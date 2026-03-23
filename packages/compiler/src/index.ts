@@ -68,3 +68,12 @@ export {
 } from "./agents/synthesis.js";
 export { VerifyAgent, type VerifyInput } from "./agents/verify.js";
 export { GovernorAgent } from "./agents/governor.js";
+
+export { analyzeCodebase, decorateWithContext } from "./context/index.js";
+export type {
+  CodebaseContext,
+  TypeRegistryEntry,
+  TypeField,
+  ConstantEntry,
+  PackageBoundary,
+} from "./context/index.js";

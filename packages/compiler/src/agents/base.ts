@@ -13,6 +13,8 @@ import type {
 } from "../types.js";
 import type { PostcodeAddress } from "@ada/provenance";
 import { generatePostcode, type StageCode } from "@ada/provenance";
+import type { CodebaseContext } from "../context/types.js";
+import { decorateWithContext } from "../context/prompt-decorator.js";
 
 export interface AgentResult<T> {
   readonly output: T;
@@ -118,6 +120,12 @@ export abstract class Agent<TInput, TOutput> {
   abstract readonly stageCode: CompilerStageCode;
   abstract readonly model: ModelId;
   abstract readonly lens: string;
+
+  private _codebaseContext: CodebaseContext | null = null;
+
+  setCodebaseContext(ctx: CodebaseContext): void {
+    this._codebaseContext = ctx;
+  }
 
   protected abstract buildPrompt(input: TInput): string;
   protected abstract getSchema(): ZodSchema;
@@ -335,7 +343,14 @@ export abstract class Agent<TInput, TOutput> {
     input: TInput,
     callbacks?: AgentCallbacks,
   ): Promise<AgentResult<TOutput>> {
-    const prompt = this.buildPrompt(input);
+    let prompt = this.buildPrompt(input);
+    if (this._codebaseContext) {
+      prompt = decorateWithContext(
+        prompt,
+        this._codebaseContext,
+        this.stageCode,
+      );
+    }
     debugLog(
       this.stageCode,
       `CALLING ${useAPI ? "API" : "CLI"} — model: ${this.model}`,

@@ -4,6 +4,7 @@ import { palette } from "./design-system.js";
 import type { CompilerStageCode } from "@ada/compiler";
 
 const STAGE_CODES: CompilerStageCode[] = [
+  "CTX",
   "INT",
   "PER",
   "ENT",

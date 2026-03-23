@@ -23,6 +23,8 @@ export interface InitOptions {
 
 function deriveSummary(stage: CompilerStageCode, ps: PipelineState): string {
   switch (stage) {
+    case "CTX":
+      return "codebase analyzed";
     case "INT": {
       const a = ps.intent;
       return a
@@ -73,6 +75,7 @@ function deriveSummary(stage: CompilerStageCode, ps: PipelineState): string {
 }
 
 const STAGE_ARTIFACTS: Record<CompilerStageCode, keyof PipelineState> = {
+  CTX: "gates",
   INT: "intent",
   PER: "persona",
   ENT: "entity",

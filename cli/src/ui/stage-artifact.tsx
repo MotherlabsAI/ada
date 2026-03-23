@@ -486,6 +486,13 @@ export function StageArtifact({
   }
 
   switch (stage) {
+    case "CTX":
+      return (
+        <Box paddingX={1}>
+          <Text color={palette.text.dim}>{"  "}</Text>
+          <Text color={palette.text.tertiary}>static analysis</Text>
+        </Box>
+      );
     case "INT":
       return <IntentArtifact data={artifact as IntentGraph} />;
     case "PER":

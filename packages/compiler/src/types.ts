@@ -3,6 +3,7 @@ import type { PostcodeAddress } from "@ada/provenance";
 // ─── Stage Codes ───
 
 export type CompilerStageCode =
+  | "CTX"
   | "INT"
   | "PER"
   | "ENT"

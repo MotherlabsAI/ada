@@ -106,6 +106,15 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/int-rerun:
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/mcp-server:
     dependencies:
       '@ada/compiler':

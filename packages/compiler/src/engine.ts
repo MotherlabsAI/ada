@@ -21,6 +21,8 @@ import type {
 import * as fs from "fs";
 import * as path from "path";
 import type { PostcodeAddress } from "@ada/provenance";
+import { analyzeCodebase } from "./context/analyzer.js";
+import type { CodebaseContext } from "./context/types.js";
 
 function gatherProjectContext(cwd: string): string {
   const fragments: string[] = [];
@@ -197,8 +199,35 @@ export class MotherCompiler {
       };
     }
 
-    // ─── Enrich intent with project context ───
-    const projectContext = gatherProjectContext(process.cwd());
+    // ─── Stage 0: Context (CTX) — static codebase analysis ───
+    const cwd = process.cwd();
+    const codebaseContext: CodebaseContext = analyzeCodebase(cwd);
+
+    // Set context on agents that benefit from grounding
+    this.intentAgent.setCodebaseContext(codebaseContext);
+    this.entityAgent.setCodebaseContext(codebaseContext);
+    this.synthesisAgent.setCodebaseContext(codebaseContext);
+
+    // Emit CTX gate
+    onStageStart?.("CTX");
+    const ctxContentScore =
+      codebaseContext.vocabulary.length + codebaseContext.constants.length;
+    emitAndGate("CTX", codebaseContext.postcode, [], ctxContentScore, 0, false);
+    stageRecords.push({
+      stageCode: "CTX",
+      metadata: {
+        modelId: "static-analysis",
+        temperature: 0,
+        extendedThinking: false,
+        maxTokens: 0,
+        retryCount: 0,
+        callDurationMs: 0,
+      },
+      postcode: codebaseContext.postcode,
+    });
+
+    // ─── Enrich intent with project context (raw text fallback) ───
+    const projectContext = gatherProjectContext(cwd);
     const enrichedIntent = projectContext ? intent + projectContext : intent;
 
     // ─── Stage 1: Intent (excavate) ───

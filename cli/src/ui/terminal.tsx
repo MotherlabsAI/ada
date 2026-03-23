@@ -10,6 +10,7 @@ import { Crystallization } from "./crystallization.js";
 import type { CompilerStageCode, GovernorDecision } from "@ada/compiler";
 
 export const STAGE_ORDER: CompilerStageCode[] = [
+  "CTX",
   "INT",
   "PER",
   "ENT",

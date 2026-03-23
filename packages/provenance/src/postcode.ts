@@ -1,6 +1,17 @@
 import { createHash } from "crypto";
 
-export type StageCode = "INT" | "PER" | "ENT" | "PRO" | "SYN" | "VER" | "GOV" | "CFG" | "ORC" | "CLI";
+export type StageCode =
+  | "CTX"
+  | "INT"
+  | "PER"
+  | "ENT"
+  | "PRO"
+  | "SYN"
+  | "VER"
+  | "GOV"
+  | "CFG"
+  | "ORC"
+  | "CLI";
 
 export interface PostcodeAddress {
   readonly prefix: "ML";
@@ -13,7 +24,7 @@ export interface PostcodeAddress {
 export function generatePostcode(
   stage: StageCode,
   content: string,
-  version: number = 1
+  version: number = 1,
 ): PostcodeAddress {
   const hash = createHash("sha256").update(content).digest("hex").slice(0, 8);
   const raw = `ML.${stage}.${hash}/v${version}`;

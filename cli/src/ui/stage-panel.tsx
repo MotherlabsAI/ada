@@ -19,6 +19,7 @@ const STAGE_META: Record<
   CompilerStageCode,
   { name: string; verb: string; question: string }
 > = {
+  CTX: { name: "CONTEXT", verb: "analyze", question: "what already exists?" },
   INT: { name: "INTENT", verb: "excavate", question: "what do you want?" },
   PER: { name: "PERSONA", verb: "situate", question: "in what world?" },
   ENT: { name: "ENTITY", verb: "crystallize", question: "what things exist?" },
