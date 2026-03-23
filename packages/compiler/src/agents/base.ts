@@ -69,6 +69,47 @@ function debugLog(stage: string, message: string, data?: unknown): void {
   }
 }
 
+function fixAdditionalProperties(
+  schema: Record<string, unknown>,
+): Record<string, unknown> {
+  const result = { ...schema };
+  if (result["type"] === "object") {
+    result["additionalProperties"] = false;
+  }
+  if (result["properties"] && typeof result["properties"] === "object") {
+    const props: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(
+      result["properties"] as Record<string, unknown>,
+    )) {
+      props[key] =
+        typeof value === "object" && value !== null
+          ? fixAdditionalProperties(value as Record<string, unknown>)
+          : value;
+    }
+    result["properties"] = props;
+  }
+  if (result["items"] && typeof result["items"] === "object") {
+    result["items"] = fixAdditionalProperties(
+      result["items"] as Record<string, unknown>,
+    );
+  }
+  if (Array.isArray(result["anyOf"])) {
+    result["anyOf"] = (result["anyOf"] as unknown[]).map((v) =>
+      typeof v === "object" && v !== null
+        ? fixAdditionalProperties(v as Record<string, unknown>)
+        : v,
+    );
+  }
+  if (Array.isArray(result["allOf"])) {
+    result["allOf"] = (result["allOf"] as unknown[]).map((v) =>
+      typeof v === "object" && v !== null
+        ? fixAdditionalProperties(v as Record<string, unknown>)
+        : v,
+    );
+  }
+  return result;
+}
+
 const apiKey = process.env["ANTHROPIC_API_KEY"];
 const useAPI = !!apiKey;
 
@@ -95,10 +136,11 @@ export abstract class Agent<TInput, TOutput> {
     let reasoning = "";
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const jsonSchema = (zodToJsonSchema as any)(this.getSchema(), {
+    const rawSchema = (zodToJsonSchema as any)(this.getSchema(), {
       $refStrategy: "none",
       target: "jsonSchema7",
     }) as Record<string, unknown>;
+    const jsonSchema = fixAdditionalProperties(rawSchema);
 
     const stream = client.messages.stream({
       model: this.model,
