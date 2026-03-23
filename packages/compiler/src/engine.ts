@@ -18,7 +18,93 @@ import type {
   ClarificationRequest,
   ClarificationAnswer,
 } from "./types.js";
+import * as fs from "fs";
+import * as path from "path";
 import type { PostcodeAddress } from "@ada/provenance";
+
+function gatherProjectContext(cwd: string): string {
+  const fragments: string[] = [];
+
+  // CLAUDE.md — primary project spec
+  const claudeMd = path.join(cwd, "CLAUDE.md");
+  if (fs.existsSync(claudeMd)) {
+    const content = fs.readFileSync(claudeMd, "utf8");
+    // Take the Summary section and key structural info, cap at 3000 chars
+    const summaryMatch = content.match(
+      /## Summary\n([\s\S]*?)(?=\n## |\n---|\Z)/,
+    );
+    if (summaryMatch?.[1]) {
+      fragments.push(
+        `PROJECT SPEC (from CLAUDE.md):\n${summaryMatch[1].trim().slice(0, 2000)}`,
+      );
+    } else {
+      fragments.push(
+        `PROJECT SPEC (from CLAUDE.md):\n${content.slice(0, 2000)}`,
+      );
+    }
+  }
+
+  // package.json — name, description, tech stack
+  const pkgJson = path.join(cwd, "package.json");
+  if (fs.existsSync(pkgJson)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgJson, "utf8")) as Record<
+        string,
+        unknown
+      >;
+      const info = [
+        pkg["name"] ? `name: ${String(pkg["name"])}` : null,
+        pkg["description"]
+          ? `description: ${String(pkg["description"])}`
+          : null,
+        pkg["engines"] ? `engines: ${JSON.stringify(pkg["engines"])}` : null,
+      ].filter(Boolean);
+      if (info.length > 0) {
+        fragments.push(`PACKAGE: ${info.join(", ")}`);
+      }
+    } catch {
+      /* skip malformed */
+    }
+  }
+
+  // tsconfig — confirms TypeScript
+  if (
+    fs.existsSync(path.join(cwd, "tsconfig.json")) ||
+    fs.existsSync(path.join(cwd, "tsconfig.base.json"))
+  ) {
+    fragments.push("TECH STACK: TypeScript (tsconfig found)");
+  }
+
+  // pnpm-workspace.yaml — monorepo structure
+  const workspace = path.join(cwd, "pnpm-workspace.yaml");
+  if (fs.existsSync(workspace)) {
+    fragments.push(
+      `MONOREPO: pnpm workspace (${fs.readFileSync(workspace, "utf8").trim()})`,
+    );
+  }
+
+  // List packages if they exist
+  const packagesDir = path.join(cwd, "packages");
+  if (fs.existsSync(packagesDir) && fs.statSync(packagesDir).isDirectory()) {
+    try {
+      const pkgs = fs.readdirSync(packagesDir).filter((d) => {
+        const p = path.join(packagesDir, d, "package.json");
+        return fs.existsSync(p);
+      });
+      if (pkgs.length > 0) {
+        fragments.push(`PACKAGES: ${pkgs.join(", ")}`);
+      }
+    } catch {
+      /* skip */
+    }
+  }
+
+  return fragments.length > 0
+    ? "\n\n--- PROJECT CONTEXT (auto-discovered from working directory) ---\n" +
+        fragments.join("\n") +
+        "\n--- END PROJECT CONTEXT ---"
+    : "";
+}
 
 export interface CompileOptions {
   readonly apiKey?: string | undefined;
@@ -111,10 +197,14 @@ export class MotherCompiler {
       };
     }
 
+    // ─── Enrich intent with project context ───
+    const projectContext = gatherProjectContext(process.cwd());
+    const enrichedIntent = projectContext ? intent + projectContext : intent;
+
     // ─── Stage 1: Intent (excavate) ───
     onStageStart?.("INT");
     const intentResult = await this.intentAgent.run(
-      intent,
+      enrichedIntent,
       stageCallbacks("INT"),
     );
     let intentGraph = {
@@ -140,6 +230,18 @@ export class MotherCompiler {
     );
 
     // ─── Clarification checkpoint ───
+    // If project context was available, auto-resolve blocking unknowns
+    // that are answerable from the codebase. Only ask the user for
+    // genuinely unresolvable questions.
+    if (projectContext && intentGraph.unknowns.length > 0) {
+      // Downgrade blocking unknowns to scoping when context is present —
+      // the context already answers questions about tech stack, scope, etc.
+      const downgraded = intentGraph.unknowns.map((u) =>
+        u.impact === "blocking" ? { ...u, impact: "scoping" as const } : u,
+      );
+      intentGraph = { ...intentGraph, unknowns: downgraded };
+    }
+
     if (onClarificationNeeded) {
       const blockers = intentGraph.unknowns.filter(
         (u) => u.impact === "blocking",
