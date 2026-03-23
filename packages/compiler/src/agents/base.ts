@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
@@ -94,12 +94,21 @@ export abstract class Agent<TInput, TOutput> {
     const client = new Anthropic({ apiKey: apiKey! });
     let reasoning = "";
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const jsonSchema = (zodToJsonSchema as any)(this.getSchema(), {
+      $refStrategy: "none",
+      target: "jsonSchema7",
+    }) as Record<string, unknown>;
+
     const stream = client.messages.stream({
       model: this.model,
       max_tokens: 16384,
       messages: [{ role: "user", content: prompt }],
       output_config: {
-        format: zodOutputFormat(this.getSchema()),
+        format: {
+          type: "json_schema" as const,
+          schema: jsonSchema,
+        },
       },
     });
 
@@ -111,17 +120,26 @@ export abstract class Agent<TInput, TOutput> {
     const message = await stream.finalMessage();
     callbacks?.onComplete?.(reasoning);
 
-    const parsedOutput = (message as { parsed_output?: unknown }).parsed_output;
-    if (parsedOutput !== undefined && parsedOutput !== null) {
-      debugLog(this.stageCode, "STRUCTURED OUTPUT SUCCESS");
-      return { parsed: parsedOutput as TOutput, reasoning };
+    // With output_config.format, response content is guaranteed-valid JSON
+    const textBlock = message.content.find((b) => b.type === "text");
+    if (textBlock && textBlock.type === "text") {
+      try {
+        const raw = JSON.parse(textBlock.text) as Record<string, unknown>;
+        delete raw["postcode"];
+        delete raw["rawIntent"];
+        const normalized = normalizeKeys(raw) as Record<string, unknown>;
+        const result = this.getSchema().parse(normalized) as TOutput;
+        debugLog(this.stageCode, "STRUCTURED OUTPUT SUCCESS");
+        return { parsed: result, reasoning };
+      } catch (e) {
+        const errMsg = e instanceof Error ? e.message : String(e);
+        debugLog(this.stageCode, `STRUCTURED OUTPUT PARSE: ${errMsg}`);
+        return { parsed: null, reasoning, error: errMsg };
+      }
     }
 
-    debugLog(
-      this.stageCode,
-      "STRUCTURED OUTPUT: no parsed_output, falling back to text extraction",
-    );
-    return { parsed: null, reasoning, error: "no parsed_output on response" };
+    debugLog(this.stageCode, "STRUCTURED OUTPUT: no text content block");
+    return { parsed: null, reasoning, error: "no text content in response" };
   }
 
   // ─── CLI fallback: uses OAuth, no streaming, text extraction ───
