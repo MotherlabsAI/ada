@@ -127,13 +127,42 @@ export abstract class Agent<TInput, TOutput> {
     return false;
   }
 
-  // ─── API path: structured output with streaming ───
-  private async callAPIStructured(
+  // ─── API path: stream reasoning (glass box), then extract JSON ───
+  // If text extraction fails, fall back to a structured output call.
+  private async callAPI(
     prompt: string,
     callbacks?: AgentCallbacks,
   ): Promise<{ parsed: TOutput | null; reasoning: string; error?: string }> {
     const client = new Anthropic({ apiKey: apiKey! });
     let reasoning = "";
+
+    // Phase 1: stream with visible reasoning (glass box)
+    const stream = client.messages.stream({
+      model: this.model,
+      max_tokens: 16384,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    stream.on("text", (text) => {
+      reasoning += text;
+      callbacks?.onToken?.(text);
+    });
+
+    await stream.finalMessage();
+    callbacks?.onComplete?.(reasoning);
+
+    // Phase 2: try to extract JSON from the reasoning text
+    const textResult = this.tryParseText(reasoning);
+    if (textResult.success) {
+      debugLog(this.stageCode, "TEXT EXTRACTION SUCCESS");
+      return { parsed: textResult.parsed, reasoning };
+    }
+
+    // Phase 3: fallback — structured output call (no streaming, guaranteed JSON)
+    debugLog(
+      this.stageCode,
+      `TEXT EXTRACTION FAILED: ${textResult.error}, falling back to structured output`,
+    );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawSchema = (zodToJsonSchema as any)(this.getSchema(), {
@@ -142,46 +171,40 @@ export abstract class Agent<TInput, TOutput> {
     }) as Record<string, unknown>;
     const jsonSchema = fixAdditionalProperties(rawSchema);
 
-    const stream = client.messages.stream({
-      model: this.model,
-      max_tokens: 16384,
-      messages: [{ role: "user", content: prompt }],
-      output_config: {
-        format: {
-          type: "json_schema" as const,
-          schema: jsonSchema,
+    try {
+      const structured = await client.messages.create({
+        model: this.model,
+        max_tokens: 16384,
+        messages: [{ role: "user", content: prompt }],
+        output_config: {
+          format: {
+            type: "json_schema" as const,
+            schema: jsonSchema,
+          },
         },
-      },
-    });
+      });
 
-    stream.on("text", (text) => {
-      reasoning += text;
-      callbacks?.onToken?.(text);
-    });
-
-    const message = await stream.finalMessage();
-    callbacks?.onComplete?.(reasoning);
-
-    // With output_config.format, response content is guaranteed-valid JSON
-    const textBlock = message.content.find((b) => b.type === "text");
-    if (textBlock && textBlock.type === "text") {
-      try {
+      const textBlock = structured.content.find((b) => b.type === "text");
+      if (textBlock && textBlock.type === "text") {
         const raw = JSON.parse(textBlock.text) as Record<string, unknown>;
         delete raw["postcode"];
         delete raw["rawIntent"];
         const normalized = normalizeKeys(raw) as Record<string, unknown>;
         const result = this.getSchema().parse(normalized) as TOutput;
-        debugLog(this.stageCode, "STRUCTURED OUTPUT SUCCESS");
+        debugLog(this.stageCode, "STRUCTURED FALLBACK SUCCESS");
         return { parsed: result, reasoning };
-      } catch (e) {
-        const errMsg = e instanceof Error ? e.message : String(e);
-        debugLog(this.stageCode, `STRUCTURED OUTPUT PARSE: ${errMsg}`);
-        return { parsed: null, reasoning, error: errMsg };
       }
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      debugLog(this.stageCode, `STRUCTURED FALLBACK FAILED: ${errMsg}`);
+      return { parsed: null, reasoning, error: errMsg };
     }
 
-    debugLog(this.stageCode, "STRUCTURED OUTPUT: no text content block");
-    return { parsed: null, reasoning, error: "no text content in response" };
+    return {
+      parsed: null,
+      reasoning,
+      error: "structured fallback produced no content",
+    };
   }
 
   // ─── CLI fallback: uses OAuth, no streaming, text extraction ───
@@ -315,7 +338,7 @@ export abstract class Agent<TInput, TOutput> {
     const prompt = this.buildPrompt(input);
     debugLog(
       this.stageCode,
-      `CALLING ${useAPI ? "API+STRUCTURED" : "CLI"} — model: ${this.model}`,
+      `CALLING ${useAPI ? "API" : "CLI"} — model: ${this.model}`,
     );
 
     const startTime = Date.now();
@@ -325,20 +348,11 @@ export abstract class Agent<TInput, TOutput> {
     let error: string | undefined;
 
     if (useAPI) {
-      // ─── Primary: structured output via Anthropic API ───
-      const result = await this.callAPIStructured(prompt, callbacks);
+      // ─── API: stream reasoning (glass box) → extract JSON → structured fallback ───
+      const result = await this.callAPI(prompt, callbacks);
       parsed = result.parsed;
       error = result.error;
-
-      // Structured output failed — fall back to text extraction from reasoning
-      if (parsed === null && result.reasoning) {
-        debugLog(this.stageCode, "FALLBACK: extracting from reasoning text");
-        retryCount++;
-        const textResult = this.tryParseText(result.reasoning);
-        parsed = textResult.success ? textResult.parsed : null;
-        error = textResult.success ? undefined : textResult.error;
-      }
-
+      if (parsed === null) retryCount++;
       parseFailure = parsed === null;
     } else {
       // ─── CLI fallback: text extraction ───
