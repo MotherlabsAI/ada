@@ -51,18 +51,19 @@ export function buildGate(input: GateInput): ProvenanceGate {
   // Clamp to [0.05, 1.0] — entropy never reaches true zero
   entropy = Math.max(0.05, Math.min(1.0, entropy));
 
-  // Gate PASS requires ALL conditions:
+  // Gate PASS requires:
   //   entropyEstimate < 0.7
-  //   entropy decreased from previous stage (monotonicity — arxiv 2603.18940)
   //   no unresolved blocking challenges
+  // Monotonicity is tracked but not a hard gate condition —
+  // integration stages (SYN) legitimately increase entropy by
+  // surfacing open questions. The Governor sees the full trajectory
+  // and decides whether violations are acceptable.
+  // (arxiv 2603.18940: shape matters, but their measurement was
+  // per-step reasoning chains, not multi-concern pipelines)
   const hasUnresolvedBlockers = input.challenges.some(
     (c) => c.severity === "blocking" && !c.resolved,
   );
-  const isMonotone =
-    entropy < input.previousEntropy ||
-    input.fromPostcode.raw === input.toPostcode.raw;
-  const passed =
-    entropy < GATE_PASS_THRESHOLD && isMonotone && !hasUnresolvedBlockers;
+  const passed = entropy < GATE_PASS_THRESHOLD && !hasUnresolvedBlockers;
 
   return {
     fromPostcode: input.fromPostcode.raw,

@@ -95,7 +95,7 @@ export async function initCommand(
   const runId = `ML-${Math.floor(Date.now() / 1000)}`;
   const compiler = new MotherCompiler();
   const renderer = createCompileRenderer(runId);
-  const maxIterations = parseInt(process.env["ADA_MAX_ITERATIONS"] ?? "2", 10);
+  const maxIterations = parseInt(process.env["ADA_MAX_ITERATIONS"] ?? "3", 10);
 
   let currentIntent = intent;
   let iterationCount = 0;
