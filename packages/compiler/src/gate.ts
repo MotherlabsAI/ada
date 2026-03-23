@@ -51,13 +51,18 @@ export function buildGate(input: GateInput): ProvenanceGate {
   // Clamp to [0.05, 1.0] — entropy never reaches true zero
   entropy = Math.max(0.05, Math.min(1.0, entropy));
 
-  // Gate PASS requires BOTH conditions (per SSOT 2.5):
+  // Gate PASS requires ALL conditions:
   //   entropyEstimate < 0.7
+  //   entropy decreased from previous stage (monotonicity — arxiv 2603.18940)
   //   no unresolved blocking challenges
   const hasUnresolvedBlockers = input.challenges.some(
     (c) => c.severity === "blocking" && !c.resolved,
   );
-  const passed = entropy < GATE_PASS_THRESHOLD && !hasUnresolvedBlockers;
+  const isMonotone =
+    entropy < input.previousEntropy ||
+    input.fromPostcode.raw === input.toPostcode.raw;
+  const passed =
+    entropy < GATE_PASS_THRESHOLD && isMonotone && !hasUnresolvedBlockers;
 
   return {
     fromPostcode: input.fromPostcode.raw,

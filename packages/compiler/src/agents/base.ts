@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
@@ -27,19 +28,15 @@ export interface AgentCallbacks {
 }
 
 function extractJSON(text: string): string | null {
-  // Prefer fenced JSON blocks — most reliable
   const fenced = text.match(/```(?:json|JSON)?\s*\n?([\s\S]*?)```/);
   if (fenced?.[1]?.trim()) {
     const candidate = fenced[1].trim();
-    // Verify it starts with { — reject ASCII art that got fenced
     if (candidate.startsWith("{")) return candidate;
   }
-  // Fallback: find outermost { ... } but validate it looks like JSON
   const braceStart = text.indexOf("{");
   const braceEnd = text.lastIndexOf("}");
   if (braceStart !== -1 && braceEnd > braceStart) {
     const candidate = text.slice(braceStart, braceEnd + 1);
-    // Quick sanity check: first non-whitespace after { should be " (a JSON key)
     const afterBrace = candidate.slice(1).trimStart();
     if (afterBrace.startsWith('"')) return candidate;
   }
@@ -89,31 +86,45 @@ export abstract class Agent<TInput, TOutput> {
     return false;
   }
 
-  // ─── API path: real streaming, fast ───
-  private async callAPI(
+  // ─── API path: structured output with streaming ───
+  private async callAPIStructured(
     prompt: string,
     callbacks?: AgentCallbacks,
-  ): Promise<string> {
+  ): Promise<{ parsed: TOutput | null; reasoning: string; error?: string }> {
     const client = new Anthropic({ apiKey: apiKey! });
-    let fullText = "";
+    let reasoning = "";
 
     const stream = client.messages.stream({
       model: this.model,
       max_tokens: 16384,
       messages: [{ role: "user", content: prompt }],
+      output_config: {
+        format: zodOutputFormat(this.getSchema()),
+      },
     });
 
     stream.on("text", (text) => {
-      fullText += text;
+      reasoning += text;
       callbacks?.onToken?.(text);
     });
 
-    await stream.finalMessage();
-    callbacks?.onComplete?.(fullText);
-    return fullText;
+    const message = await stream.finalMessage();
+    callbacks?.onComplete?.(reasoning);
+
+    const parsedOutput = (message as { parsed_output?: unknown }).parsed_output;
+    if (parsedOutput !== undefined && parsedOutput !== null) {
+      debugLog(this.stageCode, "STRUCTURED OUTPUT SUCCESS");
+      return { parsed: parsedOutput as TOutput, reasoning };
+    }
+
+    debugLog(
+      this.stageCode,
+      "STRUCTURED OUTPUT: no parsed_output, falling back to text extraction",
+    );
+    return { parsed: null, reasoning, error: "no parsed_output on response" };
   }
 
-  // ─── CLI fallback: uses OAuth, no streaming ───
+  // ─── CLI fallback: uses OAuth, no streaming, text extraction ───
   private callCLI(prompt: string): Promise<string> {
     return new Promise((resolve) => {
       const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ada-"));
@@ -183,15 +194,7 @@ export abstract class Agent<TInput, TOutput> {
     });
   }
 
-  private async call(
-    prompt: string,
-    callbacks?: AgentCallbacks,
-  ): Promise<string> {
-    if (useAPI) return this.callAPI(prompt, callbacks);
-    return this.callCLI(prompt);
-  }
-
-  private tryParse(rawText: string): {
+  private tryParseText(rawText: string): {
     parsed: TOutput;
     success: boolean;
     error?: string;
@@ -252,26 +255,53 @@ export abstract class Agent<TInput, TOutput> {
     const prompt = this.buildPrompt(input);
     debugLog(
       this.stageCode,
-      `CALLING ${useAPI ? "API" : "CLI"} — model: ${this.model}`,
+      `CALLING ${useAPI ? "API+STRUCTURED" : "CLI"} — model: ${this.model}`,
     );
 
     const startTime = Date.now();
     let retryCount = 0;
+    let parsed: TOutput | null = null;
+    let parseFailure = false;
+    let error: string | undefined;
 
-    let rawText = await this.call(prompt, callbacks);
-    let { parsed, success, error } = this.tryParse(rawText);
+    if (useAPI) {
+      // ─── Primary: structured output via Anthropic API ───
+      const result = await this.callAPIStructured(prompt, callbacks);
+      parsed = result.parsed;
+      error = result.error;
 
-    if (!success) {
-      retryCount++;
-      debugLog(this.stageCode, `RETRY — failed: ${error}`);
-      const retryPrompt =
-        prompt +
-        "\n\nIMPORTANT: Return ONLY a valid JSON object inside a ```json code fence. No other text.";
-      rawText = await this.call(retryPrompt); // no streaming on retry
-      ({ parsed, success, error } = this.tryParse(rawText));
+      // Structured output failed — fall back to text extraction from reasoning
+      if (parsed === null && result.reasoning) {
+        debugLog(this.stageCode, "FALLBACK: extracting from reasoning text");
+        retryCount++;
+        const textResult = this.tryParseText(result.reasoning);
+        parsed = textResult.success ? textResult.parsed : null;
+        error = textResult.success ? undefined : textResult.error;
+      }
+
+      parseFailure = parsed === null;
+    } else {
+      // ─── CLI fallback: text extraction ───
+      let rawText = await this.callCLI(prompt);
+      let textResult = this.tryParseText(rawText);
+      parsed = textResult.success ? textResult.parsed : null;
+      error = textResult.error;
+
+      if (!textResult.success) {
+        retryCount++;
+        debugLog(this.stageCode, `RETRY — failed: ${error}`);
+        const retryPrompt =
+          prompt +
+          "\n\nIMPORTANT: Return ONLY a valid JSON object inside a ```json code fence. No other text.";
+        rawText = await this.callCLI(retryPrompt);
+        textResult = this.tryParseText(rawText);
+        parsed = textResult.success ? textResult.parsed : null;
+        error = textResult.success ? undefined : textResult.error;
+      }
+
+      parseFailure = parsed === null;
     }
 
-    const parseFailure = !success;
     if (parseFailure) {
       debugLog(this.stageCode, `FINAL FAILURE: ${error}`);
       parsed = this.getDefaultOutput(input);
@@ -300,6 +330,6 @@ export abstract class Agent<TInput, TOutput> {
       });
     }
 
-    return { output: parsed, postcode, challenges, parseFailure, metadata };
+    return { output: parsed!, postcode, challenges, parseFailure, metadata };
   }
 }
