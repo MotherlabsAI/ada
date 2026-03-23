@@ -57,7 +57,7 @@ async function main(): Promise<void> {
       break;
     }
     case "verify":
-      await verifyCommand();
+      await verifyCommand(flags);
       break;
     case "mcp":
       await mcpCommand();
@@ -81,7 +81,9 @@ async function main(): Promise<void> {
                              --no-verify       Skip liveness check
     ada run                  Spawn Claude Code with governor watching
     ada resume <id>          Resume from checkpoint
-    ada verify               Run Verify agent on current Blueprint
+    ada verify               Verify codebase against compiled blueprint
+                             --comment     Output as GitHub PR comment markdown
+                             --json        Output raw JSON report
     ada mcp                  Start MCP spec authority server (stdio)
 `);
       break;

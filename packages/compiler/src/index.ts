@@ -77,3 +77,26 @@ export type {
   ConstantEntry,
   PackageBoundary,
 } from "./context/index.js";
+
+export {
+  verify,
+  loadBlueprintState,
+  scanCodebase,
+  findSymbolByName,
+  searchInFiles,
+  diffBlueprintAgainstCode,
+  formatTerminal,
+  formatMarkdown,
+} from "./verify/index.js";
+export type {
+  VerifyOptions,
+  VerificationReport,
+  VerificationFinding,
+  BoundedContextResult,
+  ProvenanceTrace,
+  FindingCategory,
+  FindingSeverity,
+  CodebaseSnapshot,
+  CodeSymbol,
+  DiffResult,
+} from "./verify/index.js";
