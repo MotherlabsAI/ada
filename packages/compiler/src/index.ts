@@ -1,0 +1,70 @@
+export { MotherCompiler, type CompileOptions } from "./engine.js";
+export { SONNET, OPUS, type ModelId } from "./models.js";
+export { buildGate, computeGatePassRate, type GateInput } from "./gate.js";
+
+export {
+  intentGraphSchema,
+  domainContextSchema,
+  entityMapSchema,
+  processFlowSchema,
+  blueprintSchema,
+  auditReportSchema,
+  governorDecisionSchema,
+} from "./schemas.js";
+
+export type {
+  CompilerStageCode,
+  Challenge,
+  IntentGoal,
+  IntentConstraint,
+  IntentUnknown,
+  IntentGraph,
+  Stakeholder,
+  DomainContext,
+  EntityInvariant,
+  Entity,
+  EntityProperty,
+  BoundedContext,
+  EntityMap,
+  HoareTriple,
+  WorkflowStep,
+  FailureMode,
+  StateMachine,
+  StateTransition,
+  Workflow,
+  ProcessFlow,
+  BlueprintComponent,
+  BlueprintArchitecture,
+  ResolvedConflict,
+  Blueprint,
+  SemanticDrift,
+  AuditReport,
+  GovernorDecisionType,
+  GovernorDecision,
+  PolicyViolation,
+  ProvenanceGate,
+  PipelineState,
+  DeterminismMetadata,
+  StageExecutionRecord,
+  CompilationRun,
+  ClarificationRequest,
+  ClarificationAnswer,
+  UncertaintyMarker,
+  IterationRecord,
+  FallbackBlueprintResult,
+  CompileStatus,
+  CompileResult,
+  StageCompleteEvent,
+} from "./types.js";
+
+export { IntentAgent } from "./agents/intent.js";
+export { PersonaAgent } from "./agents/persona.js";
+export { EntityAgent, type EntityInput } from "./agents/entity.js";
+export { ProcessAgent, type ProcessInput } from "./agents/process.js";
+export {
+  SynthesisAgent,
+  type SynthesisInput,
+  type SynthesisOutput,
+} from "./agents/synthesis.js";
+export { VerifyAgent, type VerifyInput } from "./agents/verify.js";
+export { GovernorAgent } from "./agents/governor.js";

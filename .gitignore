@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Ada runtime
+.ada/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Debug logs
+*.log
+
+# Temporary files
+*.tmp

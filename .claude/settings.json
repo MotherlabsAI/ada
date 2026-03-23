@@ -1,0 +1,482 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/adacli-adacli-name-ada.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/adacli-adacli-license-mit.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/adacli-adacli-apikeyconfig-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/adacli-adacli-activepromptregistry-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/apikeyconfiguration-apikeyconfiguration-keyvalue-null-apikey.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/apikeyconfiguration-apikeyconfiguration-source-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/apikeyconfiguration-apikeyconfiguration-provider-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/intent-intent-rawtext-null-intent-rawtext-trim-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/intent-intent-fingerprint-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/intent-intent-submittedat-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/semanticfragment-semanticfragment-fragmentid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/semanticfragment-semanticfragment-role-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/semanticfragment-semanticfragment-sourceintentspan-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/textspan-textspan-startindex-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/textspan-textspan-endindex-textspan-startindex.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/textspan-textspan-text-null-textspan-text-length-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entitymodel-entitymodel-entitymodelid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entitymodel-entitymodel-domaintype-null-entitymodel-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entitymodel-entitymodel-attributes-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entitymodel-entitymodel-provenanceref-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/attributedefinition-attributedefinition-attributename-null-a.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/attributedefinition-attributedefinition-datatype-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/relationshipdefinition-relationshipdefinition-sourceentitymodel.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/relationshipdefinition-relationshipdefinition-targetentitymodel.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/relationshipdefinition-relationshipdefinition-sourceentitymodel.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/relationshipdefinition-relationshipdefinition-cardinality-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/constraintdefinition-constraintdefinition-constraintid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/constraintdefinition-constraintdefinition-expression-null-con.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/constraintdefinition-constraintdefinition-scope-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/processflow-processflow-processflowid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/processflow-processflow-steps-null-processflow-steps.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/processflow-processflow-provenanceref-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/processstep-processstep-stepid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/processstep-processstep-ordinalposition-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/processstep-processstep-description-null-processstep.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/processstep-processstep-provenanceref-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/decisionnode-decisionnode-nodeid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/decisionnode-decisionnode-condition-null-decisionnode.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/decisionnode-decisionnode-branches-null-decisionnode-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/decisionnode-decisionnode-provenanceref-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/transition-transition-transitionid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/transition-transition-fromstepid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/transition-transition-tostepid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/transition-transition-fromstepid-transition-tostepi.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancerecord-provenancerecord-recordid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancerecord-provenancerecord-intentfingerprint-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancerecord-provenancerecord-sourcefragment-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancerecord-provenancerecord-producingstage-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancerecord-provenancerecord-promptversionref-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancerecord-provenancerecord-reasoningsummary-null-p.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprint-blueprint-blueprintid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprint-blueprint-schemaversion-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprint-blueprint-sourceintentfingerprint-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprint-blueprint-entitymodels-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprint-blueprint-processflows-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprint-blueprint-governancestatus-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprint-blueprint-provenanceindex-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprint-blueprint-determinismmetadata-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprintschema-blueprintschema-schemaid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprintschema-blueprintschema-version-null-blueprintsc.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprintschema-blueprintschema-fielddefinitions-null-bl.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprintschema-blueprintschema-requiredcomponents-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/fielddefinition-fielddefinition-fieldname-null-fielddefi.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/fielddefinition-fielddefinition-fieldtype-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/validationrule-validationrule-ruleid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/validationrule-validationrule-predicate-null-validation.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/validationrule-validationrule-severity-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/governancestatus-governancestatus-statusid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/governancestatus-governancestatus-verdict-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/governancestatus-governancestatus-violations-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/governancestatus-governancestatus-audittrailref-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/governancestatus-governancestatus-evaluatedat-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/policyviolation-policyviolation-violationid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/policyviolation-policyviolation-violatedruleid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/policyviolation-policyviolation-affectedelementid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilerstage-compilerstage-stageid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilerstage-compilerstage-name-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilerstage-compilerstage-inputschema-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilerstage-compilerstage-outputschema-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilerstage-compilerstage-pinnedpromptref-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/pinnedprompt-pinnedprompt-promptid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/pinnedprompt-pinnedprompt-version-null-pinnedprompt-v.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/pinnedprompt-pinnedprompt-templatetext-null-pinnedpro.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/pinnedprompt-pinnedprompt-stagetarget-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/pinnedprompt-pinnedprompt-structuredoutputschema-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/promptregistry-promptregistry-registryid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/promptregistry-promptregistry-entries-null-promptregist.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/promptregistry-promptregistry-activeversion-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/determinismmetadata-determinismmetadata-modelid-null-determi.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/determinismmetadata-determinismmetadata-temperature-0-determ.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/determinismmetadata-determinismmetadata-promptregistryversio.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/determinismmetadata-determinismmetadata-structuredoutputenfo.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/clarificationloop-clarificationloop-loopid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/clarificationloop-clarificationloop-sourceintentfingerprin.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/clarificationloop-clarificationloop-detectedambiguities-nu.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/clarificationloop-clarificationloop-collectedanswers-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ambiguitymarker-ambiguitymarker-markerid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ambiguitymarker-ambiguitymarker-affectedfragmentid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ambiguitymarker-ambiguitymarker-ambiguitytype-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ambiguitymarker-ambiguitymarker-question-null-ambiguitym.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/clarificationanswer-clarificationanswer-answerid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/clarificationanswer-clarificationanswer-markerref-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/clarificationanswer-clarificationanswer-answertext-null-clar.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/clarificationanswer-clarificationanswer-appliedtointentspan-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/fallbackblueprintresult-fallbackblueprintresult-resultid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/fallbackblueprintresult-fallbackblueprintresult-uncertaintymarke.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/fallbackblueprintresult-fallbackblueprintresult-fallbackreason-n.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilationrun-compilationrun-runid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilationrun-compilationrun-sourceintent-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilationrun-compilationrun-stagesexecuted-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilationrun-compilationrun-resultblueprintid-null-co.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilationrun-compilationrun-startedat-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilationrun-compilationrun-determinismmetadata-null.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/session-start.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "ada": {
+      "command": "ada mcp",
+      "args": []
+    }
+  },
+  "model": "claude-sonnet-4-6",
+  "largeContextModel": "claude-opus-4-6"
+}

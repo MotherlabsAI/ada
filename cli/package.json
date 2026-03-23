@@ -1,0 +1,32 @@
+{
+  "name": "@ada/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "ada": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'no tests yet'"
+  },
+  "dependencies": {
+    "@ada/compiler": "workspace:*",
+    "@ada/config-writer": "workspace:*",
+    "@ada/governor": "workspace:*",
+    "@ada/mcp-server": "workspace:*",
+    "@ada/orchestrator": "workspace:*",
+    "@ada/provenance": "workspace:*",
+    "@anthropic-ai/sdk": "^0.80.0",
+    "ink": "^5.2.0",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.7.0"
+  }
+}

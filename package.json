@@ -1,0 +1,18 @@
+{
+  "name": "ada",
+  "version": "0.1.0",
+  "description": "Semantic compiler for Claude Code — by Motherlabs",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "dev": "tsx cli/src/index.ts"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0"
+  }
+}

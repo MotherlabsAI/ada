@@ -1,0 +1,192 @@
+import type { ZodSchema } from "zod";
+import { Agent } from "./base.js";
+import { DEV_OPUS } from "../models.js";
+import type {
+  BlueprintArchitecture,
+  ResolvedConflict,
+  Challenge,
+  IntentGraph,
+  DomainContext,
+  EntityMap,
+  ProcessFlow,
+  CompilerStageCode,
+} from "../types.js";
+import { blueprintSchema } from "../schemas.js";
+
+export interface SynthesisOutput {
+  readonly summary: string;
+  readonly architecture: BlueprintArchitecture;
+  readonly nonFunctional: readonly string[];
+  readonly openQuestions: readonly string[];
+  readonly resolvedConflicts: readonly ResolvedConflict[];
+  readonly challenges: readonly Challenge[];
+}
+
+export interface SynthesisInput {
+  readonly intentGraph: IntentGraph;
+  readonly domainContext: DomainContext;
+  readonly entityMap: EntityMap;
+  readonly processFlow: ProcessFlow;
+}
+
+function compactEntities(entityMap: EntityMap): string {
+  return entityMap.entities
+    .map(
+      (e) =>
+        `${e.name} (${e.category}): ${e.invariants.map((i) => i.predicate).join(", ")}`,
+    )
+    .join("\n  ");
+}
+
+function compactWorkflows(processFlow: ProcessFlow): string {
+  return processFlow.workflows
+    .map(
+      (w) =>
+        `${w.name} [${w.trigger}]: ${w.steps.map((s) => s.name).join(" → ")}`,
+    )
+    .join("\n  ");
+}
+
+function compactBoundedContexts(entityMap: EntityMap): string {
+  return entityMap.boundedContexts
+    .map(
+      (bc) =>
+        `${bc.name} (root: ${bc.rootEntity}) → [${bc.entities.join(", ")}]`,
+    )
+    .join("\n  ");
+}
+
+export class SynthesisAgent extends Agent<SynthesisInput, SynthesisOutput> {
+  readonly name = "Synthesis";
+  readonly stageCode: CompilerStageCode = "SYN";
+  readonly model = DEV_OPUS;
+  readonly lens = "INTEGRATION — merges all upstream";
+
+  protected getSchema(): ZodSchema {
+    return blueprintSchema;
+  }
+
+  protected getDefaultOutput(input: SynthesisInput): SynthesisOutput {
+    return {
+      summary: input.intentGraph.rawIntent,
+      architecture: { pattern: "unknown", rationale: "", components: [] },
+      nonFunctional: [],
+      openQuestions: [],
+      resolvedConflicts: [],
+      challenges: [],
+    };
+  }
+
+  protected buildPrompt(input: SynthesisInput): string {
+    const goals = input.intentGraph.goals
+      .map((g) => `${g.id}: ${g.description} (${g.type})`)
+      .join("\n  ");
+    const constraints = input.intentGraph.constraints
+      .map((c) => `${c.id}: ${c.description}`)
+      .join("\n  ");
+    const unknowns = input.intentGraph.unknowns
+      .map((u) => `${u.id}: ${u.description} (${u.impact})`)
+      .join("\n  ");
+
+    return `You are the Synthesis agent. Your lens: INTEGRATION — merges all upstream.
+
+GROUNDING: ARCHITECTURE THEORY + CONFLICT RESOLUTION
+
+Traceability rule:
+  Before proposing any component, state WHY it exists.
+  Every component must trace to an entity or workflow from upstream.
+  If you cannot trace it, add to openQuestions. Never invent.
+
+Conflict resolution: when Entity and Process disagree, name the conflict,
+resolve it, and record in resolvedConflicts.
+
+Dependency direction: infrastructure → application → domain.
+Interface segregation: >7 methods = split into two components.
+
+---
+
+First, think out loud. Compose the integration.
+Derive each component from upstream — trace it explicitly.
+  "PaymentService exists because Entity found Payment and Process found createPayment workflow"
+When Entity and Process disagree, name the conflict and resolve it out loud.
+Show the dependency direction. What depends on what?
+
+Mark key insights with ◈
+Mark things you derived that weren't stated with ∴
+Mark risks or gaps with ✗
+Mark things you're confident about with ✓
+
+TASK: Produce the INTEGRATION artifact — architecture, components, non-functional requirements.
+You do NOT reproduce entities or workflows. Those are locked upstream.
+You derive components FROM them.
+
+GOALS:
+  ${goals}
+
+CONSTRAINTS:
+  ${constraints}
+
+UNKNOWNS:
+  ${unknowns}
+
+DOMAIN: ${input.domainContext.domain}
+EXCLUDED: ${input.domainContext.excludedConcerns.join(", ") || "none stated"}
+
+ENTITIES (${input.entityMap.entities.length} total):
+  ${compactEntities(input.entityMap)}
+
+BOUNDED CONTEXTS:
+  ${compactBoundedContexts(input.entityMap)}
+
+WORKFLOWS (${input.processFlow.workflows.length} total):
+  ${compactWorkflows(input.processFlow)}
+
+STATE MACHINES: ${input.processFlow.stateMachines.map((sm) => `${sm.entity} [${sm.states.join(", ")}]`).join("; ") || "none"}
+
+---
+
+Derive one component per bounded context minimum.
+Each component needs: name, responsibility, interfaces (method names), dependencies, boundedContext.
+
+CRITICAL RULES:
+- "components" must be POPULATED with actual component objects — not empty, not type definitions
+- "openQuestions" must be an array of STRINGS like ["What handles session resume?"] — NOT objects
+- "resolvedConflicts[].authoritative" must be either "entity" or "process" — NOT a description
+- "summary" must describe what the system DOES — NOT repeat the raw intent
+- DO NOT leave any array empty if upstream data exists to populate it
+
+The reasoning above is for the user to read. The JSON below is for the system.
+Return the structured result in a \`\`\`json code fence:
+\`\`\`json
+{
+  "summary": "A CLI tool that compiles human intent into governed Claude Code execution through a 7-stage sequential pipeline with provenance tracking and governor authority.",
+  "architecture": {
+    "pattern": "gated-sequential-pipeline",
+    "rationale": "The 7 compilation stages require sequential execution because each stage depends on the previous stage output. Provenance gates between stages enforce entropy reduction.",
+    "components": [
+      {
+        "name": "IntentParser",
+        "responsibility": "Parses raw human intent into structured goals, constraints, and unknowns",
+        "interfaces": ["parse(intent)"],
+        "dependencies": [],
+        "boundedContext": "compilation"
+      },
+      {
+        "name": "GovernorGate",
+        "responsibility": "Evaluates full pipeline state and issues ACCEPT/REJECT/ITERATE decision",
+        "interfaces": ["evaluate(pipelineState)"],
+        "dependencies": ["IntentParser"],
+        "boundedContext": "governance"
+      }
+    ]
+  },
+  "nonFunctional": ["TypeScript strict mode with noImplicitAny", "Node.js >= 18", "Anthropic API models only"],
+  "openQuestions": ["How does session resume work after a crash?", "What is the retry policy for failed stages?"],
+  "resolvedConflicts": [{"entity": "Pipeline has status field", "process": "Workflow defines status transitions", "resolution": "Process owns transitions, Entity owns valid states", "authoritative": "process"}],
+  "challenges": [{"id": "CH1", "description": "Provenance chain integrity across iterations", "severity": "major", "resolved": false}]
+}
+\`\`\`
+
+The example above shows the STRUCTURE and LEVEL OF DETAIL expected. Your output must have real components derived from the upstream entities and workflows — not the example values.`;
+  }
+}

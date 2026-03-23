@@ -1,0 +1,305 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { spawn } from "child_process";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+import type { ZodSchema, ZodError } from "zod";
+import type { ModelId } from "../models.js";
+import type {
+  CompilerStageCode,
+  Challenge,
+  DeterminismMetadata,
+} from "../types.js";
+import type { PostcodeAddress } from "@ada/provenance";
+import { generatePostcode, type StageCode } from "@ada/provenance";
+
+export interface AgentResult<T> {
+  readonly output: T;
+  readonly postcode: PostcodeAddress;
+  readonly challenges: readonly Challenge[];
+  readonly parseFailure: boolean;
+  readonly metadata: DeterminismMetadata;
+}
+
+export interface AgentCallbacks {
+  readonly onToken?: ((token: string) => void) | undefined;
+  readonly onComplete?: ((fullText: string) => void) | undefined;
+}
+
+function extractJSON(text: string): string | null {
+  // Prefer fenced JSON blocks — most reliable
+  const fenced = text.match(/```(?:json|JSON)?\s*\n?([\s\S]*?)```/);
+  if (fenced?.[1]?.trim()) {
+    const candidate = fenced[1].trim();
+    // Verify it starts with { — reject ASCII art that got fenced
+    if (candidate.startsWith("{")) return candidate;
+  }
+  // Fallback: find outermost { ... } but validate it looks like JSON
+  const braceStart = text.indexOf("{");
+  const braceEnd = text.lastIndexOf("}");
+  if (braceStart !== -1 && braceEnd > braceStart) {
+    const candidate = text.slice(braceStart, braceEnd + 1);
+    // Quick sanity check: first non-whitespace after { should be " (a JSON key)
+    const afterBrace = candidate.slice(1).trimStart();
+    if (afterBrace.startsWith('"')) return candidate;
+  }
+  return null;
+}
+
+function snakeToCamel(s: string): string {
+  return s.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+}
+
+function normalizeKeys(obj: unknown): unknown {
+  if (Array.isArray(obj)) return obj.map(normalizeKeys);
+  if (obj !== null && typeof obj === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      result[snakeToCamel(key)] = normalizeKeys(value);
+    }
+    return result;
+  }
+  return obj;
+}
+
+function debugLog(stage: string, message: string, data?: unknown): void {
+  try {
+    fs.mkdirSync(".ada", { recursive: true });
+    const entry = `[${new Date().toISOString()}] ${message}\n${data !== undefined ? JSON.stringify(data, null, 2).slice(0, 2000) + "\n" : ""}`;
+    fs.appendFileSync(`.ada/debug-${stage.toLowerCase()}.log`, entry);
+  } catch {
+    /* never crash for logging */
+  }
+}
+
+const apiKey = process.env["ANTHROPIC_API_KEY"];
+const useAPI = !!apiKey;
+
+export abstract class Agent<TInput, TOutput> {
+  abstract readonly name: string;
+  abstract readonly stageCode: CompilerStageCode;
+  abstract readonly model: ModelId;
+  abstract readonly lens: string;
+
+  protected abstract buildPrompt(input: TInput): string;
+  protected abstract getSchema(): ZodSchema;
+  protected abstract getDefaultOutput(input: TInput): TOutput;
+
+  protected get useExtendedThinking(): boolean {
+    return false;
+  }
+
+  // ─── API path: real streaming, fast ───
+  private async callAPI(
+    prompt: string,
+    callbacks?: AgentCallbacks,
+  ): Promise<string> {
+    const client = new Anthropic({ apiKey: apiKey! });
+    let fullText = "";
+
+    const stream = client.messages.stream({
+      model: this.model,
+      max_tokens: 16384,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    stream.on("text", (text) => {
+      fullText += text;
+      callbacks?.onToken?.(text);
+    });
+
+    await stream.finalMessage();
+    callbacks?.onComplete?.(fullText);
+    return fullText;
+  }
+
+  // ─── CLI fallback: uses OAuth, no streaming ───
+  private callCLI(prompt: string): Promise<string> {
+    return new Promise((resolve) => {
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ada-"));
+      const promptFile = path.join(tmpDir, "prompt.txt");
+      fs.writeFileSync(promptFile, prompt, "utf8");
+
+      const input = fs.createReadStream(promptFile);
+      const proc = spawn(
+        "claude",
+        [
+          "--print",
+          "--output-format",
+          "text",
+          "--model",
+          this.model,
+          "--dangerously-skip-permissions",
+          "--no-session-persistence",
+        ],
+        {
+          cwd: tmpDir,
+          stdio: ["pipe", "pipe", "pipe"],
+        },
+      );
+
+      let stdout = "";
+      let stderr = "";
+      proc.stdout.on("data", (chunk: Buffer) => {
+        stdout += chunk.toString();
+      });
+      proc.stderr.on("data", (chunk: Buffer) => {
+        stderr += chunk.toString();
+      });
+      input.pipe(proc.stdin);
+
+      proc.on("close", (code) => {
+        try {
+          fs.unlinkSync(promptFile);
+          fs.rmdirSync(tmpDir);
+        } catch {
+          /* cleanup */
+        }
+        if (stderr)
+          debugLog(
+            this.stageCode,
+            `CLI stderr (exit ${code}): ${stderr.slice(0, 500)}`,
+          );
+        if (!stdout)
+          debugLog(this.stageCode, `CLI empty stdout (exit ${code})`);
+        resolve(stdout);
+      });
+
+      proc.on("error", (err) => {
+        try {
+          fs.unlinkSync(promptFile);
+          fs.rmdirSync(tmpDir);
+        } catch {
+          /* cleanup */
+        }
+        debugLog(this.stageCode, `CLI spawn error: ${err.message}`);
+        resolve("");
+      });
+
+      setTimeout(() => {
+        proc.kill();
+        resolve(stdout || "");
+      }, 300_000);
+    });
+  }
+
+  private async call(
+    prompt: string,
+    callbacks?: AgentCallbacks,
+  ): Promise<string> {
+    if (useAPI) return this.callAPI(prompt, callbacks);
+    return this.callCLI(prompt);
+  }
+
+  private tryParse(rawText: string): {
+    parsed: TOutput;
+    success: boolean;
+    error?: string;
+  } {
+    const jsonStr = extractJSON(rawText);
+    if (!jsonStr) {
+      debugLog(this.stageCode, "NO JSON FOUND", rawText.slice(0, 500));
+      return {
+        parsed: null as TOutput,
+        success: false,
+        error: "no JSON found",
+      };
+    }
+
+    let raw: Record<string, unknown>;
+    try {
+      raw = JSON.parse(jsonStr) as Record<string, unknown>;
+    } catch (e) {
+      debugLog(this.stageCode, "JSON.parse FAILED", {
+        error: String(e),
+        json: jsonStr.slice(0, 500),
+      });
+      return {
+        parsed: null as TOutput,
+        success: false,
+        error: `JSON.parse: ${String(e)}`,
+      };
+    }
+
+    delete raw["postcode"];
+    delete raw["rawIntent"];
+    const normalized = normalizeKeys(raw) as Record<string, unknown>;
+
+    try {
+      const result = this.getSchema().parse(normalized) as TOutput;
+      debugLog(this.stageCode, "PARSE SUCCESS", {
+        keys: Object.keys(normalized),
+      });
+      return { parsed: result, success: true };
+    } catch (e) {
+      const zodError = e as ZodError;
+      const issues =
+        zodError.issues
+          ?.map((i) => `${i.path.join(".")}: ${i.message}`)
+          .join("; ") ?? String(e);
+      debugLog(this.stageCode, "ZOD FAILED", {
+        issues,
+        keys: Object.keys(normalized),
+      });
+      return { parsed: null as TOutput, success: false, error: issues };
+    }
+  }
+
+  async run(
+    input: TInput,
+    callbacks?: AgentCallbacks,
+  ): Promise<AgentResult<TOutput>> {
+    const prompt = this.buildPrompt(input);
+    debugLog(
+      this.stageCode,
+      `CALLING ${useAPI ? "API" : "CLI"} — model: ${this.model}`,
+    );
+
+    const startTime = Date.now();
+    let retryCount = 0;
+
+    let rawText = await this.call(prompt, callbacks);
+    let { parsed, success, error } = this.tryParse(rawText);
+
+    if (!success) {
+      retryCount++;
+      debugLog(this.stageCode, `RETRY — failed: ${error}`);
+      const retryPrompt =
+        prompt +
+        "\n\nIMPORTANT: Return ONLY a valid JSON object inside a ```json code fence. No other text.";
+      rawText = await this.call(retryPrompt); // no streaming on retry
+      ({ parsed, success, error } = this.tryParse(rawText));
+    }
+
+    const parseFailure = !success;
+    if (parseFailure) {
+      debugLog(this.stageCode, `FINAL FAILURE: ${error}`);
+      parsed = this.getDefaultOutput(input);
+    }
+
+    const callDurationMs = Date.now() - startTime;
+    const content = JSON.stringify(parsed);
+    const postcode = generatePostcode(this.stageCode as StageCode, content);
+
+    const metadata: DeterminismMetadata = {
+      modelId: this.model,
+      temperature: this.useExtendedThinking ? 1 : 0,
+      extendedThinking: this.useExtendedThinking,
+      maxTokens: 16384,
+      retryCount,
+      callDurationMs,
+    };
+
+    const challenges: Challenge[] = [];
+    if (parseFailure) {
+      challenges.push({
+        id: `${this.stageCode}-parse-failure`,
+        description: `${this.name} failed: ${error ?? "unknown"}`,
+        severity: "blocking",
+        resolved: false,
+      });
+    }
+
+    return { output: parsed, postcode, challenges, parseFailure, metadata };
+  }
+}
