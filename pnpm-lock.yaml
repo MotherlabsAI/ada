@@ -90,6 +90,25 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/elicitation:
+    dependencies:
+      '@ada/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@ada/provenance':
+        specifier: workspace:*
+        version: link:../provenance
+      '@anthropic-ai/sdk':
+        specifier: ^0.80.0
+        version: 0.80.0(zod@3.25.76)
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/governor:
     dependencies:
       '@ada/compiler':
