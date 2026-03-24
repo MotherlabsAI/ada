@@ -7,7 +7,16 @@ import { EntropyBar } from "./entropy-bar.js";
 import { StagePanel, type StagePhase } from "./stage-panel.js";
 import { ArtifactList, type ArtifactEntry } from "./artifact-list.js";
 import { Crystallization } from "./crystallization.js";
-import type { CompilerStageCode, GovernorDecision } from "@ada/compiler";
+import { IdeaStatePanel } from "./idea-canvas.js";
+import type {
+  CompilerStageCode,
+  GovernorDecision,
+  IntentGraph,
+  DomainContext,
+  EntityMap,
+  Blueprint,
+  AuditReport,
+} from "@ada/compiler";
 
 export const STAGE_ORDER: CompilerStageCode[] = [
   "CTX",
@@ -212,9 +221,32 @@ function CompileUI({ state }: { state: CompileState }): React.ReactElement {
       return govState?.phase === "artifact";
     })();
 
+  // Extract typed artifacts from stages for the idea canvas
+  const intentArtifact =
+    (state.stages.get("INT")?.artifact as IntentGraph | null) ?? null;
+  const personaArtifact =
+    (state.stages.get("PER")?.artifact as DomainContext | null) ?? null;
+  const entityArtifact =
+    (state.stages.get("ENT")?.artifact as EntityMap | null) ?? null;
+  const synthesisArtifact =
+    (state.stages.get("SYN")?.artifact as Blueprint | null) ?? null;
+  const verifyArtifact =
+    (state.stages.get("VER")?.artifact as AuditReport | null) ?? null;
+
   return (
     <Box flexDirection="column" paddingX={1}>
       <Header state={state} />
+
+      {/* Idea canvas — fills in live as compilation runs */}
+      <IdeaStatePanel
+        intent={intentArtifact}
+        persona={personaArtifact}
+        entity={entityArtifact}
+        synthesis={synthesisArtifact}
+        verify={verifyArtifact}
+        governor={state.governorDecision}
+        activeStage={activeStage}
+      />
 
       {/* Compile ID */}
       <Box
@@ -333,7 +365,9 @@ function CompileUI({ state }: { state: CompileState }): React.ReactElement {
       )}
 
       {/* Keybind footer */}
-      <Text color={palette.text.dim}>{"  q quit  r retry  esc interrupt"}</Text>
+      <Text color={palette.text.dim}>
+        {"  q quit  r retry  esc interrupt  ↑↓ scroll"}
+      </Text>
     </Box>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Text, Box } from "ink";
+import { Text, Box, useInput } from "ink";
 import { palette, glyphs } from "./design-system.js";
 import { useColorFlash } from "./hooks.js";
 
@@ -66,7 +66,7 @@ function LineItem({ line, dimmed }: LineItemProps): React.ReactElement {
       : baseColor;
 
   return (
-    <Text color={displayColor} wrap="truncate">
+    <Text color={displayColor} wrap="wrap">
       {"  "}
       {line}
     </Text>
@@ -110,30 +110,59 @@ export function ReasoningStream({
   // Split into non-empty lines
   const allLines = preJsonText.split("\n").filter((l) => l.trim().length > 0);
 
-  // Visible window: last maxLines
-  const dimThreshold = 8; // lines older than this in the window get dimmed
-  const globalOffset = Math.max(0, allLines.length - maxLines);
-  const visibleLines = allLines.slice(globalOffset);
-
-  // Track prev line count for flash keying
+  // Scroll state: 0 = auto-follow (bottom), N = N lines scrolled up from bottom
+  const [scrollOffset, setScrollOffset] = useState(0);
   const prevCountRef = useRef(0);
   const [, forceUpdate] = useState(0);
 
+  // When new lines arrive and we're auto-following, stay at bottom
   useEffect(() => {
     if (allLines.length > prevCountRef.current) {
       prevCountRef.current = allLines.length;
-      forceUpdate((n) => n + 1);
+      if (scrollOffset === 0) forceUpdate((n) => n + 1);
     }
   });
 
+  // Arrow key scroll — up/down only, don't capture q/r/esc
+  useInput((_input, key) => {
+    if (key.upArrow) {
+      setScrollOffset((prev) =>
+        Math.min(prev + 1, Math.max(0, allLines.length - maxLines)),
+      );
+    }
+    if (key.downArrow) {
+      setScrollOffset((prev) => Math.max(0, prev - 1));
+    }
+  });
+
+  // Compute visible window
+  const dimThreshold = 8;
+  const bottomIdx = allLines.length; // exclusive
+  const windowEnd = bottomIdx - scrollOffset;
+  const windowStart = Math.max(0, windowEnd - maxLines);
+  const visibleLines = allLines.slice(windowStart, windowEnd);
+  const hiddenAbove = windowStart;
+  const hiddenBelow = scrollOffset;
+
   return (
     <Box flexDirection="column" paddingX={1}>
+      {hiddenAbove > 0 && (
+        <Text color={palette.text.dim}>
+          {"  "}↑ {hiddenAbove} line{hiddenAbove !== 1 ? "s" : ""} above
+        </Text>
+      )}
       {visibleLines.map((line, localIdx) => {
-        const globalIdx = globalOffset + localIdx;
-        const isDimmed = localIdx < visibleLines.length - dimThreshold;
+        const globalIdx = windowStart + localIdx;
+        const isDimmed =
+          scrollOffset === 0 && localIdx < visibleLines.length - dimThreshold;
         return <LineItem key={globalIdx} line={line} dimmed={isDimmed} />;
       })}
       {jsonFenceDetected && <CrystallizingLine />}
+      {hiddenBelow > 0 && (
+        <Text color={palette.text.dim}>
+          {"  "}↓ {hiddenBelow} line{hiddenBelow !== 1 ? "s" : ""} below
+        </Text>
+      )}
     </Box>
   );
 }

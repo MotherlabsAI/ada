@@ -193,19 +193,18 @@ export function useProgressFill(
   return fill;
 }
 
-// ── Crystallize — ◇→◈→◆ transition (step 0→1→2→3=done) ──
+// ── Crystallize — ◇ ◈ ◆ cycling spinner (200ms per frame, loops forever) ──
 export function useCrystallize(): { step: number; done: boolean } {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (step >= 3) return;
-    const timer = setTimeout(() => {
-      setStep((s) => s + 1);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [step]);
+    const timer = setInterval(() => {
+      setStep((s) => (s + 1) % 3);
+    }, 220);
+    return () => clearInterval(timer);
+  }, []);
 
-  return { step, done: step >= 3 };
+  return { step, done: false };
 }
 
 // ── Color flash — brief color on mount, fades to base ──

@@ -3,6 +3,7 @@ import * as os from "os";
 import * as path from "path";
 import * as readline from "readline";
 import { spawn as cpSpawn } from "child_process";
+import Anthropic from "@anthropic-ai/sdk";
 import { MotherCompiler } from "@ada/compiler";
 import type {
   CompilerStageCode,
@@ -12,9 +13,15 @@ import type {
   ClarificationAnswer,
 } from "@ada/compiler";
 import { writeConfigGraph } from "@ada/config-writer";
+import { writeWorldModel } from "../world-model.js";
+import { AdaStorage } from "@ada/storage";
 import { createCompileRenderer, STAGE_ORDER } from "../ui/terminal.js";
 import type { ArtifactEntry } from "../ui/artifact-list.js";
 import { glyphs } from "../ui/design-system.js";
+import {
+  classifyDepth,
+  createElicitationSessionManager,
+} from "@ada/elicitation";
 
 export interface InitOptions {
   readonly noExecute?: boolean;
@@ -90,6 +97,189 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// ─── Post-run Q&A session ──────────────────────────────────────────────────────
+// After ACCEPT, Ada stays alive to answer questions before spawning Claude Code.
+
+async function runQASession(
+  result: import("@ada/compiler").CompileResult,
+): Promise<void> {
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
+
+  const blueprintContext = [
+    `BLUEPRINT: ${result.blueprint.summary}`,
+    `ARCHITECTURE: ${result.blueprint.architecture.pattern} — ${result.blueprint.architecture.rationale}`,
+    `COMPONENTS: ${result.blueprint.architecture.components.map((c) => `${c.name} (${c.boundedContext})`).join(", ")}`,
+    `DECISION: ${result.governorDecision.decision} (confidence: ${result.governorDecision.confidence.toFixed(2)})`,
+    `ENTITIES: ${result.pipelineState.entity?.entities.map((e) => e.name).join(", ") ?? "none"}`,
+    `WORKFLOWS: ${result.pipelineState.process?.workflows.map((w) => w.name).join(", ") ?? "none"}`,
+  ].join("\n");
+
+  const systemPrompt = `You are Ada, a semantic compiler that just compiled a software blueprint. Answer questions about what was compiled. Be concise and precise. Reference the blueprint content directly.
+
+${blueprintContext}`;
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const ask = (q: string): Promise<string> =>
+    new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
+
+  console.log(
+    `\n  ${glyphs.chevron} compilation complete. ask ada anything, or press enter to spawn claude code.\n`,
+  );
+
+  while (true) {
+    const input = await ask(`  ${glyphs.identity.open} `);
+
+    if (!input) {
+      // Empty input → proceed to spawn
+      break;
+    }
+    if (input === "exit" || input === "quit" || input === "q") {
+      rl.close();
+      process.exit(0);
+    }
+
+    if (!apiKey) {
+      console.log(
+        `\n  ${glyphs.chevron} (no API key — set ANTHROPIC_API_KEY to enable Q&A)\n`,
+      );
+      continue;
+    }
+
+    try {
+      const client = new Anthropic({ apiKey });
+      process.stdout.write("\n  ");
+      const stream = client.messages.stream({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: "user", content: input }],
+      });
+      stream.on("text", (text) => {
+        // Indent continuation lines
+        process.stdout.write(text.replace(/\n/g, "\n  "));
+      });
+      await stream.finalMessage();
+      process.stdout.write("\n\n");
+    } catch (e) {
+      console.log(
+        `\n  ${glyphs.chevron} error: ${e instanceof Error ? e.message : String(e)}\n`,
+      );
+    }
+  }
+
+  rl.close();
+}
+
+// ─── Git hook: close the feedback loop ────────────────────────────────────────
+// After ACCEPT, write .git/hooks/post-commit so every commit triggers ada verify.
+// If a hook already exists, append only if our marker isn't already present.
+
+function writeGitHook(projectDir: string): void {
+  const gitDir = path.join(projectDir, ".git");
+  if (!fs.existsSync(gitDir)) return; // not a git repo — skip silently
+
+  const hooksDir = path.join(gitDir, "hooks");
+  fs.mkdirSync(hooksDir, { recursive: true });
+
+  const hookPath = path.join(hooksDir, "post-commit");
+  const marker = "# ada-verify";
+  const hookBlock = `\n${marker}\nada verify\n`;
+
+  if (fs.existsSync(hookPath)) {
+    const existing = fs.readFileSync(hookPath, "utf8");
+    if (existing.includes(marker)) return; // already installed
+    fs.appendFileSync(hookPath, hookBlock, "utf8");
+  } else {
+    fs.writeFileSync(hookPath, `#!/bin/sh${hookBlock}`, "utf8");
+  }
+
+  try {
+    fs.chmodSync(hookPath, 0o755);
+  } catch {
+    /* chmod may fail on some systems — hook still runs if shell executes it */
+  }
+}
+
+// ─── Elicitation pre-phase ────────────────────────────────────────────────────
+// Runs before compilation. Classifier determines 0–5 questions to ask.
+// Returns enriched intent string (original + Q&A context appended).
+// If 0 questions: returns rawIntent unchanged.
+
+async function runElicitationPrePhase(rawIntent: string): Promise<string> {
+  const plan = classifyDepth(rawIntent);
+
+  if (plan.terminationReason === "ready") {
+    return rawIntent; // nothing to ask
+  }
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const ask = (prompt: string): Promise<string> =>
+    new Promise((resolve) => rl.question(prompt, (ans) => resolve(ans.trim())));
+
+  const n = plan.questionCount;
+  console.log(
+    `\n  ${glyphs.identity.open} ${n} quick question${n > 1 ? "s" : ""} before I compile.\n`,
+  );
+
+  const manager = createElicitationSessionManager();
+  const startResult = await manager.startSession(rawIntent);
+
+  // Fast path in session: classifier already ran, 0-question path
+  if (startResult.handoff || !startResult.turn) {
+    rl.close();
+    return rawIntent;
+  }
+
+  const qas: { question: string; answer: string }[] = [];
+  let sessionId = startResult.session.sessionId;
+  let currentTurnId = startResult.turn.turnId;
+  let clarificationRequest = startResult.clarificationRequest;
+
+  while (clarificationRequest) {
+    console.log(`  ${glyphs.chevron} ${clarificationRequest.question}`);
+    if (clarificationRequest.suggestedDefault) {
+      console.log(`     Default: ${clarificationRequest.suggestedDefault}`);
+    }
+
+    const answer = await ask(`\n  > `);
+    console.log("");
+
+    if (!answer) break; // empty = user override, stop asking
+
+    qas.push({ question: clarificationRequest.question, answer });
+
+    const result = await manager.submitAnswer(sessionId, currentTurnId, answer);
+
+    if (result.handoff || !result.nextTurn) break;
+
+    currentTurnId = result.nextTurn.turnId;
+    clarificationRequest = result.clarificationRequest;
+  }
+
+  rl.close();
+
+  if (qas.length === 0) return rawIntent;
+
+  // Build enriched intent — appended Q&A context for INT stage extraction
+  const lines = [rawIntent, ""];
+  for (const { question, answer } of qas) {
+    if (answer) {
+      lines.push(`Additional context — ${question}`);
+      lines.push(answer);
+      lines.push("");
+    }
+  }
+  return lines.join("\n").trim();
+}
+
 // ─── Init command ─────────────────────────────────────────────────────────────
 
 export async function initCommand(
@@ -101,7 +291,12 @@ export async function initCommand(
   const renderer = createCompileRenderer(runId);
   const maxIterations = parseInt(process.env["ADA_MAX_ITERATIONS"] ?? "3", 10);
 
-  let currentIntent = intent;
+  // ─── Elicitation pre-phase ───────────────────────────────────────────────
+  // Ask 0–5 axiom-aligned questions before compiling. Classifier decides.
+  // Returns enriched intent if questions were asked, otherwise original.
+  const enrichedIntent = await runElicitationPrePhase(intent);
+
+  let currentIntent = enrichedIntent;
   let iterationCount = 0;
   let finalResult: import("@ada/compiler").CompileResult | null = null;
   const iterationHistory: IterationRecord[] = [];
@@ -343,11 +538,32 @@ export async function initCommand(
     return;
   }
 
+  const targetDir = process.cwd();
   const configGraph = writeConfigGraph(
     finalResult.blueprint,
     decision,
-    process.cwd(),
+    targetDir,
   );
+
+  writeWorldModel(finalResult, runId, targetDir);
+  writeGitHook(targetDir);
+
+  // Register run in global project history
+  try {
+    const storage = new AdaStorage();
+    storage.recordRun({
+      runId,
+      projectPath: targetDir,
+      compiledAt: finalResult.compilationRun.completedAt,
+      decision: decision.decision,
+      blueprintPostcode: finalResult.blueprint.postcode.raw,
+      governorPostcode: decision.postcode.raw,
+      intent: intent,
+      durationMs: finalResult.compilationRun.totalDurationMs,
+    });
+  } catch {
+    /* never crash the init flow for storage errors */
+  }
 
   const artifactEntries: ArtifactEntry[] = [
     { path: "CLAUDE.md", written: true },
@@ -370,11 +586,15 @@ export async function initCommand(
           : undefined,
     },
     { path: ".claude/settings.json", written: true },
+    {
+      path: ".git/hooks/post-commit",
+      written: fs.existsSync(path.join(targetDir, ".git")),
+      detail: "ada verify on commit",
+    },
   ];
   renderer.onArtifactsWritten(artifactEntries);
 
   // ── Persist state checkpoint ────────────────────────────────────────────────
-  const targetDir = process.cwd();
   const stateDir = path.join(targetDir, ".ada");
   fs.mkdirSync(stateDir, { recursive: true });
   const checkpoint = {
@@ -393,6 +613,9 @@ export async function initCommand(
 
   await sleep(2000);
   renderer.unmount();
+
+  // ── Post-run Q&A — Ada answers questions before spawning Claude Code ───────
+  await runQASession(finalResult);
 
   // ── Auto-spawn Claude Code ─────────────────────────────────────────────────
   if (options.noExecute) {
