@@ -1,0 +1,564 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Claude Code Hooks: A Complete Guide to Pre-Tool Guards',
+  description: 'Claude Code hooks are shell scripts that run before every tool call — intercepting reads, writes, and bash commands before they execute. Learn what they are, how they work, and why a real project needs hundreds of them.',
+  author: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://motherlabs.ai/ada/claude-code-hooks' },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What are Claude Code hooks?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Claude Code hooks are shell scripts that run before Claude Code executes a tool call — a file write, a bash command, a read operation. They intercept the action at the tool boundary, inspect the input, and can block the action (exit 2) or allow it (exit 0). They run on your local machine and cannot be bypassed by the AI.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Where do Claude Code hooks live?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Hooks live in ~/.claude/hooks/ (global) or .claude/hooks/ in your project root (project-level). The subdirectory and filename encode which tool boundary they guard — for example, pre-tool/write-file.sh runs before every file write. Project-level hooks take precedence and are version-controlled with your codebase.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is the difference between CLAUDE.md and hooks?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "CLAUDE.md is advisory — it tells Claude Code what you want. Hooks are structural — they enforce constraints at the tool boundary regardless of what Claude Code was told. A CLAUDE.md rule says 'don't modify .env files.' A hook makes it structurally impossible. The difference is between a policy and a lock.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does a hook block a tool call?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A hook script receives the tool input as JSON on stdin. It inspects that input, and exits with code 2 to block the action (Claude Code will surface the hook\'s stderr message to the user). Exit code 0 allows the action to proceed. Exit code 1 is a hook error — distinct from a deliberate block.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How many hooks does a real project need?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A non-trivial project with multiple bounded contexts, file constraints, scope boundaries, and behavioral guards typically needs dozens to hundreds of hooks. Ada compiles 247 hooks from a structured intent specification — one for each constraint that needs structural enforcement rather than just advisory instruction. Writing them by hand is not practical at that scale.',
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="Claude Code hooks tutorial: pre-tool guards explained | Motherlabs"
+  description="Claude Code hooks are shell scripts that run before every tool call. Learn what they are, how they block actions, what a real hook looks like, and why a production project needs hundreds of them."
+  schemas={[articleSchema, faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; Claude Code hooks</p>
+        <h1>Claude Code hooks: pre-tool guards at every boundary</h1>
+        <p class="hero-sub">
+          Hooks are shell scripts that run before Claude Code executes a tool call.
+          They intercept the action at the boundary — before the write happens,
+          before the command runs. They enforce constraints the AI cannot bypass.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- What hooks are -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>What Claude Code hooks are</h2>
+        <p>
+          When Claude Code takes an action — writing a file, running a bash command,
+          reading a path — it executes a tool call. Hooks are scripts that run at
+          that boundary, before the tool executes.
+        </p>
+        <p>
+          The hook receives the tool input as JSON on stdin. It inspects what
+          Claude Code is about to do, and either allows the action (exit 0) or
+          blocks it (exit 2). If it blocks, Claude Code surfaces the hook's
+          error message — the action does not proceed.
+        </p>
+        <p>
+          They run on your local machine. They are not model-level instructions.
+          Claude Code cannot reason around them, ignore them, or be prompted
+          into bypassing them. The hook runs at the OS level before the tool
+          executes.
+        </p>
+
+        <div class="callout">
+          <p class="callout-text">
+            The key distinction: hooks are not context. They do not tell Claude Code
+            what to do. They enforce what Claude Code is allowed to do — at the moment
+            it tries to do it, at the boundary where the action would actually occur.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- The hooks directory -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Where hooks live</h2>
+        <p>
+          Hooks live in two locations. Global hooks apply to all projects:
+        </p>
+
+        <div class="path-block">
+          <span class="path-text">~/.claude/hooks/pre-tool/</span>
+        </div>
+
+        <p>
+          Project-level hooks apply only to that project and take precedence
+          over global hooks. They live alongside your code and are version-controlled:
+        </p>
+
+        <div class="path-block">
+          <span class="path-text">.claude/hooks/pre-tool/</span>
+        </div>
+
+        <p>
+          The filename convention encodes what the hook guards. A hook file named
+          <code class="inline-code">write-file.sh</code> in <code class="inline-code">pre-tool/</code>
+          runs before every file write. A hook named
+          <code class="inline-code">bash-command.sh</code> runs before every bash command.
+          The directory and filename together specify which tool boundary the script intercepts.
+        </p>
+
+        <p>
+          Ada's compiled hook output uses a more precise naming convention — filenames
+          encode the entity type and invariant being enforced, so each hook is
+          self-describing. A file named
+          <code class="inline-code">entitymap-entitymap-postcode-null.sh</code> enforces
+          the invariant that an EntityMap must have a non-null postcode before any
+          tool writes to it.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- What hooks can enforce -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>What hooks can enforce</h2>
+        <p>
+          Any constraint that can be expressed as an inspection of a tool input
+          can be enforced by a hook. Common patterns:
+        </p>
+
+        <div class="enforce-list">
+          <div class="enforce-item">
+            <div class="enforce-label">File constraints</div>
+            <div class="enforce-body">
+              Block writes to protected files — <code class="inline-code">.env</code>,
+              <code class="inline-code">*.prod.config</code>, migration files that should
+              not be modified after deployment. The hook checks the target path and blocks
+              if it matches the protected pattern.
+            </div>
+          </div>
+
+          <div class="enforce-item">
+            <div class="enforce-label">Command constraints</div>
+            <div class="enforce-body">
+              Block destructive bash commands —
+              <code class="inline-code">rm -rf /</code>,
+              <code class="inline-code">DROP TABLE</code> without a WHERE clause,
+              production deployments from non-main branches. The hook inspects the
+              command string before execution.
+            </div>
+          </div>
+
+          <div class="enforce-item">
+            <div class="enforce-label">Scope constraints</div>
+            <div class="enforce-body">
+              Enforce that Claude Code only writes within designated directories.
+              Block writes outside <code class="inline-code">src/</code>, enforce that
+              test files only live in <code class="inline-code">__tests__/</code>,
+              prevent changes to vendored code.
+            </div>
+          </div>
+
+          <div class="enforce-item">
+            <div class="enforce-label">Behavioral constraints</div>
+            <div class="enforce-body">
+              Log every write before it happens. Require a specific file header
+              on all new source files. Enforce naming conventions on created files.
+              Block writes to files that haven't passed a specific structural check.
+            </div>
+          </div>
+
+          <div class="enforce-item">
+            <div class="enforce-label">Invariant enforcement</div>
+            <div class="enforce-body">
+              In Ada's compiled output, hooks enforce domain invariants — the
+              structural constraints on entities that must hold at every tool
+              boundary. These are generated from your intent specification
+              and guard each entity's required properties.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Concrete example -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>A concrete hook</h2>
+        <p>
+          This hook blocks any write to a <code class="inline-code">.env</code> file.
+          It reads the tool input from stdin, extracts the target path, and exits 2
+          if the path matches the protected pattern.
+        </p>
+
+        <div class="code-block">
+          <div class="code-label">pre-tool/write-file.sh</div>
+          <pre class="code-pre"><code class="code-body">#!/bin/bash
+# Guard: prevent writes to .env files
+INPUT=$(cat)
+FILE=$(echo "$INPUT" | jq -r '.path // empty')
+
+if [[ "$FILE" == *".env"* ]]; then
+  echo "BLOCKED: .env files are protected." \
+       "Use .env.example instead." >&2
+  exit 2
+fi
+
+exit 0</code></pre>
+        </div>
+
+        <p>
+          Three things to note. First, the input comes on stdin as JSON — the hook
+          uses <code class="inline-code">jq</code> to extract the relevant field.
+          Second, exit 2 is the block signal — this is what stops the tool call.
+          Third, stderr becomes the message Claude Code surfaces to the user when
+          a hook blocks an action.
+        </p>
+
+        <p>
+          A more complete hook for a production project might also check for
+          <code class="inline-code">.env.production</code>,
+          <code class="inline-code">.env.local</code>, and
+          <code class="inline-code">*.secret</code>. And log the blocked attempt.
+          And verify the calling context. That's one constraint, but a real hook
+          for it needs to cover all the variants.
+        </p>
+
+        <p>
+          Multiply that by every constraint in your project.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Hooks vs CLAUDE.md -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Hooks vs CLAUDE.md: advice vs enforcement</h2>
+        <p>
+          <a href="/ada/what-is-claude-md" class="inline-link">CLAUDE.md</a> is read
+          on every message turn. It tells Claude Code what the project is, what
+          constraints apply, what it should never do. It is the authoritative
+          instruction layer — present for every decision.
+        </p>
+        <p>
+          A CLAUDE.md entry might say:
+        </p>
+
+        <div class="quote-block">
+          <p class="quote-text">Never modify .env files. Use .env.example for template changes only.</p>
+        </div>
+
+        <p>
+          Claude Code reads this. It understands it. It will generally follow it.
+          But "generally" is not structural enforcement. The model can be in a long
+          session, context can dilute, a task can be phrased in a way that makes the
+          violation seem correct. The instruction is advisory.
+        </p>
+        <p>
+          A hook is not advisory. It runs at the OS level when Claude Code attempts
+          the write. It does not depend on the model's attention, context length,
+          or how the request was phrased. The action either proceeds or it does not.
+        </p>
+
+        <div class="compare-block">
+          <div class="compare-col">
+            <div class="compare-header compare-header--advisory">CLAUDE.md</div>
+            <ul class="compare-list">
+              <li>Read on every message turn</li>
+              <li>Shapes model interpretation</li>
+              <li>Subject to context and attention</li>
+              <li>Can be reasoned around</li>
+              <li>Advisory — a policy</li>
+            </ul>
+          </div>
+          <div class="compare-col">
+            <div class="compare-header compare-header--enforce">Hooks</div>
+            <ul class="compare-list">
+              <li>Run at every tool boundary</li>
+              <li>Enforce at the OS level</li>
+              <li>Independent of context length</li>
+              <li>Cannot be reasoned around</li>
+              <li>Structural — a lock</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>
+          For constraints that matter — constraints where a violation would cause
+          real damage — you want both. CLAUDE.md so the model understands the intent.
+          Hooks so the constraint is guaranteed regardless.
+        </p>
+        <p>
+          This is the third layer of the <a href="/ada/context-engineering" class="inline-link">three-layer context architecture</a>:
+          structural enforcement at every boundary.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- The handwriting problem -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>The problem with writing hooks by hand</h2>
+        <p>
+          A single hook is straightforward to write. The problem is that a real
+          project has many constraints — across multiple bounded contexts, file types,
+          command patterns, and entity invariants.
+        </p>
+        <p>
+          Each constraint needs its own hook. Each hook needs to handle all the
+          variants of the thing it's protecting against. Each hook needs to be
+          tested to confirm it actually blocks what it's supposed to block, and
+          not things it isn't supposed to block.
+        </p>
+        <p>
+          Ada's <a href="/ada/how-ada-works" class="inline-link">7-stage compilation pipeline</a>
+          produces 247 hooks from a structured intent specification. They aren't
+          written by hand — they're compiled. The PRO stage identifies what needs
+          enforcement. The SYN stage generates the hook scripts. The GOV stage
+          verifies coherence before writing to disk.
+        </p>
+
+        <div class="stat-block">
+          <div class="stat-item">
+            <span class="stat-num">247</span>
+            <span class="stat-label">hooks compiled from one elicitation session</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-num">0</span>
+            <span class="stat-label">written by hand</span>
+          </div>
+        </div>
+
+        <p>
+          Each hook in Ada's output traces back to a specific invariant in the
+          intent specification — a constraint you stated during elicitation,
+          compiled into a guard that runs before the tool call that could violate it.
+        </p>
+        <p>
+          The alternative is writing them reactively: Claude Code violates a
+          constraint, you write a hook to prevent it happening again. That's
+          capturing drift after it happened. Ada prevents the violation before
+          building starts.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- FAQ -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Questions</h2>
+
+        <div class="faq-list">
+          <details class="faq-item">
+            <summary class="faq-q">What are Claude Code hooks?</summary>
+            <p class="faq-a">
+              Shell scripts that run before Claude Code executes a tool call — a
+              file write, a bash command, a read. They intercept the action at the
+              tool boundary, inspect the JSON input, and either allow (exit 0) or
+              block (exit 2) the action. They run at the OS level and cannot be
+              bypassed by the model.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Where do hooks live?</summary>
+            <p class="faq-a">
+              Global hooks: <code class="inline-code">~/.claude/hooks/pre-tool/</code>.
+              Project hooks: <code class="inline-code">.claude/hooks/pre-tool/</code>
+              in your project root. Project-level hooks take precedence and are
+              version-controlled with your codebase.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">What is the difference between CLAUDE.md and hooks?</summary>
+            <p class="faq-a">
+              CLAUDE.md is advisory — it tells Claude Code what you want. Hooks are
+              structural enforcement — they run at the tool boundary regardless of
+              what the model was told. CLAUDE.md says "don't modify .env files."
+              A hook makes that structurally impossible. The difference is between
+              a policy and a lock.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">How does a hook block a tool call?</summary>
+            <p class="faq-a">
+              The hook script receives the tool input as JSON on stdin. Inspecting
+              the input, it exits with code 2 to block the action. Anything written
+              to stderr becomes the message Claude Code surfaces to the user.
+              Exit 0 allows the action. Exit 1 is a hook error — distinct from
+              a deliberate block.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">How many hooks does a real project need?</summary>
+            <p class="faq-a">
+              A non-trivial project with multiple bounded contexts, file constraints,
+              scope boundaries, and behavioral guards typically needs dozens to hundreds
+              of hooks. Ada compiles 247 from one structured intent session.
+              Writing them by hand is not practical — and writing them reactively
+              means you're capturing violations after they happen, not preventing
+              them before building starts.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">git clone https://github.com/alexrozex/ada</code>
+        </div>
+        <p class="trust-signal">
+          Ada compiles 247 hooks from structured intent — every constraint enforced at the tool boundary.
+        </p>
+        <div class="cta-row">
+          <a href="/start" class="btn-primary">Get started &rarr;</a>
+          <a href="/ada" class="btn-secondary">See how Ada works &rarr;</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--color-text-dim); margin: 0 0 1.25rem; display: block; }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 1.25rem; max-width: 34rem; }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 38rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; color: var(--color-text); margin: 0 0 1.5rem; }
+
+  .callout { border-left: 2px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.75rem 0; background-color: var(--color-surface); }
+  .callout-text { font-size: 1rem !important; color: var(--color-text) !important; margin: 0 !important; line-height: 1.7 !important; }
+
+  /* Path blocks */
+  .path-block { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: 0.9rem; color: var(--color-accent); background-color: var(--color-surface); border: 1px solid var(--color-border); padding: 0.6rem 1rem; margin: 0.25rem 0 1.25rem; }
+  .path-text {}
+
+  .inline-code { font-family: var(--font-mono); font-size: 0.85em; color: var(--color-accent); background-color: var(--color-surface); padding: 0.1em 0.35em; border: 1px solid var(--color-border); }
+  .inline-link { color: var(--color-accent); text-decoration: none; }
+  .inline-link:hover { text-decoration: underline; }
+
+  /* Enforce list */
+  .enforce-list { display: flex; flex-direction: column; gap: 0; margin: 1.5rem 0; }
+  .enforce-item { padding: 1.25rem 0; border-top: 1px solid var(--color-border); }
+  .enforce-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .enforce-label { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); margin-bottom: 0.5rem; }
+  .enforce-body { font-size: 0.9375rem; color: var(--color-text-muted); line-height: 1.7; }
+
+  /* Code block */
+  .code-block { border: 1px solid var(--color-border); margin: 1.5rem 0; overflow: hidden; }
+  .code-label { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); padding: 0.625rem 1rem; border-bottom: 1px solid var(--color-border); background-color: color-mix(in srgb, var(--color-border) 30%, var(--color-surface)); }
+  .code-pre { margin: 0; padding: 1.375rem 1.25rem; overflow-x: auto; background-color: var(--color-surface); }
+  .code-body { font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.75; color: var(--color-text-muted); display: block; }
+
+  /* Quote block */
+  .quote-block { border-left: 2px solid var(--color-border); padding: 0.875rem 1.25rem; margin: 1.25rem 0; }
+  .quote-text { font-family: var(--font-mono); font-size: 0.875rem; color: var(--color-text-dim); line-height: 1.6; margin: 0; font-style: italic; }
+
+  /* Compare block */
+  .compare-block { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--color-border); margin: 1.75rem 0; }
+  @media (max-width: 560px) { .compare-block { grid-template-columns: 1fr; } }
+  .compare-col { padding: 1.25rem 1.25rem 1.5rem; }
+  .compare-col:first-child { border-right: 1px solid var(--color-border); }
+  .compare-header { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 1rem; padding-bottom: 0.625rem; border-bottom: 1px solid var(--color-border); }
+  .compare-header--advisory { color: var(--color-text-dim); }
+  .compare-header--enforce { color: var(--color-accent); }
+  .compare-list { margin: 0; padding-left: 1.1rem; }
+  .compare-list li { font-size: 0.9rem; color: var(--color-text-muted); line-height: 1.65; margin-bottom: 0.35rem; }
+
+  /* Stat block */
+  .stat-block { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background-color: var(--color-border); border: 1px solid var(--color-border); margin: 1.75rem 0; }
+  @media (max-width: 480px) { .stat-block { grid-template-columns: 1fr; } }
+  .stat-item { background-color: var(--color-surface); padding: 1.5rem 1.25rem; }
+  .stat-num { display: block; font-family: var(--font-mono); font-size: 2.5rem; font-weight: 700; color: var(--color-accent); line-height: 1; margin-bottom: 0.375rem; }
+  .stat-label { display: block; font-size: 0.875rem; color: var(--color-text-muted); line-height: 1.5; }
+
+  /* FAQ */
+  .faq-list { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+  .faq-item { border-top: 1px solid var(--color-border); }
+  .faq-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .faq-q { display: block; padding: 1.25rem 0; font-size: 1rem; font-weight: 600; color: var(--color-text); cursor: pointer; list-style: none; line-height: 1.5; }
+  .faq-q::-webkit-details-marker { display: none; }
+  .faq-q::before { content: '+ '; font-family: var(--font-mono); color: var(--color-accent); font-weight: 400; }
+  details[open] .faq-q::before { content: '− '; }
+  .faq-a { font-size: 1rem; color: var(--color-text-muted); line-height: 1.75; margin: 0 0 1.25rem; padding-left: 1.25rem; }
+
+  /* CTA */
+  .section--invite { padding: 4.5rem 0; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .cta-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+  .btn-secondary { font-size: 0.9375rem; font-weight: 500; color: var(--color-accent); padding: 0.7rem 0; display: inline-block; }
+  .btn-secondary:hover { text-decoration: underline; }
+</style>

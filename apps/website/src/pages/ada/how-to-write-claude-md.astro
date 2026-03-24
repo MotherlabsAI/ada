@@ -1,0 +1,590 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'How to write CLAUDE.md: structure, best practices, and honest limits',
+  description: 'A practical guide to writing a CLAUDE.md that actually works — what goes in it, what the four layers are, the common mistakes, and what CLAUDE.md cannot do by itself.',
+  author: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  url: 'https://motherlabs.ai/ada/how-to-write-claude-md',
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What should I put in CLAUDE.md?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'CLAUDE.md should contain structural facts that must remain stable across sessions: what the project is and what it is not, architectural decisions that have been made, technology and scope constraints, bounded context definitions, and what Claude Code should never do. Do not include current task lists, implementation details that change, or session-specific context.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How long should CLAUDE.md be?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'As short as possible while still constraining every important decision. CLAUDE.md is injected into every context window on every message turn — so every line has a token cost that is paid repeatedly. A dense, well-structured 200-line CLAUDE.md outperforms a sprawling 800-line one that Claude Code mostly ignores.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Can CLAUDE.md enforce architectural rules?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "CLAUDE.md cannot enforce anything — it is advice, not architecture. Claude Code reads it and generally follows it, but it has no mechanism to block a tool call that violates what you wrote. Enforcement happens at the hook boundary, not the prompt boundary. Hooks are pre-tool guard files that run before every tool call and can block violations structurally.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What are the most common CLAUDE.md mistakes?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'The four most common mistakes are: (1) too vague — statements like "follow best practices" that constrain nothing; (2) too long — padding with content that is only occasionally relevant wastes tokens on every turn; (3) aspirational not structural — describing what you hope to build rather than what decisions have been made; (4) written once and forgotten — CLAUDE.md needs to evolve as the project does.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is the difference between CLAUDE.md and agent files?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'CLAUDE.md is project-wide context — it applies on every turn across all agents and subagents. Agent files are scoped to a specific bounded context within the project. CLAUDE.md carries constraints that apply everywhere. Agent files carry constraints that apply within a specific domain (authentication, payments, data layer, etc.). When agent delegation hints are in CLAUDE.md, they tell Claude Code which agent file is authoritative for which domain.',
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="How to write CLAUDE.md: structure, best practices, and what it can't do | Motherlabs"
+  description="The definitive guide to writing CLAUDE.md for Claude Code. What goes in it, the four layers, common mistakes, and why even a perfect CLAUDE.md isn't enough on its own."
+  schemas={[articleSchema, faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; How to write CLAUDE.md</p>
+        <h1>How to write CLAUDE.md</h1>
+        <p class="hero-sub">
+          A practical guide for people whose CLAUDE.md "isn't quite working."
+          What it is, what goes in it, what the four layers are, and where the ceiling is.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── WHAT IT IS ─────────────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Start here: what CLAUDE.md actually does</h2>
+        <p>
+          Before writing a single line, it helps to understand exactly what you are writing for.
+          <a href="/ada/what-is-claude-md">CLAUDE.md is read by Claude Code on every message turn</a> —
+          not just at session start. Its contents are injected into every context window,
+          meaning every constraint you write in it is present at every decision point
+          for the entire session.
+        </p>
+        <p>
+          This changes how you should write it. You are not writing documentation.
+          You are not writing a README. You are writing a constraint layer —
+          one that has a token cost paid on every turn. Every line should earn its place.
+        </p>
+        <p>
+          The most important thing to understand about CLAUDE.md: it is <strong>advice, not architecture</strong>.
+          Claude Code reads it and generally follows it. But it has no mechanism to
+          structurally block a tool call that violates what you wrote. That is what hooks do.
+          More on that later.
+        </p>
+
+        <div class="callout">
+          <p class="callout-text">
+            If your CLAUDE.md "isn't quite working," the problem is almost always one of four things:
+            too vague, too long, aspirational instead of structural, or out of date.
+            This guide addresses all four.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── WHAT GOES IN IT ───────────────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>What goes in CLAUDE.md — and what does not</h2>
+        <p>
+          Because CLAUDE.md is read on every turn, only put what needs to be true on every turn.
+          That means stable, structural facts — not implementation details that change.
+        </p>
+
+        <div class="two-col">
+          <div class="col col--yes">
+            <h3 class="col-label col-label--yes">Include</h3>
+            <ul>
+              <li>What the project is — and what it is <em>not</em></li>
+              <li>Architectural decisions that are final</li>
+              <li>Technology constraints (what you will not use)</li>
+              <li>Scope boundaries (what is out of scope)</li>
+              <li>Bounded context definitions</li>
+              <li>Naming conventions and domain vocabulary</li>
+              <li>Invariants that must always hold</li>
+              <li>Agent delegation hints</li>
+            </ul>
+          </div>
+          <div class="col col--no">
+            <h3 class="col-label col-label--no">Do not include</h3>
+            <ul>
+              <li>Current tasks or in-progress work</li>
+              <li>Implementation details that change session to session</li>
+              <li>Generic instructions ("be helpful", "use best practices")</li>
+              <li>Session-specific context</li>
+              <li>Aspirational statements about what you hope to build</li>
+              <li>Anything that belongs in an agent file instead</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>
+          The "what it is not" section is the most important section in any CLAUDE.md
+          and also the hardest to write. It is easy to describe what you are building.
+          It is hard to articulate what you are explicitly not building — the adjacent
+          features that would be reasonable but are out of scope, the technology choices
+          you rejected, the user types you are not serving. This is where most CLAUDE.md
+          files fail by omission.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── THE FOUR LAYERS ───────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>The four layers of a well-structured CLAUDE.md</h2>
+        <p>
+          A CLAUDE.md that consistently works tends to follow a four-layer structure.
+          Each layer answers a different question Claude Code needs answered.
+        </p>
+
+        <div class="layers">
+
+          <div class="layer">
+            <div class="layer-number">1</div>
+            <div class="layer-content">
+              <h3 class="layer-title">Project identity</h3>
+              <p class="layer-desc">
+                What this project is. What it is not. Who it is for. Who it is explicitly not for.
+                This is the most load-bearing section — it determines how Claude Code interprets
+                every ambiguous request. A vague or missing identity layer means Claude Code
+                fills the gaps with inference. Inference is usually close. Close is not right.
+              </p>
+              <div class="layer-example">
+                <span class="example-label">Example</span>
+                <span class="example-text">
+                  "A privacy-first analytics dashboard. Single-tenant only. Not a SaaS product.
+                  Not a marketing platform. Not cookie-based."
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="layer">
+            <div class="layer-number">2</div>
+            <div class="layer-content">
+              <h3 class="layer-title">Constraints that apply</h3>
+              <p class="layer-desc">
+                Architectural, technology, data, security, and style decisions that have been made
+                and should not be revisited. These are not preferences — they are closed decisions.
+                Write them as facts, not as requests.
+              </p>
+              <div class="layer-example">
+                <span class="example-label">Example</span>
+                <span class="example-text">
+                  "SQLite only. No managed database services. No third-party analytics scripts.
+                  Server-rendered. No client-side framework. Data stays on the server."
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="layer">
+            <div class="layer-number">3</div>
+            <div class="layer-content">
+              <h3 class="layer-title">Scope</h3>
+              <p class="layer-desc">
+                What is in scope to build in this project. What is explicitly out of scope.
+                This is different from project identity — scope is about features and work,
+                not about what kind of thing the project is.
+              </p>
+              <div class="layer-example">
+                <span class="example-label">Example</span>
+                <span class="example-text">
+                  "In scope: pageview tracking, unique visitor counting, referrer attribution.
+                  Out of scope: user session recording, A/B testing, multi-site dashboards,
+                  email alerts, API access."
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="layer">
+            <div class="layer-number">4</div>
+            <div class="layer-content">
+              <h3 class="layer-title">Agent delegation hints</h3>
+              <p class="layer-desc">
+                Which bounded context handles what. When the project uses specialized agent files,
+                CLAUDE.md should tell Claude Code which agent is authoritative for which domain.
+                This prevents Claude Code from applying general behavior to problems that have
+                a designated specialist.
+              </p>
+              <div class="layer-example">
+                <span class="example-label">Example</span>
+                <span class="example-text">
+                  "Authentication decisions: see agents/auth.md.
+                  Data layer decisions: see agents/data.md.
+                  Do not make decisions in these domains without consulting the relevant agent."
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="excerpt-block" aria-label="Example CLAUDE.md using the four-layer structure">
+          <div class="excerpt-label">CLAUDE.md &mdash; four-layer structure</div>
+          <div class="excerpt-content">
+            <div class="excerpt-line excerpt-heading"># Analytics Dashboard</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-heading">## Project identity</div>
+            <div class="excerpt-line excerpt-val">Self-hosted web analytics. Privacy-first. Single-tenant.</div>
+            <div class="excerpt-line excerpt-val">Not a SaaS product. Not a marketing platform. Not cookie-based.</div>
+            <div class="excerpt-line excerpt-val">For: developers who self-host. Not for: non-technical users.</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-heading">## Constraints</div>
+            <div class="excerpt-line excerpt-val">SQLite only. No managed DB services.</div>
+            <div class="excerpt-line excerpt-val">No third-party analytics. No external data egress.</div>
+            <div class="excerpt-line excerpt-val">Server-rendered. Minimal JavaScript. No client-side framework.</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-heading">## Scope</div>
+            <div class="excerpt-line excerpt-val">In: pageviews, unique visitors, referrers.</div>
+            <div class="excerpt-line excerpt-val">Out: session recording, A/B testing, multi-site, email alerts, API.</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-heading">## Agent delegation</div>
+            <div class="excerpt-line excerpt-val">Data layer: agents/data.md is authoritative.</div>
+            <div class="excerpt-line excerpt-val">Do not make schema decisions without it.</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── COMMON MISTAKES ──────────────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Common mistakes</h2>
+
+        <div class="mistakes">
+
+          <div class="mistake">
+            <h3 class="mistake-title">Too vague</h3>
+            <p class="mistake-desc">
+              Statements like "follow best practices," "write clean code," or "be consistent"
+              constrain nothing. Claude Code already follows its own version of best practices —
+              writing this does not change its behavior. Every line in CLAUDE.md should be
+              something that would change what Claude Code does if it were absent.
+              If it would not change anything, remove it.
+            </p>
+          </div>
+
+          <div class="mistake">
+            <h3 class="mistake-title">Too long</h3>
+            <p class="mistake-desc">
+              CLAUDE.md is injected on every turn, so every line pays a token cost — repeatedly.
+              A 1000-line CLAUDE.md that is 70% padding means Claude Code is burning significant
+              context on content that rarely applies to the current turn.
+              Write dense, high-signal constraints. If a section is only relevant sometimes,
+              it probably belongs in an agent file, not in CLAUDE.md.
+            </p>
+          </div>
+
+          <div class="mistake">
+            <h3 class="mistake-title">Aspirational, not structural</h3>
+            <p class="mistake-desc">
+              There is a difference between "we want to build a fast, reliable API"
+              and "this is a REST API. No GraphQL. No WebSockets. Rate-limited at 100 req/min per user."
+              The first describes a goal. The second describes decisions. CLAUDE.md should
+              contain decisions, not aspirations. Aspirations do not constrain behavior.
+              Decisions do.
+            </p>
+          </div>
+
+          <div class="mistake">
+            <h3 class="mistake-title">Written once and forgotten</h3>
+            <p class="mistake-desc">
+              CLAUDE.md is only useful if it reflects the current state of the project.
+              A CLAUDE.md written at kickoff and never updated will describe a project
+              that no longer exists after three weeks of development. When you make a
+              decision that changes the constraints — a new architectural choice, a scope
+              cut, a technology swap — update CLAUDE.md before the next session.
+              Drift in CLAUDE.md produces drift in what gets built.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── HONEST CEILING ───────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>What CLAUDE.md cannot do</h2>
+        <p>
+          Even a well-written CLAUDE.md has a structural ceiling. Understanding it
+          tells you where to invest effort and where to look for additional tools.
+        </p>
+
+        <p>
+          <strong>CLAUDE.md persists across sessions, but does not enforce.</strong>
+          It is read on every turn and generally followed — but Claude Code has no
+          mechanism to structurally block a tool call that violates what you wrote.
+          If your CLAUDE.md says "no external database services" and Claude Code
+          writes a migration to Postgres, nothing stops it. CLAUDE.md expressed a preference.
+          Enforcement requires hooks.
+        </p>
+
+        <p>
+          <strong>CLAUDE.md does not recover from context loss.</strong>
+          When
+          <a href="/ada/claude-code-loses-context">Claude Code loses context between sessions</a>
+          or across subagent boundaries, CLAUDE.md is still injected — but the session
+          context built up during prior turns is not. CLAUDE.md can constrain fresh sessions.
+          It cannot reconstruct what was known partway through a complex task.
+        </p>
+
+        <p>
+          <strong>CLAUDE.md cannot express enforcement logic.</strong>
+          "Do not modify files outside src/" is a statement. A hook that checks every
+          file write path and blocks violations before the write executes is enforcement.
+          For constraints that matter enough to enforce — not just advise — the right
+          layer is hooks, not CLAUDE.md.
+        </p>
+
+        <div class="callout">
+          <p class="callout-text">
+            Drift does not happen at the prompt boundary. It happens at the tool call boundary —
+            when Claude Code is about to write a file, call an API, or run a command that
+            violates a constraint you wrote three sessions ago.
+            <a href="/ada/context-engineering">A governed context architecture</a>
+            has three layers: CLAUDE.md for intent, agent files for bounded-context depth,
+            and hooks for structural enforcement at every tool boundary.
+          </p>
+        </div>
+
+        <p>
+          The honest ceiling of CLAUDE.md is this: it is a high-signal constraint layer
+          for a system that is genuinely trying to follow it. For most teams and most projects,
+          a well-structured CLAUDE.md makes a material difference. But it is one layer.
+          The work that a hand-written CLAUDE.md leaves undone — the "what it is not" decisions
+          you forgot to surface, the constraints that need hook enforcement, the agent delegation
+          you never set up — is the gap that Ada closes.
+        </p>
+        <a href="/ada" class="link-arrow">How Ada produces CLAUDE.md from structured intent &rarr;</a>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── FAQ ──────────────────────────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Frequently asked questions</h2>
+
+        <div class="faq">
+
+          <details class="faq-item">
+            <summary class="faq-q">What should I put in CLAUDE.md?</summary>
+            <p class="faq-a">
+              Structural facts that must remain stable across sessions: what the project is
+              and what it is not, architectural decisions that are final, technology and scope
+              constraints, bounded context definitions, and what Claude Code should never do.
+              Exclude task lists, implementation details that change, and session-specific context.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">How long should CLAUDE.md be?</summary>
+            <p class="faq-a">
+              As short as possible while still constraining every important decision.
+              CLAUDE.md is injected on every turn — every line has a repeated token cost.
+              A dense 200-line CLAUDE.md outperforms a sprawling 800-line one that Claude Code
+              mostly treats as background noise. If a section is only sometimes relevant,
+              move it to an agent file.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Can CLAUDE.md enforce architectural rules?</summary>
+            <p class="faq-a">
+              No. CLAUDE.md expresses constraints — it does not enforce them.
+              Claude Code reads it and generally follows it, but nothing blocks a tool call
+              that violates what you wrote. For rules that need structural enforcement,
+              use hooks: pre-tool guard files that run before every tool call and can block
+              violations before they execute.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">What are the most common CLAUDE.md mistakes?</summary>
+            <p class="faq-a">
+              Too vague (statements that constrain nothing), too long (padding that wastes tokens
+              every turn), aspirational instead of structural (describing goals rather than decisions),
+              and written once then forgotten (not updated as the project evolves).
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">What is the difference between CLAUDE.md and agent files?</summary>
+            <p class="faq-a">
+              CLAUDE.md is project-wide — present on every turn across all agents and subagents.
+              Agent files are scoped to a specific bounded context: authentication, payments,
+              data layer, etc. CLAUDE.md carries constraints that apply everywhere. Agent files
+              carry deeper context for a specific domain. The agent delegation hints in CLAUDE.md
+              tell Claude Code which agent file is authoritative for which domain.
+            </p>
+          </details>
+
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── CTA ──────────────────────────────────────────────────────────── -->
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">git clone https://github.com/alexrozex/ada</code>
+        </div>
+        <p class="trust-signal">
+          Ada produces CLAUDE.md from structured elicitation — including the "what it is not"
+          decisions that are hardest to write by hand.
+        </p>
+        <a href="/ada" class="btn-primary">See how Ada works &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
+    color: var(--color-text-dim); margin: 0 0 1.25rem; display: block;
+  }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 {
+    font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800;
+    letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 1.25rem; max-width: 36rem;
+  }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 40rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; color: var(--color-text); margin: 0 0 1.5rem; }
+
+  .callout { border-left: 2px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.75rem 0; background-color: var(--color-surface); }
+  .callout-text { font-size: 1rem !important; color: var(--color-text) !important; margin: 0 !important; line-height: 1.7 !important; }
+  .callout a { color: var(--color-accent); }
+  .callout a:hover { text-decoration: underline; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1.5rem 0 1.75rem; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+  .col-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 0.75rem; }
+  .col-label--yes { color: #4ade80; }
+  .col-label--no { color: var(--color-text-muted); }
+  .col ul { padding-left: 1.25rem; margin: 0; }
+  .col li { font-size: 0.9375rem; color: var(--color-text-muted); line-height: 1.65; margin-bottom: 0.4rem; }
+
+  /* Layers */
+  .layers { display: flex; flex-direction: column; gap: 0; margin: 1.5rem 0 2rem; }
+  .layer { display: flex; gap: 1.5rem; padding: 1.5rem 0; border-top: 1px solid var(--color-border); }
+  .layer:last-of-type { border-bottom: 1px solid var(--color-border); }
+  .layer-number {
+    flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 50%;
+    background-color: var(--color-surface); border: 1px solid var(--color-border);
+    font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600;
+    color: var(--color-accent); display: flex; align-items: center; justify-content: center;
+    margin-top: 0.125rem;
+  }
+  .layer-content { flex: 1; }
+  .layer-title { font-size: 1rem; font-weight: 700; color: var(--color-text); margin: 0 0 0.5rem; letter-spacing: -0.01em; }
+  .layer-desc { font-size: 0.9375rem !important; color: var(--color-text-muted) !important; line-height: 1.7 !important; margin: 0 0 0.875rem !important; }
+  .layer-example { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.75rem 1rem; background-color: var(--color-surface); border: 1px solid var(--color-border); }
+  .example-label { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-dim); }
+  .example-text { font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.6; }
+
+  /* Excerpt block */
+  .excerpt-block { background: var(--color-surface); border: 1px solid var(--color-border); margin: 1.75rem 0; overflow: hidden; }
+  .excerpt-label { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); padding: 0.625rem 1rem; border-bottom: 1px solid var(--color-border); background-color: color-mix(in srgb, var(--color-border) 30%, var(--color-surface)); }
+  .excerpt-content { padding: 1.25rem 1.25rem 1rem; font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.7; }
+  .excerpt-line { display: block; }
+  .excerpt-heading { color: var(--color-text); font-weight: 500; }
+  .excerpt-val { color: var(--color-text-dim); padding-left: 0.5rem; }
+  .excerpt-blank { height: 0.5rem; }
+
+  /* Mistakes */
+  .mistakes { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+  .mistake { padding: 1.75rem 0; border-top: 1px solid var(--color-border); }
+  .mistake:last-child { border-bottom: 1px solid var(--color-border); }
+  .mistake-title { font-size: 1rem; font-weight: 700; color: var(--color-text); margin: 0 0 0.625rem; letter-spacing: -0.01em; }
+  .mistake-desc { font-size: 0.9375rem !important; color: var(--color-text-muted) !important; line-height: 1.75 !important; margin: 0 !important; }
+
+  /* FAQ */
+  .faq { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+  .faq-item { border-top: 1px solid var(--color-border); padding: 0; }
+  .faq-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .faq-q {
+    font-size: 0.9375rem; font-weight: 600; color: var(--color-text);
+    cursor: pointer; padding: 1.25rem 0; list-style: none; display: flex;
+    justify-content: space-between; align-items: center; gap: 1rem;
+  }
+  .faq-q::-webkit-details-marker { display: none; }
+  .faq-q::after { content: '+'; font-size: 1.25rem; font-weight: 300; color: var(--color-text-dim); flex-shrink: 0; }
+  .faq-item[open] .faq-q::after { content: '−'; }
+  .faq-a { font-size: 0.9375rem !important; color: var(--color-text-muted) !important; line-height: 1.75 !important; margin: 0 0 1.25rem !important; }
+
+  .link-arrow { font-size: 0.9375rem; color: var(--color-accent); display: inline-block; margin-top: 1.25rem; }
+  .link-arrow:hover { text-decoration: underline; }
+
+  .section p a { color: var(--color-accent); }
+  .section p a:hover { text-decoration: underline; }
+
+  .section--invite { padding: 4.5rem 0; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+</style>

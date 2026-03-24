@@ -1,0 +1,564 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'What is a Semantic Compiler?',
+  description: 'A semantic compiler takes informal natural language intent as input and produces structured, governed artifacts as output. Learn why AI development needs a formal compilation step between description and build.',
+  author: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://motherlabs.ai/ada/what-is-a-semantic-compiler' },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is a semantic compiler?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A semantic compiler is a system that takes informal natural language intent as input and produces structured, governed artifacts as output. It operates on meaning rather than syntax. Like a traditional compiler, it has a defined input language, a validated intermediate representation, and a governed output — but the input is human intent rather than formal source code. The compilation step is the formalization: converting ambiguous natural language into artifacts that constrain downstream behavior.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How is a semantic compiler different from a traditional compiler?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A traditional compiler transforms already-formal input (source code with defined syntax) into machine-executable output. The input is already precise — the compiler\'s job is transformation. A semantic compiler transforms informal input (natural language intent) into structured output. The input is ambiguous — the compiler\'s job is formalization. Both reduce something higher-level into something executable. The difference is that semantic compilation starts before the formal layer exists.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Why does AI development need a semantic compiler?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Chat-driven AI development has no compilation step. You describe what you want, the AI infers what you mean, and builds against that inference. The inference is usually close — but close is not right. A semantic compiler inserts a formal step between description and build: it takes the informal description, resolves its ambiguities through structured elicitation, and produces governed artifacts that encode intent structurally. The AI then builds against those artifacts rather than against a guess.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What does Ada compile?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada compiles natural language intent into three artifact types: CLAUDE.md (the intent file, read by Claude Code on every message turn), agent files (domain specialists scoped to bounded contexts), and hook files (pre-tool guards that enforce constraints at every tool call boundary). Input is informal description plus elicitation answers. Output is governed artifacts that Claude Code builds against. The 7-stage pipeline — CTX, INT, PER, ENT, PRO, SYN, GOV — is the compilation.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What are the 7 stages of Ada\'s semantic compilation pipeline?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'The 7 stages are: CTX (codebase context — grounds compilation in real project state), INT (intent graph — structures answers into formal goals and constraints), PER (persona mapping — encodes who uses the system and how), ENT (entity extraction — extracts canonical domain objects and invariants), PRO (process synthesis — synthesizes state machines and workflows), SYN (synthesis — assembles all layers into output artifacts), GOV (governance — evaluates coherence and iterates until threshold is met). Each stage reduces ambiguity in one dimension.',
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="What is a semantic compiler? Definition and how it works | Motherlabs"
+  description="A semantic compiler takes informal natural language intent as input and produces structured, governed artifacts as output. Learn why AI development needs a formal compilation step between description and build."
+  schemas={[articleSchema, faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; What is a semantic compiler?</p>
+        <h1>What is a semantic compiler?</h1>
+        <p class="hero-sub">
+          A system that takes informal human intent as input
+          and produces structured, governed artifacts as output.
+          The compilation step that AI development is missing.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Definition -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>The definition</h2>
+        <p>
+          A semantic compiler is a system that takes informal natural language intent
+          as input and produces structured, governed artifacts as output.
+        </p>
+        <p>
+          It is a compiler in the formal computer science sense: there is a defined
+          input, a validated intermediate representation, and a governed output.
+          The difference from a traditional compiler is what the input is.
+          Traditional compilers start with source code — already formal, already precise.
+          A semantic compiler starts with human intent — informal, ambiguous,
+          underspecified by default.
+        </p>
+        <p>
+          The word "semantic" names the layer it operates on: meaning.
+          Not syntax. Not grammar. The question a semantic compiler answers is
+          <em>what does this mean</em> — and then it encodes that meaning
+          in a form that constrains everything built from it.
+        </p>
+        <div class="callout">
+          <p class="callout-text">
+            Semantic compilation is the formalization step. It converts the
+            informal into the governed. Without it, the system built is always
+            an inference — a best guess at what was meant.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Traditional vs semantic -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Traditional compilers vs. semantic compilers</h2>
+        <p>
+          A traditional compiler solves a transformation problem.
+          The input — source code — is already formal. It has defined syntax,
+          defined semantics, no ambiguity about what the tokens mean.
+          The compiler's job is to transform that formal input into
+          machine-executable output.
+        </p>
+        <p>
+          A semantic compiler solves a formalization problem.
+          The input — natural language intent — is informal.
+          It has undefined scope, implicit constraints, and no persistence.
+          The compiler's job is to convert that informal input into something
+          formal enough to govern what gets built.
+        </p>
+
+        <div class="compare-table">
+          <div class="compare-row compare-row--header">
+            <div class="compare-cell"></div>
+            <div class="compare-cell">Traditional compiler</div>
+            <div class="compare-cell">Semantic compiler</div>
+          </div>
+          <div class="compare-row">
+            <div class="compare-cell compare-cell--label">Input</div>
+            <div class="compare-cell">Formal source code</div>
+            <div class="compare-cell">Informal natural language intent</div>
+          </div>
+          <div class="compare-row">
+            <div class="compare-cell compare-cell--label">Input precision</div>
+            <div class="compare-cell">High — syntax is defined</div>
+            <div class="compare-cell">Low — meaning is ambiguous</div>
+          </div>
+          <div class="compare-row">
+            <div class="compare-cell compare-cell--label">Primary task</div>
+            <div class="compare-cell">Transform formal input</div>
+            <div class="compare-cell">Formalize informal input</div>
+          </div>
+          <div class="compare-row">
+            <div class="compare-cell compare-cell--label">Output</div>
+            <div class="compare-cell">Machine code / bytecode</div>
+            <div class="compare-cell">Governed artifacts (CLAUDE.md, agents, hooks)</div>
+          </div>
+          <div class="compare-row">
+            <div class="compare-cell compare-cell--label">Validation</div>
+            <div class="compare-cell">Type correctness, syntax errors</div>
+            <div class="compare-cell">Coherence with stated intent</div>
+          </div>
+          <div class="compare-row">
+            <div class="compare-cell compare-cell--label">Runs before</div>
+            <div class="compare-cell">Execution</div>
+            <div class="compare-cell">Development</div>
+          </div>
+        </div>
+
+        <p>
+          Both reduce something high-level into something executable.
+          Both enforce correctness — one syntactic, one semantic.
+          The difference is that semantic compilation starts
+          before the formal layer exists.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Why AI development needs one -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Why AI development needs a semantic compiler</h2>
+        <p>
+          Chat-driven development with tools like Claude Code has no compilation step.
+          You describe what you want. The model infers what you mean. It builds.
+        </p>
+        <p>
+          That inference is usually close. Close is not right.
+        </p>
+        <p>
+          The model's guess at your intent is not your intent.
+          It is a probabilistic approximation made against informal,
+          ephemeral, underspecified input. Each session, the model
+          re-infers from a slightly different starting point.
+          Over many sessions, small deviations compound.
+          The system that gets built drifts from the system you meant to build.
+        </p>
+        <p>
+          This is the <a href="/ada/intent-gap" class="inline-link">intent gap</a> —
+          the structural distance between what you described and what got built.
+          It is not a prompting problem. Better prompts produce better guesses.
+          They are still guesses.
+        </p>
+        <p>
+          A semantic compiler closes the intent gap by inserting a formal step
+          between description and build:
+        </p>
+
+        <div class="pipeline-diagram">
+          <div class="pipeline-step pipeline-step--before">
+            <span class="pipeline-label">Before</span>
+            <div class="pipeline-flow">
+              <span class="pipeline-node">Intent</span>
+              <span class="pipeline-arrow">&rarr;</span>
+              <span class="pipeline-node pipeline-node--gap">inference</span>
+              <span class="pipeline-arrow">&rarr;</span>
+              <span class="pipeline-node">Code</span>
+            </div>
+          </div>
+          <div class="pipeline-step pipeline-step--after">
+            <span class="pipeline-label">After</span>
+            <div class="pipeline-flow">
+              <span class="pipeline-node">Intent</span>
+              <span class="pipeline-arrow">&rarr;</span>
+              <span class="pipeline-node pipeline-node--compiler">compilation</span>
+              <span class="pipeline-arrow">&rarr;</span>
+              <span class="pipeline-node pipeline-node--artifacts">governed artifacts</span>
+              <span class="pipeline-arrow">&rarr;</span>
+              <span class="pipeline-node">Code</span>
+            </div>
+          </div>
+        </div>
+
+        <p>
+          The AI now builds against a formalized specification, not an informal description.
+          The artifacts encode what you meant. They persist across sessions.
+          They enforce constraints at every tool call boundary.
+          The distance between what you meant and what gets built is smaller.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- What Ada compiles -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>What Ada compiles</h2>
+        <p>
+          Ada is a semantic compiler for software intent.
+          Its input is natural language. Its output is governed artifacts for Claude Code.
+        </p>
+
+        <div class="io-block">
+          <div class="io-side">
+            <p class="io-label">Input</p>
+            <ul class="io-list">
+              <li>Natural language description of what you want to build</li>
+              <li>Answers to elicitation questions (behavior, constraints, scope)</li>
+              <li>Existing codebase state (or greenfield)</li>
+            </ul>
+          </div>
+          <div class="io-arrow">&darr;</div>
+          <div class="io-side io-side--output">
+            <p class="io-label">Output</p>
+            <ul class="io-list">
+              <li><strong>CLAUDE.md</strong> — intent file, read on every Claude Code turn</li>
+              <li><strong>agents/</strong> — domain specialists scoped to bounded contexts</li>
+              <li><strong>hooks/</strong> — pre-tool guards enforcing constraints at every tool call</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>
+          Before compiling, Ada runs structured elicitation.
+          This is a focused session designed to surface the blocking unknowns —
+          the ambiguities in your description that, left unresolved,
+          would cause the wrong system to be built.
+          Ada asks semantic questions: what should happen when a user does X,
+          what is explicitly out of scope, what constraints are non-negotiable.
+          Not technical questions: which framework, which database, which pattern.
+        </p>
+        <p>
+          Once elicitation resolves the blocking unknowns,
+          the compilation pipeline runs automatically.
+          You read the output. If it matches what you meant, you hand it to Claude Code.
+          If not, you correct and recompile. The artifacts trace back to your words —
+          every constraint in CLAUDE.md has a provenance path to a specific
+          statement in the elicitation session.
+        </p>
+        <p>
+          Learn more about the full output in
+          <a href="/ada/context-engineering" class="inline-link">context engineering for Claude Code</a>.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- 7 stages -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>The 7 stages of Ada's compilation pipeline</h2>
+        <p>
+          Ada's pipeline has seven stages. Each stage takes the output of the previous
+          stage and reduces ambiguity in one dimension.
+          The pipeline does not proceed until each stage passes its gate.
+        </p>
+
+        <div class="compile-block" aria-label="Ada 7-stage pipeline">
+          <div class="compile-prompt">
+            <span class="prompt-char">$</span>
+            <span class="prompt-cmd">ada compile</span>
+          </div>
+          <div class="compile-stages">
+            <div class="stage-row">
+              <span class="stage-label">CTX</span>
+              <span class="stage-check">&#10003;</span>
+              <span class="stage-desc">codebase context — grounds compilation in real project state</span>
+            </div>
+            <div class="stage-row">
+              <span class="stage-label">INT</span>
+              <span class="stage-check">&#10003;</span>
+              <span class="stage-desc">intent graph — structures answers into formal goals and constraints</span>
+            </div>
+            <div class="stage-row">
+              <span class="stage-label">PER</span>
+              <span class="stage-check">&#10003;</span>
+              <span class="stage-desc">persona mapping — encodes who uses the system and how</span>
+            </div>
+            <div class="stage-row">
+              <span class="stage-label">ENT</span>
+              <span class="stage-check">&#10003;</span>
+              <span class="stage-desc">entity extraction — extracts canonical domain objects and invariants</span>
+            </div>
+            <div class="stage-row">
+              <span class="stage-label">PRO</span>
+              <span class="stage-check">&#10003;</span>
+              <span class="stage-desc">process synthesis — synthesizes state machines and workflows</span>
+            </div>
+            <div class="stage-row">
+              <span class="stage-label">SYN</span>
+              <span class="stage-check">&#10003;</span>
+              <span class="stage-desc">synthesis — assembles all layers into output artifacts</span>
+            </div>
+            <div class="stage-row">
+              <span class="stage-label">GOV</span>
+              <span class="stage-check">&#10003;</span>
+              <span class="stage-desc stage-approved">approved &nbsp; 0.94 — coherence with stated intent</span>
+            </div>
+          </div>
+        </div>
+
+        <p>
+          The Governor (GOV stage) is the semantic compiler's equivalent of a type checker.
+          It evaluates whether the compiled output is coherent with the stated intent.
+          A score of 0.94 means 94% coherence. If the score does not pass threshold,
+          the pipeline iterates — refining the intermediate representation until
+          the output traces cleanly back to the input.
+        </p>
+        <p>
+          The 7-stage structure means the compilation is not a single inference step.
+          Each stage validates what it produces before the next stage begins.
+          Ambiguity that is not resolved in INT cannot propagate silently to ENT.
+          The pipeline is gated, not streaming.
+        </p>
+        <p>
+          See the full pipeline walkthrough in
+          <a href="/ada/how-ada-works" class="inline-link">how Ada works</a>.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- FAQ -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Frequently asked questions</h2>
+
+        <div class="faq-list">
+          <div class="faq-item">
+            <h3>Is a semantic compiler the same as a prompt?</h3>
+            <p>
+              No. A prompt is input to an inference. A semantic compiler produces
+              a formalized artifact that governs all subsequent inferences.
+              A prompt is consumed once. A compiled artifact persists across
+              every session, every context window, every tool call.
+              The prompt gets you a better guess. The semantic compiler
+              replaces the guess with a specification.
+            </p>
+          </div>
+          <div class="faq-item">
+            <h3>Does using a semantic compiler require technical knowledge?</h3>
+            <p>
+              No. Semantic compilation operates at the meaning layer — what the system
+              should do, not how it should be built. You describe your project
+              at whatever level you think in. Ada infers technical choices
+              from conceptual descriptions and asks questions about behavior and intent,
+              not implementation. The only requirement is knowing what the system should do.
+            </p>
+          </div>
+          <div class="faq-item">
+            <h3>What is the relationship between semantic compilation and CLAUDE.md?</h3>
+            <p>
+              CLAUDE.md is one of three output artifact types Ada produces.
+              It is the intent file — Claude Code reads it on every message turn,
+              injecting it into every context window.
+              But CLAUDE.md alone is not the full output of semantic compilation.
+              The agent files and hook files are equally essential:
+              agents scope domain knowledge, hooks enforce constraints structurally.
+              Together, the three artifact types constitute the governed context layer
+              that semantic compilation produces.
+            </p>
+          </div>
+          <div class="faq-item">
+            <h3>Can I run a semantic compiler on an existing codebase?</h3>
+            <p>
+              Yes. Ada's CTX stage reads the existing project structure and grounds
+              the compilation in real codebase state. If a project already exists,
+              Ada compiles a governed context layer for it — CLAUDE.md, agents,
+              and hooks that encode the intent the codebase represents.
+              The result is that future Claude Code sessions build against
+              the inferred intent rather than re-inferring from scratch.
+            </p>
+          </div>
+          <div class="faq-item">
+            <h3>How is semantic compilation different from retrieval-augmented generation (RAG)?</h3>
+            <p>
+              RAG retrieves relevant context and injects it into inference.
+              The output is still inferred — from better-informed context.
+              Semantic compilation produces governed artifacts that precede inference.
+              RAG improves the quality of the guess. Semantic compilation replaces
+              the guess with a specification that constrains what the model
+              is allowed to do. The two are complementary: RAG for dynamic context,
+              semantic compilation for durable intent governance.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- CTA -->
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <p class="cta-label">Try the semantic compiler</p>
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">git clone https://github.com/alexrozex/ada</code>
+        </div>
+        <p class="trust-signal">
+          Formalize intent before Claude Code starts.
+          Governed artifacts that persist across every session.
+        </p>
+        <div class="cta-buttons">
+          <a href="/start" class="btn-primary">Get started &rarr;</a>
+          <a href="/ada" class="btn-secondary">What is Ada? &rarr;</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--color-text-dim); margin: 0 0 1.25rem; display: block; }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 { font-family: var(--font-serif); font-size: clamp(1.875rem, 4vw, 2.875rem); font-weight: 400; letter-spacing: -0.01em; line-height: 1.1; margin: 0 0 1.25rem; max-width: 32rem; }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 38rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; color: var(--color-text); margin: 0 0 1.5rem; }
+
+  .callout { border-left: 2px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.75rem 0; background-color: var(--color-surface); }
+  .callout-text { font-size: 1rem !important; color: var(--color-text) !important; margin: 0 !important; line-height: 1.7 !important; }
+
+  .inline-link { color: var(--color-accent); }
+  .inline-link:hover { text-decoration: underline; }
+
+  /* Compare table */
+  .compare-table { border: 1px solid var(--color-border); margin: 1.75rem 0; font-size: 0.9rem; }
+  .compare-row { display: grid; grid-template-columns: 10rem 1fr 1fr; border-bottom: 1px solid var(--color-border); }
+  .compare-row:last-child { border-bottom: none; }
+  .compare-row--header { background-color: var(--color-surface); }
+  .compare-row--header .compare-cell { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); font-weight: 700; }
+  .compare-cell { padding: 0.875rem 1rem; color: var(--color-text-muted); border-right: 1px solid var(--color-border); line-height: 1.5; }
+  .compare-cell:last-child { border-right: none; }
+  .compare-cell--label { font-weight: 600; color: var(--color-text); }
+  @media (max-width: 640px) { .compare-row { grid-template-columns: 1fr; } .compare-row--header { display: none; } }
+
+  /* Pipeline diagram */
+  .pipeline-diagram { margin: 1.75rem 0; display: flex; flex-direction: column; gap: 0.75rem; }
+  .pipeline-step { padding: 1rem 1.25rem; border: 1px solid var(--color-border); }
+  .pipeline-step--after { border-color: var(--color-accent); }
+  .pipeline-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); display: block; margin-bottom: 0.5rem; }
+  .pipeline-step--after .pipeline-label { color: var(--color-accent); }
+  .pipeline-flow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .pipeline-node { font-size: 0.875rem; color: var(--color-text-muted); padding: 0.25rem 0.5rem; background-color: var(--color-surface); border: 1px solid var(--color-border); font-family: var(--font-mono); }
+  .pipeline-node--gap { color: var(--color-text-dim); font-style: italic; border-style: dashed; }
+  .pipeline-node--compiler { color: var(--color-accent); border-color: var(--color-accent); }
+  .pipeline-node--artifacts { color: var(--color-accent); border-color: var(--color-accent); }
+  .pipeline-arrow { color: var(--color-text-dim); font-size: 0.875rem; }
+
+  /* IO block */
+  .io-block { border: 1px solid var(--color-border); margin: 1.75rem 0; }
+  .io-side { padding: 1.25rem; }
+  .io-side--output { border-top: 1px solid var(--color-border); background-color: color-mix(in srgb, var(--color-accent) 4%, transparent); }
+  .io-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); margin: 0 0 0.75rem !important; }
+  .io-side--output .io-label { color: var(--color-accent); }
+  .io-list { margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.375rem; }
+  .io-list li { font-size: 0.9375rem; color: var(--color-text-muted); line-height: 1.6; }
+  .io-arrow { text-align: center; padding: 0.5rem; font-size: 1.25rem; color: var(--color-text-dim); border-top: 1px solid var(--color-border); }
+
+  /* Compile block */
+  .compile-block { font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.6; margin: 1.75rem 0; display: inline-flex; flex-direction: column; background-color: var(--color-surface); border: 1px solid var(--color-border); padding: 1.25rem; }
+  .compile-prompt { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+  .prompt-char { color: var(--color-text-dim); }
+  .prompt-cmd { color: var(--color-text-muted); }
+  .compile-stages { display: flex; flex-direction: column; gap: 0.125rem; }
+  .stage-row { display: grid; grid-template-columns: 2.5rem 1.25rem 1fr; align-items: center; gap: 0.5rem; }
+  .stage-label { color: var(--color-text-dim); letter-spacing: 0.04em; font-size: 0.75rem; }
+  .stage-check { color: var(--color-accent); }
+  .stage-desc { color: var(--color-text-muted); }
+  .stage-approved { color: var(--color-accent); font-weight: 500; }
+
+  /* FAQ */
+  .faq-list { display: flex; flex-direction: column; gap: 0; }
+  .faq-item { padding: 2rem 0; border-top: 1px solid var(--color-border); }
+  .faq-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .faq-item h3 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin: 0 0 0.75rem; }
+  .faq-item p { font-size: 0.9375rem !important; margin: 0 !important; }
+
+  /* CTA */
+  .section--invite { padding: 4.5rem 0; }
+  .cta-label { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--color-text-dim); text-transform: uppercase; margin-bottom: 1rem !important; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .cta-buttons { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+  .btn-secondary { font-size: 0.9375rem; color: var(--color-accent); display: inline-block; }
+  .btn-secondary:hover { text-decoration: underline; }
+</style>

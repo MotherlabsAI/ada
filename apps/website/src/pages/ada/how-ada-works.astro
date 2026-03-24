@@ -28,7 +28,7 @@ const faqSchema = {
       name: 'How long does an Ada compilation take?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'A typical Ada compilation takes 10-20 minutes total: 5-10 minutes for the elicitation session (depending on project complexity and how many unknowns need resolving), and 2-5 minutes for the compilation pipeline to run. The result is hundreds of governed artifacts ready for Claude Code to use.',
+        text: 'A typical Ada compilation takes 10-20 minutes total: 5-10 minutes for the elicitation session (depending on project complexity and how many unknowns need resolving), and 2-5 minutes for the compilation pipeline to run. The result is hundreds of CLAUDE.md, agents, and hooks ready for Claude Code to use.',
       },
     },
     {
@@ -45,7 +45,7 @@ const faqSchema = {
 
 <Layout
   title="How Ada works — step by step guide to the intent compiler | Motherlabs"
-  description="Ada runs in 4 phases: install, elicitation (semantic questions), 7-stage compilation, and governed artifacts on disk. No technical knowledge required — Ada works at the semantic level."
+  description="Ada runs in 4 phases: install, elicitation (semantic questions), 7-stage compilation, and CLAUDE.md, agents, and hooks on disk. No technical knowledge required — Ada works at the semantic level."
   schemas={[faqSchema]}
 >
   <Nav />
@@ -56,7 +56,7 @@ const faqSchema = {
         <p class="eyebrow"><a href="/ada">Ada</a> &rarr; How Ada Works</p>
         <h1>How Ada works</h1>
         <p class="hero-sub">
-          From `ada compile` to governed artifacts on disk.
+          From `ada compile` to CLAUDE.md, agents, and hooks on disk.
           Four phases. No technical knowledge required.
         </p>
       </div>
@@ -208,7 +208,7 @@ const faqSchema = {
           </div>
           <div class="output-row">
             <code class="output-file">hooks/</code>
-            <span class="output-action">247 files written</span>
+            <span class="output-action">pre-tool guards written</span>
           </div>
         </div>
 

@@ -1,0 +1,522 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'What Is Intent Formalization? Converting Requirements Into Governed Artifacts',
+  description: 'Intent formalization is the act of converting informal natural language requirements into a structured artifact that a build system can enforce against. Without it, AI builds against inference — not intent.',
+  author: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://motherlabs.ai/ada/intent-formalization' },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is intent formalization in software development?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Intent formalization is the act of converting informal natural language requirements — how developers describe what they want to build — into a structured artifact that a build system can enforce against. A formalized intent artifact records what the system IS, what it IS NOT, what constraints apply, what is in scope, and what is explicitly excluded. Unlike a chat description or a prompt, a formalized artifact persists across sessions, traces back to source requirements, and can be compiled into enforcement mechanisms.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Why does informal intent fail in AI-assisted development?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Informal intent fails because it is ambiguous by construction. When you describe a project in natural language, the AI model infers what you mean and builds against that inference. The inference is never your intent — it is the model\'s best guess. Each session produces a slightly different guess. Microsoft Research (2026) formally documented this as the intent gap: the structural distance between informal requirements and precise program behavior. Better descriptions reduce the inference error per session but do not eliminate drift across sessions.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is the difference between a prompt and a formalized intent artifact?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A prompt is informal, ephemeral, and session-scoped. It expresses intent once, to one context window, and disappears. A formalized intent artifact is structured, persistent, and traceable. It records what the system is and is not, what constraints govern it, and what is out of scope. It is written in a form that persists across sessions and can be compiled into enforcement mechanisms like CLAUDE.md, agent files, and hooks. The artifact does not need to be re-expressed each session — it governs every session.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What does a formalized intent artifact contain?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A properly formalized intent artifact contains: a positive definition (what the system IS), a negative definition (what it IS NOT), explicit constraints (what must always be true), scope boundaries (what is in and out of scope), entity definitions (the core domain concepts), process flows (how the system behaves), and governance rules (what cannot be violated). Ada compiles all of this from structured elicitation into CLAUDE.md, agent files, and hook files.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Does Ada require technical vocabulary to formalize intent?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. Ada\'s elicitation stage is designed to work at whatever level you think in. You do not need to use terms like entity, bounded context, or state machine. Ada asks questions at the semantic level — what the system should do, what it should not do, what decisions you have already made — and performs the translation to governed artifacts autonomously. The formalization is the compiler\'s job, not yours.',
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="What is intent formalization? Converting requirements into governed artifacts | Motherlabs"
+  description="Intent formalization converts informal natural language requirements into structured artifacts a build system can enforce against. The missing step before AI-assisted development."
+  schemas={[articleSchema, faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; Intent Formalization</p>
+        <h1>Intent formalization</h1>
+        <p class="hero-sub">
+          The act of converting informal requirements into a structured artifact
+          that a build system can enforce against.
+          The step that happens before building — and almost never does.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>What intent formalization means</h2>
+        <p>
+          Intent formalization is the conversion of informal natural language requirements
+          into a structured artifact that is persistent, traceable, and enforceable
+          by a build system.
+        </p>
+        <p>
+          The word <em>formal</em> here has a precise meaning: the artifact can be
+          checked against. It is not a description. It is not a note.
+          It is a record of what the system IS, what it IS NOT,
+          what constraints apply, and what is explicitly out of scope —
+          written in a form that governs every subsequent build decision.
+        </p>
+        <p>
+          This is distinct from writing a better prompt, a clearer description,
+          or a more detailed CLAUDE.md by hand. Those are informal artifacts
+          that improve the quality of the inference. Formalization eliminates
+          the need to infer.
+        </p>
+        <div class="callout">
+          <p class="callout-text">
+            <strong>Definition.</strong> Intent formalization: the act of converting informal
+            natural language requirements into a structured artifact that records what a
+            system IS, IS NOT, and must always enforce — in a form that persists across
+            sessions, traces back to source requirements, and can be compiled into
+            enforcement mechanisms.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Why informal intent fails</h2>
+        <p>
+          A chat description is ambiguous by construction.
+          When you write "build me a dashboard," you leave open: what it tracks,
+          who uses it, what privacy means, what update frequency is acceptable,
+          where data comes from, and what is out of scope.
+          The model fills those gaps with inference.
+        </p>
+        <p>
+          That inference is not your intent. It is the closest plausible interpretation
+          of your intent — made in the moment, against an underspecified input,
+          without access to what you were actually thinking.
+        </p>
+        <p>
+          The <a href="/ada/intent-gap" class="inline-link">intent gap</a> — the structural
+          distance between what you described and what gets built — is not a prompting failure.
+          It is what happens when interpretation substitutes for formalization.
+          Each session, the model interprets again. The interpretation drifts.
+          The code drifts with it.
+        </p>
+
+        <div class="reason-list">
+          <div class="reason">
+            <h3>Interpretation is not deterministic</h3>
+            <p>
+              The same description produces slightly different inferences across sessions.
+              Temperature, context position, and what else is in the window all shift
+              what the model treats as implied. There is no guarantee the third session's
+              interpretation matches the first.
+            </p>
+          </div>
+          <div class="reason">
+            <h3>Informal artifacts do not persist</h3>
+            <p>
+              A prompt lives in one context window and closes with the session.
+              A description in chat is not read by the model again unless you paste it again.
+              Nothing was written down in a form that survives the session boundary
+              and governs the next one.
+            </p>
+          </div>
+          <div class="reason">
+            <h3>Memory captures drift, not intent</h3>
+            <p>
+              Auto-memory and session notes record what the model observed during the session.
+              If the original inference was wrong, memory compounds the error — it remembers
+              the wrong version of your intent, accurately.
+            </p>
+          </div>
+          <div class="reason">
+            <h3>Scope creep has no structural limit</h3>
+            <p>
+              Without a formalized "what this is not," there is nothing to enforce against
+              when the model expands scope. Each session, the boundaries shift slightly.
+              By the time the drift is visible, it is entangled with decisions
+              that are expensive to reverse.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>The research context</h2>
+        <p>
+          The intent gap is not Ada's framing — it is documented in the research literature.
+        </p>
+        <p>
+          Microsoft Research (2026) formally characterized the gap as the structural distance
+          between informal natural language requirements and precise program behavior.
+          The finding was not that AI models are bad at building software.
+          The finding was that informal requirements are an insufficient input —
+          regardless of the model's capability, the output cannot be more precise
+          than the specification it was given.
+        </p>
+        <p>
+          This is the oldest problem in software requirements, now running at AI speed.
+          Requirements engineering has studied it for decades under names like
+          specification completeness, requirements ambiguity, and scope management.
+          What changed with AI-assisted development is that the cost of starting
+          dropped to near zero — which means the cost of starting from insufficient
+          requirements is now paid much more often, and much faster.
+        </p>
+        <div class="callout">
+          <p class="callout-text">
+            The gap exists before the model does anything. It is a property of the input,
+            not the inference. Formalization closes it at the input — before the first
+            line of code is written.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>What formalization looks like: a concrete before and after</h2>
+        <p>
+          The difference between informal and formalized intent is not the amount of text.
+          It is the structure of the record.
+        </p>
+
+        <div class="compare-block">
+          <div class="compare-side compare-side--before">
+            <div class="compare-label compare-label--before">Informal — chat description</div>
+            <pre class="compare-text">"Build me a dashboard that shows
+our key metrics. It should look
+clean, update in real time, and
+the team should be able to see it."</pre>
+          </div>
+
+          <div class="compare-side compare-side--after">
+            <div class="compare-label compare-label--after">Formalized — intent artifact (excerpt)</div>
+            <pre class="compare-text">IS: Real-time metrics dashboard for
+    internal team use only.
+    Displays: DAU, MRR, error rate.
+    Updates on 60s polling interval.
+
+IS NOT: Public-facing. Does not
+    expose raw event data. No user
+    management. No export feature.
+
+CONSTRAINTS:
+  - Auth: team members only (no SSO)
+  - Data source: internal API v2 only
+  - No third-party analytics SDKs
+
+OUT OF SCOPE: Mobile view, alerts,
+    historical export, custom queries.</pre>
+          </div>
+        </div>
+
+        <p>
+          The informal version requires the model to infer all of: what "key metrics"
+          means, what "real time" means, who "the team" is, what "clean" means,
+          whether auth is required, what is out of scope, and what data source to use.
+        </p>
+        <p>
+          The formalized version eliminates those inferences.
+          The model builds against the artifact, not against its interpretation of the description.
+          Scope creep has a structural boundary. The "IS NOT" section is as important as the "IS."
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>The formalization spectrum</h2>
+        <p>
+          Formalization is not binary. There is a spectrum from fully informal to fully compiled,
+          and each level reduces the inference burden placed on the model.
+        </p>
+
+        <div class="spectrum-list">
+          <div class="spectrum-item">
+            <div class="spectrum-header">
+              <span class="spectrum-level">Level 0</span>
+              <h3>Informal — chat description</h3>
+            </div>
+            <p>
+              Natural language in a chat window. No structure, no persistence,
+              no enforcement. The model infers everything. Drift is immediate
+              and undetectable.
+            </p>
+          </div>
+
+          <div class="spectrum-item">
+            <div class="spectrum-header">
+              <span class="spectrum-level">Level 1</span>
+              <h3>Semi-formal — handwritten CLAUDE.md</h3>
+            </div>
+            <p>
+              A structured text file the model reads on every turn. Better than chat —
+              the intent persists across sessions. But it is still written informally,
+              still advisory, and still relies on the model to interpret it correctly.
+              See <a href="/ada/context-engineering" class="inline-link">context engineering</a>
+              for why CLAUDE.md alone is structurally insufficient.
+            </p>
+          </div>
+
+          <div class="spectrum-item">
+            <div class="spectrum-header">
+              <span class="spectrum-level">Level 2</span>
+              <h3>Compiled — Ada output</h3>
+            </div>
+            <p>
+              Intent compiled through a semantic pipeline into governed artifacts:
+              CLAUDE.md (hot memory), agent files (domain specialists), and hooks
+              (structural enforcement at every tool boundary). The artifact is not written —
+              it is compiled from structured elicitation. Constraints are enforced,
+              not described. This is full formalization.
+            </p>
+          </div>
+        </div>
+
+        <p>
+          Most developers operate at Level 0 or Level 1.
+          Level 1 is a significant improvement over Level 0.
+          But Level 1 is still informal — the CLAUDE.md file is as good as what you happened to write,
+          contains what you remembered to include, and enforces nothing structurally.
+        </p>
+        <p>
+          Full formalization requires a compiler, not a text editor.
+          The compiler asks the questions you didn't know to ask,
+          extracts what is implied, and structures the output in a form
+          the build system can enforce — not just read.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Ada's position: a semantic compiler for intent</h2>
+        <p>
+          Ada is a semantic compiler. It takes informal intent as input
+          and produces governed artifacts as output — the same relationship
+          a TypeScript compiler has to source code, or a schema validator
+          has to a JSON document.
+        </p>
+        <p>
+          The elicitation stage is the formalization stage.
+          Ada asks structured questions specifically designed to surface what is
+          underspecified, what is ambiguous, and what the "what it is not" answers are.
+          These are the questions that close the intent gap before it becomes wrong code.
+        </p>
+        <p>
+          The compilation pipeline — CTX, INT, PER, ENT, PRO, SYN, GOV —
+          extracts the entity model, the process flows, the constraints,
+          and the governance rules from the elicitation answers.
+          Each stage reduces entropy. Each gate verifies that the previous stage's
+          output is coherent before the next stage runs.
+        </p>
+        <p>
+          The output is not a better prompt. It is a three-layer context architecture:
+          CLAUDE.md that encodes what the system is and is not,
+          agent files that encode domain depth per bounded context,
+          and hooks that enforce constraints at every tool call boundary.
+          Claude Code builds against this architecture rather than against
+          an informal description — and the distance between what you meant
+          and what gets built is measurably smaller.
+        </p>
+        <a href="/ada" class="link-arrow">See how Ada compiles intent &rarr;</a>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Frequently asked questions</h2>
+
+        <div class="faq-list">
+          <div class="faq-item">
+            <h3>What is intent formalization in software development?</h3>
+            <p>
+              Intent formalization is the act of converting informal natural language requirements
+              into a structured artifact that records what a system IS, IS NOT, and must always enforce —
+              in a form that persists across sessions, traces back to source requirements,
+              and can be compiled into enforcement mechanisms.
+              It is the step that happens before building, and almost never does.
+            </p>
+          </div>
+
+          <div class="faq-item">
+            <h3>Why does informal intent fail in AI-assisted development?</h3>
+            <p>
+              Informal intent fails because it is ambiguous by construction.
+              The model infers what you mean and builds against that inference.
+              The inference drifts across sessions.
+              Microsoft Research (2026) documented this formally as the intent gap —
+              the structural distance between informal requirements and precise program behavior.
+              Better descriptions reduce inference error per session but do not eliminate drift.
+            </p>
+          </div>
+
+          <div class="faq-item">
+            <h3>What is the difference between a prompt and a formalized intent artifact?</h3>
+            <p>
+              A prompt is informal, ephemeral, and session-scoped.
+              A formalized intent artifact is structured, persistent, and traceable.
+              The artifact does not need to be re-expressed each session —
+              it governs every session. It can be compiled into enforcement mechanisms
+              that the model cannot override. A prompt can only be interpreted.
+            </p>
+          </div>
+
+          <div class="faq-item">
+            <h3>What does a formalized intent artifact contain?</h3>
+            <p>
+              A properly formalized intent artifact contains:
+              a positive definition (what the system IS), a negative definition (what it IS NOT),
+              explicit constraints (what must always be true), scope boundaries (what is in and out of scope),
+              entity definitions (the core domain concepts), process flows (how the system behaves),
+              and governance rules (what cannot be violated).
+              Ada compiles all of this into CLAUDE.md, agent files, and hook files.
+            </p>
+          </div>
+
+          <div class="faq-item">
+            <h3>Does Ada require technical vocabulary to formalize intent?</h3>
+            <p>
+              No. Ada's elicitation stage works at whatever level you think in.
+              You do not need to use terms like entity, bounded context, or state machine.
+              Ada asks questions at the semantic level and performs the translation to
+              governed artifacts autonomously. The formalization is the compiler's job, not yours.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">git clone https://github.com/alexrozex/ada</code>
+        </div>
+        <p class="trust-signal">Semantic compiler for intent. Governed artifacts before building starts.</p>
+        <a href="/start" class="btn-primary">Get started &rarr;</a>
+        &nbsp;&nbsp;
+        <a href="/ada" class="link-arrow">How Ada works &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--color-text-dim); margin: 0 0 1.25rem; display: block; }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 { font-family: var(--font-serif); font-size: clamp(1.875rem, 4vw, 2.875rem); font-weight: 400; letter-spacing: -0.01em; line-height: 1.1; margin: 0 0 1.25rem; max-width: 30rem; }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 38rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; color: var(--color-text); margin: 0 0 1.5rem; }
+
+  .callout { border-left: 2px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.75rem 0; background-color: var(--color-surface); }
+  .callout-text { font-size: 1rem !important; color: var(--color-text) !important; margin: 0 !important; line-height: 1.7 !important; }
+
+  .inline-link { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
+  .inline-link:hover { opacity: 0.8; }
+
+  /* Reason list */
+  .reason-list { display: flex; flex-direction: column; gap: 0; margin-top: 1.75rem; }
+  .reason { padding: 2rem 0; border-top: 1px solid var(--color-border); }
+  .reason h3 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin: 0 0 0.5rem; }
+  .reason p { font-size: 0.9375rem; color: var(--color-text-muted); margin: 0; line-height: 1.7; }
+
+  /* Before/after compare */
+  .compare-block { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; border: 1px solid var(--color-border); margin: 1.75rem 0; background-color: var(--color-border); }
+  .compare-side { background-color: var(--color-bg); padding: 1.5rem; }
+  .compare-side--after { background-color: color-mix(in srgb, var(--color-accent) 4%, var(--color-bg)); }
+  .compare-label { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 1rem; }
+  .compare-label--before { color: var(--color-text-dim); }
+  .compare-label--after { color: var(--color-accent); }
+  .compare-text { font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.7; margin: 0; white-space: pre-wrap; word-break: break-word; }
+  @media (max-width: 640px) { .compare-block { grid-template-columns: 1fr; } }
+
+  /* Spectrum */
+  .spectrum-list { display: flex; flex-direction: column; gap: 0; margin: 1.75rem 0; }
+  .spectrum-item { padding: 2rem 0; border-top: 1px solid var(--color-border); }
+  .spectrum-header { display: flex; gap: 1rem; align-items: baseline; margin-bottom: 0.75rem; }
+  .spectrum-level { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--color-accent); flex-shrink: 0; }
+  .spectrum-header h3 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin: 0; }
+  .spectrum-item p { font-size: 0.9375rem; color: var(--color-text-muted); margin: 0; line-height: 1.7; }
+
+  /* FAQ */
+  .faq-list { display: flex; flex-direction: column; gap: 0; }
+  .faq-item { padding: 2rem 0; border-top: 1px solid var(--color-border); }
+  .faq-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .faq-item h3 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin: 0 0 0.625rem; }
+  .faq-item p { font-size: 0.9375rem !important; color: var(--color-text-muted) !important; margin: 0 !important; line-height: 1.7 !important; }
+
+  .link-arrow { font-size: 0.9375rem; color: var(--color-accent); display: inline-block; margin-top: 0.5rem; }
+  .link-arrow:hover { text-decoration: underline; }
+
+  .section--invite { padding: 4.5rem 0; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+</style>

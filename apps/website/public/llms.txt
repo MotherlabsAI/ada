@@ -1,33 +1,61 @@
 # Motherlabs
 
-> Motherlabs builds Ada — a semantic intent compiler that structures what you mean before Claude Code starts building.
+> Motherlabs is a one-person AI lab building the semantic layer between human intent and governed AI execution. Ada is the product. ~400 iterations since late 2024.
 
-## What Ada does
+## Ada
 
-Ada closes the intent gap. The intent gap is the structural distance between informal natural language requirements and the precise program behavior that gets built. Ada compiles your intent into governed artifacts before development starts.
+Ada is a semantic compiler for software intent. It runs before Claude Code starts. Where Claude Code builds, Ada formalizes — producing the governed artifacts that Claude Code builds against.
 
-Ada runs as a CLI tool. You describe what you want to build. Ada identifies blocking unknowns and asks the minimum set of questions to resolve them. Then it compiles a 7-stage pipeline — CTX (codebase context), INT (intent graph), PER (persona mapping), ENT (entity extraction), PRO (process synthesis), SYN (synthesis), GOV (governance) — and produces three artifact types.
+The core problem Ada solves: every AI-assisted development session begins with informal natural language input. The model infers what you mean and builds against that inference. The inference is usually close — but close is not right. This structural gap between informal intent and precise program behavior is the intent gap. Ada closes it by formalizing intent before building begins.
 
-## What Ada produces
+Ada takes natural language input through structured elicitation — a focused session that identifies and resolves blocking unknowns — then compiles through a 7-stage pipeline that produces three artifact types:
 
-- **CLAUDE.md** — The intent file. Claude Code reads this on every message turn, not just at session start. Contains what the project is, what it is not, and what constraints apply.
-- **agents/** — Specialized agent files scoped to bounded contexts. Each knows its domain and its constraints.
-- **hooks/** — Pre-tool guards that enforce constraints at every tool call boundary. Structural enforcement, not advisory suggestions.
+- **CLAUDE.md** — The intent file. Claude Code reads this on every message turn, injecting it into every context window. It encodes what the project is, what it is not, and what constraints govern all decisions.
+- **agents/** — Specialized agent files scoped to bounded contexts. Each agent knows its domain and constraints. Claude Code loads the relevant agent for each context automatically.
+- **hooks/** — Pre-tool guard files that execute at every tool call boundary. Not suggestions — structural enforcement. The hooks prevent Claude Code from building outside the specification.
 
-## How Ada differs from MEMORY.md
+### The 7-stage compilation pipeline
 
-Claude Code's auto-memory records what it observed as it worked — retrospective. Ada records what you intend before it starts — prospective. One captures drift after it happens. The other prevents it before building begins.
+1. **CTX** — Codebase context. Ada reads the existing project structure, detects package boundaries, and grounds the compilation in actual codebase state (or notes greenfield for new projects).
+2. **INT** — Intent graph. Ada structures the elicitation answers into a formal intent graph: goals, constraints, unknowns, and their relationships.
+3. **PER** — Persona mapping. Ada maps who uses the system, in what contexts, with what constraints — shaping how decisions propagate through the remaining stages.
+4. **ENT** — Entity extraction. Ada extracts the canonical domain entities: the objects, their properties, their invariants, and their bounded contexts.
+5. **PRO** — Process synthesis. Ada synthesizes the state machines and workflows: what transitions are valid, what triggers what, what is explicitly out of scope.
+6. **SYN** — Synthesis. Ada assembles all layers into the final output artifacts — CLAUDE.md, agent files, and hook files.
+7. **GOV** — Governance. The Governor evaluates coherence between compiled output and stated intent. If the score does not pass threshold, the pipeline iterates. A score of 0.94 means the output closely traces back to the input.
 
-## Research context
-
-The intent gap is formally documented in Microsoft Research (2026). The three-tier context architecture Ada implements (hot memory + domain specialists + enforcement layer) is independently validated by multiple papers on context engineering (2025–2026). Ada occupies the research gap between vibe coding (informal, unstructured) and agentic coding (formal, structured) documented in arxiv 2505.19443.
+Ada is installed as a CLI tool. You run `ada compile` in your project directory. Elicitation takes 5–10 minutes. Compilation takes 2–5 minutes. The result is hundreds of governed artifacts ready for Claude Code to use.
 
 ## Pages
 
-- [Homepage](https://motherlabs.ai/) — What Ada does, who it's for, the install command
-- [Ada](https://motherlabs.ai/ada) — Full explanation of the compiler, pipeline, and governed artifacts
-- [Get Started](https://motherlabs.ai/start) — Installation and first session
-- [Lab](https://motherlabs.ai/lab) — About Motherlabs and its origin
+- [Ada](/ada): Full explanation of Ada as a semantic compiler — what it is, the intent gap it closes, the 7-stage pipeline, what it produces, and who it is for.
+- [How Ada works](/ada/how-ada-works): Step-by-step walkthrough of all four phases — install, elicitation, 7-stage compilation, and artifacts on disk. Includes examples of elicitation dialogue and the compile output.
+- [The intent gap](/ada/intent-gap): Defines the intent gap formally (the structural distance between informal requirements and precise program behavior, documented by Microsoft Research 2026). Explains why it happens, why better prompts don't fix it, and how Ada closes it.
+- [Context engineering](/ada/context-engineering): Explains the three-layer context architecture Ada produces — hot memory (CLAUDE.md), domain specialists (agent files), and enforcement layer (hook files). Covers why a single CLAUDE.md is insufficient for complex projects.
+- [Why Claude Code loses context](/ada/claude-code-loses-context): Explains the three mechanisms behind context loss — session reset (context window cleared between sessions), attention dilution (long contexts degrade model attention), and subagent gap (spawned agents don't inherit parent context). Explains the three-layer fix.
+- [What is CLAUDE.md](/ada/what-is-claude-md): What CLAUDE.md is (the file Claude Code reads on every turn), what it does, what it cannot do alone, and where it sits in the full context architecture Ada produces.
+- [CLAUDE.md vs Memory](/ada/claude-md-vs-memory): Comparison of CLAUDE.md (prospective intent, governs every session) vs MEMORY.md and auto-memory (retrospective observations, helps AI remember). Explains why they solve different problems and why Ada is complementary to, not a replacement for, memory tools.
+- [What is a semantic compiler](/ada/what-is-a-semantic-compiler): Defines the term — a system that takes informal natural language intent as input and produces structured, governed artifacts as output. Contrasts with traditional compilers (formal input → machine code). Explains why AI development needs a formal compilation step between description and build.
+- [Get started](/start): Installation instructions, first-session walkthrough, and setup guide for Ada.
+- [Lab](/lab): Motherlabs origin, beliefs, and the Ada product overview. One-person lab. The problem is the gap between people with ideas and working software.
+
+## Key concepts
+
+**Intent gap** — The structural distance between informal natural language requirements and the precise program behavior that gets built. When you describe a project in chat, the model infers what you mean. That inference is not your intent. The gap between guess and actual intent is the intent gap. Documented formally by Microsoft Research (2026).
+
+**Intent formalization** — The process of converting informal natural language intent into a persistent, structured artifact that governs downstream behavior. Ada does this through structured elicitation followed by 7-stage compilation. The formalized intent persists across all Claude Code sessions.
+
+**Semantic compiler** — A system that takes informal human intent as input and produces structured, governed artifacts as output. Analogous to a traditional compiler (source code → machine code) but operating on meaning rather than syntax. The "compilation" is the formalization step. Ada is a semantic compiler for software intent.
+
+**Provenance** — The traceable lineage from intent statement to compiled artifact. Ada's pipeline maintains provenance so every constraint in CLAUDE.md traces back to a specific statement in the elicitation session. Postcodes (content-addressed identifiers) anchor each artifact to its origin.
+
+**Governed execution** — Building that occurs within constraints encoded by a prior formalization step. When Claude Code builds against Ada's artifacts, it operates under governed execution — the hook files structurally prevent tool calls that violate intent constraints.
+
+**Pre-tool hooks** — Files executed at every Claude Code tool call boundary before the tool runs. Ada compiles these from extracted invariants and constraints. They are structural enforcement, not advisory prompts. A hook that rejects a tool call cannot be overridden by conversation.
+
+**Bounded context** — A domain boundary within the system where a specific set of entities, terms, and invariants apply. Ada's ENT stage extracts bounded contexts from the intent graph. Each agent file is scoped to one bounded context, preventing cross-domain constraint leakage.
+
+**Elicitation** — Ada's structured pre-compilation dialogue. Not a general chat — a focused session designed to surface the minimum set of blocking unknowns that, if unresolved, would cause the wrong system to be built. Ada asks semantic questions (behavior, constraints, scope) not technical ones (frameworks, libraries, patterns).
 
 ## Install
 
@@ -35,7 +63,12 @@ The intent gap is formally documented in Microsoft Research (2026). The three-ti
 npm install -g @motherlabs/ada
 ```
 
+Or clone directly:
+
+```
+git clone https://github.com/alexrozex/ada
+```
+
 ## Contact
 
-Built by one person. ~400 iterations since late 2024.
-Questions: reach out via GitHub.
+Built by one person. Questions via GitHub.
