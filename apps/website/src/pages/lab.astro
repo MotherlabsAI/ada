@@ -56,7 +56,8 @@ import Footer from '../components/Footer.astro';
     </section>
 
     <!-- ─── BELIEFS ───────────────────────────────────────────────────────── -->
-    <section class="section section--surface">
+    <section class="section section--surface section--sym">
+      <span class="sym-watermark sym-watermark--right" aria-hidden="true">◆</span>
       <div class="container">
         <p class="section-eyebrow">What we believe</p>
         <div class="beliefs">
@@ -120,10 +121,10 @@ import Footer from '../components/Footer.astro';
         <div class="split-body">
           <h2>Ada</h2>
           <p>
-            Ada is the semantic compiler that came out of this lab. It runs before Claude Code
-            starts. You describe what you want to build — at whatever level you think in.
-            Ada identifies blocking unknowns, asks the minimum set of questions to resolve them,
-            then compiles a 7-stage pipeline that produces three governed artifacts.
+            Ada came out of this lab. It runs before Claude Code starts. You describe what you
+            want to build — at whatever level you think in. Ada identifies blocking unknowns,
+            asks the minimum set of questions to resolve them, then compiles your intent into
+            CLAUDE.md, agent files, and hook files that Claude Code reads every session.
           </p>
 
           <div class="ada-tui">
@@ -151,7 +152,7 @@ import Footer from '../components/Footer.astro';
               <div class="tui-output">
                 <div class="tui-out-row"><span class="tui-out-file">CLAUDE.md</span><span class="tui-out-action">written</span></div>
                 <div class="tui-out-row"><span class="tui-out-file">agents/</span><span class="tui-out-action">8 files written</span></div>
-                <div class="tui-out-row"><span class="tui-out-file">hooks/</span><span class="tui-out-action">247 files written</span></div>
+                <div class="tui-out-row"><span class="tui-out-file">hooks/</span><span class="tui-out-action">pre-tool guards written</span></div>
               </div>
             </div>
           </div>
@@ -226,7 +227,7 @@ import Footer from '../components/Footer.astro';
   .split-label { padding-top: 0.35rem; }
   .label-text { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-dim); }
   .split-body { display: flex; flex-direction: column; gap: 1.5rem; }
-  .split-body p { font-size: 1.0625rem; color: var(--color-text-muted); margin: 0; line-height: 1.8; }
+  .split-body p { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-text-muted); margin: 0; line-height: 1.85; }
   .split-body h2 { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 400; color: var(--color-text); margin: 0; }
 
   blockquote { border-left: 2px solid var(--color-accent); padding: 0.75rem 1.5rem; margin: 0; background-color: var(--color-surface); }
@@ -241,13 +242,13 @@ import Footer from '../components/Footer.astro';
   .belief-num { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; color: var(--color-accent); padding-top: 0.3rem; flex-shrink: 0; letter-spacing: 0.05em; }
   .belief-body { display: flex; flex-direction: column; gap: 0.75rem; }
   .belief-body h3 { font-size: 0.9375rem; font-weight: 600; color: var(--color-text); margin: 0; line-height: 1.4; }
-  .belief-body p { font-size: 0.875rem; color: var(--color-text-muted); margin: 0; line-height: 1.75; }
+  .belief-body p { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--color-text-muted); margin: 0; line-height: 1.75; }
 
   /* ── Ada TUI showcase ── */
   .ada-tui {
     background-color: #0F0E0C;
     border: 1px solid #2E2921;
-    border-radius: 6px;
+    border-radius: 12px;
     overflow: hidden;
     font-family: var(--font-mono);
   }
@@ -302,6 +303,23 @@ import Footer from '../components/Footer.astro';
   .ada-link-primary:hover { color: var(--color-accent-hover); }
   .ada-link-secondary { font-size: 0.9375rem; color: var(--color-text-muted); transition: color 120ms ease; }
   .ada-link-secondary:hover { color: var(--color-text); }
+
+  /* ── Symbol watermarks ── */
+  .section--sym { position: relative; overflow: hidden; }
+  .sym-watermark {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: clamp(14rem, 28vw, 22rem);
+    line-height: 1;
+    color: var(--color-text);
+    opacity: 0.028;
+    user-select: none;
+    pointer-events: none;
+    top: 50%;
+    left: -3rem;
+    transform: translateY(-50%);
+  }
+  .sym-watermark--right { left: auto; right: -3rem; }
 
   /* ── Contact ── */
   .section--contact { border-top: 1px solid var(--color-border); }

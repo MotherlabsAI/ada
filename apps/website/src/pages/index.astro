@@ -10,7 +10,7 @@ const softwareSchema = {
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'macOS, Linux, Windows',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  description: 'Ada structures your intent before Claude Code starts. A 7-stage semantic compiler that produces CLAUDE.md, agents/, and hooks/ — the governed context layer your AI builds against.',
+  description: 'Ada structures your intent before Claude Code starts — producing CLAUDE.md, agents, and hooks that Claude Code reads every session. Requirements elicitation before building begins.',
   url: 'https://motherlabs.ai',
   publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
 };
@@ -24,7 +24,7 @@ const faqSchema = {
       name: 'What is Ada?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Ada is a semantic compiler for software intent. You describe what you want to build, Ada asks clarifying questions, then compiles a governed context layer — CLAUDE.md, agent files, and hook files — that Claude Code builds against. It runs before development, not during.',
+        text: 'Ada closes the intent gap. You describe what you want to build — in plain language, no technical vocabulary required. Ada runs structured elicitation to surface blocking unknowns, then compiles your intent into CLAUDE.md, agent files, and hook files that Claude Code reads every session. It runs before development, not during.',
       },
     },
     {
@@ -48,7 +48,7 @@ const faqSchema = {
       name: 'What is the intent gap?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'The intent gap is the structural distance between informal natural language requirements and the precise program behavior that gets built. Documented in Microsoft Research (2026), the gap exists because informal intent is never formalized before building starts. Ada closes this gap by compiling intent into governed artifacts before Claude Code touches code.',
+        text: 'The intent gap is the structural distance between informal natural language requirements and the precise program behavior that gets built. Named in Microsoft Research (2026) as a grand challenge for reliable AI-assisted development. Ada closes it by formalizing intent into CLAUDE.md, agent files, and hook files before Claude Code starts.',
       },
     },
   ],
@@ -56,8 +56,8 @@ const faqSchema = {
 ---
 
 <Layout
-  title="Ada — Semantic intent compiler for Claude Code | Motherlabs"
-  description="Ada structures your intent before Claude Code starts. A 7-stage compiler that produces CLAUDE.md, agents, and hooks — less distance between what you mean and what gets built."
+  title="Ada — Close the intent gap before Claude Code starts | Motherlabs"
+  description="Ada structures your intent before Claude Code starts. Requirements elicitation that produces CLAUDE.md, agents, and hooks — less distance between what you mean and what gets built."
   schemas={[softwareSchema, faqSchema]}
 >
   <Nav />
@@ -126,7 +126,7 @@ const faqSchema = {
             </div>
             <div class="output-row">
               <span class="output-file">hooks/</span>
-              <span class="output-action">247 files written</span>
+              <span class="output-action">pre-tool guards written</span>
             </div>
           </div>
         </div>
@@ -149,7 +149,8 @@ const faqSchema = {
 
     <!-- ─── RECOGNITION ──────────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section animate-in">
+    <section class="section section--sym animate-in">
+      <span class="sym-watermark" aria-hidden="true">◇</span>
       <div class="container container--prose">
         <p class="hook">
           You describe something to Claude Code. It builds.
@@ -225,7 +226,8 @@ const faqSchema = {
 
     <!-- ─── ARTIFACT ─────────────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section animate-in">
+    <section class="section section--sym animate-in">
+      <span class="sym-watermark sym-watermark--right" aria-hidden="true">◆</span>
       <div class="container container--prose">
         <p class="section-label">What Ada produces</p>
 
@@ -241,7 +243,7 @@ const faqSchema = {
           </div>
           <div class="file-row">
             <code class="file-name">hooks/</code>
-            <span class="file-desc">247 pre-tool guards that run before Claude Code takes actions. The constraints from your intent, enforced at the boundary where decisions are made.</span>
+            <span class="file-desc">Pre-tool guards that run before Claude Code takes any action. The constraints from your intent, enforced at the boundary where decisions are made.</span>
           </div>
         </div>
 
@@ -274,7 +276,8 @@ const faqSchema = {
 
     <!-- ─── INVITATION ───────────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section section--invite animate-in">
+    <section class="section section--invite section--sym animate-in">
+      <span class="sym-watermark sym-watermark--center" aria-hidden="true">◈</span>
       <div class="container container--prose">
         <div class="install-block">
           <span class="install-prompt">$</span>
@@ -490,7 +493,7 @@ const faqSchema = {
     color: var(--color-bg);
     background-color: var(--color-accent);
     padding: 0.7rem 1.5rem;
-    border-radius: 3px;
+    border-radius: 8px;
     transition: background-color 0.12s ease;
     display: inline-block;
   }
@@ -508,6 +511,36 @@ const faqSchema = {
 
   .btn-ghost:hover {
     color: var(--color-text);
+  }
+
+  /* ── Symbol watermarks ───────────────────────────────────────────────── */
+  .section--sym {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sym-watermark {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: clamp(14rem, 28vw, 22rem);
+    line-height: 1;
+    color: var(--color-text);
+    opacity: 0.03;
+    user-select: none;
+    pointer-events: none;
+    top: 50%;
+    left: -3rem;
+    transform: translateY(-50%);
+  }
+
+  .sym-watermark--right {
+    left: auto;
+    right: -3rem;
+  }
+
+  .sym-watermark--center {
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
   /* ── Sections ─────────────────────────────────────────────────────────── */
@@ -609,15 +642,17 @@ const faqSchema = {
   }
 
   .file-desc {
-    font-size: 0.9375rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
     color: var(--color-text-muted);
-    line-height: 1.6;
+    line-height: 1.65;
   }
 
   /* CLAUDE.md excerpt */
   .excerpt-block {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
+    border-radius: 10px;
     margin-bottom: 1.75rem;
     overflow: hidden;
   }
@@ -700,7 +735,8 @@ const faqSchema = {
   }
 
   .trust-signal {
-    font-size: 0.875rem !important;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem !important;
     color: var(--color-text-dim) !important;
     margin: 0 0 1.5rem !important;
   }
