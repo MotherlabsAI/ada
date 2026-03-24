@@ -4,18 +4,79 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Instrument Serif", Georgia, ui-serif, serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-
-  /* motherTUI palette — exact values from cli/src/ui/design-system.ts */
-  --color-bg: #0d0d0d;
-  --color-surface: #151518;
-  --color-surface-raised: #1c1c21;
-  --color-border: #1c1c21;
-  --color-text: #e8e6df;
-  --color-text-muted: #9c9a92;
-  --color-text-dim: #5e5d58;
-  --color-accent: #8ba4c4;
-  --color-accent-hover: #afc3d9;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Ada / Motherlabs colour palette
+   Accent: warm amber-copper — HSL(32°, 65%, 48%) dark / HSL(32°, 72%, 36%) light
+   In Anthropic's warm orange family, shifted toward gold. Pairs subliminally.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Dark mode — default */
+:root {
+  --color-bg: #100f0d;
+  --color-surface: #181612;
+  --color-surface-raised: #211e19;
+  --color-border: #2e2921;
+  --color-text: #f0e9df;
+  --color-text-muted: #a89278;
+  --color-text-dim: #6b5643;
+  --color-accent: #c8762c;
+  --color-accent-hover: #da8e3e;
+  --color-accent-subtle: rgba(200, 118, 44, 0.13);
+  color-scheme: dark;
+}
+
+/* Light mode — system preference */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --color-bg: #f8f4ee;
+    --color-surface: #fdfaf5;
+    --color-surface-raised: #ede8df;
+    --color-border: #ddd6ca;
+    --color-text: #1c1813;
+    --color-text-muted: #6b5643;
+    --color-text-dim: #a89278;
+    --color-accent: #9a5620;
+    --color-accent-hover: #7d4318;
+    --color-accent-subtle: rgba(154, 86, 32, 0.1);
+    color-scheme: light;
+  }
+}
+
+/* Light mode — explicit toggle */
+[data-theme="light"] {
+  --color-bg: #f8f4ee;
+  --color-surface: #fdfaf5;
+  --color-surface-raised: #ede8df;
+  --color-border: #ddd6ca;
+  --color-text: #1c1813;
+  --color-text-muted: #6b5643;
+  --color-text-dim: #a89278;
+  --color-accent: #9a5620;
+  --color-accent-hover: #7d4318;
+  --color-accent-subtle: rgba(154, 86, 32, 0.1);
+  color-scheme: light;
+}
+
+/* Dark mode — explicit toggle (for system-light users) */
+[data-theme="dark"] {
+  --color-bg: #100f0d;
+  --color-surface: #181612;
+  --color-surface-raised: #211e19;
+  --color-border: #2e2921;
+  --color-text: #f0e9df;
+  --color-text-muted: #a89278;
+  --color-text-dim: #6b5643;
+  --color-accent: #c8762c;
+  --color-accent-hover: #da8e3e;
+  --color-accent-subtle: rgba(200, 118, 44, 0.13);
+  color-scheme: dark;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Base styles
+   ───────────────────────────────────────────────────────────────────────────── */
 
 @layer base {
   *,
@@ -31,6 +92,9 @@
     font-size: 17px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    transition:
+      background-color 200ms ease,
+      color 200ms ease;
   }
 
   body {
@@ -42,8 +106,8 @@
   h2 {
     font-family: var(--font-serif);
     font-weight: 400;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
     color: var(--color-text);
   }
 
@@ -57,6 +121,7 @@
   a {
     color: var(--color-accent);
     text-decoration: none;
+    transition: color 120ms ease;
   }
 
   a:hover {
@@ -82,22 +147,26 @@
   }
 }
 
-/* ── Animations ────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Animations
+   ───────────────────────────────────────────────────────────────────────────── */
 
 @keyframes diamond-breathe {
   0%,
   100% {
-    opacity: 0.35;
+    opacity: 0.3;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.85;
+    opacity: 0.9;
+    transform: scale(1.06);
   }
 }
 
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -105,25 +174,83 @@
   }
 }
 
-/* Scroll-triggered entrance. JS adds .is-visible when element enters viewport. */
+@keyframes cursor-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes compile-tick {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Scroll-triggered entrance */
 .animate-in {
   opacity: 0;
 }
 
 .animate-in.is-visible {
-  animation: fade-in-up 200ms ease forwards;
+  animation: fade-in-up 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --color-bg: #f5f4f0;
-    --color-surface: #ffffff;
-    --color-surface-raised: #eeede9;
-    --color-border: #e0dfd9;
-    --color-text: #1a1a18;
-    --color-text-muted: #5e5d58;
-    --color-text-dim: #9c9a92;
-    --color-accent: #8ba4c4;
-    --color-accent-hover: #6b8aad;
+/* Staggered children */
+.animate-in.is-visible .stagger-1 {
+  animation-delay: 80ms;
+}
+.animate-in.is-visible .stagger-2 {
+  animation-delay: 160ms;
+}
+.animate-in.is-visible .stagger-3 {
+  animation-delay: 240ms;
+}
+.animate-in.is-visible .stagger-4 {
+  animation-delay: 320ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-in,
+  .animate-in.is-visible {
+    opacity: 1;
+    animation: none;
+  }
+
+  @keyframes diamond-breathe {
+    0%,
+    100% {
+      opacity: 0.6;
+      transform: none;
+    }
+  }
+
+  @keyframes cursor-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  html {
+    transition: none;
   }
 }

@@ -34,6 +34,15 @@ function isActive(href: string) {
       ))}
     </ul>
 
+    <button class="nav-theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
+      <svg class="theme-icon theme-icon--sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+      </svg>
+      <svg class="theme-icon theme-icon--moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+      </svg>
+    </button>
+
     <a href="/start" class="nav-cta">
       Get Started
     </a>
@@ -147,6 +156,29 @@ function isActive(href: string) {
     color: var(--color-bg);
   }
 
+  .nav-theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: 2px;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+  }
+
+  .nav-theme-toggle:hover {
+    color: var(--color-text);
+    border-color: var(--color-text-dim);
+    background-color: var(--color-surface-raised);
+  }
+
+  .theme-icon { display: block; }
+
   .nav-mobile-toggle {
     display: none;
     flex-direction: column;
@@ -212,6 +244,16 @@ function isActive(href: string) {
 </style>
 
 <script>
+  // Theme toggle
+  const themeBtn = document.getElementById('theme-toggle');
+  themeBtn?.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('ada-theme', next);
+  });
+
+  // Mobile nav toggle
   const toggle = document.getElementById('mobile-toggle');
   const menu = document.getElementById('mobile-menu');
 

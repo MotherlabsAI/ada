@@ -32,6 +32,15 @@ const orgSchema = {
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Theme: set before first paint to prevent flash -->
+    <script is:inline>
+      (function() {
+        var saved = localStorage.getItem('ada-theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = saved || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
