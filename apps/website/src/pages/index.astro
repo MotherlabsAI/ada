@@ -66,72 +66,10 @@ const faqSchema = {
 
     <!-- ─── HERO ─────────────────────────────────────────────────────────── -->
     <section class="hero">
-      <div class="hero-glow" aria-hidden="true"></div>
-      <div class="container">
-
-        <!-- Identity mark -->
-        <span class="hero-diamond" aria-hidden="true">◈</span>
-
-        <!-- Terminal compile block — answers "what is this?" before headline -->
-        <div class="compile-block" aria-label="Ada compile output">
-          <div class="compile-prompt">
-            <span class="prompt-char">$</span>
-            <span class="prompt-cmd">ada compile</span>
-          </div>
-          <div class="compile-stages">
-            <div class="stage-row">
-              <span class="stage-glyph stage-glyph--done">◆</span>
-              <span class="stage-label">CTX</span>
-              <span class="stage-desc">codebase context</span>
-            </div>
-            <div class="stage-row">
-              <span class="stage-glyph stage-glyph--done">◆</span>
-              <span class="stage-label">INT</span>
-              <span class="stage-desc">intent graph</span>
-            </div>
-            <div class="stage-row">
-              <span class="stage-glyph stage-glyph--done">◆</span>
-              <span class="stage-label">PER</span>
-              <span class="stage-desc">persona mapping</span>
-            </div>
-            <div class="stage-row">
-              <span class="stage-glyph stage-glyph--done">◆</span>
-              <span class="stage-label">ENT</span>
-              <span class="stage-desc">entity extraction</span>
-            </div>
-            <div class="stage-row">
-              <span class="stage-glyph stage-glyph--done">◆</span>
-              <span class="stage-label">PRO</span>
-              <span class="stage-desc">process synthesis</span>
-            </div>
-            <div class="stage-row">
-              <span class="stage-glyph stage-glyph--done">◆</span>
-              <span class="stage-label">SYN</span>
-              <span class="stage-desc">synthesis</span>
-            </div>
-            <div class="stage-row">
-              <span class="stage-glyph stage-glyph--gov">◈</span>
-              <span class="stage-label">GOV</span>
-              <span class="stage-desc stage-approved">approved &nbsp; 0.94</span>
-            </div>
-          </div>
-          <div class="compile-output">
-            <div class="output-row">
-              <span class="output-file">CLAUDE.md</span>
-              <span class="output-action">written</span>
-            </div>
-            <div class="output-row">
-              <span class="output-file">agents/</span>
-              <span class="output-action">8 files written</span>
-            </div>
-            <div class="output-row">
-              <span class="output-file">hooks/</span>
-              <span class="output-action">pre-tool guards written</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Headline and CTA -->
+      <div class="hero-image-wrap" aria-hidden="true">
+        <img src="/intent-notes.jpg" alt="" class="hero-image" loading="eager" decoding="async" />
+      </div>
+      <div class="container hero-content">
         <h1 class="hero-headline">
           Between what you mean<br />and what gets built,<br />something gets lost.
         </h1>
@@ -143,151 +81,134 @@ const faqSchema = {
           <a href="/start" class="btn-primary">Get started</a>
           <a href="/ada" class="btn-ghost">What is Ada? &rarr;</a>
         </div>
-
       </div>
     </section>
 
-    <!-- ─── RECOGNITION ──────────────────────────────────────────────────── -->
+    <!-- ─── ADA CLI DEMO ──────────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section section--sym animate-in">
-      <span class="sym-watermark" aria-hidden="true">◇</span>
-      <div class="container container--prose">
-        <p class="hook">
-          You describe something to Claude Code. It builds.
-          The next session, it builds from where it thinks it left off —
-          which isn't quite where you left off.
-          By the time the drift is visible, rewinding is harder than starting over.
-        </p>
-        <p>
-          The gap is not a prompt problem. It is a structural one.
-          Your intent was never written down in a form that persists.
-          It lived in a chat window. The chat window closed.
-        </p>
-        <p>
-          Most tools address this after the fact — better prompts,
-          auto-memory, clearer mid-build instructions. These help.
-          They don't fix the root.
-        </p>
-      </div>
-    </section>
+    <section class="demo-section">
+      <div class="container">
+        <div class="demo-wrap">
 
-    <!-- ─── EDITORIAL IMAGE ──────────────────────────────────────────────── -->
-    <div class="editorial-image animate-in">
-      <img
-        src="/intent-notes.jpg"
-        alt="A person standing in a bright studio, contemplating hundreds of handwritten notes suspended in space — the visual metaphor for unstructured intent."
-        class="editorial-img"
-        loading="lazy"
-        decoding="async"
-      />
-      <p class="editorial-caption">
-        Unstructured intent, suspended. Ada compiles it into something that governs.
-      </p>
-    </div>
+          <!-- Compile block -->
+          <div class="compile-block" aria-label="Ada compile output">
+            <div class="compile-prompt">
+              <span class="prompt-char">$</span>
+              <span class="prompt-cmd">ada compile</span>
+            </div>
+            <div class="compile-stages">
+              <div class="stage-row">
+                <span class="stage-glyph stage-glyph--done">◆</span>
+                <span class="stage-label">CTX</span>
+                <span class="stage-desc">codebase context</span>
+              </div>
+              <div class="stage-row">
+                <span class="stage-glyph stage-glyph--done">◆</span>
+                <span class="stage-label">INT</span>
+                <span class="stage-desc">intent graph</span>
+              </div>
+              <div class="stage-row">
+                <span class="stage-glyph stage-glyph--done">◆</span>
+                <span class="stage-label">PER</span>
+                <span class="stage-desc">persona mapping</span>
+              </div>
+              <div class="stage-row">
+                <span class="stage-glyph stage-glyph--done">◆</span>
+                <span class="stage-label">ENT</span>
+                <span class="stage-desc">entity extraction</span>
+              </div>
+              <div class="stage-row">
+                <span class="stage-glyph stage-glyph--done">◆</span>
+                <span class="stage-label">PRO</span>
+                <span class="stage-desc">process synthesis</span>
+              </div>
+              <div class="stage-row">
+                <span class="stage-glyph stage-glyph--done">◆</span>
+                <span class="stage-label">SYN</span>
+                <span class="stage-desc">synthesis</span>
+              </div>
+              <div class="stage-row stage-row--gov">
+                <span class="stage-glyph stage-glyph--gov">◈</span>
+                <span class="stage-label">GOV</span>
+                <span class="stage-desc stage-approved">approved &nbsp; 0.94</span>
+              </div>
+            </div>
+            <div class="compile-output">
+              <div class="output-row output-row--claude">
+                <span class="output-file">CLAUDE.md</span>
+                <span class="output-action">written</span>
+              </div>
+              <div class="output-row output-row--agents">
+                <span class="output-file">agents/</span>
+                <span class="output-action">8 files written</span>
+              </div>
+              <div class="output-row output-row--hooks">
+                <span class="output-file">hooks/</span>
+                <span class="output-action">pre-tool guards written</span>
+              </div>
+            </div>
+          </div>
 
-    <!-- ─── SEPARATION (the differentiator) ──────────────────────────────── -->
-    <hr class="divider" />
-    <section class="section animate-in">
-      <div class="container container--prose">
-        <div class="distinction">
-          <p class="distinction-line">
-            Claude Code's auto-memory records what it observed as it worked.
-          </p>
-          <p class="distinction-line">
-            Ada records what you intend before it starts.
-          </p>
-          <p class="distinction-caption">
-            One is retrospective. One is prospective. They are not the same thing.
-          </p>
+          <!-- Callout annotations -->
+          <div class="callouts">
+            <div class="callout callout--gov">
+              <div class="callout-dot"></div>
+              <div class="callout-body">
+                <span class="callout-label">GOV — approved 0.94</span>
+                <p class="callout-text">Semantic coherence validated. The Governor scores your intent against the compiled blueprint before writing any files.</p>
+              </div>
+            </div>
+            <div class="callout callout--claude">
+              <div class="callout-dot"></div>
+              <div class="callout-body">
+                <span class="callout-label">CLAUDE.md</span>
+                <p class="callout-text">Injected into every Claude Code context window, every session. Not a one-time setup — a persistent intent anchor.</p>
+              </div>
+            </div>
+            <div class="callout callout--hooks">
+              <div class="callout-dot"></div>
+              <div class="callout-body">
+                <span class="callout-label">hooks/</span>
+                <p class="callout-text">Pre-tool guards that enforce your constraints at every tool call boundary. Before Claude Code acts, not after.</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
 
-    <!-- ─── MECHANISM ────────────────────────────────────────────────────── -->
+    <!-- ─── ESSENTIAL INFO ───────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section animate-in">
-      <div class="container container--prose">
-        <p class="lead">Ada is the step before.</p>
-        <p>
-          You describe what you want to build — at whatever level you think in.
-          Ada asks you the questions that surface what you actually mean.
-          Not framework questions. Not library questions.
-          Questions about what the thing should do and be.
-        </p>
-        <p>
-          You answer. Ada compiles. The files land on disk.
-        </p>
-        <p class="result-statement">
-          Less distance between what you described and what gets built.<br />
-          Not zero. Less.
-        </p>
-      </div>
-    </section>
+    <section class="essential-section">
+      <div class="container container--narrow">
 
-    <!-- ─── ARTIFACT ─────────────────────────────────────────────────────── -->
-    <hr class="divider" />
-    <section class="section section--sym animate-in">
-      <span class="sym-watermark sym-watermark--right" aria-hidden="true">◆</span>
-      <div class="container container--prose">
-        <p class="section-label">What Ada produces</p>
-
-        <!-- File listing — ls-style, not a card grid -->
-        <div class="file-listing">
-          <div class="file-row">
-            <code class="file-name">CLAUDE.md</code>
-            <span class="file-desc">Claude Code reads this on every message turn — not just at session start. What the project is. What it is not. What constraints apply. Injected into every context window.</span>
+        <div class="output-list">
+          <div class="output-item">
+            <code class="out-file">CLAUDE.md</code>
+            <span class="out-desc">The intent file. Claude Code reads this on every message turn — what the system is, what it is not, what constraints apply.</span>
           </div>
-          <div class="file-row">
-            <code class="file-name">agents/</code>
-            <span class="file-desc">Specialized agents scoped to bounded contexts. Each knows its domain and its constraints.</span>
+          <div class="output-item">
+            <code class="out-file">agents/</code>
+            <span class="out-desc">Specialist agents scoped to bounded contexts. Each knows its domain and its constraints.</span>
           </div>
-          <div class="file-row">
-            <code class="file-name">hooks/</code>
-            <span class="file-desc">Pre-tool guards that run before Claude Code takes any action. The constraints from your intent, enforced at the boundary where decisions are made.</span>
+          <div class="output-item">
+            <code class="out-file">hooks/</code>
+            <span class="out-desc">Pre-tool guards. Your intent, enforced at the boundary where decisions are made.</span>
           </div>
         </div>
 
-        <!-- CLAUDE.md excerpt — show a real one, not just describe it -->
-        <div class="excerpt-block" aria-label="Example CLAUDE.md excerpt">
-          <div class="excerpt-label">CLAUDE.md &mdash; excerpt</div>
-          <div class="excerpt-content">
-            <div class="excerpt-line excerpt-heading"># Analytics Dashboard</div>
-            <div class="excerpt-line excerpt-blank"></div>
-            <div class="excerpt-line excerpt-key">What this project is:</div>
-            <div class="excerpt-line excerpt-val">A self-hosted web analytics dashboard. Privacy-first.</div>
-            <div class="excerpt-line excerpt-val">No cookies. Tracks pageviews, unique visitors, referrers.</div>
-            <div class="excerpt-line excerpt-blank"></div>
-            <div class="excerpt-line excerpt-key">What it is not:</div>
-            <div class="excerpt-line excerpt-val">Not a marketing platform. Not a cookie-based tracker.</div>
-            <div class="excerpt-line excerpt-blank"></div>
-            <div class="excerpt-line excerpt-key">Constraints that apply:</div>
-            <div class="excerpt-line excerpt-val">No third-party analytics. Single-tenant deployment.</div>
-            <div class="excerpt-line excerpt-val">Data stays on the server. No external egress.</div>
+        <div class="essential-cta">
+          <div class="install-block">
+            <span class="install-prompt">$</span>
+            <code class="install-cmd">ada compile</code>
+          </div>
+          <div class="essential-links">
+            <a href="/start" class="btn-primary">Get started</a>
+            <a href="/ada" class="btn-ghost">Read about Ada &rarr;</a>
           </div>
         </div>
 
-        <p class="file-note">
-          Plain files. You read them before handing to Claude Code.
-          If they match what you meant: proceed.
-          If not: run Ada again with the correction.
-        </p>
-      </div>
-    </section>
-
-    <!-- ─── INVITATION ───────────────────────────────────────────────────── -->
-    <hr class="divider" />
-    <section class="section section--invite section--sym animate-in">
-      <span class="sym-watermark sym-watermark--center" aria-hidden="true">◈</span>
-      <div class="container container--prose">
-        <div class="install-block">
-          <span class="install-prompt">$</span>
-          <code class="install-cmd">git clone https://github.com/alexrozex/ada</code>
-        </div>
-        <p class="install-note">Early access — npm package coming soon.</p>
-        <p class="trust-signal">
-          Built by one person. ~400 iterations since late 2024.
-        </p>
-        <a href="/ada" class="btn-ghost invite-link">Read about Ada &rarr;</a>
       </div>
     </section>
 
@@ -304,11 +225,10 @@ const faqSchema = {
     padding: 0 clamp(1.5rem, 5vw, 4rem);
   }
 
-  .container--prose {
-    max-width: 42rem;
+  .container--narrow {
+    max-width: 44rem;
   }
 
-  /* ── Dividers ────────────────────────────────────────────────────────── */
   .divider {
     border: none;
     border-top: 1px solid var(--color-border);
@@ -317,166 +237,59 @@ const faqSchema = {
 
   /* ── Hero ────────────────────────────────────────────────────────────── */
   .hero {
-    padding: 7rem 0 5rem;
     position: relative;
+    min-height: 88vh;
+    display: flex;
+    align-items: center;
     overflow: hidden;
   }
 
-  /* Ambient glow behind compile block */
-  .hero-glow {
+  .hero-image-wrap {
     position: absolute;
-    top: -6rem;
-    left: -8rem;
-    width: 52rem;
-    height: 36rem;
-    background: radial-gradient(ellipse at 30% 40%, var(--color-accent-subtle) 0%, transparent 65%);
-    pointer-events: none;
+    inset: 0;
     z-index: 0;
-    animation: glow-pulse 6s ease-in-out infinite;
   }
 
-  .hero .container {
+  .hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+    opacity: 0.09;
+    display: block;
+  }
+
+  /* Light mode: less opacity since image is bright */
+  @media (prefers-color-scheme: light) {
+    .hero-image { opacity: 0.06; }
+  }
+  [data-theme="light"] .hero-image { opacity: 0.06; }
+  [data-theme="dark"] .hero-image { opacity: 0.09; }
+
+  .hero-content {
     position: relative;
     z-index: 1;
+    padding-top: 6rem;
+    padding-bottom: 6rem;
   }
 
-  /* Identity mark */
-  .hero-diamond {
-    font-family: var(--font-mono);
-    font-size: 1rem;
-    color: var(--color-accent);
-    display: block;
-    margin-bottom: 2.25rem;
-    animation: diamond-breathe 3s ease-in-out infinite;
-  }
-
-  /* Compile block */
-  .compile-block {
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    line-height: 1.6;
-    margin-bottom: 3.5rem;
-    display: inline-flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .compile-prompt {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    opacity: 0;
-    animation: fade-in-up 180ms ease forwards;
-    animation-delay: 80ms;
-  }
-
-  .prompt-char {
-    color: var(--color-text-dim);
-  }
-
-  .prompt-cmd {
-    color: var(--color-text-muted);
-  }
-
-  .compile-stages {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .stage-row {
-    display: grid;
-    grid-template-columns: 1rem 2.5rem 1fr;
-    align-items: center;
-    gap: 0.5rem;
-    opacity: 0;
-    animation: fade-in-up 180ms ease forwards;
-  }
-
-  .stage-row:nth-child(1) { animation-delay: 200ms; }
-  .stage-row:nth-child(2) { animation-delay: 310ms; }
-  .stage-row:nth-child(3) { animation-delay: 420ms; }
-  .stage-row:nth-child(4) { animation-delay: 530ms; }
-  .stage-row:nth-child(5) { animation-delay: 640ms; }
-  .stage-row:nth-child(6) { animation-delay: 750ms; }
-  .stage-row:nth-child(7) { animation-delay: 860ms; }
-
-  .stage-glyph {
-    font-size: 0.65rem;
-    line-height: 1;
-  }
-
-  .stage-glyph--done {
-    color: var(--color-text-dim);
-  }
-
-  .stage-glyph--gov {
-    color: var(--color-accent);
-  }
-
-  .stage-label {
-    color: var(--color-text-dim);
-    letter-spacing: 0.04em;
-    font-size: 0.75rem;
-  }
-
-  .stage-desc {
-    color: var(--color-text-muted);
-  }
-
-  .stage-approved {
-    color: var(--color-accent);
-    font-weight: 500;
-  }
-
-  .compile-output {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    padding-top: 0.25rem;
-    border-top: 1px solid var(--color-border);
-  }
-
-  .output-row {
-    display: grid;
-    grid-template-columns: 10rem 1fr;
-    gap: 1rem;
-    opacity: 0;
-    animation: fade-in-up 180ms ease forwards;
-  }
-
-  .output-row:nth-child(1) { animation-delay: 1020ms; }
-  .output-row:nth-child(2) { animation-delay: 1100ms; }
-  .output-row:nth-child(3) { animation-delay: 1180ms; }
-
-  .output-file {
-    color: var(--color-text);
-    font-weight: 500;
-  }
-
-  .output-action {
-    color: var(--color-text-dim);
-  }
-
-  /* Headline */
   .hero-headline {
     font-family: var(--font-serif);
-    font-size: clamp(2.25rem, 5vw, 3.75rem);
+    font-size: clamp(2.5rem, 5.5vw, 4.25rem);
     font-weight: 400;
-    line-height: 1.1;
-    letter-spacing: -0.01em;
+    line-height: 1.08;
+    letter-spacing: -0.015em;
     color: var(--color-text);
-    margin: 0 0 1.25rem;
+    margin: 0 0 1.5rem;
+    max-width: 18ch;
   }
 
   .hero-sub {
-    font-size: 1rem;
+    font-size: 1.0625rem;
     color: var(--color-text-muted);
-    line-height: 1.7;
-    margin: 0 0 2.5rem;
-    max-width: 38rem;
+    line-height: 1.75;
+    margin: 0 0 2.75rem;
+    max-width: 36rem;
   }
 
   .hero-actions {
@@ -513,209 +326,201 @@ const faqSchema = {
     color: var(--color-text);
   }
 
-  /* ── Symbol watermarks ───────────────────────────────────────────────── */
-  .section--sym {
-    position: relative;
-    overflow: hidden;
+  /* ── Demo section ────────────────────────────────────────────────────── */
+  .demo-section {
+    padding: 5rem 0;
   }
 
-  .sym-watermark {
-    position: absolute;
+  .demo-wrap {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  /* Compile block */
+  .compile-block {
     font-family: var(--font-mono);
-    font-size: clamp(14rem, 28vw, 22rem);
-    line-height: 1;
-    color: var(--color-text);
-    opacity: 0.03;
-    user-select: none;
-    pointer-events: none;
-    top: 50%;
-    left: -3rem;
-    transform: translateY(-50%);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 22rem;
   }
 
-  .sym-watermark--right {
-    left: auto;
-    right: -3rem;
+  .compile-prompt {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    opacity: 0;
+    animation: fade-in-up 180ms ease forwards;
+    animation-delay: 80ms;
   }
 
-  .sym-watermark--center {
-    left: 50%;
-    transform: translate(-50%, -50%);
+  .prompt-char { color: var(--color-text-dim); }
+  .prompt-cmd  { color: var(--color-text-muted); }
+
+  .compile-stages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-bottom: 1.25rem;
   }
 
-  /* ── Sections ─────────────────────────────────────────────────────────── */
-  .section {
-    padding: 4.5rem 0;
+  .stage-row {
+    display: grid;
+    grid-template-columns: 1rem 2.5rem 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.1rem 0;
+    opacity: 0;
+    animation: fade-in-up 180ms ease forwards;
   }
 
-  .section p {
-    font-size: 1.0625rem;
-    color: var(--color-text-muted);
-    line-height: 1.8;
-    margin: 0 0 1.25rem;
+  .stage-row--gov {
+    margin-top: 0.125rem;
   }
 
-  .section p:last-child {
-    margin-bottom: 0;
-  }
+  .stage-row:nth-child(1) { animation-delay: 200ms; }
+  .stage-row:nth-child(2) { animation-delay: 310ms; }
+  .stage-row:nth-child(3) { animation-delay: 420ms; }
+  .stage-row:nth-child(4) { animation-delay: 530ms; }
+  .stage-row:nth-child(5) { animation-delay: 640ms; }
+  .stage-row:nth-child(6) { animation-delay: 750ms; }
+  .stage-row:nth-child(7) { animation-delay: 860ms; }
 
-  /* ── Recognition ─────────────────────────────────────────────────────── */
-  .hook {
-    font-size: 1.0625rem !important;
-    color: var(--color-text) !important;
-    line-height: 1.75 !important;
-    margin-bottom: 1.5rem !important;
-  }
+  .stage-glyph      { font-size: 0.65rem; line-height: 1; }
+  .stage-glyph--done { color: var(--color-text-dim); }
+  .stage-glyph--gov  { color: var(--color-accent); }
+  .stage-label       { color: var(--color-text-dim); letter-spacing: 0.04em; font-size: 0.8rem; }
+  .stage-desc        { color: var(--color-text-muted); font-size: 0.8125rem; }
+  .stage-approved    { color: var(--color-accent); font-weight: 500; }
 
-  /* ── Distinction block ───────────────────────────────────────────────── */
-  .distinction {
-    border-left: 1px solid var(--color-accent);
-    padding-left: 1.5rem;
-  }
-
-  .distinction-line {
-    font-size: 1.0625rem !important;
-    color: var(--color-text) !important;
-    line-height: 1.6 !important;
-    margin: 0 0 0.625rem !important;
-  }
-
-  .distinction-caption {
-    font-size: 0.9rem !important;
-    color: var(--color-text-muted) !important;
-    margin-top: 1rem !important;
-  }
-
-  /* ── Mechanism ───────────────────────────────────────────────────────── */
-  .lead {
-    font-size: 1.25rem !important;
-    font-weight: 700;
-    color: var(--color-text) !important;
-    margin-bottom: 1.5rem !important;
-  }
-
-  .result-statement {
-    font-size: 1.125rem !important;
-    font-weight: 600;
-    color: var(--color-text) !important;
-    line-height: 1.6 !important;
-    margin-top: 2rem !important;
-    padding-top: 1.75rem;
+  .compile-output {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding-top: 1rem;
     border-top: 1px solid var(--color-border);
   }
 
-  /* ── Artifact ────────────────────────────────────────────────────────── */
-  .section-label {
-    font-family: var(--font-mono);
-    font-size: 0.7rem !important;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-text-dim) !important;
-    margin: 0 0 1.5rem !important;
-  }
-
-  /* File listing */
-  .file-listing {
-    margin-bottom: 2rem;
-  }
-
-  .file-row {
+  .output-row {
     display: grid;
-    grid-template-columns: 7rem 1fr;
+    grid-template-columns: 9rem 1fr;
+    gap: 1rem;
+    opacity: 0;
+    animation: fade-in-up 180ms ease forwards;
+  }
+
+  .output-row:nth-child(1) { animation-delay: 1020ms; }
+  .output-row:nth-child(2) { animation-delay: 1100ms; }
+  .output-row:nth-child(3) { animation-delay: 1180ms; }
+
+  .output-file   { color: var(--color-text); font-weight: 500; }
+  .output-action { color: var(--color-text-dim); }
+
+  /* Callouts */
+  .callouts {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding-top: 0.5rem;
+  }
+
+  .callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+  }
+
+  .callout-dot {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+    margin-top: 0.45em;
+  }
+
+  .callout-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .callout-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text);
+    letter-spacing: 0.02em;
+  }
+
+  .callout-text {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  /* ── Essential info ──────────────────────────────────────────────────── */
+  .essential-section {
+    padding: 5rem 0 6rem;
+  }
+
+  .output-list {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 3.5rem;
+  }
+
+  .output-item {
+    display: grid;
+    grid-template-columns: 8rem 1fr;
     gap: 1.5rem;
-    padding: 1rem 0;
+    padding: 1.125rem 0;
     border-top: 1px solid var(--color-border);
     align-items: baseline;
   }
 
-  .file-row:last-child {
+  .output-item:last-child {
     border-bottom: 1px solid var(--color-border);
   }
 
-  .file-name {
+  .out-file {
     font-family: var(--font-mono);
     font-size: 0.875rem;
     color: var(--color-text);
+    font-weight: 500;
     background: none;
     padding: 0;
-    flex-shrink: 0;
   }
 
-  .file-desc {
+  .out-desc {
     font-family: var(--font-mono);
     font-size: 0.8125rem;
     color: var(--color-text-muted);
     line-height: 1.65;
   }
 
-  /* CLAUDE.md excerpt */
-  .excerpt-block {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
-    margin-bottom: 1.75rem;
-    overflow: hidden;
-  }
-
-  .excerpt-label {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-text-dim);
-    padding: 0.625rem 1.25rem;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .excerpt-content {
-    padding: 1rem 1.25rem 1.125rem;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    line-height: 1.65;
-  }
-
-  .excerpt-blank {
-    height: 0.5rem;
-  }
-
-  .excerpt-heading {
-    color: var(--color-text);
-    font-weight: 600;
-  }
-
-  .excerpt-key {
-    color: var(--color-text-muted);
-    font-weight: 500;
-  }
-
-  .excerpt-val {
-    color: var(--color-text-dim);
-    padding-left: 1rem;
-  }
-
-  .file-note {
-    font-size: 0.9rem !important;
-    color: var(--color-text-dim) !important;
-    line-height: 1.65 !important;
-  }
-
-  /* ── Invitation ──────────────────────────────────────────────────────── */
-  .section--invite {
-    padding-bottom: 6rem;
+  .essential-cta {
+    padding-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 
   .install-block {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-family: var(--font-mono);
-    margin-bottom: 0.75rem;
-  }
-
-  .install-note {
-    font-size: 0.8125rem;
-    color: var(--color-text-dim);
-    margin: 0 0 1.25rem;
     font-family: var(--font-mono);
   }
 
@@ -726,92 +531,51 @@ const faqSchema = {
   }
 
   .install-cmd {
-    font-size: clamp(0.875rem, 2.5vw, 1.0625rem);
+    font-family: var(--font-mono);
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
     color: var(--color-accent);
     background: none;
     padding: 0;
     letter-spacing: -0.01em;
-    user-select: all;
   }
 
-  .trust-signal {
-    font-family: var(--font-mono);
-    font-size: 0.8125rem !important;
-    color: var(--color-text-dim) !important;
-    margin: 0 0 1.5rem !important;
-  }
-
-  .invite-link {
-    font-size: 0.9375rem;
-  }
-
-  /* ── Editorial image ─────────────────────────────────────────────────── */
-  .editorial-image {
-    width: 100%;
-    max-height: 58vh;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .editorial-img {
-    width: 100%;
-    height: 58vh;
-    object-fit: cover;
-    object-position: center 30%;
-    display: block;
-  }
-
-  .editorial-caption {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 1.5rem clamp(1.5rem, 5vw, 4rem);
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.04em;
-    color: rgba(232, 230, 223, 0.6);
-    background: linear-gradient(to top, rgba(13,13,13,0.55) 0%, transparent 100%);
-    margin: 0;
+  .essential-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
   }
 
   /* ── Mobile ──────────────────────────────────────────────────────────── */
-  @media (max-width: 640px) {
-    .editorial-image,
-    .editorial-img {
-      height: 45vw;
-      max-height: 45vw;
-    }
-
-    .hero {
-      padding: 3.5rem 0 3rem;
-    }
-
-    .output-row {
-      grid-template-columns: 8rem 1fr;
-    }
-
-    .file-row {
+  @media (max-width: 768px) {
+    .demo-wrap {
       grid-template-columns: 1fr;
-      gap: 0.375rem;
+      gap: 2.5rem;
     }
 
     .compile-block {
-      font-size: 0.75rem;
-    }
-
-    .hero-headline {
-      font-size: 2rem;
-    }
-
-    .section {
-      padding: 3.5rem 0;
+      min-width: 0;
+      width: 100%;
     }
   }
 
-  /* Respect reduced-motion preference */
+  @media (max-width: 640px) {
+    .hero {
+      min-height: 75vh;
+    }
+
+    .hero-headline {
+      font-size: 2.25rem;
+    }
+
+    .output-item {
+      grid-template-columns: 1fr;
+      gap: 0.375rem;
+    }
+  }
+
+  /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .hero-diamond { animation: none; opacity: 0.6; }
     .compile-prompt,
     .stage-row,
     .output-row { animation: none; opacity: 1; }
