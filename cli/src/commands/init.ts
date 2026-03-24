@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import * as readline from "readline";
 import { spawn as cpSpawn } from "child_process";
@@ -408,13 +409,24 @@ export async function initCommand(
     .replace(/'/g, "'\\''");
   const initialPrompt =
     "Read CLAUDE.md, then read all agent files in .claude/agents/. Follow the build order and session protocol. Begin building now.";
-  const claudeCmd = `cd '${targetDir.replace(/'/g, "'\\''")}' && claude --permission-mode auto --append-system-prompt '${summaryLine}' '${initialPrompt}'`;
+
+  // Write the command to a temp script so osascript do script doesn't need
+  // to embed the full command string (avoids escaping corruption with long
+  // blueprint summaries containing Unicode or special characters).
+  const scriptContent = [
+    "#!/bin/bash",
+    `cd '${targetDir.replace(/'/g, "'\\''")}'`,
+    `exec claude --permission-mode auto --append-system-prompt '${summaryLine}' '${initialPrompt}'`,
+    "",
+  ].join("\n");
+  const scriptPath = path.join(os.tmpdir(), `ada-spawn-${Date.now()}.sh`);
+  fs.writeFileSync(scriptPath, scriptContent, { mode: 0o755 });
 
   cpSpawn(
     "osascript",
     [
       "-e",
-      `tell application "Terminal" to do script "${claudeCmd.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`,
+      `tell application "Terminal" to do script "bash '${scriptPath}'"`,
       "-e",
       `tell application "Terminal" to activate`,
     ],
