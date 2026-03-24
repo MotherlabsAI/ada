@@ -1,5 +1,5 @@
 {
-  "build_command": "pnpm build",
+  "build_command": "pnpm install --no-frozen-lockfile && pnpm build",
   "build_output_directory": "dist",
   "root_directory": "apps/website"
 }
