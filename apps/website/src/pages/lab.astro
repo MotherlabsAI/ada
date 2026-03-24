@@ -1,0 +1,208 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout
+  title="Lab — Motherlabs"
+  description="Motherlabs is a personal AI lab. One person, one PC, ~400 iterations. Ada is what came out of it."
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow">Motherlabs</p>
+        <h1>A lab, not a startup.</h1>
+        <p class="hero-sub">
+          One person. One PC. A specific problem and the discipline to iterate until it's solved.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container container--narrow">
+        <div class="prose">
+          <p>
+            Motherlabs is my personal AI lab. The name is honest — it's where things are made.
+            Not a brand, not a team page with headshots. Me and my computer, since late 2024,
+            trying to understand how LLMs actually work when you build against them instead of
+            just talking about them.
+          </p>
+
+          <p>
+            I ran about 400 versions. Wrong turns, dead ends, things that almost worked.
+            Each iteration taught me something about context engineering — about what it
+            actually means to design what an agent knows, when, and why.
+          </p>
+
+          <p>
+            Ada is the product that came out of that. Not planned from the start — it emerged
+            from the work. I needed a way to compile my intent into something an AI execution
+            layer couldn't misinterpret. After enough iterations, Ada is what that looks like.
+          </p>
+
+          <blockquote>
+            "I built it because I needed it for myself."
+          </blockquote>
+
+          <p>
+            That's not a marketing line. It means the product was tested against a real problem
+            before it was tested against a market. It means the iteration count reflects genuine
+            learning, not pivots chasing traction.
+          </p>
+
+          <h2>Ada's relationship to Motherlabs</h2>
+
+          <p>
+            Ada is to Motherlabs what Claude Code is to Anthropic. Anthropic built Claude Code
+            as the execution layer on top of Claude. Motherlabs built Ada as the semantic
+            governance layer on top of Claude Code.
+          </p>
+
+          <p>
+            They aren't competing. They're layered. Ada governs what Claude Code builds.
+            Claude Code executes what Ada has compiled. The artifacts flow from intent to
+            governed execution without losing what the original intent was.
+          </p>
+
+          <h2>What's next</h2>
+
+          <p>
+            The compilation pipeline is live. Elicitation is live. The world model — persistent
+            artifacts that make Ada's compiled understanding navigable and queryable — is what
+            I'm building now.
+          </p>
+
+          <p>
+            The goal hasn't changed: from first idea to last commit, Ada is the semantic
+            authority for the software. Every decision traces back to the original intent.
+            Drift is detectable. The right thing is structurally the only thing that can be built.
+          </p>
+        </div>
+
+        <div class="contact">
+          <p class="contact-label">Reach out</p>
+          <a
+            href="https://github.com/motherlabs"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="contact-link"
+          >
+            GitHub &rarr;
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .container--narrow {
+    max-width: 44rem;
+  }
+
+  .page-hero {
+    padding: 6rem 0 5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 1rem;
+  }
+
+  .page-hero h1 {
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    font-weight: 800;
+    margin: 0 0 1.25rem;
+    max-width: 28rem;
+  }
+
+  .hero-sub {
+    font-size: 1.125rem;
+    color: var(--color-text-muted);
+    max-width: 36rem;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .section {
+    padding: 5rem 0;
+  }
+
+  .prose {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+  }
+
+  .prose p {
+    font-size: 1.0625rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.75;
+  }
+
+  .prose h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 1rem 0 0;
+  }
+
+  .prose blockquote {
+    border-left: 3px solid var(--color-accent);
+    padding-left: 1.25rem;
+    margin: 0.5rem 0;
+  }
+
+  .prose blockquote p {
+    font-size: 1.125rem;
+    font-style: italic;
+    color: var(--color-text);
+  }
+
+  .contact {
+    padding-top: 3rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .contact-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 0.75rem;
+  }
+
+  .contact-link {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .contact-link:hover {
+    color: var(--color-accent-hover);
+  }
+
+  @media (max-width: 640px) {
+    .page-hero {
+      padding: 4rem 0 3.5rem;
+    }
+  }
+</style>

@@ -1,0 +1,63 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="404 — Motherlabs" description="Page not found.">
+  <Nav />
+  <main class="not-found">
+    <div class="container">
+      <p class="code">404</p>
+      <h1>Nothing here.</h1>
+      <p class="sub">The page you're looking for doesn't exist.</p>
+      <a href="/" class="home-link">&larr; Back to home</a>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .not-found {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+  }
+
+  .container {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .code {
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+    margin: 0 0 1rem;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    margin: 0 0 0.75rem;
+  }
+
+  .sub {
+    font-size: 1.0625rem;
+    color: var(--color-text-muted);
+    margin: 0 0 2rem;
+  }
+
+  .home-link {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .home-link:hover {
+    color: var(--color-accent-hover);
+  }
+</style>

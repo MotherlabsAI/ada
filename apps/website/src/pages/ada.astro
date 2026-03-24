@@ -1,0 +1,562 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout
+  title="Ada — Motherlabs"
+  description="Ada is the semantic authority for your software. A semantic compiler, not a chatbot — from first idea to last commit."
+>
+  <Nav />
+
+  <main>
+    <!-- Governing invariant -->
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow">Ada</p>
+        <h1>The semantic authority for your software — from first idea to last commit.</h1>
+        <p class="hero-sub">
+          Not a chatbot. Not a code generator. A compiler. It takes intent as input and
+          governed artifacts as output. Claude Code builds against those artifacts.
+        </p>
+      </div>
+    </section>
+
+    <!-- What Ada is NOT -->
+    <section class="section">
+      <div class="container container--narrow">
+        <h2 class="section-label">What Ada is not</h2>
+        <p class="section-heading">Clear the assumptions first.</p>
+        <div class="not-list">
+          <div class="not-item">
+            <span class="not-marker">✕</span>
+            <div>
+              <h3>Not a chatbot</h3>
+              <p>Ada doesn't do open-ended conversation. It runs structured elicitation sessions with a specific goal: resolve the blocking unknowns before they become wrong code.</p>
+            </div>
+          </div>
+          <div class="not-item">
+            <span class="not-marker">✕</span>
+            <div>
+              <h3>Not a code generator</h3>
+              <p>Ada produces governed blueprints. Claude Code generates the code. Ada is the layer above the execution layer — not inside it.</p>
+            </div>
+          </div>
+          <div class="not-item">
+            <span class="not-marker">✕</span>
+            <div>
+              <h3>Not a one-shot tool</h3>
+              <p>The compiled world model persists. It's navigable. You can query it months later — "what did the architecture stage decide about payments?" — and get an authoritative answer.</p>
+            </div>
+          </div>
+          <div class="not-item">
+            <span class="not-marker">✕</span>
+            <div>
+              <h3>Not a prompt wrapper</h3>
+              <p>Ada makes autonomous implementation decisions at the semantic level. It doesn't surface technical choices to the user — it surfaces semantic ones. The output is a governed artifact, not a better prompt.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The pipeline -->
+    <section class="section section--surface">
+      <div class="container container--narrow">
+        <h2 class="section-label">The pipeline</h2>
+        <p class="section-heading">Four phases. Each reduces ambiguity in one dimension.</p>
+
+        <div class="phase-grid">
+          <div class="phase">
+            <div class="phase-header">
+              <span class="phase-num">01</span>
+              <h3>Intent</h3>
+            </div>
+            <p>You describe what you want to build — at whatever level you think in. Ada infers technical choices from conceptual descriptions. It doesn't ask which framework. It asks what the system should do.</p>
+          </div>
+          <div class="phase">
+            <div class="phase-header">
+              <span class="phase-num">02</span>
+              <h3>Elicitation</h3>
+            </div>
+            <p>Ada identifies blocking unknowns — the things it genuinely doesn't know that would cause the wrong system to be built. It asks the minimum set of questions to resolve them. Semantic questions, not technical ones.</p>
+          </div>
+          <div class="phase">
+            <div class="phase-header">
+              <span class="phase-num">03</span>
+              <h3>Compilation</h3>
+            </div>
+            <p>Ada produces the canonical semantic model: goals, entities, processes, and architecture — encoded as governed artifacts. Each artifact is addressable by provenance. Every decision traces back to intent.</p>
+          </div>
+          <div class="phase">
+            <div class="phase-header">
+              <span class="phase-num">04</span>
+              <h3>Execution</h3>
+            </div>
+            <p>Claude Code receives the governed blueprint and builds. Ada's constraints are in the artifacts — not in the prompt. Claude Code can't build outside Ada's decisions because those decisions are structural, not conversational.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- World model -->
+    <section class="section">
+      <div class="container container--narrow">
+        <h2 class="section-label">The world model</h2>
+        <p class="section-heading">Persistent artifacts, not ephemeral context.</p>
+        <p class="section-body">
+          Most AI tools produce ephemeral output — a response in a conversation.
+          Ada produces a world model: a persistent, navigable, provenance-addressed artifact store.
+        </p>
+        <div class="artifact-store">
+          <div class="artifact-row">
+            <code class="artifact-code">intent-graph/</code>
+            <span class="artifact-desc">Your goals, constraints, and unknowns — as a structured artifact</span>
+          </div>
+          <div class="artifact-row">
+            <code class="artifact-code">entity-map/</code>
+            <span class="artifact-desc">The canonical entities of your domain</span>
+          </div>
+          <div class="artifact-row">
+            <code class="artifact-code">process-flow/</code>
+            <span class="artifact-desc">State machines and workflows that define how entities move</span>
+          </div>
+          <div class="artifact-row">
+            <code class="artifact-code">blueprint/</code>
+            <span class="artifact-desc">The governed architecture and component mapping — authoritative</span>
+          </div>
+          <div class="artifact-row">
+            <code class="artifact-code">verification/</code>
+            <span class="artifact-desc">Drift detection — does the codebase still match original intent?</span>
+          </div>
+        </div>
+        <p class="world-model-note">
+          Claude Code reads this on every session. Not a static file — a live knowledge graph.
+          Every artifact traces to the raw intent it came from.
+        </p>
+      </div>
+    </section>
+
+    <!-- Ada + Claude Code -->
+    <section class="section section--surface">
+      <div class="container container--narrow">
+        <h2 class="section-label">Ada + Claude Code</h2>
+        <p class="section-heading">The governance model.</p>
+        <p class="section-body">
+          Ada and Claude Code are not competing — they're layered. Ada governs.
+          Claude Code executes. The interface between them is the artifact store.
+        </p>
+        <div class="governance-detail">
+          <div class="governance-item">
+            <h3>CLAUDE.md + agents + hooks</h3>
+            <p>Ada writes CLAUDE.md as a pointer to the world model — not a spec dump. Agents are scoped by bounded context. Hooks enforce entity invariants at every tool boundary. These are laws, not suggestions.</p>
+          </div>
+          <div class="governance-item">
+            <h3>Structural constraints</h3>
+            <p>Ada's artifacts constrain what Claude Code can build. The governed blueprint tells Claude Code what entities exist, what processes are valid, what the architecture is. It can't deviate — the constraints are structural.</p>
+          </div>
+          <div class="governance-item">
+            <h3>Parallel workstreams</h3>
+            <p>You can run Ada compiling product strategy for one initiative while Claude Code builds an entirely different part of the system. Two abstraction levels. Both governed. Both traceable.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="section">
+      <div class="container container--narrow">
+        <h2 class="section-label">Where Ada is now</h2>
+        <p class="section-heading">Honest about current state.</p>
+        <div class="roadmap">
+          <div class="roadmap-item roadmap-item--live">
+            <div class="roadmap-status">Live</div>
+            <div>
+              <h3>Compilation</h3>
+              <p>Intent → elicitation → governed blueprint → Claude Code execution. The full pipeline runs today.</p>
+            </div>
+          </div>
+          <div class="roadmap-item roadmap-item--live">
+            <div class="roadmap-status">Live</div>
+            <div>
+              <h3>Elicitation</h3>
+              <p>Structured dialogue before compilation. Ada resolves blocking unknowns before they become wrong code.</p>
+            </div>
+          </div>
+          <div class="roadmap-item roadmap-item--building">
+            <div class="roadmap-status">Building</div>
+            <div>
+              <h3>World Model</h3>
+              <p>Persistent artifact store. Navigable. Provenance-addressed. CLAUDE.md becomes a 3-line pointer to the manifest.</p>
+            </div>
+          </div>
+          <div class="roadmap-item roadmap-item--vision">
+            <div class="roadmap-status">Vision</div>
+            <div>
+              <h3>Ongoing Authority</h3>
+              <p>Ada as semantic guardian on every commit. Drift detection. Impact analysis. "Does this change align with what the system was meant to be?"</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section section--cta">
+      <div class="container">
+        <h2>Start compiling.</h2>
+        <p>Ada runs in your terminal. Governed artifacts in minutes.</p>
+        <a href="/start" class="btn-primary">Get Started &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .container--narrow {
+    max-width: 52rem;
+  }
+
+  .page-hero {
+    padding: 6rem 0 5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 1rem;
+  }
+
+  .page-hero h1 {
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-weight: 800;
+    max-width: 36rem;
+    margin: 0 0 1.25rem;
+  }
+
+  .hero-sub {
+    font-size: 1.0625rem;
+    color: var(--color-text-muted);
+    max-width: 38rem;
+    margin: 0;
+    line-height: 1.65;
+  }
+
+  .section {
+    padding: 5rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .section--surface {
+    background-color: var(--color-surface);
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 1rem;
+  }
+
+  .section-heading {
+    font-size: clamp(1.375rem, 3vw, 1.875rem);
+    font-weight: 700;
+    margin: 0 0 1.5rem;
+    max-width: 34rem;
+  }
+
+  .section-body {
+    font-size: 1.0625rem;
+    color: var(--color-text-muted);
+    max-width: 40rem;
+    line-height: 1.7;
+    margin: 0 0 2.5rem;
+  }
+
+  /* Not list */
+  .not-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 2rem;
+  }
+
+  .not-item {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.75rem 0;
+    border-bottom: 1px solid var(--color-border);
+    align-items: flex-start;
+  }
+
+  .not-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .not-marker {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    padding-top: 0.2rem;
+    flex-shrink: 0;
+    width: 1.25rem;
+  }
+
+  .not-item h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+
+  .not-item p {
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.65;
+  }
+
+  /* Phase grid */
+  .phase-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .phase {
+    padding: 1.5rem;
+    background-color: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .phase-num {
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+    letter-spacing: 0.05em;
+  }
+
+  .phase h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .phase p {
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.65;
+  }
+
+  /* Artifact store */
+  .artifact-store {
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    background-color: var(--color-surface);
+  }
+
+  .artifact-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: wrap;
+  }
+
+  .artifact-row:last-child {
+    border-bottom: none;
+  }
+
+  .artifact-code {
+    font-size: 0.875rem;
+    color: var(--color-accent);
+    flex-shrink: 0;
+    min-width: 10rem;
+  }
+
+  .artifact-desc {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+
+  .world-model-note {
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* Governance */
+  .governance-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 2rem;
+  }
+
+  .governance-item {
+    padding: 1.75rem 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .governance-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .governance-item h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+
+  .governance-item p {
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.65;
+  }
+
+  /* Roadmap */
+  .roadmap {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 2rem;
+  }
+
+  .roadmap-item {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.75rem 0;
+    border-bottom: 1px solid var(--color-border);
+    align-items: flex-start;
+  }
+
+  .roadmap-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .roadmap-status {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+  }
+
+  .roadmap-item--live .roadmap-status {
+    background-color: color-mix(in srgb, #4ade80 15%, transparent);
+    color: #4ade80;
+  }
+
+  .roadmap-item--building .roadmap-status {
+    background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+    color: var(--color-accent);
+  }
+
+  .roadmap-item--vision .roadmap-status {
+    background-color: color-mix(in srgb, var(--color-text-muted) 15%, transparent);
+    color: var(--color-text-muted);
+  }
+
+  .roadmap-item h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+
+  .roadmap-item p {
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* CTA */
+  .section--cta {
+    text-align: center;
+    background-color: var(--color-surface);
+    border-bottom: none;
+  }
+
+  .section--cta h2 {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    font-weight: 800;
+    margin: 0 0 0.75rem;
+  }
+
+  .section--cta p {
+    color: var(--color-text-muted);
+    font-size: 1.0625rem;
+    margin: 0 0 2rem;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #fff;
+    background-color: var(--color-accent);
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.4rem;
+    transition: background-color 0.15s;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-accent-hover);
+    color: #fff;
+  }
+
+  @media (max-width: 640px) {
+    .page-hero {
+      padding: 4rem 0 3.5rem;
+    }
+
+    .phase-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .artifact-row {
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .artifact-code {
+      min-width: unset;
+    }
+  }
+</style>
