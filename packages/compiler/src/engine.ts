@@ -17,10 +17,15 @@ import type {
   StageExecutionRecord,
   ClarificationRequest,
   ClarificationAnswer,
+  AccumulationContext,
+  CompileRecord,
+  GateDelta,
 } from "./types.js";
 import * as fs from "fs";
 import * as path from "path";
+import { createHash } from "crypto";
 import type { PostcodeAddress } from "@ada/provenance";
+import { generatePostcode } from "@ada/provenance";
 import { analyzeCodebase } from "./context/analyzer.js";
 import type { CodebaseContext } from "./context/types.js";
 
@@ -110,6 +115,7 @@ function gatherProjectContext(cwd: string): string {
 
 export interface CompileOptions {
   readonly apiKey?: string | undefined;
+  readonly accumulationContext?: AccumulationContext | undefined;
   readonly onStageStart?: (stage: CompilerStageCode) => void;
   readonly onStageToken?: (event: {
     stage: CompilerStageCode;
@@ -228,7 +234,15 @@ export class MotherCompiler {
 
     // ─── Enrich intent with project context (raw text fallback) ───
     const projectContext = gatherProjectContext(cwd);
-    const enrichedIntent = projectContext ? intent + projectContext : intent;
+    let enrichedIntent = projectContext ? intent + projectContext : intent;
+
+    // ─── Accumulation context: cross-run memory (Intent Read Hook) ───
+    if (options.accumulationContext && options.accumulationContext.summary) {
+      enrichedIntent +=
+        "\n\n--- ACCUMULATION CONTEXT (from prior compiles) ---\n" +
+        options.accumulationContext.summary +
+        "\n--- END ACCUMULATION CONTEXT ---";
+    }
 
     // ─── Stage 1: Intent (excavate) ───
     onStageStart?.("INT");
@@ -532,6 +546,136 @@ export class MotherCompiler {
       iterationCount: 1,
       compilationRun,
       fallback: null,
+    };
+  }
+
+  /**
+   * Build a CompileRecord from a CompileResult — the Governor Write Hook.
+   * Called after ACCEPT to write the compile delta to the accumulation ledger.
+   */
+  static buildCompileRecord(
+    result: CompileResult,
+    runId: string,
+  ): CompileRecord {
+    const intentHash = createHash("sha256")
+      .update(result.compilationRun.sourceIntent)
+      .digest("hex")
+      .slice(0, 16);
+
+    const gateDeltas: GateDelta[] = Object.entries(
+      result.pipelineState.gates,
+    ).map(([, gate]) => ({
+      stageCode: (gate.toPostcode.split(".")[1] ?? "GOV") as CompilerStageCode,
+      entropyEstimate: gate.entropyEstimate,
+      passed: gate.passed,
+    }));
+
+    const entropyReadings: Record<string, number> = {};
+    for (const [, gate] of Object.entries(result.pipelineState.gates)) {
+      const stage = gate.toPostcode.split(".")[1] ?? "GOV";
+      entropyReadings[stage] = gate.entropyEstimate;
+    }
+
+    const recordContent = JSON.stringify({
+      intentHash,
+      runId,
+      decision: result.governorDecision.decision,
+      timestamp: result.compilationRun.completedAt,
+    });
+    const postcode = generatePostcode(
+      "ACC",
+      recordContent,
+      1,
+    );
+
+    return {
+      intentHash,
+      blueprintPostcode: result.blueprint.postcode.raw,
+      gateDeltas,
+      entropyReadings: entropyReadings as Record<CompilerStageCode, number>,
+      timestamp: result.compilationRun.completedAt,
+      runId,
+      decision: result.governorDecision.decision,
+      postcode,
+    };
+  }
+
+  /**
+   * Build an AccumulationContext summary from raw ledger records.
+   * The Intent Read Hook — surfaces prior compile patterns as context.
+   */
+  static buildAccumulationContext(
+    records: ReadonlyArray<{
+      intentHash: string;
+      blueprintPostcode: string;
+      gateDeltas: string;
+      entropyReadings: string;
+      timestamp: number;
+      runId: string;
+      decision: string;
+      postcodeRaw: string;
+    }>,
+  ): AccumulationContext | undefined {
+    if (records.length === 0) return undefined;
+
+    const parsed: CompileRecord[] = records.map((r) => {
+      let gateDeltas: GateDelta[] = [];
+      let entropyReadings: Record<string, number> = {};
+      try {
+        gateDeltas = JSON.parse(r.gateDeltas) as GateDelta[];
+      } catch {
+        /* malformed — skip */
+      }
+      try {
+        entropyReadings = JSON.parse(r.entropyReadings) as Record<
+          string,
+          number
+        >;
+      } catch {
+        /* malformed — skip */
+      }
+      return {
+        intentHash: r.intentHash,
+        blueprintPostcode: r.blueprintPostcode,
+        gateDeltas,
+        entropyReadings: entropyReadings as Record<CompilerStageCode, number>,
+        timestamp: r.timestamp,
+        runId: r.runId,
+        decision: r.decision as CompileRecord["decision"],
+        postcode: {
+          prefix: "ML" as const,
+          stage: "ACC" as const,
+          hash: r.postcodeRaw.split(".")[2]?.split("/")[0] ?? "",
+          version: 1,
+          raw: r.postcodeRaw,
+        },
+      };
+    });
+
+    const lines: string[] = [
+      `Prior compiles: ${parsed.length} record(s) available.`,
+    ];
+
+    for (const rec of parsed.slice(0, 3)) {
+      const failedGates = rec.gateDeltas.filter((g) => !g.passed);
+      const bottlenecks =
+        failedGates.length > 0
+          ? failedGates.map((g) => g.stageCode).join(", ")
+          : "none";
+
+      const highEntropyStages = Object.entries(rec.entropyReadings)
+        .filter(([, e]) => e > 0.5)
+        .map(([s, e]) => `${s}:${e.toFixed(3)}`)
+        .join(", ");
+
+      lines.push(
+        `  [${rec.runId}] ${rec.decision} | bottlenecks: ${bottlenecks} | high-entropy: ${highEntropyStages || "none"} | blueprint: ${rec.blueprintPostcode}`,
+      );
+    }
+
+    return {
+      recentRecords: parsed,
+      summary: lines.join("\n"),
     };
   }
 }

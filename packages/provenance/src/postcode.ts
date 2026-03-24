@@ -12,7 +12,8 @@ export type StageCode =
   | "CFG"
   | "ORC"
   | "CLI"
-  | "ELI";
+  | "ELI"
+  | "ACC";
 
 export interface PostcodeAddress {
   readonly prefix: "ML";

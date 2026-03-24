@@ -55,6 +55,9 @@ export type {
   CompileStatus,
   CompileResult,
   StageCompleteEvent,
+  GateDelta,
+  CompileRecord,
+  AccumulationContext,
 } from "./types.js";
 
 export { IntentAgent } from "./agents/intent.js";

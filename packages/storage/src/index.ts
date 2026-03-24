@@ -26,6 +26,18 @@ export interface RunRecord {
   readonly durationMs: number;
 }
 
+export interface LedgerRecord {
+  readonly intentHash: string;
+  readonly blueprintPostcode: string;
+  readonly gateDeltas: string; // JSON-serialized GateDelta[]
+  readonly entropyReadings: string; // JSON-serialized Record<string, number>
+  readonly timestamp: number;
+  readonly runId: string;
+  readonly decision: string;
+  readonly postcodeRaw: string;
+  readonly projectPath: string;
+}
+
 // ─── AdaStorage ──────────────────────────────────────────────────────────────
 
 /**
@@ -70,6 +82,21 @@ export class AdaStorage {
       );
 
       CREATE INDEX IF NOT EXISTS runs_by_project ON runs (project_path, compiled_at DESC);
+
+      CREATE TABLE IF NOT EXISTS compile_ledger (
+        run_id TEXT PRIMARY KEY,
+        project_path TEXT NOT NULL,
+        intent_hash TEXT NOT NULL,
+        blueprint_postcode TEXT NOT NULL,
+        gate_deltas TEXT NOT NULL DEFAULT '[]',
+        entropy_readings TEXT NOT NULL DEFAULT '{}',
+        timestamp INTEGER NOT NULL,
+        decision TEXT NOT NULL,
+        postcode_raw TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS ledger_by_project ON compile_ledger (project_path, timestamp DESC);
+      CREATE INDEX IF NOT EXISTS ledger_by_intent ON compile_ledger (intent_hash, timestamp DESC);
     `);
   }
 
@@ -225,6 +252,101 @@ export class AdaStorage {
       governorPostcode: r.governor_postcode,
       intent: r.intent,
       durationMs: r.duration_ms,
+    }));
+  }
+
+  // ─── Accumulation Ledger ────────────────────────────────────────────────────
+
+  /** Write a CompileRecord to the accumulation ledger. Called on Governor ACCEPT. */
+  recordCompile(record: {
+    runId: string;
+    projectPath: string;
+    intentHash: string;
+    blueprintPostcode: string;
+    gateDeltas: string;
+    entropyReadings: string;
+    timestamp: number;
+    decision: string;
+    postcodeRaw: string;
+  }): void {
+    this.db
+      .prepare(
+        `INSERT OR REPLACE INTO compile_ledger
+        (run_id, project_path, intent_hash, blueprint_postcode, gate_deltas, entropy_readings, timestamp, decision, postcode_raw)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        record.runId,
+        record.projectPath,
+        record.intentHash,
+        record.blueprintPostcode,
+        record.gateDeltas,
+        record.entropyReadings,
+        record.timestamp,
+        record.decision,
+        record.postcodeRaw,
+      );
+  }
+
+  /** Read recent ledger entries for a project, most recent first. */
+  getRecentCompileRecords(projectPath: string, limit = 5): LedgerRecord[] {
+    const rows = this.db
+      .prepare(
+        "SELECT * FROM compile_ledger WHERE project_path = ? ORDER BY timestamp DESC LIMIT ?",
+      )
+      .all(projectPath, limit) as Array<{
+      run_id: string;
+      project_path: string;
+      intent_hash: string;
+      blueprint_postcode: string;
+      gate_deltas: string;
+      entropy_readings: string;
+      timestamp: number;
+      decision: string;
+      postcode_raw: string;
+    }>;
+
+    return rows.map((r) => ({
+      runId: r.run_id,
+      projectPath: r.project_path,
+      intentHash: r.intent_hash,
+      blueprintPostcode: r.blueprint_postcode,
+      gateDeltas: r.gate_deltas,
+      entropyReadings: r.entropy_readings,
+      timestamp: r.timestamp,
+      decision: r.decision,
+      postcodeRaw: r.postcode_raw,
+    }));
+  }
+
+  /** Read ledger entries across all projects matching an intent hash. */
+  getRecordsByIntentHash(intentHash: string, limit = 3): LedgerRecord[] {
+    const rows = this.db
+      .prepare(
+        "SELECT * FROM compile_ledger WHERE intent_hash = ? ORDER BY timestamp DESC LIMIT ?",
+      )
+      .all(intentHash, limit) as Array<{
+      run_id: string;
+      project_path: string;
+      intent_hash: string;
+      blueprint_postcode: string;
+      gate_deltas: string;
+      entropy_readings: string;
+      timestamp: number;
+      decision: string;
+      postcode_raw: string;
+    }>;
+
+    return rows.map((r) => ({
+      runId: r.run_id,
+      projectPath: r.project_path,
+      intentHash: r.intent_hash,
+      blueprintPostcode: r.blueprint_postcode,
+      gateDeltas: r.gate_deltas,
+      entropyReadings: r.entropy_readings,
+      timestamp: r.timestamp,
+      decision: r.decision,
+      postcodeRaw: r.postcode_raw,
     }));
   }
 }

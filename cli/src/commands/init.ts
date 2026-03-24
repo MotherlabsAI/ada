@@ -11,6 +11,7 @@ import type {
   IterationRecord,
   ClarificationRequest,
   ClarificationAnswer,
+  AccumulationContext,
 } from "@ada/compiler";
 import { writeConfigGraph } from "@ada/config-writer";
 import { writeWorldModel } from "../world-model.js";
@@ -296,6 +297,20 @@ export async function initCommand(
   // Returns enriched intent if questions were asked, otherwise original.
   const enrichedIntent = await runElicitationPrePhase(intent);
 
+  // ─── Intent Read Hook: load accumulation context from prior compiles ─────
+  let accumulationContext: AccumulationContext | undefined;
+  try {
+    const ledgerStorage = new AdaStorage();
+    const recentRecords = ledgerStorage.getRecentCompileRecords(
+      process.cwd(),
+      5,
+    );
+    accumulationContext =
+      MotherCompiler.buildAccumulationContext(recentRecords);
+  } catch {
+    /* ledger read is non-fatal */
+  }
+
   let currentIntent = enrichedIntent;
   let iterationCount = 0;
   let finalResult: import("@ada/compiler").CompileResult | null = null;
@@ -342,6 +357,7 @@ export async function initCommand(
     let stageStart = Date.now();
 
     const result = await compiler.compile(currentIntent, {
+      accumulationContext,
       onClarificationNeeded:
         iterationCount === 1 ? handleClarification : undefined,
       onStageStart(stage) {
@@ -560,6 +576,20 @@ export async function initCommand(
       governorPostcode: decision.postcode.raw,
       intent: intent,
       durationMs: finalResult.compilationRun.totalDurationMs,
+    });
+
+    // ─── Governor Write Hook: write CompileRecord to accumulation ledger ───
+    const compileRecord = MotherCompiler.buildCompileRecord(finalResult, runId);
+    storage.recordCompile({
+      runId: compileRecord.runId,
+      projectPath: targetDir,
+      intentHash: compileRecord.intentHash,
+      blueprintPostcode: compileRecord.blueprintPostcode,
+      gateDeltas: JSON.stringify(compileRecord.gateDeltas),
+      entropyReadings: JSON.stringify(compileRecord.entropyReadings),
+      timestamp: compileRecord.timestamp,
+      decision: compileRecord.decision,
+      postcodeRaw: compileRecord.postcode.raw,
     });
   } catch {
     /* never crash the init flow for storage errors */

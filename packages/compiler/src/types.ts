@@ -335,6 +335,30 @@ export interface CompileResult {
   readonly fallback: FallbackBlueprintResult | null;
 }
 
+// ─── Accumulation Ledger ───
+
+export interface GateDelta {
+  readonly stageCode: CompilerStageCode;
+  readonly entropyEstimate: number;
+  readonly passed: boolean;
+}
+
+export interface CompileRecord {
+  readonly intentHash: string;
+  readonly blueprintPostcode: string;
+  readonly gateDeltas: readonly GateDelta[];
+  readonly entropyReadings: Record<CompilerStageCode, number>;
+  readonly timestamp: number;
+  readonly runId: string;
+  readonly decision: GovernorDecisionType;
+  readonly postcode: PostcodeAddress;
+}
+
+export interface AccumulationContext {
+  readonly recentRecords: readonly CompileRecord[];
+  readonly summary: string;
+}
+
 // ─── Stage Complete Callback ───
 
 export interface StageCompleteEvent {
