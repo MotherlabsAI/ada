@@ -4,14 +4,16 @@
   --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
 
-  --color-bg: #0a0a0f;
-  --color-surface: #111118;
-  --color-surface-raised: #1a1a24;
-  --color-border: #2a2a38;
-  --color-text: #e8e8f0;
-  --color-text-muted: #8888a8;
-  --color-accent: #7c6cff;
-  --color-accent-hover: #9b8dff;
+  /* motherTUI palette — exact values from cli/src/ui/design-system.ts */
+  --color-bg: #0d0d0d;
+  --color-surface: #151518;
+  --color-surface-raised: #1c1c21;
+  --color-border: #1c1c21;
+  --color-text: #e8e6df;
+  --color-text-muted: #9c9a92;
+  --color-text-dim: #5e5d58;
+  --color-accent: #8ba4c4;
+  --color-accent-hover: #afc3d9;
 }
 
 @layer base {
@@ -74,13 +76,14 @@
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --color-bg: #f8f8fc;
+    --color-bg: #f5f4f0;
     --color-surface: #ffffff;
-    --color-surface-raised: #f0f0f8;
-    --color-border: #e0e0ec;
-    --color-text: #12121a;
-    --color-text-muted: #606078;
-    --color-accent: #5c4ef5;
-    --color-accent-hover: #7c6cff;
+    --color-surface-raised: #eeede9;
+    --color-border: #e0dfd9;
+    --color-text: #1a1a18;
+    --color-text-muted: #5e5d58;
+    --color-text-dim: #9c9a92;
+    --color-accent: #8ba4c4;
+    --color-accent-hover: #6b8aad;
   }
 }
