@@ -1,0 +1,585 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Ada vs Cursor Rules: advisory context vs compiled intent',
+  description: 'A precise comparison of Ada/CLAUDE.md and Cursor Rules for AI. What each does, where enforcement happens, how intent is captured, and who each approach is for.',
+  author: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  url: 'https://motherlabs.ai/ada/ada-vs-cursor-rules',
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Are Cursor Rules and CLAUDE.md the same thing?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'They are structurally similar but not the same. Both are markdown files that inject context into an AI model. The key differences: Cursor Rules are injected per-message in Cursor; CLAUDE.md is injected per-turn in Claude Code. More importantly, CLAUDE.md can be paired with hooks — pre-tool guard files that enforce constraints at every tool call boundary. Cursor has no equivalent to hooks. One advises; the other also enforces.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Can I use Cursor Rules with Claude Code?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Not directly. Cursor Rules live in .cursor/rules/ and are read by Cursor\'s model integration. Claude Code reads CLAUDE.md, not Cursor rule files. If you move from Cursor to Claude Code, you would need to translate your Cursor rules into a CLAUDE.md. The content — constraints, architectural decisions, project context — translates well. The file format and location does not.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What does Ada produce that Cursor Rules cannot?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada produces three artifact types: CLAUDE.md (advisory context, similar in role to Cursor Rules), agent files (scoped context per bounded domain), and hooks (pre-tool guard files that structurally enforce constraints at every tool call). Cursor has no equivalent to hooks. Ada also derives these artifacts from a compilation of your stated intent — you describe what you want, Ada excavates the rules. With Cursor Rules you write the rules yourself.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Do Cursor Rules enforce anything?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. Cursor Rules are advisory context injected into the model prompt. The model reads them and generally follows them, but there is no mechanism that blocks a model action that violates a rule. If your rule says "never use Postgres" and the model writes a Postgres migration anyway, the rule was advice, not enforcement. Ada hooks run as separate processes before each tool call and can return a non-zero exit code that blocks the action entirely.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Should I use Cursor Rules or Ada?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Cursor Rules are the right choice if you use Cursor as your primary editor and want fast, frictionless per-project context for the model. Ada is the right choice if you use Claude Code specifically, want structural enforcement via hooks, need provenance tracing from intent to artifact, or want your project context compiled from what you mean rather than written manually. They are not in competition — they serve different editors and different levels of governance need.',
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="Ada vs Cursor Rules: advisory context vs compiled intent | Motherlabs"
+  description="A precise comparison of Cursor's Rules for AI and Ada's CLAUDE.md + hooks approach. What each enforces, how intent is captured, and which fits which workflow."
+  schemas={[articleSchema, faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; Ada vs Cursor Rules</p>
+        <h1>Ada vs Cursor Rules</h1>
+        <p class="hero-sub">
+          Both inject markdown context into an AI model. One is advisory context you write manually.
+          The other is compiled intent that also enforces. Here is the precise difference.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── WHAT CURSOR RULES ARE ──────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>What Cursor Rules are</h2>
+        <p>
+          Cursor has a <code>.cursor/rules/</code> directory where you write project rules in markdown.
+          Each file describes constraints, conventions, or context you want the model to follow —
+          things like architecture decisions, naming conventions, libraries to prefer or avoid,
+          and what the project is or is not.
+        </p>
+        <p>
+          When you interact with Cursor's AI, the relevant rule files are injected into the prompt
+          alongside your message. The model reads them and generally follows them. They shape behavior
+          without enforcing it.
+        </p>
+        <p>
+          Cursor also supports global rules (applied to all projects) and project-level rules
+          (in <code>.cursor/rules/</code>), which is a reasonable scoping model for teams
+          working across multiple codebases.
+        </p>
+
+        <div class="callout">
+          <p class="callout-text">
+            Cursor Rules are advisory context — not compiled from intent, not structurally enforced.
+            They are the right thing for what they are: a fast way to give the model project-level
+            context without ceremony.
+          </p>
+        </div>
+
+        <p>
+          The mechanism is simple: markdown in, context injected, model informed.
+          No compilation step. No provenance. No enforcement layer. You write the rules;
+          the model reads them. What you get out depends on how well you wrote them
+          and whether the model happens to follow them on the turn that matters.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── WHAT ADA PRODUCES ─────────────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>What Ada produces for Claude Code</h2>
+        <p>
+          Ada produces three artifact types. They serve different purposes and only one of them
+          is analogous to Cursor Rules.
+        </p>
+
+        <div class="artifact-list">
+          <div class="artifact-item">
+            <code class="artifact-name">CLAUDE.md</code>
+            <div class="artifact-body">
+              <p>
+                The primary context file for Claude Code. Read on <strong>every message turn</strong>
+                — not just at session start. Injected into every context window throughout a session.
+                This is the Ada analog to Cursor Rules: advisory markdown context that the model reads
+                and follows. The key difference is origin — Ada derives it from structured elicitation
+                of your intent rather than asking you to write it yourself.
+              </p>
+              <p>
+                <a href="/ada/what-is-claude-md">What CLAUDE.md is and how it works &rarr;</a>
+              </p>
+            </div>
+          </div>
+
+          <div class="artifact-item">
+            <code class="artifact-name">agents/</code>
+            <div class="artifact-body">
+              <p>
+                Specialized context files scoped to bounded contexts within the project — authentication,
+                data layer, payments, etc. When Claude Code works in a specific domain, it loads the
+                relevant agent file. This gives deeper, more precise context for each domain without
+                bloating the main CLAUDE.md that is read on every turn. Cursor has no direct equivalent,
+                though you can approximate it with multiple rule files.
+              </p>
+            </div>
+          </div>
+
+          <div class="artifact-item">
+            <code class="artifact-name">hooks/</code>
+            <div class="artifact-body">
+              <p>
+                Pre-tool guard files that run before Claude Code takes any tool action — file reads,
+                file writes, bash commands, MCP calls. Each hook corresponds to a specific invariant
+                from your compiled intent. When Claude Code is about to take an action, the relevant
+                hooks run first. If a constraint is violated, the hook returns a non-zero exit code
+                and the action is blocked — before it executes.
+              </p>
+              <p>
+                <strong>Cursor has no equivalent to hooks.</strong> This is the structural difference
+                between the two approaches, not a feature gap — it reflects different design goals.
+                <a href="/ada/claude-code-hooks">How Claude Code hooks work &rarr;</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── SIDE-BY-SIDE ──────────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Side-by-side comparison</h2>
+
+        <div class="comparison-table">
+          <div class="comparison-row comparison-row--header">
+            <div class="comparison-cell comparison-cell--dim"></div>
+            <div class="comparison-cell"><strong>Cursor Rules</strong></div>
+            <div class="comparison-cell"><strong>Ada (CLAUDE.md + hooks)</strong></div>
+          </div>
+
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--dim">Input</div>
+            <div class="comparison-cell">You write the rules manually</div>
+            <div class="comparison-cell">Compiled from structured elicitation of your intent</div>
+          </div>
+
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--dim">Enforcement</div>
+            <div class="comparison-cell">Advisory — model reads and generally follows</div>
+            <div class="comparison-cell">Advisory (CLAUDE.md) + structural enforcement (hooks)</div>
+          </div>
+
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--dim">Provenance</div>
+            <div class="comparison-cell">None — rules are static text you authored</div>
+            <div class="comparison-cell">Each artifact traces to a specific elicitation answer</div>
+          </div>
+
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--dim">Trigger</div>
+            <div class="comparison-cell">Injected with each message</div>
+            <div class="comparison-cell">CLAUDE.md on each turn; hooks on each tool call</div>
+          </div>
+
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--dim">Update workflow</div>
+            <div class="comparison-cell">Edit the markdown file directly</div>
+            <div class="comparison-cell">Recompile Ada with updated or corrected intent</div>
+          </div>
+
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--dim">Scope</div>
+            <div class="comparison-cell">Global rules + per-project rules</div>
+            <div class="comparison-cell">Project-wide (CLAUDE.md) + bounded contexts (agents)</div>
+          </div>
+
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--dim">Editor</div>
+            <div class="comparison-cell">Cursor</div>
+            <div class="comparison-cell">Claude Code (terminal)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── THE STRUCTURAL DIFFERENCE ────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>The structural difference: advice vs enforcement</h2>
+        <p>
+          This is the most important distinction, and it is worth being precise about it.
+        </p>
+        <p>
+          Both Cursor Rules and CLAUDE.md are advisory. The model reads them. The model generally
+          follows them. Neither can block a model action — they can only inform the model before it acts.
+          If the model decides, under context pressure or from a different inference, to do something
+          that violates what you wrote, the rule was advice. Nothing stops it.
+        </p>
+        <p>
+          Ada hooks are different in kind. They are shell scripts that run as a separate process
+          before each Claude Code tool call. They do not advise the model. They check a condition
+          after the model has decided what to do but before it executes. If the condition fails,
+          the hook returns a non-zero exit code, Claude Code sees the failure, and the action
+          does not proceed. The model is informed of the block and must try a different approach.
+        </p>
+
+        <div class="callout">
+          <p class="callout-text">
+            Cursor Rules advise the model before it decides. Ada hooks enforce after the model
+            decides but before it acts. Advice can be overridden by context pressure.
+            Enforcement cannot.
+          </p>
+        </div>
+
+        <p>
+          This matters most for constraints where the cost of violation is high: writing outside
+          a designated directory, calling an external service that should be blocked, creating a
+          database schema that violates a declared invariant. Advice handles most cases. Enforcement
+          handles the cases where most is not enough.
+        </p>
+
+        <p>
+          Cursor's design does not include an enforcement layer, and that is not a deficiency —
+          Cursor is an editor-first tool optimized for speed and developer experience.
+          Ada is a compiler-first tool optimized for governance and traceability,
+          specifically for Claude Code. Different design goals.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── THE INTENT COMPILATION DIFFERENCE ────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>The intent compilation difference</h2>
+        <p>
+          With Cursor Rules, you start by writing rules. You decide what rules the project needs,
+          articulate them in markdown, put them in the right directory, and iterate as the project
+          evolves. This works well and most developers find it natural — you already understand
+          the project, so writing rules about it is not difficult.
+        </p>
+        <p>
+          With Ada, you start by describing intent. You describe what the system should do and be —
+          at whatever level you think in. Ada runs structured elicitation to surface blocking unknowns
+          (the gaps in your description that would cause the wrong thing to be built), then compiles
+          your intent through an 8-stage pipeline into CLAUDE.md, agent files, and hooks.
+        </p>
+        <p>
+          The difference is where the knowledge lives. With Cursor Rules, the knowledge lives in
+          your head and you transcribe it into rules. With Ada, the knowledge is excavated from
+          your description — including things you would not have thought to write as rules,
+          like what the system explicitly is not, which adjacent features are out of scope,
+          or which architectural decisions are closed.
+        </p>
+
+        <div class="two-col">
+          <div class="col">
+            <h3 class="col-label">Cursor Rules</h3>
+            <ul>
+              <li>You know what rules you need</li>
+              <li>You write them</li>
+              <li>You update them as you go</li>
+              <li>Fast, low ceremony</li>
+              <li>Quality depends on what you thought to write</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3 class="col-label col-label--ada">Ada</h3>
+            <ul>
+              <li>You describe what you want to build</li>
+              <li>Ada identifies what rules are required</li>
+              <li>You recompile when intent changes</li>
+              <li>Higher setup cost, more complete output</li>
+              <li>Quality depends on the elicitation, not recall</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>
+          Neither approach is universally better. Cursor Rules are faster for developers who have
+          clear, stable requirements and want to stay in an editor-centric workflow. Ada is better
+          when the requirements are partially implicit, when you want guarantees that the constraints
+          you meant to have are actually present, or when you need enforcement rather than advice.
+        </p>
+
+        <a href="/ada/how-ada-works" class="link-arrow">How Ada's compilation pipeline works &rarr;</a>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── WHO EACH IS FOR ───────────────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Who each is for</h2>
+
+        <div class="for-list">
+
+          <div class="for-item">
+            <h3 class="for-title">Cursor Rules is a good fit if:</h3>
+            <ul class="for-ul">
+              <li>Cursor is your primary editor and you want to stay there</li>
+              <li>You already have clear requirements and just need them in the model's context</li>
+              <li>You want fast, frictionless setup with no compilation step</li>
+              <li>Your project is single-model (not multi-agent across bounded contexts)</li>
+              <li>Advisory context is sufficient — you are not trying to enforce hard invariants</li>
+            </ul>
+          </div>
+
+          <div class="for-item">
+            <h3 class="for-title">Ada is a good fit if:</h3>
+            <ul class="for-ul">
+              <li>You use Claude Code specifically and want Claude Code integration</li>
+              <li>You want structural enforcement via hooks, not just advisory context</li>
+              <li>Your intent is partially implicit and you want it excavated, not written by hand</li>
+              <li>You need provenance — artifacts that trace back to what you actually said</li>
+              <li>You are working with bounded contexts and want agent-scoped depth</li>
+              <li>You have had the experience of the model ignoring rules at the wrong moment</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="callout">
+          <p class="callout-text">
+            These tools are not in direct competition. Cursor is an editor. Ada is a compiler
+            that produces input for Claude Code's context system. If you use both editors,
+            you would use Cursor Rules in Cursor and Ada artifacts in Claude Code sessions.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── FAQ ──────────────────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Frequently asked questions</h2>
+
+        <div class="faq">
+
+          <details class="faq-item">
+            <summary class="faq-q">Are Cursor Rules and CLAUDE.md the same thing?</summary>
+            <p class="faq-a">
+              They are structurally similar: both are markdown files that inject context into
+              an AI model. The differences are in origin (manually written vs compiled from intent),
+              enforcement (advisory only vs advisory + hooks), trigger (per-message vs per-turn + per-tool-call),
+              and editor (Cursor vs Claude Code). CLAUDE.md can be paired with hooks that structurally
+              enforce constraints at every tool call boundary. Cursor Rules cannot.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Can I use Cursor Rules with Claude Code?</summary>
+            <p class="faq-a">
+              Not directly. Cursor Rules live in <code>.cursor/rules/</code> and are read by
+              Cursor's model integration. Claude Code reads CLAUDE.md from the project root.
+              The content of your Cursor rules — constraints, architectural decisions, project context —
+              translates well to CLAUDE.md format. The file location and tooling do not.
+              If you move a project from Cursor to Claude Code, manually porting your rules
+              to CLAUDE.md is the right approach.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">What does Ada produce that Cursor Rules cannot?</summary>
+            <p class="faq-a">
+              Ada produces three artifacts: CLAUDE.md (advisory context, analogous in role to Cursor Rules),
+              agent files (bounded-context depth per domain), and hooks (pre-tool enforcement that
+              Cursor has no equivalent for). Ada also derives these artifacts by compiling your
+              stated intent — you do not write the rules, Ada excavates them from what you describe.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Do Cursor Rules enforce anything?</summary>
+            <p class="faq-a">
+              No. Cursor Rules are advisory context injected into the model prompt. The model reads
+              them and generally follows them, but there is no mechanism that blocks an action
+              that violates a rule. If your rule says "never use Postgres" and the model writes
+              a Postgres migration, the rule was advice. Ada hooks run before each tool call and
+              can block the action structurally by returning a non-zero exit code.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Should I use Cursor Rules or Ada?</summary>
+            <p class="faq-a">
+              Cursor Rules are the right choice if you use Cursor and want fast, frictionless
+              per-project context with no compilation step. Ada is the right choice if you use
+              Claude Code, want structural enforcement via hooks, need provenance from intent
+              to artifact, or want your context compiled from what you mean rather than written
+              manually. They serve different editors and different governance needs.
+            </p>
+          </details>
+
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── CTA ──────────────────────────────────────────────────────────── -->
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">git clone https://github.com/alexrozex/ada</code>
+        </div>
+        <p class="trust-signal">
+          Ada compiles your intent into CLAUDE.md, agent files, and hooks — the enforcement layer
+          Cursor Rules don't have.
+        </p>
+        <div class="cta-actions">
+          <a href="/ada" class="btn-primary">See how Ada works &rarr;</a>
+          <a href="/start" class="btn-ghost">Setup guide &rarr;</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
+    color: var(--color-text-dim); margin: 0 0 1.25rem; display: block;
+  }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 {
+    font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800;
+    letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 1.25rem; max-width: 36rem;
+  }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 40rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; color: var(--color-text); margin: 0 0 1.5rem; }
+  .section p code { font-family: var(--font-mono); font-size: 0.875em; color: var(--color-text); background-color: var(--color-surface); padding: 0.1em 0.35em; border-radius: 2px; }
+
+  .callout { border-left: 2px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.75rem 0; background-color: var(--color-surface); }
+  .callout-text { font-size: 1rem !important; color: var(--color-text) !important; margin: 0 !important; line-height: 1.7 !important; }
+
+  /* Artifact list */
+  .artifact-list { display: flex; flex-direction: column; gap: 0; margin: 1.5rem 0; }
+  .artifact-item { display: flex; flex-direction: column; gap: 0.75rem; padding: 1.75rem 0; border-top: 1px solid var(--color-border); }
+  .artifact-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .artifact-name { font-family: var(--font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--color-accent); background: none; padding: 0; }
+  .artifact-body p { font-size: 0.9375rem !important; color: var(--color-text-muted) !important; line-height: 1.75 !important; margin: 0 0 0.625rem !important; }
+  .artifact-body p:last-child { margin-bottom: 0 !important; }
+  .artifact-body a { color: var(--color-accent); font-size: 0.9rem; }
+  .artifact-body a:hover { text-decoration: underline; }
+
+  /* Comparison table */
+  .comparison-table { border: 1px solid var(--color-border); margin: 1.5rem 0; overflow-x: auto; }
+  .comparison-row { display: grid; grid-template-columns: 9rem 1fr 1fr; border-bottom: 1px solid var(--color-border); }
+  .comparison-row:last-child { border-bottom: none; }
+  .comparison-row--header { background-color: var(--color-surface); }
+  .comparison-cell { padding: 0.875rem 1rem; font-size: 0.9rem; color: var(--color-text-muted); line-height: 1.55; }
+  .comparison-cell + .comparison-cell { border-left: 1px solid var(--color-border); }
+  .comparison-row--header .comparison-cell { font-size: 0.8125rem; font-weight: 600; color: var(--color-text); }
+  .comparison-cell--dim { color: var(--color-text-dim); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; }
+  @media (max-width: 640px) {
+    .comparison-row { grid-template-columns: 1fr; }
+    .comparison-cell + .comparison-cell { border-left: none; border-top: 1px solid var(--color-border); }
+    .comparison-cell--dim { background-color: var(--color-surface); }
+  }
+
+  /* Two col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1.5rem 0 1.75rem; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+  .col-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 0.75rem; color: var(--color-text-muted); }
+  .col-label--ada { color: var(--color-accent); }
+  .col ul { padding-left: 1.25rem; margin: 0; }
+  .col li { font-size: 0.9375rem; color: var(--color-text-muted); line-height: 1.65; margin-bottom: 0.4rem; }
+
+  /* For list */
+  .for-list { display: flex; flex-direction: column; gap: 0; margin: 0.5rem 0 1.75rem; }
+  .for-item { padding: 1.75rem 0; border-top: 1px solid var(--color-border); }
+  .for-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .for-title { font-size: 1rem; font-weight: 700; color: var(--color-text); margin: 0 0 0.875rem; letter-spacing: -0.01em; }
+  .for-ul { padding-left: 1.25rem; margin: 0; }
+  .for-ul li { font-size: 0.9375rem; color: var(--color-text-muted); line-height: 1.65; margin-bottom: 0.4rem; }
+
+  /* FAQ */
+  .faq { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+  .faq-item { border-top: 1px solid var(--color-border); padding: 0; }
+  .faq-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .faq-q {
+    font-size: 0.9375rem; font-weight: 600; color: var(--color-text);
+    cursor: pointer; padding: 1.25rem 0; list-style: none; display: flex;
+    justify-content: space-between; align-items: center; gap: 1rem;
+  }
+  .faq-q::-webkit-details-marker { display: none; }
+  .faq-q::after { content: '+'; font-size: 1.25rem; font-weight: 300; color: var(--color-text-dim); flex-shrink: 0; }
+  .faq-item[open] .faq-q::after { content: '−'; }
+  .faq-a { font-size: 0.9375rem !important; color: var(--color-text-muted) !important; line-height: 1.75 !important; margin: 0 0 1.25rem !important; }
+  .faq-a code { font-family: var(--font-mono); font-size: 0.875em; color: var(--color-text); background-color: var(--color-surface); padding: 0.1em 0.35em; border-radius: 2px; }
+
+  .link-arrow { font-size: 0.9375rem; color: var(--color-accent); display: inline-block; margin-top: 1.25rem; }
+  .link-arrow:hover { text-decoration: underline; }
+
+  .section p a { color: var(--color-accent); }
+  .section p a:hover { text-decoration: underline; }
+
+  .section--invite { padding: 4.5rem 0; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .cta-actions { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+  .btn-ghost { font-size: 0.9375rem; font-weight: 500; color: var(--color-text-muted); border: 1px solid var(--color-border); padding: 0.7rem 1.5rem; border-radius: 3px; transition: border-color 0.12s ease, color 0.12s ease; display: inline-block; }
+  .btn-ghost:hover { border-color: var(--color-text-muted); color: var(--color-text); }
+</style>

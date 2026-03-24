@@ -1,0 +1,550 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Ada vs manual CLAUDE.md: when to write it yourself and when to compile it',
+  description: 'Both approaches produce CLAUDE.md, agent files, and hooks. The difference is provenance, hooks depth, and what happens when requirements change. An honest comparison for people evaluating whether Ada is worth it.',
+  author: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://motherlabs.ai/ada/ada-vs-manual-claude-md' },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Is Ada just a CLAUDE.md generator?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Ada produces CLAUDE.md as one artifact of three. The other two are agent files and hook files. The hooks are where the meaningful structural difference lies — Ada compiles a complete hook suite from your intent specification, enforcing constraints at every tool boundary. Generating a CLAUDE.md alone is the easy part. Writing 80+ hooks by hand for a real project is not practical.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Can I edit Ada\'s CLAUDE.md after it is compiled?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Yes. But Ada can detect if your CLAUDE.md has drifted from the original intent specification. If you recompile after updating your requirements, Ada uses the current intent graph as ground truth — not the edited CLAUDE.md. This is different from manual editing, where there is no source of truth to drift from.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How long does Ada take to compile a project?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "An elicitation session typically takes 10–20 minutes for a non-trivial project. The compilation run produces CLAUDE.md, agent files, and hooks from that session. Recompilation after requirements change runs in minutes because Ada only needs to re-elicit what changed, not start over.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What if I already have a CLAUDE.md I wrote by hand?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Ada does not require starting from scratch. You can use your existing CLAUDE.md as input to an elicitation session — Ada will identify what is missing, what is ambiguous, and what needs structural enforcement as hooks. The compiled output replaces the manual version with one that traces back to formal intent.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'When is manual CLAUDE.md the right choice?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Manual CLAUDE.md is the right choice for toy projects, quick explorations, or when you are learning how Claude Code works. It is also fine if your project has no hooks, a single agent context, and requirements that will not change. The moment you have more than a handful of constraints that need structural enforcement — or requirements that will evolve — the maintenance case for Ada becomes real.",
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="Ada vs manual CLAUDE.md: when to write it yourself and when to compile it | Motherlabs"
+  description="Both approaches produce CLAUDE.md and agents. The real difference is hooks and provenance. An honest comparison for people who have tried the manual approach and are evaluating Ada."
+  schemas={[articleSchema, faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; Ada vs manual CLAUDE.md</p>
+        <h1>Ada vs manual CLAUDE.md</h1>
+        <p class="hero-sub">
+          Both produce CLAUDE.md, agent files, and hooks. One you write.
+          One a compiler produces from your intent. Here is the honest difference
+          — and where each approach breaks down.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── THE HONEST SETUP ───────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>The honest setup</h2>
+        <p>
+          Neither approach is magic. Both produce the same artifact types:
+          a <a href="/ada/how-to-write-claude-md" class="inline-link">CLAUDE.md</a>
+          that Claude Code reads on every turn, agent files scoped to bounded contexts,
+          and <a href="/ada/claude-code-hooks" class="inline-link">hook files</a>
+          that enforce constraints at the tool boundary.
+        </p>
+        <p>
+          Manual means you write them yourself — by hand, across however many sessions
+          it takes to figure out what the project needs. Ada means a compiler produces
+          them from a structured elicitation session, starting from your intent description
+          and resolving ambiguities before generating anything.
+        </p>
+        <p>
+          The output format is identical. Claude Code cannot tell which approach produced
+          the files it reads. The difference is in depth, coverage, provenance, and what
+          happens when requirements change.
+        </p>
+
+        <div class="callout">
+          <p class="callout-text">
+            If you have used manual CLAUDE.md and it has been working, that is genuinely
+            fine for the scope where it works. This page is about where that scope ends.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── COMPARISON TABLE ───────────────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Side by side</h2>
+
+        <div class="compare-table">
+          <div class="compare-table-header">
+            <div class="compare-table-cell compare-table-cell--label"></div>
+            <div class="compare-table-cell compare-table-cell--col-head">Manual</div>
+            <div class="compare-table-cell compare-table-cell--col-head compare-table-cell--ada">Ada</div>
+          </div>
+
+          <div class="compare-table-row">
+            <div class="compare-table-cell compare-table-cell--label">Time to first CLAUDE.md</div>
+            <div class="compare-table-cell">30 min to a few hours, depending on project complexity and how clearly you already understand the scope</div>
+            <div class="compare-table-cell compare-table-cell--ada">10–20 min elicitation session, then compilation</div>
+          </div>
+
+          <div class="compare-table-row">
+            <div class="compare-table-cell compare-table-cell--label">Hook depth</div>
+            <div class="compare-table-cell">As many as you write. In practice: zero to a handful, written reactively after a violation occurs</div>
+            <div class="compare-table-cell compare-table-cell--ada">Full suite compiled from intent — one hook per invariant, covering all bounded contexts from the start</div>
+          </div>
+
+          <div class="compare-table-row">
+            <div class="compare-table-cell compare-table-cell--label">Provenance</div>
+            <div class="compare-table-cell">None. Your CLAUDE.md exists, but there is no record of why each line is there or what intent it encodes</div>
+            <div class="compare-table-cell compare-table-cell--ada">Every line traces back to the intent graph. Ada can detect drift between CLAUDE.md and the original specification</div>
+          </div>
+
+          <div class="compare-table-row">
+            <div class="compare-table-cell compare-table-cell--label">Session consistency</div>
+            <div class="compare-table-cell">Consistent only if you maintain the file. Most teams let it drift as the project evolves</div>
+            <div class="compare-table-cell compare-table-cell--ada">Recompile from updated intent — all artifacts regenerate together, so CLAUDE.md, agents, and hooks stay coherent</div>
+          </div>
+
+          <div class="compare-table-row">
+            <div class="compare-table-cell compare-table-cell--label">When requirements change</div>
+            <div class="compare-table-cell">Update CLAUDE.md manually, then update every affected hook and agent file by hand — or let them drift</div>
+            <div class="compare-table-cell compare-table-cell--ada">Re-elicit what changed, recompile. Hook and agent updates propagate automatically from the updated intent</div>
+          </div>
+
+          <div class="compare-table-row">
+            <div class="compare-table-cell compare-table-cell--label">Maintenance overhead</div>
+            <div class="compare-table-cell">Linear: grows with project complexity and the number of constraints you need to enforce</div>
+            <div class="compare-table-cell compare-table-cell--ada">Recompilation cost is roughly constant — the elicitation session scope grows, not the manual editing burden</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── WHAT MANUAL GETS RIGHT ────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>What the manual approach gets right</h2>
+        <p>
+          Manual CLAUDE.md has real advantages in the right context. Worth naming
+          them honestly before making the case for where it fails.
+        </p>
+
+        <div class="pros">
+          <div class="pro-item">
+            <h3 class="pro-title">Full control</h3>
+            <p class="pro-desc">
+              You decide exactly what is in the file. Every line reflects a
+              deliberate choice you made. Nothing was inferred or generated — which
+              means nothing will surprise you when Claude Code acts on it.
+            </p>
+          </div>
+
+          <div class="pro-item">
+            <h3 class="pro-title">No dependencies</h3>
+            <p class="pro-desc">
+              A text file you maintain yourself has zero external dependencies.
+              No compilation step, no API keys, no tooling. Open the file, edit it,
+              save it. It works.
+            </p>
+          </div>
+
+          <div class="pro-item">
+            <h3 class="pro-title">Right for small, stable projects</h3>
+            <p class="pro-desc">
+              If your project has one bounded context, a handful of constraints,
+              and requirements that will not meaningfully change, there is no
+              maintenance problem to solve. A hand-written CLAUDE.md is entirely
+              adequate and adding a compilation step would be overhead without benefit.
+            </p>
+          </div>
+
+          <div class="pro-item">
+            <h3 class="pro-title">Useful for learning</h3>
+            <p class="pro-desc">
+              Writing CLAUDE.md by hand teaches you how Claude Code uses it.
+              You see exactly what changes behavior and what does not.
+              If you are new to Claude Code project setup, writing your first
+              CLAUDE.md manually is a worthwhile step.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── WHERE IT BREAKS DOWN ──────────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Where it breaks down</h2>
+        <p>
+          The manual approach scales linearly with complexity. For real projects,
+          that scaling hits two specific walls.
+        </p>
+
+        <div class="breakdown-items">
+
+          <div class="breakdown-item">
+            <h3 class="breakdown-title">The hooks problem</h3>
+            <p class="breakdown-desc">
+              Writing CLAUDE.md is the easy part. The structural enforcement layer —
+              <a href="/ada/claude-code-hooks" class="inline-link">hooks</a> —
+              is where the manual approach fails at scale. A non-trivial project
+              with multiple bounded contexts, file constraints, scope boundaries,
+              and behavioral invariants needs dozens to hundreds of hooks.
+            </p>
+            <p class="breakdown-desc">
+              In practice, teams write zero or a few. They write them reactively —
+              after Claude Code violates a constraint they forgot to guard.
+              That means every unguarded constraint is a trust problem: you believe
+              it will hold, but it is not structurally enforced.
+            </p>
+            <p class="breakdown-desc">
+              Ada compiles the full hook suite from the intent specification.
+              Every constraint that needs enforcement gets a hook before building starts,
+              not after a violation surfaces it.
+            </p>
+          </div>
+
+          <div class="breakdown-item">
+            <h3 class="breakdown-title">Requirements change</h3>
+            <p class="breakdown-desc">
+              When a real project's requirements change — scope shifts, a technology
+              decision gets reversed, a bounded context gets added — you need to update
+              CLAUDE.md, every affected agent file, and every affected hook.
+            </p>
+            <p class="breakdown-desc">
+              On a project with 20 hooks, updating them after a scope change is a
+              full day. They are disconnected files, each written in isolation —
+              there is no shared source of truth to regenerate them from.
+            </p>
+            <p class="breakdown-desc">
+              With Ada, you re-elicit the changed requirement and recompile.
+              The intent graph is the source of truth. All three artifact types
+              regenerate coherently from it.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── PROVENANCE ARGUMENT ────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>The provenance argument</h2>
+        <p>
+          A hand-written CLAUDE.md has no ground truth. It exists, and Claude Code
+          reads it — but there is no record of the intent it was meant to encode,
+          no way to verify that it still reflects what you meant, and no way to
+          detect when it has drifted.
+        </p>
+        <p>
+          This becomes a real problem when the project runs for more than a few weeks.
+          Lines get added by different people, or by you in different mental states,
+          at different points in the project. Over time, a manually maintained CLAUDE.md
+          accumulates contradictions, stale constraints, and content that no longer
+          reflects the current project shape.
+        </p>
+
+        <div class="callout">
+          <p class="callout-text">
+            Ada's output traces back to the intent graph produced during elicitation.
+            That graph is the formal source of truth.
+            <a href="/ada/intent-formalization" class="inline-link">Intent formalization</a>
+            means the compiled CLAUDE.md encodes what you actually stated during elicitation —
+            and if you edit it manually afterward, Ada can detect the divergence
+            when you recompile.
+          </p>
+        </div>
+
+        <p>
+          With a manual CLAUDE.md, there is no ground truth to drift from.
+          Drift is invisible. You can only discover it when Claude Code behaves
+          in a way that surprises you — at which point the constraint was already lost.
+        </p>
+        <p>
+          With Ada, the intent graph is the canonical record. The compiled CLAUDE.md
+          is a projection of that record. If they diverge, Ada surfaces it.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── WHO SHOULD USE WHAT ───────────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Who should use which</h2>
+
+        <div class="two-col">
+          <div class="col col--manual">
+            <h3 class="col-label col-label--manual">Manual is the right call when</h3>
+            <ul>
+              <li>The project is a toy, experiment, or quick exploration</li>
+              <li>You are learning how Claude Code project setup works</li>
+              <li>No API key or external tooling is acceptable</li>
+              <li>Requirements will not meaningfully change</li>
+              <li>A handful of constraints is the entire scope</li>
+              <li>Hooks are not needed or will be written by hand anyway</li>
+            </ul>
+          </div>
+          <div class="col col--ada">
+            <h3 class="col-label col-label--ada">Ada is the right call when</h3>
+            <ul>
+              <li>The project is real and requirements will evolve</li>
+              <li>You work with Claude Code regularly and across sessions</li>
+              <li>Multiple bounded contexts need separate agent files</li>
+              <li>You need structural enforcement, not just advisory constraints</li>
+              <li>A scope change would otherwise mean a day of manual hook updates</li>
+              <li>You want the CLAUDE.md to trace back to what you actually meant</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>
+          The line is roughly: is there a maintenance problem? If requirements are stable
+          and simple, manual works. The moment you have constraints that need hooks,
+          multiple agent contexts, or requirements that will change, the manual approach
+          starts costing more than it saves.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── FAQ ──────────────────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Questions</h2>
+
+        <div class="faq-list">
+
+          <details class="faq-item">
+            <summary class="faq-q">Is Ada just a CLAUDE.md generator?</summary>
+            <p class="faq-a">
+              Ada produces CLAUDE.md as one artifact of three. The other two are agent files
+              and hook files. The hooks are where the meaningful structural difference lies —
+              Ada compiles a complete hook suite from your intent specification,
+              enforcing constraints at every tool boundary. Generating a CLAUDE.md alone
+              is the easy part. Writing 80+ hooks by hand for a real project is not practical.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Can I edit Ada's CLAUDE.md after it is compiled?</summary>
+            <p class="faq-a">
+              Yes. But Ada can detect if your CLAUDE.md has drifted from the original
+              intent specification. If you recompile after updating your requirements,
+              Ada uses the current intent graph as ground truth — not the edited CLAUDE.md.
+              This is different from manual editing, where there is no source of truth
+              to drift from.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">How long does Ada take to compile a project?</summary>
+            <p class="faq-a">
+              An elicitation session typically takes 10–20 minutes for a non-trivial project.
+              The compilation run produces CLAUDE.md, agent files, and hooks from that session.
+              Recompilation after requirements change runs in minutes because Ada only
+              re-elicits what changed, not the full project.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">What if I already have a CLAUDE.md I wrote by hand?</summary>
+            <p class="faq-a">
+              Ada does not require starting from scratch. You can use your existing CLAUDE.md
+              as input to an elicitation session — Ada will identify what is missing,
+              what is ambiguous, and what needs structural enforcement as hooks.
+              The compiled output replaces the manual version with one that traces
+              back to formal intent.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">When is manual CLAUDE.md the right choice?</summary>
+            <p class="faq-a">
+              Manual CLAUDE.md is the right choice for toy projects, quick explorations,
+              or when you are learning how Claude Code works. It is also fine if your project
+              has no hooks, a single agent context, and requirements that will not change.
+              The moment you have more than a handful of constraints that need structural
+              enforcement — or requirements that will evolve — the maintenance case for Ada
+              becomes real.
+            </p>
+          </details>
+
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ─── CTA ──────────────────────────────────────────────────────────── -->
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">git clone https://github.com/alexrozex/ada</code>
+        </div>
+        <p class="trust-signal">
+          Ada compiles CLAUDE.md, agent files, and a full hook suite from one elicitation session.
+        </p>
+        <div class="cta-row">
+          <a href="/start" class="btn-primary">Get started &rarr;</a>
+          <a href="/ada" class="btn-secondary">See how Ada works &rarr;</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
+    color: var(--color-text-dim); margin: 0 0 1.25rem; display: block;
+  }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 {
+    font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800;
+    letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 1.25rem; max-width: 36rem;
+  }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 40rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; color: var(--color-text); margin: 0 0 1.5rem; }
+
+  .callout { border-left: 2px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.75rem 0; background-color: var(--color-surface); }
+  .callout-text { font-size: 1rem !important; color: var(--color-text) !important; margin: 0 !important; line-height: 1.7 !important; }
+  .callout a { color: var(--color-accent); }
+  .callout a:hover { text-decoration: underline; }
+
+  .inline-link { color: var(--color-accent); text-decoration: none; }
+  .inline-link:hover { text-decoration: underline; }
+
+  /* Comparison table */
+  .compare-table { border: 1px solid var(--color-border); margin: 1.5rem 0; overflow: hidden; }
+  .compare-table-header { display: grid; grid-template-columns: 10rem 1fr 1fr; background-color: color-mix(in srgb, var(--color-border) 30%, var(--color-surface)); border-bottom: 1px solid var(--color-border); }
+  .compare-table-row { display: grid; grid-template-columns: 10rem 1fr 1fr; border-top: 1px solid var(--color-border); }
+  @media (max-width: 640px) {
+    .compare-table-header { grid-template-columns: 1fr 1fr; }
+    .compare-table-row { grid-template-columns: 1fr 1fr; }
+    .compare-table-cell--label { display: none; }
+  }
+  .compare-table-cell { padding: 0.875rem 1rem; font-size: 0.875rem; color: var(--color-text-muted); line-height: 1.65; }
+  .compare-table-cell + .compare-table-cell { border-left: 1px solid var(--color-border); }
+  .compare-table-cell--label { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-dim); display: flex; align-items: center; }
+  .compare-table-cell--col-head { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); }
+  .compare-table-cell--ada { color: var(--color-accent) !important; }
+
+  /* Pros */
+  .pros { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+  .pro-item { padding: 1.5rem 0; border-top: 1px solid var(--color-border); }
+  .pro-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .pro-title { font-size: 1rem; font-weight: 700; color: var(--color-text); margin: 0 0 0.5rem; letter-spacing: -0.01em; }
+  .pro-desc { font-size: 0.9375rem !important; color: var(--color-text-muted) !important; line-height: 1.75 !important; margin: 0 !important; }
+
+  /* Breakdown */
+  .breakdown-items { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+  .breakdown-item { padding: 1.75rem 0; border-top: 1px solid var(--color-border); }
+  .breakdown-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .breakdown-title { font-size: 1rem; font-weight: 700; color: var(--color-text); margin: 0 0 0.75rem; letter-spacing: -0.01em; }
+  .breakdown-desc { font-size: 0.9375rem !important; color: var(--color-text-muted) !important; line-height: 1.75 !important; margin: 0 0 0.75rem !important; }
+  .breakdown-desc:last-child { margin-bottom: 0 !important; }
+
+  /* Two col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1.5rem 0 1.75rem; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+  .col-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 0.75rem; }
+  .col-label--manual { color: var(--color-text-muted); }
+  .col-label--ada { color: var(--color-accent); }
+  .col ul { padding-left: 1.25rem; margin: 0; }
+  .col li { font-size: 0.9375rem; color: var(--color-text-muted); line-height: 1.65; margin-bottom: 0.4rem; }
+
+  /* FAQ */
+  .faq-list { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+  .faq-item { border-top: 1px solid var(--color-border); }
+  .faq-item:last-child { border-bottom: 1px solid var(--color-border); }
+  .faq-q { display: block; padding: 1.25rem 0; font-size: 1rem; font-weight: 600; color: var(--color-text); cursor: pointer; list-style: none; line-height: 1.5; }
+  .faq-q::-webkit-details-marker { display: none; }
+  .faq-q::before { content: '+ '; font-family: var(--font-mono); color: var(--color-accent); font-weight: 400; }
+  details[open] .faq-q::before { content: '− '; }
+  .faq-a { font-size: 1rem; color: var(--color-text-muted); line-height: 1.75; margin: 0 0 1.25rem; padding-left: 1.25rem; }
+
+  /* CTA */
+  .section--invite { padding: 4.5rem 0; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .cta-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+  .btn-secondary { font-size: 0.9375rem; font-weight: 500; color: var(--color-accent); padding: 0.7rem 0; display: inline-block; }
+  .btn-secondary:hover { text-decoration: underline; }
+
+  .section p a { color: var(--color-accent); }
+  .section p a:hover { text-decoration: underline; }
+</style>
