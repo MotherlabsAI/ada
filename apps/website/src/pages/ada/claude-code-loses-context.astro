@@ -1,0 +1,419 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Why Claude Code Loses Context Between Sessions — and How to Prevent It',
+  description: 'Claude Code resets its context window on every new session. Without a structured persistence layer, it rebuilds its understanding from scratch each time — producing drift. Here is the mechanism, and how to fix it.',
+  author: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://motherlabs.ai/ada/claude-code-loses-context' },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Why does Claude Code forget what I told it?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Claude Code has no persistent memory between sessions. Each new session starts with a fresh context window. The only information that carries over is what is explicitly written in files the model reads at session start — primarily CLAUDE.md. If your project intent, constraints, and architectural decisions are not in a file Claude Code reads on every turn, they are lost when the session ends.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Does Claude Code have persistent memory between sessions?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Not by default. Claude Code reads CLAUDE.md at the start of each session, which is the closest thing to persistence it has natively. However, CLAUDE.md is advisory — it tells Claude Code what you want but cannot enforce it. Without structured agent files and pre-tool hooks, every session is a fresh inference from whatever text is in CLAUDE.md. If CLAUDE.md is sparse, vague, or missing, Claude Code rebuilds its understanding from scratch.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is context drift in Claude Code?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Context drift is the accumulation of small inference errors across sessions. Session 1: Claude Code infers your intent and builds. Session 2: it re-infers from a slightly different starting point and builds again. By session 5 or 10, the codebase reflects five or ten layers of inference, not a single coherent intent. Each individual session looks reasonable. The drift is only visible across sessions, and by the time it is visible, it is expensive to reverse.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How do I make Claude Code remember between sessions?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'The reliable method is a structured persistence layer: CLAUDE.md encodes what the project is, what it is not, and what constraints apply. Agent files provide domain-deep context scoped to bounded areas. Pre-tool hooks enforce constraints at every tool call boundary. This three-layer architecture means each session starts from a consistent, governed understanding rather than a fresh inference. Ada produces all three layers from structured intent.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Why does Claude Code behave differently in long sessions?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'In long sessions, Claude Code\'s attention is distributed across a growing context window. Early instructions, constraints, and decisions get proportionally less attention as the session grows. This is attention dilution — not forgetting, but deprioritization. Structural enforcement via pre-tool hooks addresses this because hooks run at every tool boundary regardless of context window length.',
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="Why Claude Code loses context between sessions — and how to prevent it | Motherlabs"
+  description="Claude Code resets its context window every session and re-infers your intent from scratch. Here is why that causes drift, and the three-layer architecture that prevents it."
+  schemas={[articleSchema, faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; Claude Code Context</p>
+        <h1>Why Claude Code loses context between sessions</h1>
+        <p class="hero-sub">
+          Every new session is a fresh inference. Without a structured persistence layer,
+          Claude Code rebuilds its understanding from scratch each time — and the drift compounds.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>The mechanism</h2>
+        <p>
+          Claude Code has no persistent memory. When a session ends, the context window clears.
+          The next session starts fresh.
+        </p>
+        <p>
+          The only thing that carries over is what is explicitly written in files the model reads
+          at session start. For Claude Code, that is primarily <code>CLAUDE.md</code>. Everything
+          else — the decisions you made, the constraints you established, the architectural choices
+          you explained — must be re-derived from whatever is in that file.
+        </p>
+        <p>
+          If CLAUDE.md is sparse, Claude Code fills the gaps with inference.
+          The inference is usually close. Close is not right.
+        </p>
+        <div class="callout">
+          <p class="callout-text">
+            The problem is not that Claude Code is inconsistent. It is that it is
+            consistently doing its best with whatever information it has. If that information
+            changes between sessions — or was never fully specified — the output changes too.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Three ways context gets lost</h2>
+
+        <div class="loss-list">
+          <div class="loss-item">
+            <div class="loss-header">
+              <span class="loss-num">01</span>
+              <h3>Session reset</h3>
+            </div>
+            <p>
+              The most common case. You end a session. The next day, you start a new one.
+              Claude Code has no memory of yesterday's decisions. If CLAUDE.md does not contain
+              them explicitly, they are gone. The model re-infers from the current state of the
+              codebase and whatever context you provide in the new session.
+            </p>
+            <p>
+              Over multiple sessions, each re-inference introduces small errors. The errors
+              compound. By session five or ten, the codebase reflects layers of inference,
+              not a single coherent intent.
+            </p>
+          </div>
+
+          <div class="loss-item">
+            <div class="loss-header">
+              <span class="loss-num">02</span>
+              <h3>Attention dilution in long sessions</h3>
+            </div>
+            <p>
+              Within a single long session, context does not disappear — but it deprioritizes.
+              A context window that starts with your project definition and constraints
+              gradually fills with code, tool outputs, and back-and-forth. Early instructions
+              receive proportionally less attention as the window grows.
+            </p>
+            <p>
+              This is not forgetting. It is attention dilution. The constraint you stated
+              at the beginning of a long session may receive a fraction of the attention weight
+              at the end of that same session.
+            </p>
+          </div>
+
+          <div class="loss-item">
+            <div class="loss-header">
+              <span class="loss-num">03</span>
+              <h3>Subagent context gap</h3>
+            </div>
+            <p>
+              When Claude Code spawns a subagent for a specific task, that subagent
+              does not automatically inherit the full context of the parent session.
+              It receives what is explicitly passed to it. Constraints, architectural decisions,
+              and domain knowledge that live only in the conversation are not passed.
+            </p>
+            <p>
+              The subagent builds against its limited context. Its output is coherent
+              within that context and inconsistent with the broader project intent.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Why CLAUDE.md alone is not enough</h2>
+        <p>
+          The instinct is to put everything in CLAUDE.md. If context is lost between sessions,
+          write more in CLAUDE.md.
+        </p>
+        <p>
+          This solves one problem and creates another. CLAUDE.md is in context on every turn,
+          which means it has to be short enough to remain signal-dense. A bloated CLAUDE.md
+          buries the constraints under noise. Research on context length shows model performance
+          degrades as context grows — not always linearly, but reliably.
+        </p>
+        <p>
+          More critically: CLAUDE.md is advisory. It tells Claude Code what you want.
+          It cannot prevent Claude Code from doing otherwise. If it decides a constraint
+          does not apply to the current task, it will proceed anyway.
+        </p>
+
+        <div class="comparison">
+          <div class="comparison-col">
+            <div class="comparison-header comparison-header--bad">Without persistence layer</div>
+            <ul class="comparison-list">
+              <li>Session 1: infers intent from description</li>
+              <li>Session 2: re-infers from changed codebase</li>
+              <li>Session 5: builds against 5 layers of inference</li>
+              <li>Constraints are advisory — ignored when inconvenient</li>
+              <li>Subagents get no project context</li>
+              <li>Long sessions dilute early instructions</li>
+            </ul>
+          </div>
+          <div class="comparison-col">
+            <div class="comparison-header comparison-header--good">With three-layer architecture</div>
+            <ul class="comparison-list">
+              <li>Every session reads the same governed CLAUDE.md</li>
+              <li>Domain agents carry deep context into subagent spawns</li>
+              <li>Hooks enforce constraints at every tool boundary</li>
+              <li>Constraints are structural — cannot be bypassed</li>
+              <li>Context is consistent across sessions and agents</li>
+              <li>Long sessions maintain enforcement via hooks</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>The three-layer fix</h2>
+        <p>
+          Solving context loss requires three layers working together.
+          Each layer addresses a different failure mode.
+        </p>
+
+        <div class="layer-list">
+          <div class="layer">
+            <div class="layer-header">
+              <span class="layer-num">01</span>
+              <div>
+                <h3>CLAUDE.md — session persistence</h3>
+                <span class="layer-file">Addresses: session reset</span>
+              </div>
+            </div>
+            <p>
+              The foundation. Read on every turn, every session. Contains what the project is,
+              what it is not, architectural decisions, and scope boundaries — dense with signal,
+              not with history. A well-structured CLAUDE.md means every session starts
+              from the same governed understanding, not a fresh inference.
+            </p>
+          </div>
+
+          <div class="layer">
+            <div class="layer-header">
+              <span class="layer-num">02</span>
+              <div>
+                <h3>Agent files — domain context</h3>
+                <span class="layer-file">Addresses: subagent context gap</span>
+              </div>
+            </div>
+            <p>
+              Scoped context files for each domain area. An agent for the auth system
+              knows auth entities, constraints, and state machines — and this context
+              is available to subagents working in that domain. Domain depth without
+              polluting the hot layer that every session reads.
+            </p>
+          </div>
+
+          <div class="layer">
+            <div class="layer-header">
+              <span class="layer-num">03</span>
+              <div>
+                <h3>Pre-tool hooks — structural enforcement</h3>
+                <span class="layer-file">Addresses: attention dilution, advisory drift</span>
+              </div>
+            </div>
+            <p>
+              Hook files that run before Claude Code takes any tool action.
+              They enforce constraints at the boundary where decisions are made,
+              not in the context window where attention fluctuates.
+              A hook does not care how long the session has been running
+              or how far down the context window the original constraint is.
+              It runs on every tool call.
+            </p>
+          </div>
+        </div>
+
+        <p style="margin-top: 1.5rem;">
+          This is the architecture Ada compiles from structured intent.
+          Read more about <a href="/ada/context-engineering">context engineering for Claude Code</a>
+          and why each layer exists.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Frequently asked questions</h2>
+
+        <div class="faq-list">
+          <div class="faq-item">
+            <h3>Why does Claude Code forget what I told it?</h3>
+            <p>
+              Claude Code has no persistent memory between sessions. Each new session starts
+              with a fresh context window. The only information that carries over is what is
+              explicitly written in files it reads at session start — primarily CLAUDE.md.
+              If your project intent, constraints, and decisions are not in a file Claude Code
+              reads on every turn, they are lost when the session ends.
+            </p>
+          </div>
+
+          <div class="faq-item">
+            <h3>Does Claude Code have persistent memory?</h3>
+            <p>
+              Not by default. CLAUDE.md is the closest native mechanism — it is read at the
+              start of each session. But CLAUDE.md is advisory, not structural. Without agent
+              files and hooks, every session is a fresh inference from whatever is in that file.
+            </p>
+          </div>
+
+          <div class="faq-item">
+            <h3>How do I make Claude Code remember between sessions?</h3>
+            <p>
+              Build a structured persistence layer: CLAUDE.md for what always applies,
+              agent files for domain-specific depth, and hooks for structural enforcement.
+              These three layers together mean every session starts from the same governed
+              understanding. <a href="/ada">Ada compiles all three from structured intent</a>.
+            </p>
+          </div>
+
+          <div class="faq-item">
+            <h3>Why does Claude Code behave differently in long sessions?</h3>
+            <p>
+              Attention dilution. As the context window fills with tool outputs and back-and-forth,
+              early instructions receive proportionally less attention weight. This is why
+              structural enforcement via hooks matters — hooks run at every tool boundary
+              regardless of context window length.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">git clone https://github.com/alexrozex/ada</code>
+        </div>
+        <p class="trust-signal">Three-layer context architecture. Compiled from intent. No more session drift.</p>
+        <a href="/start" class="btn-primary">Get started &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--color-text-dim); margin: 0 0 1.25rem; display: block; }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 { font-family: var(--font-serif); font-size: clamp(1.875rem, 4vw, 2.875rem); font-weight: 400; letter-spacing: -0.01em; line-height: 1.1; margin: 0 0 1.25rem; max-width: 34rem; }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 38rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; color: var(--color-text); margin: 0 0 1.5rem; }
+
+  .callout { border-left: 2px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.75rem 0; background-color: var(--color-surface); }
+  .callout-text { font-size: 1rem !important; color: var(--color-text) !important; margin: 0 !important; line-height: 1.7 !important; }
+
+  .loss-list { display: flex; flex-direction: column; gap: 0; }
+  .loss-item { padding: 2rem 0; border-top: 1px solid var(--color-border); }
+  .loss-header { display: flex; gap: 1.25rem; align-items: flex-start; margin-bottom: 1rem; }
+  .loss-num { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; color: var(--color-accent); padding-top: 0.25rem; flex-shrink: 0; }
+  .loss-header h3 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin: 0; }
+  .loss-item p { font-size: 0.9375rem; color: var(--color-text-muted); margin: 0 0 0.875rem; line-height: 1.7; }
+  .loss-item p:last-child { margin-bottom: 0; }
+
+  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; border: 1px solid var(--color-border); margin: 1.75rem 0; font-size: 0.875rem; }
+  .comparison-col { padding: 0; }
+  .comparison-header { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.75rem 1rem; border-bottom: 1px solid var(--color-border); }
+  .comparison-header--bad { color: var(--color-text-dim); background-color: var(--color-surface); }
+  .comparison-header--good { color: var(--color-accent); background-color: var(--color-surface); }
+  .comparison-list { list-style: none; margin: 0; padding: 0; }
+  .comparison-list li { padding: 0.625rem 1rem; color: var(--color-text-muted); border-bottom: 1px solid var(--color-border); line-height: 1.5; font-size: 0.875rem; }
+  .comparison-list li:last-child { border-bottom: none; }
+  @media (max-width: 640px) { .comparison { grid-template-columns: 1fr; } }
+
+  .layer-list { display: flex; flex-direction: column; gap: 0; }
+  .layer { padding: 2rem 0; border-top: 1px solid var(--color-border); }
+  .layer-header { display: flex; gap: 1.25rem; align-items: flex-start; margin-bottom: 1rem; }
+  .layer-num { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; color: var(--color-accent); padding-top: 0.3rem; flex-shrink: 0; }
+  .layer-header h3 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin: 0 0 0.25rem; }
+  .layer-file { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-text-dim); }
+  .layer p { font-size: 0.9375rem; color: var(--color-text-muted); margin: 0; line-height: 1.7; }
+
+  .faq-list { display: flex; flex-direction: column; gap: 0; }
+  .faq-item { padding: 1.75rem 0; border-top: 1px solid var(--color-border); }
+  .faq-item h3 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin: 0 0 0.75rem; }
+  .faq-item p { font-size: 0.9375rem; color: var(--color-text-muted); margin: 0; line-height: 1.7; }
+  .faq-item a { color: var(--color-accent); }
+
+  .section--invite { padding: 4.5rem 0; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+
+  code { font-family: var(--font-mono); font-size: 0.875rem; color: var(--color-accent); background-color: var(--color-surface); padding: 0.1rem 0.35rem; border-radius: 2px; }
+</style>

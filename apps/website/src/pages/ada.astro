@@ -473,6 +473,36 @@ const faqSchema = {
       </div>
     </section>
 
+    <!-- ─── CLUSTER LINKS ────────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Go deeper</h2>
+        <div class="cluster-links">
+          <a href="/ada/claude-code-loses-context" class="cluster-link">
+            <span class="cluster-link-title">Why Claude Code loses context between sessions &rarr;</span>
+            <span class="cluster-link-desc">The mechanism behind session reset, attention dilution, and subagent gaps — and the three-layer fix.</span>
+          </a>
+          <a href="/ada/context-engineering" class="cluster-link">
+            <span class="cluster-link-title">Context engineering for Claude Code &rarr;</span>
+            <span class="cluster-link-desc">CLAUDE.md is one layer. A governed context architecture has three.</span>
+          </a>
+          <a href="/ada/intent-gap" class="cluster-link">
+            <span class="cluster-link-title">The intent gap &rarr;</span>
+            <span class="cluster-link-desc">Why AI code drifts from what you meant — and why it is structural, not a prompting problem.</span>
+          </a>
+          <a href="/ada/what-is-claude-md" class="cluster-link">
+            <span class="cluster-link-title">What is CLAUDE.md? &rarr;</span>
+            <span class="cluster-link-desc">What it does, what it cannot do, and where it sits in the full context architecture.</span>
+          </a>
+          <a href="/ada/how-ada-works" class="cluster-link">
+            <span class="cluster-link-title">How Ada works &rarr;</span>
+            <span class="cluster-link-desc">The 7-stage compilation pipeline from raw intent to governed artifacts.</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
     <!-- ─── INSTALL ───────────────────────────────────────────────────────── -->
     <hr class="divider" />
     <section class="section section--invite">
@@ -966,6 +996,13 @@ const faqSchema = {
     margin: 0;
     line-height: 1.65;
   }
+
+  .cluster-links { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+  .cluster-link { display: block; padding: 1.25rem 0; border-top: 1px solid var(--color-border); text-decoration: none; transition: opacity 120ms ease; }
+  .cluster-link:last-child { border-bottom: 1px solid var(--color-border); }
+  .cluster-link:hover { opacity: 0.75; }
+  .cluster-link-title { display: block; font-size: 0.9375rem; font-weight: 600; color: var(--color-accent); margin-bottom: 0.375rem; }
+  .cluster-link-desc { display: block; font-size: 0.875rem; color: var(--color-text-muted); line-height: 1.6; }
 
   .honest-note {
     font-size: 1.25rem !important;
