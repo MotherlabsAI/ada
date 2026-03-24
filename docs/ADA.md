@@ -16,6 +16,7 @@ surfaces to the reader without explanation, no promise exceeds what the product 
 ADA.md  ←  this file — master index
 │
 ├── BRAND.md            ←  top of the semantic hierarchy — all other docs derive from this
+├── ARCHITECTURE.md     ←  Ada internals: pipeline, postcodes, world model, git-backed design
 │
 ├── docs/product/
 │   ├── CAPABILITIES.md ←  what Ada does: [LIVE], [BUILDING], [VISION]
@@ -28,6 +29,7 @@ ADA.md  ←  this file — master index
 └── docs/website/
     ├── CONTENT_STRATEGY.md   ←  what each page says and why — battle-tested claims only
     ├── DESIGN_DIRECTION.md   ←  visual language, palette, ◈, layout grammar
+    ├── DESIGN_PSYCHOLOGY.md  ←  visitor psychology, evidence sequencing, page structure rules
     ├── SEO_STRATEGY.md       ←  how Ada gets found — search queries, timeline
     └── IMAGERY.md            ←  what visual assets appear and what never appears
 ```
@@ -69,16 +71,37 @@ user intent  →  Ada elicits  →  Ada compiles  →  CLAUDE.md + agents + hook
 
 ### Current Product State
 
-| Phase | What                                                    | Status         |
-| ----- | ------------------------------------------------------- | -------------- |
-| 1     | Compilation — intent → CLAUDE.md + agents + hooks       | Live           |
-| 2     | Elicitation — structured questioning before compilation | Live           |
-| 3     | World model — persistent artifact store, navigable      | In development |
-| 4     | Ongoing authority — drift detection, impact analysis    | Vision         |
+| Phase | What                                                    | Status    |
+| ----- | ------------------------------------------------------- | --------- |
+| 1     | Compilation — intent → CLAUDE.md + agents + hooks       | Live      |
+| 2     | Elicitation — structured questioning before compilation | Live      |
+| 3     | World model — artifact store + MCP constraint authority | Live      |
+| 4     | Git-backed world model — postcodes = git SHAs           | Designing |
 
 ---
 
 ## Document Summaries
+
+### ARCHITECTURE.md
+
+**Role:** canonical design decisions for Ada's internals — how the compiler is built, not what it does.
+
+**Contains:**
+
+- The 8-stage pipeline (CTX→INT→PER→ENT→PRO→SYN→VER→GOV) with stage outputs
+- Postcode anatomy and the key insight: postcodes are git SHAs by another name
+- Current world model (`.ada/artifacts/`) vs target architecture (git object store)
+- Migration path: `git hash-object` → `git mktree` → `.ada` one-line ref pointer
+- Elicitation design: adaptive depth classifier, pre-calibrated question frames
+- MCP authority server design and `loadBlueprint` resolution order
+- Generated artifact index with token budget rationale for CLAUDE.md
+
+**Key insight:**
+Postcodes are git SHAs by another name. Ada's `.ada/artifacts/` reinvents what git already provides.
+The right design: artifacts are git objects, postcodes are git SHAs, `.ada` is a one-line committed ref.
+This eliminates custom content-addressing, reduces latency, and gives provenance for free.
+
+---
 
 ### BRAND.md
 
@@ -190,6 +213,28 @@ Product quality is the growth strategy. One bad session that doesn't match inten
 **Key invariant:**
 The core differentiator: Ada happens before. MEMORY.md, Cursor Rules, better prompting — during or after.
 This distinction is factual, specific, survives any competitive challenge.
+
+---
+
+### docs/website/DESIGN_PSYCHOLOGY.md
+
+**Role:** psychological and architectural principles behind every page decision — visitor behavior, evidence sequencing, progressive disclosure, trust hierarchy.
+
+**Contains:**
+
+- The 3-second rule: hero must answer "what is this?" before any copy runs
+- Evidence rule: claim → evidence → claim → evidence → action (never claim → claim → action)
+- Progressive disclosure: each section answers one question, earns the next scroll
+- Recognition moment: name the specific frustration, not the general category
+- User-framing vs product-framing: "You do Y, and X happens" not "Ada does X"
+- CTA hierarchy: the install command is the primary CTA, not a button
+- Trust signals for cold-start: specificity + honest limitations + iteration count
+- Correct page structure: Recognition → Evidence → Mechanism → Separation → Artifact → Invitation
+- Full prohibition list: what never to do on any page
+
+**Key invariant:**
+"not zero distance. less." is the strongest trust signal on the page — it earns trust by refusing to overclaim.
+Must be visually prominent, not buried in body text.
 
 ---
 
