@@ -68,6 +68,9 @@ const faqSchema = {
     <section class="hero">
       <div class="container">
 
+        <!-- Identity mark -->
+        <span class="hero-diamond" aria-hidden="true">◈</span>
+
         <!-- Terminal compile block — answers "what is this?" before headline -->
         <div class="compile-block" aria-label="Ada compile output">
           <div class="compile-prompt">
@@ -76,38 +79,38 @@ const faqSchema = {
           </div>
           <div class="compile-stages">
             <div class="stage-row">
+              <span class="stage-glyph stage-glyph--done">◆</span>
               <span class="stage-label">CTX</span>
-              <span class="stage-check">✓</span>
               <span class="stage-desc">codebase context</span>
             </div>
             <div class="stage-row">
+              <span class="stage-glyph stage-glyph--done">◆</span>
               <span class="stage-label">INT</span>
-              <span class="stage-check">✓</span>
               <span class="stage-desc">intent graph</span>
             </div>
             <div class="stage-row">
+              <span class="stage-glyph stage-glyph--done">◆</span>
               <span class="stage-label">PER</span>
-              <span class="stage-check">✓</span>
               <span class="stage-desc">persona mapping</span>
             </div>
             <div class="stage-row">
+              <span class="stage-glyph stage-glyph--done">◆</span>
               <span class="stage-label">ENT</span>
-              <span class="stage-check">✓</span>
               <span class="stage-desc">entity extraction</span>
             </div>
             <div class="stage-row">
+              <span class="stage-glyph stage-glyph--done">◆</span>
               <span class="stage-label">PRO</span>
-              <span class="stage-check">✓</span>
               <span class="stage-desc">process synthesis</span>
             </div>
             <div class="stage-row">
+              <span class="stage-glyph stage-glyph--done">◆</span>
               <span class="stage-label">SYN</span>
-              <span class="stage-check">✓</span>
               <span class="stage-desc">synthesis</span>
             </div>
             <div class="stage-row">
+              <span class="stage-glyph stage-glyph--gov">◈</span>
               <span class="stage-label">GOV</span>
-              <span class="stage-check">✓</span>
               <span class="stage-desc stage-approved">approved &nbsp; 0.94</span>
             </div>
           </div>
@@ -145,7 +148,7 @@ const faqSchema = {
 
     <!-- ─── RECOGNITION ──────────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section">
+    <section class="section animate-in">
       <div class="container container--prose">
         <p class="hook">
           You describe something to Claude Code. It builds.
@@ -166,9 +169,23 @@ const faqSchema = {
       </div>
     </section>
 
+    <!-- ─── EDITORIAL IMAGE ──────────────────────────────────────────────── -->
+    <div class="editorial-image animate-in">
+      <img
+        src="/intent-notes.jpg"
+        alt="A person standing in a bright studio, contemplating hundreds of handwritten notes suspended in space — the visual metaphor for unstructured intent."
+        class="editorial-img"
+        loading="lazy"
+        decoding="async"
+      />
+      <p class="editorial-caption">
+        Unstructured intent, suspended. Ada compiles it into something that governs.
+      </p>
+    </div>
+
     <!-- ─── SEPARATION (the differentiator) ──────────────────────────────── -->
     <hr class="divider" />
-    <section class="section">
+    <section class="section animate-in">
       <div class="container container--prose">
         <div class="distinction">
           <p class="distinction-line">
@@ -186,7 +203,7 @@ const faqSchema = {
 
     <!-- ─── MECHANISM ────────────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section">
+    <section class="section animate-in">
       <div class="container container--prose">
         <p class="lead">Ada is the step before.</p>
         <p>
@@ -207,7 +224,7 @@ const faqSchema = {
 
     <!-- ─── ARTIFACT ─────────────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section">
+    <section class="section animate-in">
       <div class="container container--prose">
         <p class="section-label">What Ada produces</p>
 
@@ -256,7 +273,7 @@ const faqSchema = {
 
     <!-- ─── INVITATION ───────────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section section--invite">
+    <section class="section section--invite animate-in">
       <div class="container container--prose">
         <div class="install-block">
           <span class="install-prompt">$</span>
@@ -298,6 +315,16 @@ const faqSchema = {
     padding: 5rem 0 4rem;
   }
 
+  /* Identity mark */
+  .hero-diamond {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--color-accent);
+    display: block;
+    margin-bottom: 2.25rem;
+    animation: diamond-breathe 3s ease-in-out infinite;
+  }
+
   /* Compile block */
   .compile-block {
     font-family: var(--font-mono);
@@ -314,6 +341,9 @@ const faqSchema = {
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 1rem;
+    opacity: 0;
+    animation: fade-in-up 180ms ease forwards;
+    animation-delay: 80ms;
   }
 
   .prompt-char {
@@ -333,19 +363,38 @@ const faqSchema = {
 
   .stage-row {
     display: grid;
-    grid-template-columns: 2.5rem 1.25rem 1fr;
+    grid-template-columns: 1rem 2.5rem 1fr;
     align-items: center;
     gap: 0.5rem;
+    opacity: 0;
+    animation: fade-in-up 180ms ease forwards;
+  }
+
+  .stage-row:nth-child(1) { animation-delay: 200ms; }
+  .stage-row:nth-child(2) { animation-delay: 310ms; }
+  .stage-row:nth-child(3) { animation-delay: 420ms; }
+  .stage-row:nth-child(4) { animation-delay: 530ms; }
+  .stage-row:nth-child(5) { animation-delay: 640ms; }
+  .stage-row:nth-child(6) { animation-delay: 750ms; }
+  .stage-row:nth-child(7) { animation-delay: 860ms; }
+
+  .stage-glyph {
+    font-size: 0.65rem;
+    line-height: 1;
+  }
+
+  .stage-glyph--done {
+    color: var(--color-text-dim);
+  }
+
+  .stage-glyph--gov {
+    color: var(--color-accent);
   }
 
   .stage-label {
     color: var(--color-text-dim);
     letter-spacing: 0.04em;
     font-size: 0.75rem;
-  }
-
-  .stage-check {
-    color: var(--color-accent);
   }
 
   .stage-desc {
@@ -369,7 +418,13 @@ const faqSchema = {
     display: grid;
     grid-template-columns: 10rem 1fr;
     gap: 1rem;
+    opacity: 0;
+    animation: fade-in-up 180ms ease forwards;
   }
+
+  .output-row:nth-child(1) { animation-delay: 1020ms; }
+  .output-row:nth-child(2) { animation-delay: 1100ms; }
+  .output-row:nth-child(3) { animation-delay: 1180ms; }
 
   .output-file {
     color: var(--color-text);
@@ -382,10 +437,11 @@ const faqSchema = {
 
   /* Headline */
   .hero-headline {
-    font-size: clamp(2rem, 4.5vw, 3.25rem);
-    font-weight: 800;
+    font-family: var(--font-serif);
+    font-size: clamp(2.25rem, 5vw, 3.75rem);
+    font-weight: 400;
     line-height: 1.1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.01em;
     color: var(--color-text);
     margin: 0 0 1.25rem;
   }
@@ -624,8 +680,44 @@ const faqSchema = {
     font-size: 0.9375rem;
   }
 
+  /* ── Editorial image ─────────────────────────────────────────────────── */
+  .editorial-image {
+    width: 100%;
+    max-height: 58vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .editorial-img {
+    width: 100%;
+    height: 58vh;
+    object-fit: cover;
+    object-position: center 30%;
+    display: block;
+  }
+
+  .editorial-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem clamp(1.5rem, 5vw, 4rem);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: rgba(232, 230, 223, 0.6);
+    background: linear-gradient(to top, rgba(13,13,13,0.55) 0%, transparent 100%);
+    margin: 0;
+  }
+
   /* ── Mobile ──────────────────────────────────────────────────────────── */
   @media (max-width: 640px) {
+    .editorial-image,
+    .editorial-img {
+      height: 45vw;
+      max-height: 45vw;
+    }
+
     .hero {
       padding: 3.5rem 0 3rem;
     }
@@ -651,4 +743,29 @@ const faqSchema = {
       padding: 3.5rem 0;
     }
   }
+
+  /* Respect reduced-motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-diamond { animation: none; opacity: 0.6; }
+    .compile-prompt,
+    .stage-row,
+    .output-row { animation: none; opacity: 1; }
+  }
 </style>
+
+<script>
+  // Scroll-triggered entrance for below-fold sections
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.08 }
+  );
+
+  document.querySelectorAll('.animate-in').forEach((el) => observer.observe(el));
+</script>

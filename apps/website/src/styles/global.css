@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, ui-serif, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* motherTUI palette — exact values from cli/src/ui/design-system.ts */
   --color-bg: #0d0d0d;
@@ -38,7 +39,14 @@
   }
 
   h1,
-  h2,
+  h2 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--color-text);
+  }
+
   h3,
   h4 {
     line-height: 1.2;
@@ -63,7 +71,7 @@
   pre {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 0.5rem;
+    border-radius: 2px;
     padding: 1rem 1.25rem;
     overflow-x: auto;
   }
@@ -72,6 +80,38 @@
     background-color: var(--color-accent);
     color: #fff;
   }
+}
+
+/* ── Animations ────────────────────────────────────────────────────────── */
+
+@keyframes diamond-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scroll-triggered entrance. JS adds .is-visible when element enters viewport. */
+.animate-in {
+  opacity: 0;
+}
+
+.animate-in.is-visible {
+  animation: fade-in-up 200ms ease forwards;
 }
 
 @media (prefers-color-scheme: light) {
