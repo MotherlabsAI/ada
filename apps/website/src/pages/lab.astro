@@ -6,203 +6,307 @@ import Footer from '../components/Footer.astro';
 
 <Layout
   title="Motherlabs — The lab behind Ada"
-  description="Motherlabs is a one-person AI lab. ~400 iterations since late 2024. Ada is what came out of it — a semantic compiler that structures intent before Claude Code starts."
+  description="Motherlabs is a one-person AI lab building the semantic layer between human intent and governed execution. Ada is what came out of it."
 >
   <Nav />
 
   <main>
-    <section class="page-hero">
+
+    <!-- ─── HERO ─────────────────────────────────────────────────────────── -->
+    <section class="hero">
       <div class="container">
         <p class="eyebrow">Motherlabs</p>
-        <h1>A lab, not a startup.</h1>
+        <h1>A lab built around<br />one conviction.</h1>
         <p class="hero-sub">
-          One person. One PC. A specific problem and the discipline to iterate until it's solved.
+          The gap between what you mean and what gets built is not a prompting problem.
+          It is a structural one. And it is solvable.
         </p>
       </div>
     </section>
 
+    <!-- ─── ORIGIN ────────────────────────────────────────────────────────── -->
     <section class="section">
-      <div class="container container--narrow">
-        <div class="prose">
+      <div class="container container--split">
+        <div class="split-label">
+          <span class="label-text">Origin</span>
+        </div>
+        <div class="split-body">
           <p>
-            Motherlabs is my personal AI lab. The name is honest — it's where things are made.
-            Not a brand, not a team page with headshots. Me and my computer, since late 2024,
-            trying to understand how LLMs actually work when you build against them instead of
-            just talking about them.
+            Motherlabs is one person and a specific problem. Not a team, not a brand —
+            a lab in the original sense. A place where you run experiments until something
+            true comes out the other end.
           </p>
-
           <p>
-            I ran about 400 versions. Wrong turns, dead ends, things that almost worked.
-            Each iteration taught me something about context engineering — about what it
-            actually means to design what an agent knows, when, and why.
+            It started in late 2024. I was building with Claude Code and kept running into
+            the same wall: the AI built what it inferred I meant, not what I actually meant.
+            The inference was close. Close enough to ship. Wrong enough to undo.
           </p>
-
           <p>
-            Ada is the product that came out of that. Not planned from the start — it emerged
-            from the work. I needed a way to compile my intent into something an AI execution
-            layer couldn't misinterpret. After enough iterations, Ada is what that looks like.
+            ~400 iterations later, I understood the problem precisely enough to solve it.
+            Intent was never formalized before building started. Every session was a fresh
+            guess. The drift was structural. So the fix had to be structural.
           </p>
-
           <blockquote>
-            "I built it because I needed it for myself."
+            <p>I built Ada because I needed it. That is not a marketing line.
+            It means the product was tested against a real problem before it was
+            tested against a market.</p>
           </blockquote>
+        </div>
+      </div>
+    </section>
 
+    <!-- ─── BELIEFS ───────────────────────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container">
+        <p class="section-eyebrow">What we believe</p>
+        <div class="beliefs">
+          <div class="belief">
+            <span class="belief-num">01</span>
+            <div class="belief-body">
+              <h3>Intent should be formal before building starts.</h3>
+              <p>
+                Informal requirements are ambiguous by construction. Every AI model that
+                builds from a chat description is building from a guess. Formalizing intent
+                first is not overhead — it is the difference between governed execution
+                and expensive iteration.
+              </p>
+            </div>
+          </div>
+          <div class="belief">
+            <span class="belief-num">02</span>
+            <div class="belief-body">
+              <h3>Capability without governance produces drift.</h3>
+              <p>
+                The most capable AI coding tools still produce code that drifts from
+                what you meant, session by session, inference by inference. Capability
+                is necessary. Governance — structure that makes the right thing the
+                only thing that can be built — is what makes it reliable.
+              </p>
+            </div>
+          </div>
+          <div class="belief">
+            <span class="belief-num">03</span>
+            <div class="belief-body">
+              <h3>The right architecture prevents more drift than the best prompts.</h3>
+              <p>
+                You cannot prompt your way out of a structural problem. A hook that
+                enforces a constraint at every tool boundary is worth more than a
+                paragraph in CLAUDE.md. Architecture is enforcement. Prompts are advice.
+              </p>
+            </div>
+          </div>
+          <div class="belief">
+            <span class="belief-num">04</span>
+            <div class="belief-body">
+              <h3>One person can build a reliable system if they iterate long enough.</h3>
+              <p>
+                Solo does not mean limited. It means accountable. Every decision traces
+                back to one understanding of the problem. There are no handoffs where
+                intent gets lost. The product reflects exactly what was understood,
+                for better or worse, until it is right.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── ADA ───────────────────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="container container--split">
+        <div class="split-label">
+          <span class="label-text">The product</span>
+        </div>
+        <div class="split-body">
+          <h2>Ada</h2>
           <p>
-            That's not a marketing line. It means the product was tested against a real problem
-            before it was tested against a market. It means the iteration count reflects genuine
-            learning, not pivots chasing traction.
+            Ada is the semantic compiler that came out of this lab. It runs before Claude Code
+            starts. You describe what you want to build — at whatever level you think in.
+            Ada identifies blocking unknowns, asks the minimum set of questions to resolve them,
+            then compiles a 7-stage pipeline that produces three governed artifacts.
           </p>
 
-          <h2>Ada's relationship to Motherlabs</h2>
+          <div class="ada-tui">
+            <div class="tui-bar">
+              <span class="tui-dot"></span>
+              <span class="tui-dot"></span>
+              <span class="tui-dot"></span>
+              <span class="tui-title">ada compile</span>
+            </div>
+            <div class="tui-body">
+              <div class="tui-prompt">
+                <span class="tui-ps1">$</span>
+                <span class="tui-cmd">ada compile</span>
+                <span class="tui-cursor" aria-hidden="true">▋</span>
+              </div>
+              <div class="tui-stages">
+                <div class="tui-stage"><span class="tui-glyph done">◆</span><span class="tui-code">CTX</span><span class="tui-desc">codebase context</span></div>
+                <div class="tui-stage"><span class="tui-glyph done">◆</span><span class="tui-code">INT</span><span class="tui-desc">intent graph</span></div>
+                <div class="tui-stage"><span class="tui-glyph done">◆</span><span class="tui-code">PER</span><span class="tui-desc">persona mapping</span></div>
+                <div class="tui-stage"><span class="tui-glyph done">◆</span><span class="tui-code">ENT</span><span class="tui-desc">entity extraction</span></div>
+                <div class="tui-stage"><span class="tui-glyph done">◆</span><span class="tui-code">PRO</span><span class="tui-desc">process synthesis</span></div>
+                <div class="tui-stage"><span class="tui-glyph done">◆</span><span class="tui-code">SYN</span><span class="tui-desc">synthesis</span></div>
+                <div class="tui-stage"><span class="tui-glyph gov">◈</span><span class="tui-code">GOV</span><span class="tui-desc tui-approved">approved &nbsp;0.94</span></div>
+              </div>
+              <div class="tui-output">
+                <div class="tui-out-row"><span class="tui-out-file">CLAUDE.md</span><span class="tui-out-action">written</span></div>
+                <div class="tui-out-row"><span class="tui-out-file">agents/</span><span class="tui-out-action">8 files written</span></div>
+                <div class="tui-out-row"><span class="tui-out-file">hooks/</span><span class="tui-out-action">247 files written</span></div>
+              </div>
+            </div>
+          </div>
 
+          <div class="ada-links">
+            <a href="/ada" class="ada-link-primary">What Ada does &rarr;</a>
+            <a href="/start" class="ada-link-secondary">Get started</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── HORIZON ───────────────────────────────────────────────────────── -->
+    <section class="section section--surface">
+      <div class="container container--split">
+        <div class="split-label">
+          <span class="label-text">What's next</span>
+        </div>
+        <div class="split-body">
           <p>
-            Ada is to Motherlabs what Claude Code is to Anthropic. Anthropic built Claude Code
-            as the execution layer on top of Claude. Motherlabs built Ada as the semantic
-            governance layer on top of Claude Code.
+            The compilation pipeline is live. Elicitation is live. The world model —
+            persistent artifacts that make Ada's compiled understanding navigable and
+            queryable across sessions — is the current build.
           </p>
-
           <p>
-            They aren't competing. They're layered. Ada governs what Claude Code builds.
-            Claude Code executes what Ada has compiled. The artifacts flow from intent to
-            governed execution without losing what the original intent was.
-          </p>
-
-          <h2>What's next</h2>
-
-          <p>
-            The compilation pipeline is live. Elicitation is live. The world model — persistent
-            artifacts that make Ada's compiled understanding navigable and queryable — is what
-            I'm building now.
-          </p>
-
-          <p>
-            The goal hasn't changed: from first idea to last commit, Ada is the semantic
+            The goal has not changed: from first idea to last commit, Ada is the semantic
             authority for the software. Every decision traces back to the original intent.
             Drift is detectable. The right thing is structurally the only thing that can be built.
           </p>
+          <p>
+            Ada's relationship to Motherlabs is what Claude Code is to Anthropic —
+            the execution layer that proves the thesis of the lab.
+          </p>
         </div>
+      </div>
+    </section>
 
-        <div class="contact">
-          <p class="contact-label">Reach out</p>
-          <a
-            href="https://github.com/motherlabs"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="contact-link"
-          >
+    <!-- ─── CONTACT ───────────────────────────────────────────────────────── -->
+    <section class="section section--contact">
+      <div class="container">
+        <div class="contact-inner">
+          <p class="contact-sub">One person. Questions welcome.</p>
+          <a href="https://github.com/alexrozex/ada" target="_blank" rel="noopener noreferrer" class="contact-link">
             GitHub &rarr;
           </a>
         </div>
       </div>
     </section>
+
   </main>
 
   <Footer />
 </Layout>
 
 <style>
-  .container {
-    max-width: 72rem;
-    margin: 0 auto;
-    padding: 0 1.5rem;
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--split { display: grid; grid-template-columns: 10rem 1fr; gap: 4rem; align-items: start; }
+  @media (max-width: 720px) { .container--split { grid-template-columns: 1fr; gap: 1.5rem; } }
+
+  /* ── Hero ── */
+  .hero { padding: 8rem 0 7rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); margin: 0 0 2rem; }
+  .hero h1 { font-family: var(--font-serif); font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.08; margin: 0 0 1.75rem; color: var(--color-text); max-width: 22rem; }
+  .hero-sub { font-size: 1.125rem; color: var(--color-text-muted); max-width: 36rem; margin: 0; line-height: 1.75; }
+
+  /* ── Sections ── */
+  .section { padding: 6rem 0; border-top: 1px solid var(--color-border); }
+  .section--surface { background-color: var(--color-surface); }
+  .section-eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-dim); margin: 0 0 3rem; }
+
+  /* ── Split layout ── */
+  .split-label { padding-top: 0.35rem; }
+  .label-text { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-dim); }
+  .split-body { display: flex; flex-direction: column; gap: 1.5rem; }
+  .split-body p { font-size: 1.0625rem; color: var(--color-text-muted); margin: 0; line-height: 1.8; }
+  .split-body h2 { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 400; color: var(--color-text); margin: 0; }
+
+  blockquote { border-left: 2px solid var(--color-accent); padding: 0.75rem 1.5rem; margin: 0; background-color: var(--color-surface); }
+  blockquote p { font-size: 1rem !important; color: var(--color-text) !important; font-style: italic; line-height: 1.7 !important; }
+
+  /* ── Beliefs ── */
+  .beliefs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  @media (max-width: 720px) { .beliefs { grid-template-columns: 1fr; } }
+  .belief { padding: 2.5rem 2rem 2.5rem 0; border-top: 1px solid var(--color-border); display: flex; gap: 1.5rem; align-items: flex-start; }
+  .belief:nth-child(even) { padding-left: 2rem; border-left: 1px solid var(--color-border); }
+  @media (max-width: 720px) { .belief:nth-child(even) { padding-left: 0; border-left: none; } }
+  .belief-num { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; color: var(--color-accent); padding-top: 0.3rem; flex-shrink: 0; letter-spacing: 0.05em; }
+  .belief-body { display: flex; flex-direction: column; gap: 0.75rem; }
+  .belief-body h3 { font-size: 0.9375rem; font-weight: 600; color: var(--color-text); margin: 0; line-height: 1.4; }
+  .belief-body p { font-size: 0.875rem; color: var(--color-text-muted); margin: 0; line-height: 1.75; }
+
+  /* ── Ada TUI showcase ── */
+  .ada-tui {
+    background-color: #0F0E0C;
+    border: 1px solid #2E2921;
+    border-radius: 6px;
+    overflow: hidden;
+    font-family: var(--font-mono);
   }
 
-  .container--narrow {
-    max-width: 44rem;
-  }
-
-  .page-hero {
-    padding: 6rem 0 5rem;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .eyebrow {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-    margin: 0 0 1rem;
-  }
-
-  .page-hero h1 {
-    font-size: clamp(2rem, 4.5vw, 3rem);
-    font-weight: 800;
-    margin: 0 0 1.25rem;
-    max-width: 28rem;
-  }
-
-  .hero-sub {
-    font-size: 1.125rem;
-    color: var(--color-text-muted);
-    max-width: 36rem;
-    margin: 0;
-    line-height: 1.6;
-  }
-
-  .section {
-    padding: 5rem 0;
-  }
-
-  .prose {
+  .tui-bar {
     display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    margin-bottom: 4rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background-color: #181612;
+    border-bottom: 1px solid #2E2921;
   }
 
-  .prose p {
-    font-size: 1.0625rem;
-    color: var(--color-text-muted);
-    margin: 0;
-    line-height: 1.75;
+  .tui-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #2E2921;
   }
 
-  .prose h2 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin: 1rem 0 0;
+  .tui-title {
+    font-size: 0.7rem;
+    color: #6B5643;
+    letter-spacing: 0.04em;
+    margin-left: 0.5rem;
   }
 
-  .prose blockquote {
-    border-left: 3px solid var(--color-accent);
-    padding-left: 1.25rem;
-    margin: 0.5rem 0;
-  }
+  .tui-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
 
-  .prose blockquote p {
-    font-size: 1.125rem;
-    font-style: italic;
-    color: var(--color-text);
-  }
+  .tui-prompt { display: flex; align-items: center; gap: 0.5rem; }
+  .tui-ps1 { color: #6B5643; font-size: 0.875rem; }
+  .tui-cmd { color: #F0E9DF; font-size: 0.875rem; }
+  .tui-cursor { color: #C8762C; font-size: 0.875rem; animation: cursor-blink 1.2s step-end infinite; }
 
-  .contact {
-    padding-top: 3rem;
-    border-top: 1px solid var(--color-border);
-  }
+  .tui-stages { display: flex; flex-direction: column; gap: 0.3rem; }
+  .tui-stage { display: grid; grid-template-columns: 1rem 2.5rem 1fr; gap: 0.75rem; align-items: center; font-size: 0.8125rem; }
+  .tui-glyph { font-size: 0.6rem; }
+  .tui-glyph.done { color: #C8762C; }
+  .tui-glyph.gov { color: #C8762C; animation: diamond-breathe 3s ease-in-out infinite; }
+  .tui-code { color: #6B5643; letter-spacing: 0.04em; }
+  .tui-desc { color: #A89278; }
+  .tui-approved { color: #C8762C; }
 
-  .contact-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    margin: 0 0 0.75rem;
-  }
+  .tui-output { display: flex; flex-direction: column; gap: 0.2rem; border-top: 1px solid #2E2921; padding-top: 1rem; }
+  .tui-out-row { display: flex; gap: 1.5rem; font-size: 0.8125rem; }
+  .tui-out-file { color: #F0E9DF; min-width: 8rem; }
+  .tui-out-action { color: #6B5643; }
 
-  .contact-link {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--color-accent);
-  }
+  /* ── Ada links ── */
+  .ada-links { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+  .ada-link-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-accent); transition: color 120ms ease; }
+  .ada-link-primary:hover { color: var(--color-accent-hover); }
+  .ada-link-secondary { font-size: 0.9375rem; color: var(--color-text-muted); transition: color 120ms ease; }
+  .ada-link-secondary:hover { color: var(--color-text); }
 
-  .contact-link:hover {
-    color: var(--color-accent-hover);
-  }
-
-  @media (max-width: 640px) {
-    .page-hero {
-      padding: 4rem 0 3.5rem;
-    }
-  }
+  /* ── Contact ── */
+  .section--contact { border-top: 1px solid var(--color-border); }
+  .contact-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; }
+  .contact-sub { font-size: 1rem; color: var(--color-text-muted); margin: 0; }
+  .contact-link { font-size: 0.9375rem; font-weight: 500; color: var(--color-accent); transition: color 120ms ease; }
+  .contact-link:hover { color: var(--color-accent-hover); }
 </style>

@@ -66,6 +66,7 @@ const faqSchema = {
 
     <!-- ─── HERO ─────────────────────────────────────────────────────────── -->
     <section class="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
       <div class="container">
 
         <!-- Identity mark -->
@@ -313,7 +314,27 @@ const faqSchema = {
 
   /* ── Hero ────────────────────────────────────────────────────────────── */
   .hero {
-    padding: 5rem 0 4rem;
+    padding: 7rem 0 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Ambient glow behind compile block */
+  .hero-glow {
+    position: absolute;
+    top: -6rem;
+    left: -8rem;
+    width: 52rem;
+    height: 36rem;
+    background: radial-gradient(ellipse at 30% 40%, var(--color-accent-subtle) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+    animation: glow-pulse 6s ease-in-out infinite;
+  }
+
+  .hero .container {
+    position: relative;
+    z-index: 1;
   }
 
   /* Identity mark */
