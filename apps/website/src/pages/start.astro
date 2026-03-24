@@ -16,12 +16,13 @@ import Footer from '../components/Footer.astro';
         <p class="eyebrow">Get Started</p>
         <h1>Up and running in minutes.</h1>
         <p class="hero-sub">
-          Ada runs in your terminal. No account. No dashboard. Intent in, governed artifacts out.
+          Ada runs in your terminal. No account. No dashboard. Intent in, CLAUDE.md out.
         </p>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section section--sym">
+      <span class="sym-watermark sym-watermark--right" aria-hidden="true">◈</span>
       <div class="container container--narrow">
 
         <div class="step">
@@ -189,7 +190,7 @@ cd ada && pnpm install && pnpm build</code></pre>
     padding: 0.15rem 0.4rem;
     vertical-align: middle;
     margin-left: 0.5rem;
-    border-radius: 2px;
+    border-radius: 5px;
   }
 
   .hero-sub {
@@ -203,6 +204,23 @@ cd ada && pnpm install && pnpm build</code></pre>
   .section {
     padding: 5rem 0;
   }
+
+  /* ── Symbol watermark ── */
+  .section--sym { position: relative; overflow: hidden; }
+  .sym-watermark {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: clamp(14rem, 28vw, 22rem);
+    line-height: 1;
+    color: var(--color-text);
+    opacity: 0.028;
+    user-select: none;
+    pointer-events: none;
+    top: 50%;
+    left: -3rem;
+    transform: translateY(-50%);
+  }
+  .sym-watermark--right { left: auto; right: -3rem; }
 
   .step {
     padding: 3rem 0;
@@ -308,7 +326,7 @@ cd ada && pnpm install && pnpm build</code></pre>
     color: var(--color-text-muted);
     background: var(--color-surface-raised);
     border: 1px solid var(--color-border);
-    border-radius: 0.25rem;
+    border-radius: 6px;
     padding: 0.25rem 0.5rem;
     cursor: pointer;
     transition: color 0.15s;
@@ -319,10 +337,11 @@ cd ada && pnpm install && pnpm build</code></pre>
   }
 
   .step-note {
-    font-size: 0.9375rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
     color: var(--color-text-muted);
     margin: 0 0 1rem;
-    line-height: 1.65;
+    line-height: 1.7;
   }
 
   .step-note code {
@@ -353,10 +372,11 @@ cd ada && pnpm install && pnpm build</code></pre>
   }
 
   .expect-item p {
-    font-size: 0.9375rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
     color: var(--color-text-muted);
     margin: 0;
-    line-height: 1.65;
+    line-height: 1.7;
   }
 
   .expect-item code {

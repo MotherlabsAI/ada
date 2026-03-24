@@ -10,7 +10,7 @@ const softwareSchema = {
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'macOS, Linux, Windows',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  description: 'Ada is a semantic intent compiler that closes the gap between what you mean and what gets built. It runs before Claude Code starts — producing CLAUDE.md, agent files, and hook files from structured elicitation.',
+  description: 'Ada closes the intent gap. It runs before Claude Code starts — structured requirements elicitation that produces CLAUDE.md, agent files, and hook files from your plain language description.',
   url: 'https://motherlabs.ai/ada',
   publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
 };
@@ -32,7 +32,7 @@ const faqSchema = {
       name: 'How does Ada close the intent gap?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Ada runs a 7-stage semantic compilation pipeline before Claude Code starts. It takes your natural language description, identifies the blocking unknowns through structured elicitation, and compiles governed artifacts — CLAUDE.md, agent files, and hook files — that encode your intent structurally. Claude Code then builds against those artifacts rather than against an informal description.',
+        text: 'Ada runs an 8-stage compilation pipeline before Claude Code starts. It takes your natural language description, identifies blocking unknowns through structured elicitation, and compiles your intent into CLAUDE.md, agent files, and hook files that Claude Code reads every session. Claude Code then builds against structured intent rather than an informal description.',
       },
     },
     {
@@ -73,7 +73,7 @@ const faqSchema = {
 
 <Layout
   title="What is Ada? Intent compiler for Claude Code | Motherlabs"
-  description="Ada closes the intent gap. A 7-stage semantic compiler that produces CLAUDE.md, agents, and hooks before Claude Code starts — so less gets lost between what you mean and what gets built."
+  description="Ada closes the intent gap. Requirements elicitation that produces CLAUDE.md, agents, and hooks before Claude Code starts — so less gets lost between what you mean and what gets built."
   schemas={[softwareSchema, faqSchema]}
 >
   <Nav />
@@ -86,8 +86,8 @@ const faqSchema = {
         <p class="eyebrow">Ada</p>
         <h1>The step before building.</h1>
         <p class="hero-sub">
-          You describe what you want. Ada structures it into governed artifacts.
-          Claude Code builds against those artifacts — not against a conversation.
+          You describe what you want. Ada structures it before Claude Code starts.
+          Claude Code builds against that structure — not against a conversation.
         </p>
         <div class="hero-actions">
           <a href="/start" class="btn-primary">Install Ada</a>
@@ -98,7 +98,8 @@ const faqSchema = {
 
     <!-- ─── THE INTENT GAP ───────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section" id="intent-gap">
+    <section class="section section--sym" id="intent-gap">
+      <span class="sym-watermark" aria-hidden="true">◇</span>
       <div class="container container--prose">
         <p class="section-kicker">The problem Ada solves</p>
         <h2>The intent gap</h2>
@@ -135,7 +136,8 @@ const faqSchema = {
 
     <!-- ─── HOW IT WORKS ─────────────────────────────────────────────────── -->
     <hr class="divider" />
-    <section class="section" id="how-it-works">
+    <section class="section section--sym" id="how-it-works">
+      <span class="sym-watermark sym-watermark--right" aria-hidden="true">◆</span>
       <div class="container container--prose">
         <p class="section-kicker">The mechanism</p>
         <h2>How Ada works</h2>
@@ -434,14 +436,14 @@ const faqSchema = {
             <span class="status-badge status-badge--live">Live</span>
             <div class="status-body">
               <h3>Intent elicitation</h3>
-              <p>Structured session that surfaces blocking unknowns before compilation. Runs before the 7-stage pipeline.</p>
+              <p>Structured session that surfaces blocking unknowns before compilation. Runs before the 8-stage pipeline.</p>
             </div>
           </div>
           <div class="status-item">
             <span class="status-badge status-badge--live">Live</span>
             <div class="status-body">
-              <h3>7-stage compilation</h3>
-              <p>CTX → INT → PER → ENT → PRO → SYN → GOV. Produces CLAUDE.md, agents/, and hooks/ as governed artifacts.</p>
+              <h3>8-stage compilation</h3>
+              <p>CTX → INT → PER → ENT → PRO → SYN → VER → GOV. Produces CLAUDE.md, agents/, and hooks/.</p>
             </div>
           </div>
           <div class="status-item">
@@ -497,7 +499,23 @@ const faqSchema = {
           </a>
           <a href="/ada/how-ada-works" class="cluster-link">
             <span class="cluster-link-title">How Ada works &rarr;</span>
-            <span class="cluster-link-desc">The 7-stage compilation pipeline from raw intent to governed artifacts.</span>
+            <span class="cluster-link-desc">The 8-stage compilation pipeline from raw intent to CLAUDE.md, agents, and hooks.</span>
+          </a>
+          <a href="/ada/intent-formalization" class="cluster-link">
+            <span class="cluster-link-title">What is intent formalization? &rarr;</span>
+            <span class="cluster-link-desc">Why informal requirements fail and what it means to compile intent before building.</span>
+          </a>
+          <a href="/ada/how-to-write-claude-md" class="cluster-link">
+            <span class="cluster-link-title">How to write CLAUDE.md</span>
+            <span class="cluster-link-desc">Structure, best practices, and what CLAUDE.md can't do alone.</span>
+          </a>
+          <a href="/ada/claude-code-hooks" class="cluster-link">
+            <span class="cluster-link-title">Claude Code hooks &rarr;</span>
+            <span class="cluster-link-desc">What pre-tool hooks do, how they work, and why hundreds can't be written by hand.</span>
+          </a>
+          <a href="/ada/what-is-a-semantic-compiler" class="cluster-link">
+            <span class="cluster-link-title">What is a semantic compiler? &rarr;</span>
+            <span class="cluster-link-desc">Why AI development needs a formal compilation step between intent and execution.</span>
           </a>
         </div>
       </div>
@@ -588,7 +606,7 @@ const faqSchema = {
     color: var(--color-bg);
     background-color: var(--color-accent);
     padding: 0.7rem 1.5rem;
-    border-radius: 3px;
+    border-radius: 8px;
     transition: background-color 0.12s ease;
     display: inline-block;
   }
@@ -607,6 +625,28 @@ const faqSchema = {
   .btn-ghost:hover {
     color: var(--color-text);
   }
+
+  /* ── Symbol watermarks ───────────────────────────────────────────────── */
+  .section--sym {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sym-watermark {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: clamp(14rem, 28vw, 22rem);
+    line-height: 1;
+    color: var(--color-text);
+    opacity: 0.028;
+    user-select: none;
+    pointer-events: none;
+    top: 50%;
+    left: -3rem;
+    transform: translateY(-50%);
+  }
+
+  .sym-watermark--right { left: auto; right: -3rem; }
 
   /* ── Sections ─────────────────────────────────────────────────────────── */
   .section {
@@ -659,6 +699,7 @@ const faqSchema = {
     padding: 1rem 1.5rem;
     margin: 1.75rem 0;
     background-color: var(--color-surface);
+    border-radius: 0 8px 8px 0;
   }
 
   .callout-text {
@@ -703,9 +744,10 @@ const faqSchema = {
   }
 
   .step-body p {
-    font-size: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
     color: var(--color-text-muted);
-    line-height: 1.7;
+    line-height: 1.75;
     margin: 0;
   }
 
@@ -716,6 +758,8 @@ const faqSchema = {
     gap: 1px;
     background-color: var(--color-border);
     border: 1px solid var(--color-border);
+    border-radius: 10px;
+    overflow: hidden;
     margin-top: 2.5rem;
   }
 
