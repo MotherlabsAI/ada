@@ -1,0 +1,41 @@
+# Motherlabs
+
+> Motherlabs builds Ada — a semantic intent compiler that structures what you mean before Claude Code starts building.
+
+## What Ada does
+
+Ada closes the intent gap. The intent gap is the structural distance between informal natural language requirements and the precise program behavior that gets built. Ada compiles your intent into governed artifacts before development starts.
+
+Ada runs as a CLI tool. You describe what you want to build. Ada identifies blocking unknowns and asks the minimum set of questions to resolve them. Then it compiles a 7-stage pipeline — CTX (codebase context), INT (intent graph), PER (persona mapping), ENT (entity extraction), PRO (process synthesis), SYN (synthesis), GOV (governance) — and produces three artifact types.
+
+## What Ada produces
+
+- **CLAUDE.md** — The intent file. Claude Code reads this on every message turn, not just at session start. Contains what the project is, what it is not, and what constraints apply.
+- **agents/** — Specialized agent files scoped to bounded contexts. Each knows its domain and its constraints.
+- **hooks/** — Pre-tool guards that enforce constraints at every tool call boundary. Structural enforcement, not advisory suggestions.
+
+## How Ada differs from MEMORY.md
+
+Claude Code's auto-memory records what it observed as it worked — retrospective. Ada records what you intend before it starts — prospective. One captures drift after it happens. The other prevents it before building begins.
+
+## Research context
+
+The intent gap is formally documented in Microsoft Research (2026). The three-tier context architecture Ada implements (hot memory + domain specialists + enforcement layer) is independently validated by multiple papers on context engineering (2025–2026). Ada occupies the research gap between vibe coding (informal, unstructured) and agentic coding (formal, structured) documented in arxiv 2505.19443.
+
+## Pages
+
+- [Homepage](https://motherlabs.ai/) — What Ada does, who it's for, the install command
+- [Ada](https://motherlabs.ai/ada) — Full explanation of the compiler, pipeline, and governed artifacts
+- [Get Started](https://motherlabs.ai/start) — Installation and first session
+- [Lab](https://motherlabs.ai/lab) — About Motherlabs and its origin
+
+## Install
+
+```
+npm install -g @motherlabs/ada
+```
+
+## Contact
+
+Built by one person. ~400 iterations since late 2024.
+Questions: reach out via GitHub.

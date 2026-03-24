@@ -2,11 +2,63 @@
 import Layout from '../layouts/Layout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+
+const softwareSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Ada',
+  applicationCategory: 'DeveloperApplication',
+  operatingSystem: 'macOS, Linux, Windows',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description: 'Ada structures your intent before Claude Code starts. A 7-stage semantic compiler that produces CLAUDE.md, agents/, and hooks/ — the governed context layer your AI builds against.',
+  url: 'https://motherlabs.ai',
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is Ada?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada is a semantic compiler for software intent. You describe what you want to build, Ada asks clarifying questions, then compiles a governed context layer — CLAUDE.md, agent files, and hook files — that Claude Code builds against. It runs before development, not during.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How is Ada different from MEMORY.md or Claude Code auto-memory?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Claude Code's auto-memory records what it observed as it worked — it is retrospective. Ada records what you intend before it starts — it is prospective. One captures drift after it happens. The other prevents it before building begins. They are not the same thing.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What does Ada produce?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada produces three artifacts: CLAUDE.md (the intent file Claude Code reads on every message turn), agents/ (specialized agent files scoped to bounded contexts), and hooks/ (pre-tool guards that enforce constraints at every tool call boundary). These are plain files you can read and verify before any build starts.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is the intent gap?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'The intent gap is the structural distance between informal natural language requirements and the precise program behavior that gets built. Documented in Microsoft Research (2026), the gap exists because informal intent is never formalized before building starts. Ada closes this gap by compiling intent into governed artifacts before Claude Code touches code.',
+      },
+    },
+  ],
+};
 ---
 
 <Layout
-  title="Motherlabs — Ada"
-  description="Between what you mean and what gets built, something gets lost. Ada structures your intent before Claude Code starts. Less distance. Not zero. Less."
+  title="Ada — Semantic intent compiler for Claude Code | Motherlabs"
+  description="Ada structures your intent before Claude Code starts. A 7-stage compiler that produces CLAUDE.md, agents, and hooks — less distance between what you mean and what gets built."
+  schemas={[softwareSchema, faqSchema]}
 >
   <Nav />
 
@@ -163,7 +215,7 @@ import Footer from '../components/Footer.astro';
         <div class="file-listing">
           <div class="file-row">
             <code class="file-name">CLAUDE.md</code>
-            <span class="file-desc">Claude Code reads this at the start of every session. What the project is. What it is not. What constraints apply.</span>
+            <span class="file-desc">Claude Code reads this on every message turn — not just at session start. What the project is. What it is not. What constraints apply. Injected into every context window.</span>
           </div>
           <div class="file-row">
             <code class="file-name">agents/</code>

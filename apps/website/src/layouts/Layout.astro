@@ -5,15 +5,28 @@ interface Props {
   title: string;
   description?: string;
   ogImage?: string;
+  /** JSON-LD schema objects to inject. Pass an array for multiple schemas. */
+  schemas?: object[];
 }
 
 const {
   title,
-  description = 'Ada is the semantic authority for your software — from first idea to last commit.',
+  description = 'Ada structures your intent before Claude Code starts — so less gets lost between what you mean and what gets built.',
   ogImage = '/og-default.png',
+  schemas = [],
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://motherlabs.ai');
+
+// Organisation schema — emitted on every page
+const orgSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Motherlabs',
+  url: 'https://motherlabs.ai',
+  description: 'Motherlabs builds Ada — the semantic compiler that structures intent before Claude Code starts.',
+  sameAs: ['https://github.com/motherlabs'],
+};
 ---
 
 <!doctype html>
@@ -32,13 +45,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://motherla
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={ogImage} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site ?? 'https://motherlabs.ai')} />
+    <meta property="og:site_name" content="Motherlabs" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image" content={new URL(ogImage, Astro.site ?? 'https://motherlabs.ai')} />
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -50,6 +64,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://motherla
       href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+
+    <!-- JSON-LD: Organisation (every page) -->
+    <script type="application/ld+json" set:html={JSON.stringify(orgSchema)} />
+
+    <!-- JSON-LD: Page-specific schemas -->
+    {schemas.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
   </head>
   <body>
     <slot />

@@ -2,561 +2,1041 @@
 import Layout from '../layouts/Layout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+
+const softwareSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Ada',
+  applicationCategory: 'DeveloperApplication',
+  operatingSystem: 'macOS, Linux, Windows',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description: 'Ada is a semantic intent compiler that closes the gap between what you mean and what gets built. It runs before Claude Code starts — producing CLAUDE.md, agent files, and hook files from structured elicitation.',
+  url: 'https://motherlabs.ai/ada',
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is the intent gap in AI development?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'The intent gap is the structural distance between informal natural language requirements and the precise program behavior that gets built. Documented formally in Microsoft Research (2026), the gap exists because most AI-assisted development starts with unstructured input — a description in chat — that is never formalized before building begins. The result is drift: the AI builds what it inferred, not necessarily what you meant.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does Ada close the intent gap?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada runs a 7-stage semantic compilation pipeline before Claude Code starts. It takes your natural language description, identifies the blocking unknowns through structured elicitation, and compiles governed artifacts — CLAUDE.md, agent files, and hook files — that encode your intent structurally. Claude Code then builds against those artifacts rather than against an informal description.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is CLAUDE.md and why does it matter?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "CLAUDE.md is a file that Claude Code reads on every message turn — not just at session start. It is injected into every context window throughout your session. Whatever is in CLAUDE.md constrains how Claude Code interprets every request and makes every decision. Ada produces this file from compiled intent, so the constraints it encodes come from what you actually meant — not from what Claude Code inferred from conversation.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How is Ada different from MEMORY.md or Claude Code auto-memory?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "MEMORY.md and Claude Code's auto-memory are retrospective — they record what happened as the AI worked. Ada is prospective — it records what you intend before the AI starts. One captures drift after it happens. The other prevents it before building begins. They solve different problems. MEMORY.md helps the AI remember. Ada helps the AI know what it was supposed to do.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What does Ada produce exactly?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada produces three artifact types. CLAUDE.md: the intent file read by Claude Code on every message turn, encoding what the project is, what it is not, and what constraints apply. agents/: specialized agent files scoped to bounded contexts within the project. hooks/: pre-tool guard files that enforce constraints at every tool call boundary — these are structural enforcement, not suggestions. The compilation run also produces an approval score (coherence score); 0.94 means the compiled output is highly coherent with the stated intent.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Who is Ada for?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada is for anyone building software with Claude Code who has experienced the gap between what they meant and what got built. This includes non-technical founders describing products, technical builders working on ambiguous domains, and anyone who has spent time re-explaining their architecture to Claude Code at the start of each session. Ada works at whatever level you think in — you do not need technical vocabulary.',
+      },
+    },
+  ],
+};
 ---
 
 <Layout
-  title="Ada — Motherlabs"
-  description="Ada is the semantic authority for your software. A semantic compiler, not a chatbot — from first idea to last commit."
+  title="What is Ada? Intent compiler for Claude Code | Motherlabs"
+  description="Ada closes the intent gap. A 7-stage semantic compiler that produces CLAUDE.md, agents, and hooks before Claude Code starts — so less gets lost between what you mean and what gets built."
+  schemas={[softwareSchema, faqSchema]}
 >
   <Nav />
 
   <main>
-    <!-- Governing invariant -->
+
+    <!-- ─── HERO ──────────────────────────────────────────────────────────── -->
     <section class="page-hero">
       <div class="container">
         <p class="eyebrow">Ada</p>
-        <h1>The semantic authority for your software — from first idea to last commit.</h1>
+        <h1>The step before building.</h1>
         <p class="hero-sub">
-          Not a chatbot. Not a code generator. A compiler. It takes intent as input and
-          governed artifacts as output. Claude Code builds against those artifacts.
+          You describe what you want. Ada structures it into governed artifacts.
+          Claude Code builds against those artifacts — not against a conversation.
+        </p>
+        <div class="hero-actions">
+          <a href="/start" class="btn-primary">Install Ada</a>
+          <a href="#how-it-works" class="btn-ghost">How it works &darr;</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── THE INTENT GAP ───────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <section class="section" id="intent-gap">
+      <div class="container container--prose">
+        <p class="section-kicker">The problem Ada solves</p>
+        <h2>The intent gap</h2>
+        <p>
+          When you describe a project to Claude Code in a chat window,
+          something happens that most people don't notice until it's too late:
+          the description is never formalized.
+        </p>
+        <p>
+          Claude Code infers what you meant. It builds against that inference.
+          The inference is usually close. Close is not the same as right.
+        </p>
+        <p>
+          By the time the drift becomes visible — the wrong entity model,
+          the feature that was never meant to exist, the constraint that
+          got dropped — rewinding is harder than starting over.
+          And starting over means re-explaining everything. Again.
+        </p>
+        <div class="callout">
+          <p class="callout-text">
+            The gap between informal natural language requirements and
+            precise program behavior is formally documented in research
+            as the intent gap. Most tools address it after the fact.
+            Ada addresses it before building starts.
+          </p>
+        </div>
+        <p>
+          This is not a prompt engineering problem. Better prompts produce
+          better guesses. The issue is structural: intent was never written
+          down in a form that persists, traces, and governs.
         </p>
       </div>
     </section>
 
-    <!-- What Ada is NOT -->
-    <section class="section">
-      <div class="container container--narrow">
-        <h2 class="section-label">What Ada is not</h2>
-        <p class="section-heading">Clear the assumptions first.</p>
-        <div class="not-list">
-          <div class="not-item">
-            <span class="not-marker">✕</span>
-            <div>
-              <h3>Not a chatbot</h3>
-              <p>Ada doesn't do open-ended conversation. It runs structured elicitation sessions with a specific goal: resolve the blocking unknowns before they become wrong code.</p>
+    <!-- ─── HOW IT WORKS ─────────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <section class="section" id="how-it-works">
+      <div class="container container--prose">
+        <p class="section-kicker">The mechanism</p>
+        <h2>How Ada works</h2>
+        <p>
+          Ada is a command-line compiler. It runs before Claude Code starts.
+          The interface is a session — Ada asks questions, you answer,
+          Ada compiles. The output is files on disk.
+        </p>
+
+        <div class="step-list">
+          <div class="step">
+            <div class="step-num">01</div>
+            <div class="step-body">
+              <h3>You describe what you want to build</h3>
+              <p>
+                At whatever level you think in. You don't need technical vocabulary.
+                Ada does not ask which framework. It asks what the system should
+                do and be — the semantic questions that actually determine
+                whether the right thing gets built.
+              </p>
             </div>
           </div>
-          <div class="not-item">
-            <span class="not-marker">✕</span>
-            <div>
-              <h3>Not a code generator</h3>
-              <p>Ada produces governed blueprints. Claude Code generates the code. Ada is the layer above the execution layer — not inside it.</p>
+          <div class="step">
+            <div class="step-num">02</div>
+            <div class="step-body">
+              <h3>Ada identifies and resolves blocking unknowns</h3>
+              <p>
+                Before compiling, Ada runs structured elicitation — a focused session
+                that surfaces the gaps in the description that would cause the wrong
+                system to be built. Not every unknown, just the blocking ones.
+                You answer. The unknowns become known.
+              </p>
             </div>
           </div>
-          <div class="not-item">
-            <span class="not-marker">✕</span>
-            <div>
-              <h3>Not a one-shot tool</h3>
-              <p>The compiled world model persists. It's navigable. You can query it months later — "what did the architecture stage decide about payments?" — and get an authoritative answer.</p>
+          <div class="step">
+            <div class="step-num">03</div>
+            <div class="step-body">
+              <h3>Ada compiles through 7 stages</h3>
+              <p>
+                CTX → INT → PER → ENT → PRO → SYN → GOV.
+                Each stage reduces ambiguity in one dimension: codebase context,
+                intent graph, persona mapping, entity extraction, process synthesis,
+                synthesis, governance. The governor evaluates coherence and
+                either approves or iterates.
+              </p>
             </div>
           </div>
-          <div class="not-item">
-            <span class="not-marker">✕</span>
-            <div>
-              <h3>Not a prompt wrapper</h3>
-              <p>Ada makes autonomous implementation decisions at the semantic level. It doesn't surface technical choices to the user — it surfaces semantic ones. The output is a governed artifact, not a better prompt.</p>
+          <div class="step">
+            <div class="step-num">04</div>
+            <div class="step-body">
+              <h3>Files land on disk. Claude Code builds against them.</h3>
+              <p>
+                CLAUDE.md, agents/, hooks/ — plain files you can read before
+                handing to Claude Code. If they match what you meant: proceed.
+                If not: run Ada again with the correction. The intent is
+                yours to verify before building starts.
+              </p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- The pipeline -->
+    <!-- ─── THE PIPELINE ─────────────────────────────────────────────────── -->
+    <hr class="divider" />
     <section class="section section--surface">
-      <div class="container container--narrow">
-        <h2 class="section-label">The pipeline</h2>
-        <p class="section-heading">Four phases. Each reduces ambiguity in one dimension.</p>
-
-        <div class="phase-grid">
-          <div class="phase">
-            <div class="phase-header">
-              <span class="phase-num">01</span>
-              <h3>Intent</h3>
-            </div>
-            <p>You describe what you want to build — at whatever level you think in. Ada infers technical choices from conceptual descriptions. It doesn't ask which framework. It asks what the system should do.</p>
-          </div>
-          <div class="phase">
-            <div class="phase-header">
-              <span class="phase-num">02</span>
-              <h3>Elicitation</h3>
-            </div>
-            <p>Ada identifies blocking unknowns — the things it genuinely doesn't know that would cause the wrong system to be built. It asks the minimum set of questions to resolve them. Semantic questions, not technical ones.</p>
-          </div>
-          <div class="phase">
-            <div class="phase-header">
-              <span class="phase-num">03</span>
-              <h3>Compilation</h3>
-            </div>
-            <p>Ada produces the canonical semantic model: goals, entities, processes, and architecture — encoded as governed artifacts. Each artifact is addressable by provenance. Every decision traces back to intent.</p>
-          </div>
-          <div class="phase">
-            <div class="phase-header">
-              <span class="phase-num">04</span>
-              <h3>Execution</h3>
-            </div>
-            <p>Claude Code receives the governed blueprint and builds. Ada's constraints are in the artifacts — not in the prompt. Claude Code can't build outside Ada's decisions because those decisions are structural, not conversational.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- World model -->
-    <section class="section">
-      <div class="container container--narrow">
-        <h2 class="section-label">The world model</h2>
-        <p class="section-heading">Persistent artifacts, not ephemeral context.</p>
-        <p class="section-body">
-          Most AI tools produce ephemeral output — a response in a conversation.
-          Ada produces a world model: a persistent, navigable, provenance-addressed artifact store.
-        </p>
-        <div class="artifact-store">
-          <div class="artifact-row">
-            <code class="artifact-code">intent-graph/</code>
-            <span class="artifact-desc">Your goals, constraints, and unknowns — as a structured artifact</span>
-          </div>
-          <div class="artifact-row">
-            <code class="artifact-code">entity-map/</code>
-            <span class="artifact-desc">The canonical entities of your domain</span>
-          </div>
-          <div class="artifact-row">
-            <code class="artifact-code">process-flow/</code>
-            <span class="artifact-desc">State machines and workflows that define how entities move</span>
-          </div>
-          <div class="artifact-row">
-            <code class="artifact-code">blueprint/</code>
-            <span class="artifact-desc">The governed architecture and component mapping — authoritative</span>
-          </div>
-          <div class="artifact-row">
-            <code class="artifact-code">verification/</code>
-            <span class="artifact-desc">Drift detection — does the codebase still match original intent?</span>
-          </div>
-        </div>
-        <p class="world-model-note">
-          Claude Code reads this on every session. Not a static file — a live knowledge graph.
-          Every artifact traces to the raw intent it came from.
-        </p>
-      </div>
-    </section>
-
-    <!-- Ada + Claude Code -->
-    <section class="section section--surface">
-      <div class="container container--narrow">
-        <h2 class="section-label">Ada + Claude Code</h2>
-        <p class="section-heading">The governance model.</p>
-        <p class="section-body">
-          Ada and Claude Code are not competing — they're layered. Ada governs.
-          Claude Code executes. The interface between them is the artifact store.
-        </p>
-        <div class="governance-detail">
-          <div class="governance-item">
-            <h3>CLAUDE.md + agents + hooks</h3>
-            <p>Ada writes CLAUDE.md as a pointer to the world model — not a spec dump. Agents are scoped by bounded context. Hooks enforce entity invariants at every tool boundary. These are laws, not suggestions.</p>
-          </div>
-          <div class="governance-item">
-            <h3>Structural constraints</h3>
-            <p>Ada's artifacts constrain what Claude Code can build. The governed blueprint tells Claude Code what entities exist, what processes are valid, what the architecture is. It can't deviate — the constraints are structural.</p>
-          </div>
-          <div class="governance-item">
-            <h3>Parallel workstreams</h3>
-            <p>You can run Ada compiling product strategy for one initiative while Claude Code builds an entirely different part of the system. Two abstraction levels. Both governed. Both traceable.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Roadmap -->
-    <section class="section">
-      <div class="container container--narrow">
-        <h2 class="section-label">Where Ada is now</h2>
-        <p class="section-heading">Honest about current state.</p>
-        <div class="roadmap">
-          <div class="roadmap-item roadmap-item--live">
-            <div class="roadmap-status">Live</div>
-            <div>
-              <h3>Compilation</h3>
-              <p>Intent → elicitation → governed blueprint → Claude Code execution. The full pipeline runs today.</p>
-            </div>
-          </div>
-          <div class="roadmap-item roadmap-item--live">
-            <div class="roadmap-status">Live</div>
-            <div>
-              <h3>Elicitation</h3>
-              <p>Structured dialogue before compilation. Ada resolves blocking unknowns before they become wrong code.</p>
-            </div>
-          </div>
-          <div class="roadmap-item roadmap-item--building">
-            <div class="roadmap-status">Building</div>
-            <div>
-              <h3>World Model</h3>
-              <p>Persistent artifact store. Navigable. Provenance-addressed. CLAUDE.md becomes a 3-line pointer to the manifest.</p>
-            </div>
-          </div>
-          <div class="roadmap-item roadmap-item--vision">
-            <div class="roadmap-status">Vision</div>
-            <div>
-              <h3>Ongoing Authority</h3>
-              <p>Ada as semantic guardian on every commit. Drift detection. Impact analysis. "Does this change align with what the system was meant to be?"</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA -->
-    <section class="section section--cta">
       <div class="container">
-        <h2>Start compiling.</h2>
-        <p>Ada runs in your terminal. Governed artifacts in minutes.</p>
-        <a href="/start" class="btn-primary">Get Started &rarr;</a>
+        <p class="section-kicker center">The compiler</p>
+        <h2 class="center">7 stages. Each reduces ambiguity.</h2>
+
+        <div class="pipeline-grid">
+          <div class="pipeline-stage">
+            <span class="stage-code">CTX</span>
+            <h3>Codebase Context</h3>
+            <p>Static analysis of the existing project. Package boundaries, type registry, existing conventions. Ground truth before intent is applied.</p>
+          </div>
+          <div class="pipeline-stage">
+            <span class="stage-code">INT</span>
+            <h3>Intent Graph</h3>
+            <p>Your raw description is structured into an intent graph — goals, constraints, unknowns. Blocking unknowns gate the next stage.</p>
+          </div>
+          <div class="pipeline-stage">
+            <span class="stage-code">PER</span>
+            <h3>Persona Mapping</h3>
+            <p>Who builds this, who uses it, what they know and care about. The context layer that determines how entities and processes should be named.</p>
+          </div>
+          <div class="pipeline-stage">
+            <span class="stage-code">ENT</span>
+            <h3>Entity Extraction</h3>
+            <p>The canonical entities of your domain — extracted from intent, not inferred from conversation. Stored in a provenance-addressed entity map.</p>
+          </div>
+          <div class="pipeline-stage">
+            <span class="stage-code">PRO</span>
+            <h3>Process Synthesis</h3>
+            <p>State machines and workflows that describe how entities move. Synthesized from intent and entity map — not designed by the AI in isolation.</p>
+          </div>
+          <div class="pipeline-stage">
+            <span class="stage-code">SYN</span>
+            <h3>Synthesis</h3>
+            <p>The governed blueprint — architecture, component mapping, the CLAUDE.md and agents and hooks — assembled from all upstream stages.</p>
+          </div>
+          <div class="pipeline-stage pipeline-stage--wide">
+            <span class="stage-code stage-code--gov">GOV</span>
+            <h3>Governance</h3>
+            <p>
+              The Governor evaluates coherence. Checks that the compiled
+              output traces back to the stated intent. Outputs a score.
+              A score below threshold triggers iteration — not a silent failure.
+              <span class="gov-example">approved &nbsp; 0.94</span>
+            </p>
+          </div>
+        </div>
       </div>
     </section>
+
+    <!-- ─── WHAT ADA PRODUCES ────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <section class="section" id="artifacts">
+      <div class="container container--prose">
+        <p class="section-kicker">The output</p>
+        <h2>What Ada produces</h2>
+        <p>
+          Three artifact types. Plain files. You read them before handing
+          to Claude Code. Each traces back to something you said.
+        </p>
+
+        <div class="artifact-list">
+          <div class="artifact-item">
+            <code class="artifact-name">CLAUDE.md</code>
+            <div class="artifact-body">
+              <p>
+                The primary context file. Claude Code reads this on
+                <strong>every message turn</strong> — not just at session start.
+                It is injected into every context window throughout your session.
+                Whatever Ada writes here constrains how Claude Code interprets
+                every subsequent request.
+              </p>
+              <p>
+                CLAUDE.md encodes: what the project is, what it is not,
+                what architectural decisions have been made, what constraints
+                apply, and what the bounded contexts are.
+              </p>
+            </div>
+          </div>
+
+          <div class="artifact-item">
+            <code class="artifact-name">agents/</code>
+            <div class="artifact-body">
+              <p>
+                Specialized agent files, each scoped to a bounded context.
+                An agent knows its domain, its entities, its constraints.
+                When Claude Code works in that context, it loads the relevant
+                agent — not a general instruction set.
+              </p>
+            </div>
+          </div>
+
+          <div class="artifact-item">
+            <code class="artifact-name">hooks/</code>
+            <div class="artifact-body">
+              <p>
+                Pre-tool guard files. These run before Claude Code takes
+                any tool action — read, write, bash. They enforce the
+                constraints from your intent at the boundary where decisions
+                are made. Not advisory. Structural.
+              </p>
+              <p>
+                A single Ada compilation produces hundreds of these.
+                Each one corresponds to a specific invariant in your
+                intent — an entity that must exist, a constraint that
+                must hold, a boundary that must not be crossed.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLAUDE.md excerpt -->
+        <div class="excerpt-block" aria-label="Example CLAUDE.md excerpt">
+          <div class="excerpt-label">CLAUDE.md &mdash; example excerpt</div>
+          <div class="excerpt-content">
+            <div class="excerpt-line excerpt-heading"># Analytics Dashboard</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-key">What this project is:</div>
+            <div class="excerpt-line excerpt-val">A self-hosted web analytics dashboard. Privacy-first.</div>
+            <div class="excerpt-line excerpt-val">No cookies. Tracks pageviews, unique visitors, referrers.</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-key">What it is not:</div>
+            <div class="excerpt-line excerpt-val">Not a marketing platform. Not a cookie-based tracker.</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-key">Constraints that apply:</div>
+            <div class="excerpt-line excerpt-val">No third-party analytics. Single-tenant deployment.</div>
+            <div class="excerpt-line excerpt-val">Data stays on the server. No external egress.</div>
+          </div>
+        </div>
+
+        <p class="excerpt-note">
+          This is not a prompt. It is a governed artifact that traces back
+          to what you said in the elicitation session.
+          Claude Code builds against it — on every turn.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── THE SEPARATION ───────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <section class="section" id="comparison">
+      <div class="container container--prose">
+        <p class="section-kicker">The distinction</p>
+        <h2>Ada vs the alternatives</h2>
+
+        <div class="distinction-block">
+          <p class="distinction-line">Claude Code's auto-memory records what it observed as it worked.</p>
+          <p class="distinction-line">Ada records what you intend before it starts.</p>
+          <p class="distinction-caption">One is retrospective. One is prospective. They are not the same thing.</p>
+        </div>
+
+        <div class="comparison-table">
+          <div class="comparison-row comparison-row--header">
+            <div class="comparison-cell comparison-cell--tool">Tool</div>
+            <div class="comparison-cell comparison-cell--timing">Timing</div>
+            <div class="comparison-cell comparison-cell--what">What it captures</div>
+          </div>
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--tool"><strong>Ada</strong></div>
+            <div class="comparison-cell comparison-cell--timing">Before building</div>
+            <div class="comparison-cell comparison-cell--what">Your intent — structured, governed, provenance-addressed</div>
+          </div>
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--tool">MEMORY.md</div>
+            <div class="comparison-cell comparison-cell--timing">After working</div>
+            <div class="comparison-cell comparison-cell--what">What Claude Code observed during the session</div>
+          </div>
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--tool">Auto-memory</div>
+            <div class="comparison-cell comparison-cell--timing">After working</div>
+            <div class="comparison-cell comparison-cell--what">Inferred observations — not structured intent</div>
+          </div>
+          <div class="comparison-row">
+            <div class="comparison-cell comparison-cell--tool">Better prompts</div>
+            <div class="comparison-cell comparison-cell--timing">Per session</div>
+            <div class="comparison-cell comparison-cell--what">Improved guesses — not formalized intent</div>
+          </div>
+        </div>
+
+        <p>
+          MEMORY.md helps Claude Code remember. Ada tells Claude Code
+          what it was supposed to build before it starts.
+          These solve different parts of the problem.
+          They can coexist — Ada governs, memory records.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── WHO IT'S FOR ─────────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <section class="section">
+      <div class="container container--prose">
+        <p class="section-kicker">Who it's for</p>
+        <h2>If any of these are familiar, Ada is for you.</h2>
+
+        <div class="recognition-list">
+          <div class="recognition-item">
+            <p>"I described what I wanted, Claude Code built something else."</p>
+          </div>
+          <div class="recognition-item">
+            <p>"I re-explain the architecture at the start of every session."</p>
+          </div>
+          <div class="recognition-item">
+            <p>"By the time I noticed the drift, rewinding was harder than starting over."</p>
+          </div>
+          <div class="recognition-item">
+            <p>"I'm not a developer, but I know exactly what the system should do."</p>
+          </div>
+          <div class="recognition-item">
+            <p>"I need Claude Code to stay inside the decisions I've already made."</p>
+          </div>
+        </div>
+
+        <p>
+          Ada is not a tool for AI practitioners. It is a tool for people
+          who have clear intent and a gap between that intent and what
+          currently gets built.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── WHERE ADA IS NOW ─────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <p class="section-kicker">Honest status</p>
+        <h2>Where Ada is now</h2>
+
+        <div class="status-list">
+          <div class="status-item">
+            <span class="status-badge status-badge--live">Live</span>
+            <div class="status-body">
+              <h3>Intent elicitation</h3>
+              <p>Structured session that surfaces blocking unknowns before compilation. Runs before the 7-stage pipeline.</p>
+            </div>
+          </div>
+          <div class="status-item">
+            <span class="status-badge status-badge--live">Live</span>
+            <div class="status-body">
+              <h3>7-stage compilation</h3>
+              <p>CTX → INT → PER → ENT → PRO → SYN → GOV. Produces CLAUDE.md, agents/, and hooks/ as governed artifacts.</p>
+            </div>
+          </div>
+          <div class="status-item">
+            <span class="status-badge status-badge--live">Live</span>
+            <div class="status-body">
+              <h3>Governor with coherence scoring</h3>
+              <p>Evaluates compilation output. Iterates if coherence falls below threshold. Approves when it passes.</p>
+            </div>
+          </div>
+          <div class="status-item">
+            <span class="status-badge status-badge--building">Building</span>
+            <div class="status-body">
+              <h3>Persistent world model</h3>
+              <p>Navigable artifact store. CLAUDE.md becomes a 3-line pointer to the manifest. Query the compiled world model months later.</p>
+            </div>
+          </div>
+          <div class="status-item">
+            <span class="status-badge status-badge--vision">Vision</span>
+            <div class="status-body">
+              <h3>Ongoing semantic authority</h3>
+              <p>Ada as the governance layer on every commit. Drift detection. Impact analysis. "Does this change align with what the system was meant to be?"</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="honest-note">
+          not zero distance. less.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── INSTALL ───────────────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <h2>Start before Claude Code does.</h2>
+        <p class="invite-sub">Ada runs in your terminal. Governed artifacts in minutes.</p>
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">npm install -g @motherlabs/ada</code>
+        </div>
+        <p class="trust-signal">Built by one person. ~400 iterations since late 2024.</p>
+        <a href="/start" class="btn-primary">Full setup guide &rarr;</a>
+      </div>
+    </section>
+
   </main>
 
   <Footer />
 </Layout>
 
 <style>
+  /* ── Layout ──────────────────────────────────────────────────────────── */
   .container {
     max-width: 72rem;
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 0 clamp(1.5rem, 5vw, 4rem);
   }
 
-  .container--narrow {
-    max-width: 52rem;
+  .container--prose {
+    max-width: 44rem;
   }
 
+  .divider {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 0;
+  }
+
+  /* ── Hero ────────────────────────────────────────────────────────────── */
   .page-hero {
-    padding: 6rem 0 5rem;
-    border-bottom: 1px solid var(--color-border);
+    padding: 5rem 0 4rem;
   }
 
   .eyebrow {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--color-accent);
-    margin: 0 0 1rem;
+    margin: 0 0 1.25rem;
   }
 
   .page-hero h1 {
-    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
     font-weight: 800;
-    max-width: 36rem;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
     margin: 0 0 1.25rem;
+    max-width: 28rem;
   }
 
   .hero-sub {
     font-size: 1.0625rem;
     color: var(--color-text-muted);
     max-width: 38rem;
-    margin: 0;
-    line-height: 1.65;
+    margin: 0 0 2.5rem;
+    line-height: 1.7;
   }
 
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────────────────── */
+  .btn-primary {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--color-bg);
+    background-color: var(--color-accent);
+    padding: 0.7rem 1.5rem;
+    border-radius: 3px;
+    transition: background-color 0.12s ease;
+    display: inline-block;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-accent-hover);
+    color: var(--color-bg);
+  }
+
+  .btn-ghost {
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+    transition: color 0.12s ease;
+  }
+
+  .btn-ghost:hover {
+    color: var(--color-text);
+  }
+
+  /* ── Sections ─────────────────────────────────────────────────────────── */
   .section {
     padding: 5rem 0;
-    border-bottom: 1px solid var(--color-border);
   }
 
   .section--surface {
     background-color: var(--color-surface);
   }
 
-  .section-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-    margin: 0 0 1rem;
-  }
-
-  .section-heading {
-    font-size: clamp(1.375rem, 3vw, 1.875rem);
-    font-weight: 700;
-    margin: 0 0 1.5rem;
-    max-width: 34rem;
-  }
-
-  .section-body {
+  .section p {
     font-size: 1.0625rem;
     color: var(--color-text-muted);
-    max-width: 40rem;
-    line-height: 1.7;
-    margin: 0 0 2.5rem;
+    line-height: 1.8;
+    margin: 0 0 1.25rem;
   }
 
-  /* Not list */
-  .not-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin-top: 2rem;
+  .section p:last-child {
+    margin-bottom: 0;
   }
 
-  .not-item {
-    display: flex;
-    gap: 1.25rem;
-    padding: 1.75rem 0;
-    border-bottom: 1px solid var(--color-border);
-    align-items: flex-start;
-  }
-
-  .not-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .not-marker {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--color-text-muted);
-    padding-top: 0.2rem;
-    flex-shrink: 0;
-    width: 1.25rem;
-  }
-
-  .not-item h3 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0 0 0.5rem;
-  }
-
-  .not-item p {
-    font-size: 0.9375rem;
-    color: var(--color-text-muted);
-    margin: 0;
-    line-height: 1.65;
-  }
-
-  /* Phase grid */
-  .phase-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
-    gap: 1.5rem;
-    margin-top: 2rem;
-  }
-
-  .phase {
-    padding: 1.5rem;
-    background-color: var(--color-surface-raised);
-    border: 1px solid var(--color-border);
-    border-radius: 0.5rem;
-  }
-
-  .phase-header {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .phase-num {
-    font-size: 0.7rem;
-    font-weight: 700;
+  /* ── Section kicker ──────────────────────────────────────────────────── */
+  .section-kicker {
     font-family: var(--font-mono);
-    color: var(--color-accent);
-    letter-spacing: 0.05em;
+    font-size: 0.7rem !important;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-dim) !important;
+    margin: 0 0 0.875rem !important;
   }
 
-  .phase h3 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0;
+  .section h2 {
+    font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--color-text);
+    margin: 0 0 1.75rem;
+    line-height: 1.15;
   }
 
-  .phase p {
-    font-size: 0.9375rem;
-    color: var(--color-text-muted);
-    margin: 0;
-    line-height: 1.65;
+  .center {
+    text-align: center;
   }
 
-  /* Artifact store */
-  .artifact-store {
-    border: 1px solid var(--color-border);
-    border-radius: 0.5rem;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
+  /* ── Callout ─────────────────────────────────────────────────────────── */
+  .callout {
+    border-left: 2px solid var(--color-accent);
+    padding: 1rem 1.5rem;
+    margin: 1.75rem 0;
     background-color: var(--color-surface);
   }
 
-  .artifact-row {
-    display: flex;
-    align-items: baseline;
-    gap: 1.5rem;
-    padding: 0.875rem 1.25rem;
-    border-bottom: 1px solid var(--color-border);
-    flex-wrap: wrap;
+  .callout-text {
+    font-size: 1rem !important;
+    color: var(--color-text) !important;
+    margin: 0 !important;
+    line-height: 1.7 !important;
   }
 
-  .artifact-row:last-child {
-    border-bottom: none;
-  }
-
-  .artifact-code {
-    font-size: 0.875rem;
-    color: var(--color-accent);
-    flex-shrink: 0;
-    min-width: 10rem;
-  }
-
-  .artifact-desc {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-  }
-
-  .world-model-note {
-    font-size: 0.9375rem;
-    color: var(--color-text-muted);
-    margin: 0;
-    line-height: 1.6;
-  }
-
-  /* Governance */
-  .governance-detail {
+  /* ── Steps ───────────────────────────────────────────────────────────── */
+  .step-list {
+    margin-top: 0.5rem;
     display: flex;
     flex-direction: column;
     gap: 0;
-    margin-top: 2rem;
   }
 
-  .governance-item {
-    padding: 1.75rem 0;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .governance-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .governance-item h3 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0 0 0.5rem;
-  }
-
-  .governance-item p {
-    font-size: 0.9375rem;
-    color: var(--color-text-muted);
-    margin: 0;
-    line-height: 1.65;
-  }
-
-  /* Roadmap */
-  .roadmap {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin-top: 2rem;
-  }
-
-  .roadmap-item {
+  .step {
     display: flex;
     gap: 1.5rem;
-    padding: 1.75rem 0;
-    border-bottom: 1px solid var(--color-border);
+    padding: 2rem 0;
+    border-top: 1px solid var(--color-border);
     align-items: flex-start;
   }
 
-  .roadmap-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+  .step-num {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    letter-spacing: 0.05em;
+    padding-top: 0.3rem;
+    flex-shrink: 0;
+    width: 2rem;
   }
 
-  .roadmap-status {
+  .step-body h3 {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 0.625rem;
+  }
+
+  .step-body p {
+    font-size: 1rem;
+    color: var(--color-text-muted);
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  /* ── Pipeline grid ───────────────────────────────────────────────────── */
+  .pipeline-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background-color: var(--color-border);
+    border: 1px solid var(--color-border);
+    margin-top: 2.5rem;
+  }
+
+  .pipeline-stage {
+    background-color: var(--color-bg);
+    padding: 1.75rem;
+  }
+
+  .pipeline-stage--wide {
+    grid-column: span 3;
+    background-color: var(--color-surface);
+  }
+
+  .stage-code {
+    font-family: var(--font-mono);
     font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--color-text-dim);
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  .stage-code--gov {
+    color: var(--color-accent);
+  }
+
+  .pipeline-stage h3 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 0.5rem;
+  }
+
+  .pipeline-stage p {
+    font-size: 0.875rem !important;
+    color: var(--color-text-muted) !important;
+    line-height: 1.65 !important;
+    margin: 0 !important;
+  }
+
+  .gov-example {
+    display: inline-block;
+    margin-top: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem !important;
+    color: var(--color-accent) !important;
+    font-weight: 500;
+  }
+
+  /* ── Artifact list ───────────────────────────────────────────────────── */
+  .artifact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 2.5rem;
+  }
+
+  .artifact-item {
+    padding: 2rem 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .artifact-name {
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    color: var(--color-text);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.875rem;
+    background: none;
+    padding: 0;
+  }
+
+  .artifact-body p {
+    font-size: 1rem;
+    color: var(--color-text-muted);
+    line-height: 1.75;
+    margin: 0 0 0.875rem;
+  }
+
+  .artifact-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ── CLAUDE.md excerpt ───────────────────────────────────────────────── */
+  .excerpt-block {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+
+  .excerpt-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-dim);
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    background-color: color-mix(in srgb, var(--color-border) 30%, var(--color-surface));
+  }
+
+  .excerpt-content {
+    padding: 1.25rem 1.25rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+
+  .excerpt-line {
+    display: block;
+  }
+
+  .excerpt-heading {
+    color: var(--color-text);
+    font-weight: 500;
+  }
+
+  .excerpt-key {
+    color: var(--color-text-muted);
+    margin-top: 0.25rem;
+  }
+
+  .excerpt-val {
+    color: var(--color-text-dim);
+    padding-left: 0.5rem;
+  }
+
+  .excerpt-blank {
+    height: 0.5rem;
+  }
+
+  .excerpt-note {
+    font-size: 0.9rem !important;
+    color: var(--color-text-dim) !important;
+    margin: 0 !important;
+  }
+
+  /* ── Distinction block ───────────────────────────────────────────────── */
+  .distinction-block {
+    border-left: 1px solid var(--color-accent);
+    padding-left: 1.5rem;
+    margin: 0 0 2.5rem;
+  }
+
+  .distinction-line {
+    font-size: 1.0625rem !important;
+    color: var(--color-text) !important;
+    line-height: 1.6 !important;
+    margin: 0 0 0.625rem !important;
+  }
+
+  .distinction-caption {
+    font-size: 0.9rem !important;
+    color: var(--color-text-muted) !important;
+    margin-top: 1rem !important;
+  }
+
+  /* ── Comparison table ────────────────────────────────────────────────── */
+  .comparison-table {
+    border: 1px solid var(--color-border);
+    margin-bottom: 2rem;
+    font-size: 0.9375rem;
+  }
+
+  .comparison-row {
+    display: grid;
+    grid-template-columns: 9rem 9rem 1fr;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .comparison-row:last-child {
+    border-bottom: none;
+  }
+
+  .comparison-row--header {
+    background-color: var(--color-surface);
+  }
+
+  .comparison-row--header .comparison-cell {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-dim);
+  }
+
+  .comparison-cell {
+    padding: 0.875rem 1rem;
+    color: var(--color-text-muted);
+    border-right: 1px solid var(--color-border);
+    line-height: 1.5;
+  }
+
+  .comparison-cell:last-child {
+    border-right: none;
+  }
+
+  .comparison-cell--tool strong {
+    color: var(--color-text);
+  }
+
+  /* ── Recognition list ────────────────────────────────────────────────── */
+  .recognition-list {
+    margin: 0 0 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .recognition-item {
+    padding: 1.25rem 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .recognition-item p {
+    font-size: 1.0625rem !important;
+    color: var(--color-text) !important;
+    margin: 0 !important;
+    line-height: 1.6 !important;
+    font-style: italic;
+  }
+
+  /* ── Status list ─────────────────────────────────────────────────────── */
+  .status-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 2.5rem;
+  }
+
+  .status-item {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.75rem 0;
+    border-top: 1px solid var(--color-border);
+    align-items: flex-start;
+  }
+
+  .status-badge {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
     flex-shrink: 0;
-    margin-top: 0.15rem;
+    margin-top: 0.2rem;
   }
 
-  .roadmap-item--live .roadmap-status {
-    background-color: color-mix(in srgb, #4ade80 15%, transparent);
+  .status-badge--live {
+    background-color: color-mix(in srgb, #4ade80 12%, transparent);
     color: #4ade80;
   }
 
-  .roadmap-item--building .roadmap-status {
-    background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  .status-badge--building {
+    background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
     color: var(--color-accent);
   }
 
-  .roadmap-item--vision .roadmap-status {
-    background-color: color-mix(in srgb, var(--color-text-muted) 15%, transparent);
+  .status-badge--vision {
+    background-color: color-mix(in srgb, var(--color-text-muted) 12%, transparent);
     color: var(--color-text-muted);
   }
 
-  .roadmap-item h3 {
+  .status-body h3 {
     font-size: 1rem;
     font-weight: 600;
+    color: var(--color-text);
     margin: 0 0 0.5rem;
   }
 
-  .roadmap-item p {
+  .status-body p {
     font-size: 0.9375rem;
     color: var(--color-text-muted);
     margin: 0;
-    line-height: 1.6;
+    line-height: 1.65;
   }
 
-  /* CTA */
-  .section--cta {
-    text-align: center;
-    background-color: var(--color-surface);
-    border-bottom: none;
+  .honest-note {
+    font-size: 1.25rem !important;
+    font-weight: 700;
+    color: var(--color-text) !important;
+    letter-spacing: -0.015em;
+    margin-top: 2rem !important;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
   }
 
-  .section--cta h2 {
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-    font-weight: 800;
-    margin: 0 0 0.75rem;
+  /* ── Invite ──────────────────────────────────────────────────────────── */
+  .section--invite {
+    padding: 5rem 0;
   }
 
-  .section--cta p {
+  .section--invite h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .invite-sub {
     color: var(--color-text-muted);
-    font-size: 1.0625rem;
-    margin: 0 0 2rem;
+    font-size: 1.0625rem !important;
+    margin: 0 0 2rem !important;
   }
 
-  .btn-primary {
-    display: inline-block;
+  .install-block {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
     font-size: 0.9375rem;
-    font-weight: 600;
-    color: #fff;
-    background-color: var(--color-accent);
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.4rem;
-    transition: background-color 0.15s;
+    color: var(--color-accent);
+    margin-bottom: 1.25rem;
+    user-select: all;
   }
 
-  .btn-primary:hover {
-    background-color: var(--color-accent-hover);
-    color: #fff;
+  .install-prompt {
+    color: var(--color-text-dim);
   }
 
-  @media (max-width: 640px) {
-    .page-hero {
-      padding: 4rem 0 3.5rem;
-    }
+  .trust-signal {
+    font-size: 0.875rem !important;
+    color: var(--color-text-dim) !important;
+    margin: 0 0 2rem !important;
+  }
 
-    .phase-grid {
+  /* ── Responsive ──────────────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .pipeline-grid {
       grid-template-columns: 1fr;
     }
 
-    .artifact-row {
-      flex-direction: column;
-      gap: 0.25rem;
+    .pipeline-stage--wide {
+      grid-column: span 1;
     }
 
-    .artifact-code {
-      min-width: unset;
+    .comparison-row {
+      grid-template-columns: 1fr;
+    }
+
+    .comparison-row--header {
+      display: none;
+    }
+
+    .comparison-cell {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+      padding: 0.625rem 1rem;
+    }
+
+    .comparison-cell:last-child {
+      border-bottom: none;
     }
   }
 </style>
