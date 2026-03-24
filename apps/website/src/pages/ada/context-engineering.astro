@@ -1,0 +1,314 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Context Engineering for Claude Code: Why CLAUDE.md Is Not Enough',
+  description: 'Context engineering is the formal discipline of optimizing information payloads for LLMs. For Claude Code, it means three layers: hot memory (CLAUDE.md), domain specialists (agents), and enforcement (hooks). Ada produces all three.',
+  author: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://motherlabs.ai/ada/context-engineering' },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is context engineering for AI coding tools?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Context engineering is the systematic optimization of information payloads for LLMs — deciding what goes into the context window, in what form, at what time. For AI coding tools like Claude Code, this means structuring the information the model uses to make decisions: the project definition, domain knowledge, constraints, and enforcement mechanisms. A 2025 survey covering 1,400+ papers formally established context engineering as a distinct discipline from prompt engineering.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What are the three layers of context for Claude Code?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Three layers: hot memory (CLAUDE.md, read on every turn — contains project identity, constraints, decisions), domain specialists (agent files scoped to bounded contexts — contain deep domain knowledge for specific areas), and enforcement (hooks — pre-tool guards that enforce constraints at every tool call boundary). Ada produces all three from compiled intent.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Why is CLAUDE.md alone not sufficient context engineering?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'CLAUDE.md alone is advisory — it tells Claude Code what to do, but cannot prevent it from doing otherwise. Complete context engineering requires all three layers: CLAUDE.md encodes intent, agent files provide domain depth, and hooks enforce constraints structurally at tool boundaries. Without hooks, constraints are suggestions. Without agents, all context competes for space in CLAUDE.md. The three layers together form a governed context architecture.',
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="Context engineering for Claude Code — the three-layer architecture | Motherlabs"
+  description="Context engineering for Claude Code requires three layers: CLAUDE.md (hot memory), agents (domain specialists), and hooks (structural enforcement). Ada produces all three from compiled intent."
+  schemas={[articleSchema, faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; Context Engineering</p>
+        <h1>Context engineering for Claude Code</h1>
+        <p class="hero-sub">
+          CLAUDE.md is one layer. A governed context architecture has three.
+          Ada produces all of them from structured intent.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>What context engineering is</h2>
+        <p>
+          Context engineering is the systematic design of what goes into an LLM's
+          context window — what information, in what form, at what time.
+        </p>
+        <p>
+          It is distinct from prompt engineering. Prompt engineering is about
+          how you phrase a single request. Context engineering is about
+          the information architecture that shapes every request — the persistent
+          layer that governs how the model interprets everything.
+        </p>
+        <p>
+          A 2025 survey covering 1,400+ papers formally established context engineering
+          as a distinct discipline. The finding: the quality and structure of context
+          determines model behavior more reliably than prompt phrasing.
+        </p>
+        <div class="callout">
+          <p class="callout-text">
+            For Claude Code, context engineering is the discipline of deciding
+            what goes in CLAUDE.md, what belongs in agent files, and what gets
+            enforced by hooks — and ensuring each layer encodes the right information
+            at the right granularity.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>The three-layer architecture</h2>
+        <p>
+          Research on context architecture for multi-agent coding systems has independently
+          converged on a three-tier structure. Ada implements this architecture:
+        </p>
+
+        <div class="layer-list">
+          <div class="layer">
+            <div class="layer-header">
+              <span class="layer-num">01</span>
+              <div>
+                <h3>Hot memory — CLAUDE.md</h3>
+                <span class="layer-file">Always in context. Read on every turn.</span>
+              </div>
+            </div>
+            <p>
+              The top layer. Present on every message turn, every decision, every tool call.
+              Contains the structural facts that must always be true: what the project is,
+              what it is not, architectural decisions, scope boundaries, naming conventions.
+            </p>
+            <p>
+              Because CLAUDE.md is in context on every turn, it must be dense with signal.
+              It should not contain session notes, task lists, or anything that changes.
+              It is a structural constraint, not a conversation.
+            </p>
+          </div>
+
+          <div class="layer">
+            <div class="layer-header">
+              <span class="layer-num">02</span>
+              <div>
+                <h3>Domain specialists — agents/</h3>
+                <span class="layer-file">Loaded per bounded context. Domain-deep.</span>
+              </div>
+            </div>
+            <p>
+              The middle layer. Agent files scoped to bounded contexts — one per
+              domain area. An agent for the auth system knows auth entities, auth constraints,
+              auth state machines. It doesn't need to know about billing.
+            </p>
+            <p>
+              This solves a core context engineering problem: you cannot put all domain
+              knowledge in CLAUDE.md without diluting the signal. Agents provide depth
+              without polluting the hot layer.
+            </p>
+          </div>
+
+          <div class="layer">
+            <div class="layer-header">
+              <span class="layer-num">03</span>
+              <div>
+                <h3>Structural enforcement — hooks/</h3>
+                <span class="layer-file">Pre-tool guards. Constraints at every boundary.</span>
+              </div>
+            </div>
+            <p>
+              The enforcement layer. Pre-tool hook files that run before Claude Code takes
+              any tool action — read, write, bash. They enforce the constraints from
+              your intent at the boundary where decisions are made.
+            </p>
+            <p>
+              This is the critical layer most developers miss. CLAUDE.md tells Claude Code
+              what to do. Hooks enforce it. Without hooks, constraints are advisory.
+              With hooks, constraints are structural — Claude Code cannot violate them
+              without the hook blocking the action.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Why CLAUDE.md alone is not enough</h2>
+        <p>
+          The instinct when discovering CLAUDE.md is to put everything in it.
+          Project definition, technical decisions, constraints, task list, history — all in one file.
+        </p>
+        <p>
+          This degrades context quality. Research on context length demonstrates that
+          model performance degrades as context grows — not always linearly, but reliably.
+          A bloated CLAUDE.md buries the signal under noise.
+        </p>
+        <p>
+          More critically: CLAUDE.md is advisory. It tells Claude Code what you want.
+          It cannot prevent Claude Code from doing otherwise. If a constraint matters,
+          it needs enforcement — not just instruction.
+        </p>
+
+        <div class="problem-table">
+          <div class="problem-row problem-row--header">
+            <div class="problem-cell">What you put in CLAUDE.md</div>
+            <div class="problem-cell">The actual problem</div>
+            <div class="problem-cell">Better layer</div>
+          </div>
+          <div class="problem-row">
+            <div class="problem-cell">Auth system domain knowledge</div>
+            <div class="problem-cell">Dilutes hot memory; not always relevant</div>
+            <div class="problem-cell">agents/auth.md</div>
+          </div>
+          <div class="problem-row">
+            <div class="problem-cell">"Never use external APIs in X"</div>
+            <div class="problem-cell">Advisory only — not enforced</div>
+            <div class="problem-cell">hooks/no-external-api.sh</div>
+          </div>
+          <div class="problem-row">
+            <div class="problem-cell">Entity definitions for all domains</div>
+            <div class="problem-cell">Too large; competes with constraints</div>
+            <div class="problem-cell">Per-domain agent files</div>
+          </div>
+          <div class="problem-row">
+            <div class="problem-cell">Architecture decisions (all)</div>
+            <div class="problem-cell">Correct layer for this</div>
+            <div class="problem-cell">CLAUDE.md ✓</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>How Ada implements this architecture</h2>
+        <p>
+          Ada's 7-stage compilation pipeline produces all three layers from structured intent:
+        </p>
+        <p>
+          The CTX and INT stages extract what goes in the hot layer.
+          The ENT and PER stages extract what goes in domain agent files.
+          The PRO and SYN stages determine what needs hook enforcement.
+          The GOV stage verifies coherence across all three layers before writing to disk.
+        </p>
+        <p>
+          The result: 247 hook files, 8 agent files, and a CLAUDE.md — all produced
+          from one elicitation session. Each layer dense with the right information
+          for its purpose.
+        </p>
+        <p>
+          The context architecture Ada produces is not optimized by hand. It is compiled
+          from intent — which means the right information is in the right layer because
+          that's where it belongs structurally, not because you happened to put it there.
+        </p>
+        <a href="/ada" class="link-arrow">See the full Ada pipeline &rarr;</a>
+      </div>
+    </section>
+
+    <hr class="divider" />
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">npm install -g @motherlabs/ada</code>
+        </div>
+        <p class="trust-signal">Three-layer context architecture. Compiled from intent.</p>
+        <a href="/start" class="btn-primary">Get started &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--color-text-dim); margin: 0 0 1.25rem; display: block; }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 1.25rem; max-width: 34rem; }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 38rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-size: clamp(1.375rem, 3vw, 1.875rem); font-weight: 700; color: var(--color-text); margin: 0 0 1.5rem; }
+
+  .callout { border-left: 2px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.75rem 0; background-color: var(--color-surface); }
+  .callout-text { font-size: 1rem !important; color: var(--color-text) !important; margin: 0 !important; line-height: 1.7 !important; }
+
+  .layer-list { display: flex; flex-direction: column; gap: 0; }
+  .layer { padding: 2rem 0; border-top: 1px solid var(--color-border); }
+  .layer-header { display: flex; gap: 1.25rem; align-items: flex-start; margin-bottom: 1rem; }
+  .layer-num { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; color: var(--color-accent); padding-top: 0.3rem; flex-shrink: 0; }
+  .layer-header h3 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin: 0 0 0.25rem; }
+  .layer-file { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-text-dim); }
+  .layer p { font-size: 0.9375rem; color: var(--color-text-muted); margin: 0 0 0.875rem; line-height: 1.7; }
+  .layer p:last-child { margin-bottom: 0; }
+
+  .problem-table { border: 1px solid var(--color-border); margin: 1.75rem 0; font-size: 0.875rem; }
+  .problem-row { display: grid; grid-template-columns: 1fr 1fr 9rem; border-bottom: 1px solid var(--color-border); }
+  .problem-row:last-child { border-bottom: none; }
+  .problem-row--header { background-color: var(--color-surface); }
+  .problem-row--header .problem-cell { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); }
+  .problem-cell { padding: 0.875rem 1rem; color: var(--color-text-muted); border-right: 1px solid var(--color-border); line-height: 1.5; }
+  .problem-cell:last-child { border-right: none; color: var(--color-text); font-family: var(--font-mono); font-size: 0.8rem; }
+  @media (max-width: 640px) { .problem-row { grid-template-columns: 1fr; } .problem-row--header { display: none; } }
+
+  .link-arrow { font-size: 0.9375rem; color: var(--color-accent); display: inline-block; margin-top: 0.5rem; }
+  .link-arrow:hover { text-decoration: underline; }
+
+  .section--invite { padding: 4.5rem 0; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+</style>

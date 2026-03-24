@@ -1,0 +1,337 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'How does Ada work step by step?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada works in four phases: (1) You install Ada and run `ada compile` in your project directory. (2) Ada runs structured elicitation — a focused session where it asks the minimum questions needed to resolve blocking unknowns. You answer in plain language. (3) Ada compiles your answers through a 7-stage pipeline: CTX (codebase context), INT (intent graph), PER (persona mapping), ENT (entity extraction), PRO (process synthesis), SYN (synthesis), GOV (governance). (4) Files land on disk — CLAUDE.md, agents/, and hooks/. You read them, verify they match your intent, then hand them to Claude Code.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What questions does Ada ask during elicitation?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada asks semantic questions, not technical ones. Not "which framework?" but "what should happen when a user does X?" Not "SQL or NoSQL?" but "what entities need to exist and what are their boundaries?" The elicitation session surfaces: what the system should do, what it explicitly should not do, who uses it and how, what constraints are non-negotiable, and what decisions have already been made. These are the questions that resolve the blocking unknowns that would otherwise cause the wrong system to be built.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How long does an Ada compilation take?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A typical Ada compilation takes 10-20 minutes total: 5-10 minutes for the elicitation session (depending on project complexity and how many unknowns need resolving), and 2-5 minutes for the compilation pipeline to run. The result is hundreds of governed artifacts ready for Claude Code to use.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Do I need technical knowledge to use Ada?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. Ada operates at the semantic level — what the system should do, not how it should be built. You describe your project at whatever level you think in. Ada infers technical choices from conceptual descriptions and asks questions about behavior and intent, not implementation. The elicitation session is designed for people who know what they want to build but not necessarily how to build it.',
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="How Ada works — step by step guide to the intent compiler | Motherlabs"
+  description="Ada runs in 4 phases: install, elicitation (semantic questions), 7-stage compilation, and governed artifacts on disk. No technical knowledge required — Ada works at the semantic level."
+  schemas={[faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; How Ada Works</p>
+        <h1>How Ada works</h1>
+        <p class="hero-sub">
+          From `ada compile` to governed artifacts on disk.
+          Four phases. No technical knowledge required.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Phase 1: Install -->
+    <section class="section">
+      <div class="container container--prose">
+        <div class="phase-marker">
+          <span class="phase-num">Phase 01</span>
+          <h2>Install and run</h2>
+        </div>
+
+        <div class="code-block">
+          <div class="code-prompt"><span class="prompt-char">$</span> npm install -g @motherlabs/ada</div>
+          <div class="code-prompt"><span class="prompt-char">$</span> cd your-project</div>
+          <div class="code-prompt"><span class="prompt-char">$</span> ada compile</div>
+        </div>
+
+        <p>
+          Ada runs in your terminal. No account required. No API key setup for first use.
+          You run it in your project directory — Ada detects the codebase context
+          automatically as part of the CTX stage.
+        </p>
+        <p>
+          If you're starting a new project with no existing code, that's fine too.
+          Ada compiles from intent — the codebase context stage simply notes that
+          the project is greenfield.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Phase 2: Elicitation -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <div class="phase-marker">
+          <span class="phase-num">Phase 02</span>
+          <h2>Elicitation — the questions that matter</h2>
+        </div>
+
+        <p>
+          Before Ada compiles, it runs structured elicitation.
+          This is a focused dialogue session designed to surface the blocking unknowns —
+          the things Ada genuinely doesn't know that would cause the wrong system to be built.
+        </p>
+        <p>
+          Ada asks semantic questions, not technical ones.
+        </p>
+
+        <div class="example-dialogue">
+          <div class="dialogue-exchange">
+            <span class="dialogue-who">Ada</span>
+            <p class="dialogue-text">You described a "dashboard." Who sees it — the person who owns the data, or someone they grant access to?</p>
+          </div>
+          <div class="dialogue-exchange dialogue-exchange--you">
+            <span class="dialogue-who dialogue-who--you">You</span>
+            <p class="dialogue-text">The owner only. This is a private view. No sharing.</p>
+          </div>
+          <div class="dialogue-exchange">
+            <span class="dialogue-who">Ada</span>
+            <p class="dialogue-text">The data updates in real time, or on a schedule?</p>
+          </div>
+          <div class="dialogue-exchange dialogue-exchange--you">
+            <span class="dialogue-who dialogue-who--you">You</span>
+            <p class="dialogue-text">Daily. It's a digest — not a live view.</p>
+          </div>
+        </div>
+
+        <p>
+          Each question corresponds to an unknown that would force an assumption in the
+          compilation. Ada asks the minimum set of questions to resolve them —
+          not everything, just what blocks the right output.
+        </p>
+        <p>
+          The questions surface: what the system should do, what it should not do,
+          who uses it, what constraints are non-negotiable, what decisions are already made.
+          You answer in plain language. Ada handles the rest.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Phase 3: Compilation -->
+    <section class="section">
+      <div class="container container--prose">
+        <div class="phase-marker">
+          <span class="phase-num">Phase 03</span>
+          <h2>7-stage compilation</h2>
+        </div>
+
+        <p>
+          Once elicitation is complete, Ada compiles. The pipeline runs automatically —
+          you watch the stages pass.
+        </p>
+
+        <div class="compile-block" aria-label="Ada compile output">
+          <div class="compile-prompt">
+            <span class="prompt-char">$</span>
+            <span class="prompt-cmd">ada compile</span>
+          </div>
+          <div class="compile-stages">
+            <div class="stage-row"><span class="stage-label">CTX</span><span class="stage-check">✓</span><span class="stage-desc">codebase context</span></div>
+            <div class="stage-row"><span class="stage-label">INT</span><span class="stage-check">✓</span><span class="stage-desc">intent graph</span></div>
+            <div class="stage-row"><span class="stage-label">PER</span><span class="stage-check">✓</span><span class="stage-desc">persona mapping</span></div>
+            <div class="stage-row"><span class="stage-label">ENT</span><span class="stage-check">✓</span><span class="stage-desc">entity extraction</span></div>
+            <div class="stage-row"><span class="stage-label">PRO</span><span class="stage-check">✓</span><span class="stage-desc">process synthesis</span></div>
+            <div class="stage-row"><span class="stage-label">SYN</span><span class="stage-check">✓</span><span class="stage-desc">synthesis</span></div>
+            <div class="stage-row"><span class="stage-label">GOV</span><span class="stage-check">✓</span><span class="stage-desc stage-approved">approved &nbsp; 0.94</span></div>
+          </div>
+        </div>
+
+        <p>
+          Each stage reduces ambiguity in one dimension. CTX grounds the compilation
+          in real codebase state. INT structures your answers into a formal intent graph.
+          PER maps who uses the system and how that shapes decisions.
+          ENT extracts the canonical domain entities. PRO synthesizes the state machines
+          and workflows. SYN assembles all layers into the output artifacts.
+          GOV evaluates coherence — and iterates if it doesn't pass.
+        </p>
+        <p>
+          The 0.94 coherence score means the compiled output closely traces back to
+          the stated intent. The Governor does not approve until it passes threshold.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Phase 4: Artifacts -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <div class="phase-marker">
+          <span class="phase-num">Phase 04</span>
+          <h2>Files on disk — verify, then build</h2>
+        </div>
+
+        <div class="output-block">
+          <div class="output-row">
+            <code class="output-file">CLAUDE.md</code>
+            <span class="output-action">written</span>
+          </div>
+          <div class="output-row">
+            <code class="output-file">agents/</code>
+            <span class="output-action">8 files written</span>
+          </div>
+          <div class="output-row">
+            <code class="output-file">hooks/</code>
+            <span class="output-action">247 files written</span>
+          </div>
+        </div>
+
+        <p>
+          Plain files. You read them before handing to Claude Code.
+        </p>
+        <p>
+          CLAUDE.md is the first thing to read. Does it match what you meant?
+          If yes: open Claude Code. It reads CLAUDE.md on every turn and builds
+          against what Ada wrote. If no: run <code class="inline-code">ada compile</code> again
+          with the correction — Ada's elicitation picks up where you diverged.
+        </p>
+        <p>
+          The agents and hooks run automatically — you don't need to configure them.
+          Claude Code loads the relevant agent for each domain context.
+          The hooks enforce constraints at every tool call, silently.
+        </p>
+        <p>
+          The session pattern: Ada compiles once. Claude Code builds for as many sessions
+          as you need, always within the intent Ada encoded.
+          When scope changes significantly: re-run Ada to update the artifacts.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Who this is for</h2>
+        <p>
+          Ada works at whatever level you think in. You don't need to know
+          which database to use or which framework to pick. Ada infers technical
+          choices from conceptual descriptions.
+        </p>
+        <p>
+          The only requirement: you need to know what the system should do.
+          Not in technical terms — in behavioral ones. "When a user does X, Y should happen."
+          "This is for people who need Z, not people who need W."
+          "This is not a [category]."
+        </p>
+        <p>
+          That's the level Ada works at. Everything below it is Ada's to handle.
+        </p>
+        <a href="/ada" class="link-arrow">Full Ada documentation &rarr;</a>
+      </div>
+    </section>
+
+    <hr class="divider" />
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">npm install -g @motherlabs/ada</code>
+        </div>
+        <p class="trust-signal">~400 iterations since late 2024. Built by one person.</p>
+        <a href="/start" class="btn-primary">Full setup guide &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--color-text-dim); margin: 0 0 1.25rem; display: block; }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 1.25rem; }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 38rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-size: clamp(1.375rem, 3vw, 1.875rem); font-weight: 700; color: var(--color-text); margin: 0 0 1.5rem; }
+
+  .phase-marker { margin-bottom: 1.75rem; }
+  .phase-num { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; color: var(--color-accent); letter-spacing: 0.06em; display: block; margin-bottom: 0.5rem; }
+  .phase-marker h2 { margin: 0; }
+
+  .code-block { font-family: var(--font-mono); font-size: 0.875rem; background-color: var(--color-surface); border: 1px solid var(--color-border); padding: 1.25rem; margin-bottom: 1.75rem; display: flex; flex-direction: column; gap: 0.375rem; }
+  .code-prompt { color: var(--color-text-muted); }
+  .prompt-char { color: var(--color-text-dim); margin-right: 0.5rem; }
+
+  .example-dialogue { border: 1px solid var(--color-border); margin: 1.75rem 0; overflow: hidden; }
+  .dialogue-exchange { padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border); display: flex; gap: 1rem; align-items: flex-start; }
+  .dialogue-exchange:last-child { border-bottom: none; }
+  .dialogue-exchange--you { background-color: var(--color-surface); }
+  .dialogue-who { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-accent); flex-shrink: 0; padding-top: 0.2rem; min-width: 2.5rem; }
+  .dialogue-who--you { color: var(--color-text-dim); }
+  .dialogue-text { font-size: 0.9375rem !important; color: var(--color-text-muted) !important; margin: 0 !important; line-height: 1.6 !important; }
+
+  /* Compile block */
+  .compile-block { font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.6; margin-bottom: 1.75rem; display: inline-flex; flex-direction: column; background-color: var(--color-surface); border: 1px solid var(--color-border); padding: 1.25rem; }
+  .compile-prompt { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+  .prompt-cmd { color: var(--color-text-muted); }
+  .compile-stages { display: flex; flex-direction: column; gap: 0.125rem; }
+  .stage-row { display: grid; grid-template-columns: 2.5rem 1.25rem 1fr; align-items: center; gap: 0.5rem; }
+  .stage-label { color: var(--color-text-dim); letter-spacing: 0.04em; font-size: 0.75rem; }
+  .stage-check { color: var(--color-accent); }
+  .stage-desc { color: var(--color-text-muted); }
+  .stage-approved { color: var(--color-accent); font-weight: 500; }
+
+  .output-block { font-family: var(--font-mono); font-size: 0.875rem; margin-bottom: 1.75rem; background-color: var(--color-surface); border: 1px solid var(--color-border); padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.375rem; }
+  .output-row { display: grid; grid-template-columns: 8rem 1fr; gap: 1rem; }
+  .output-file { color: var(--color-text); font-weight: 500; }
+  .output-action { color: var(--color-text-dim); }
+
+  .inline-code { font-family: var(--font-mono); font-size: 0.875em; color: var(--color-text-muted); }
+
+  .link-arrow { font-size: 0.9375rem; color: var(--color-accent); display: inline-block; margin-top: 0.5rem; }
+  .link-arrow:hover { text-decoration: underline; }
+
+  .section--invite { padding: 4.5rem 0; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+</style>

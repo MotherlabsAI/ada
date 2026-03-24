@@ -1,0 +1,298 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'The Intent Gap in AI-Assisted Development',
+  description: 'The intent gap is the structural distance between informal natural language requirements and the precise program behavior that gets built. Formally documented in research, it explains why AI-generated code drifts from what you meant.',
+  author: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': 'https://motherlabs.ai/ada/intent-gap' },
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is the intent gap in software development?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'The intent gap is the structural distance between informal natural language requirements — how developers describe what they want — and the precise program behavior that actually gets built. Formally documented by Microsoft Research (2026), the gap exists because informal descriptions are ambiguous, underspecified, and never formalized into a persistent artifact before building begins. AI models infer the intent and build against that inference, not against the actual intent.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Why does AI code drift from what you meant?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'AI code drift happens because the model builds against an inference of your intent, not a formalization of it. When you describe a project in a chat window, the model infers what you mean and proceeds. The inference is usually close — but close is not right. Each session starts from a slightly different inference. Over time, the drift compounds. The root cause is that intent was never written down in a form that persists, traces, and governs.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does Ada close the intent gap?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada closes the intent gap by formalizing intent before building starts. It runs structured elicitation to surface blocking unknowns, then compiles through a 7-stage pipeline (CTX → INT → PER → ENT → PRO → SYN → GOV) that produces governed artifacts — CLAUDE.md, agent files, and hook files. These artifacts encode intent structurally. Claude Code builds against them rather than against an informal description.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Is the intent gap the same as prompt engineering problems?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. The intent gap is structural, not a prompting problem. Better prompts produce better guesses — but they are still guesses made against informal input. The intent gap exists because informal requirements are never formalized into a persistent artifact before building begins. Prompt engineering addresses the quality of the guess. Closing the intent gap requires formalizing the requirements before the guess is made.',
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="The intent gap in AI development — why code drifts from what you meant | Motherlabs"
+  description="The intent gap is the structural distance between what you describe and what AI builds. Formally documented in research. Learn what causes it and how Ada closes it."
+  schemas={[articleSchema, faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; The Intent Gap</p>
+        <h1>The intent gap</h1>
+        <p class="hero-sub">
+          Why there is always distance between what you describe
+          and what gets built — and why better prompts don't fix it.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>What the intent gap is</h2>
+        <p>
+          Every time you describe a project to Claude Code, something happens
+          before a single line of code is written: the model infers what you mean.
+        </p>
+        <p>
+          That inference is not your intent. It is the model's best guess at your
+          intent, given informal, unstructured, underspecified natural language.
+          The gap between that guess and your actual intent is the intent gap.
+        </p>
+        <p>
+          For small, simple projects, the gap is negligible. The guess is close
+          enough. But as scope grows, sessions multiply, and decisions accumulate —
+          the gap compounds. Each session, Claude Code builds from where
+          it <em>thinks</em> you left off. Which isn't quite where you left off.
+        </p>
+        <div class="callout">
+          <p class="callout-text">
+            Microsoft Research formally documented the intent gap in March 2026,
+            naming it the structural distance between informal natural language
+            requirements and precise program behavior. It is not a new problem —
+            it is the oldest problem in software requirements, now accelerated by AI.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>Why it happens</h2>
+
+        <div class="reason-list">
+          <div class="reason">
+            <h3>Intent is informal by default</h3>
+            <p>
+              Natural language is ambiguous. "Build a dashboard" leaves open: what does
+              it track, who uses it, what does privacy mean, what is the update frequency,
+              where does data come from, what is out of scope. The model makes assumptions.
+              The assumptions become code.
+            </p>
+          </div>
+          <div class="reason">
+            <h3>Intent is never formalized</h3>
+            <p>
+              The description exists in a chat window. The chat window closes.
+              The next session starts fresh — with the model inferring the same intent
+              again, from a slightly different starting point. Nothing was written down
+              in a form that persists, traces, and governs.
+            </p>
+          </div>
+          <div class="reason">
+            <h3>The gap is invisible until it isn't</h3>
+            <p>
+              Small deviations from intent don't surface immediately.
+              The code looks right. Tests pass. But the entity model is subtly wrong.
+              The scope crept beyond what you intended. The constraint you implied
+              was never enforced. By the time the drift is visible, rewinding is
+              harder than starting over.
+            </p>
+          </div>
+          <div class="reason">
+            <h3>Memory tools capture drift, not intent</h3>
+            <p>
+              MEMORY.md, auto-memory, session notes — these record what happened
+              during the session. They help Claude Code remember. But they capture
+              the AI's observations, not your intent. If the inference was wrong
+              from the start, memory compounds the error.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>Why better prompts don't fix it</h2>
+        <p>
+          The instinct is to write a better prompt.
+          More specific. More detailed. Clearer constraints.
+        </p>
+        <p>
+          This helps. A well-written prompt reduces the inference error.
+          But it doesn't close the intent gap — because the prompt is still informal,
+          still ephemeral, and still only present for one session.
+        </p>
+        <p>
+          The next session, you write it again. Or you paste it from somewhere.
+          Either way, you're re-expressing informal intent, session by session,
+          hoping the inference stays consistent.
+        </p>
+        <p>
+          The intent gap is structural. It closes when intent is formalized
+          into a persistent, governed artifact — not when the description gets better.
+        </p>
+
+        <div class="gap-table">
+          <div class="gap-row gap-row--header">
+            <div class="gap-cell">Approach</div>
+            <div class="gap-cell">What it does</div>
+            <div class="gap-cell">What it doesn't do</div>
+          </div>
+          <div class="gap-row">
+            <div class="gap-cell"><strong>Better prompts</strong></div>
+            <div class="gap-cell">Reduces inference error per session</div>
+            <div class="gap-cell">Doesn't formalize or persist intent</div>
+          </div>
+          <div class="gap-row">
+            <div class="gap-cell"><strong>MEMORY.md</strong></div>
+            <div class="gap-cell">Helps AI remember observations</div>
+            <div class="gap-cell">Captures drift, not original intent</div>
+          </div>
+          <div class="gap-row">
+            <div class="gap-cell"><strong>Auto-memory</strong></div>
+            <div class="gap-cell">Records what happened automatically</div>
+            <div class="gap-cell">Still retrospective — based on inference</div>
+          </div>
+          <div class="gap-row gap-row--highlight">
+            <div class="gap-cell"><strong>Ada</strong></div>
+            <div class="gap-cell">Formalizes intent before building starts</div>
+            <div class="gap-cell">Not zero distance. Less.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <section class="section">
+      <div class="container container--prose">
+        <h2>How Ada closes it</h2>
+        <p>
+          Ada addresses the intent gap at its root: the absence of formalized intent
+          before building begins.
+        </p>
+        <p>
+          Before Claude Code starts, Ada runs structured elicitation — a focused session
+          that asks the questions specifically designed to surface what's underspecified,
+          what's ambiguous, and what the "what it is not" answers are.
+          These are the questions that reveal the intent gap before it becomes wrong code.
+        </p>
+        <p>
+          The answers are compiled through a 7-stage pipeline into governed artifacts:
+          CLAUDE.md (read on every turn), agent files, and hook files.
+          These encode intent structurally — not as a description, but as a constraint layer.
+        </p>
+        <p>
+          Claude Code builds against the artifacts. The artifacts trace back to your words.
+          The distance between what you meant and what gets built is smaller —
+          not zero, but less.
+        </p>
+        <a href="/ada" class="link-arrow">How Ada works &rarr;</a>
+      </div>
+    </section>
+
+    <hr class="divider" />
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">npm install -g @motherlabs/ada</code>
+        </div>
+        <p class="trust-signal">Structured elicitation before building. Governed artifacts that persist.</p>
+        <a href="/start" class="btn-primary">Get started &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--color-text-dim); margin: 0 0 1.25rem; display: block; }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 1.25rem; max-width: 28rem; }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 38rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-size: clamp(1.375rem, 3vw, 1.875rem); font-weight: 700; color: var(--color-text); margin: 0 0 1.5rem; }
+
+  .callout { border-left: 2px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.75rem 0; background-color: var(--color-surface); }
+  .callout-text { font-size: 1rem !important; color: var(--color-text) !important; margin: 0 !important; line-height: 1.7 !important; }
+
+  .reason-list { display: flex; flex-direction: column; gap: 0; }
+  .reason { padding: 2rem 0; border-top: 1px solid var(--color-border); }
+  .reason h3 { font-size: 1rem; font-weight: 600; color: var(--color-text); margin: 0 0 0.5rem; }
+  .reason p { font-size: 0.9375rem; color: var(--color-text-muted); margin: 0; line-height: 1.7; }
+
+  .gap-table { border: 1px solid var(--color-border); margin: 1.75rem 0; font-size: 0.9rem; }
+  .gap-row { display: grid; grid-template-columns: 9rem 1fr 1fr; border-bottom: 1px solid var(--color-border); }
+  .gap-row:last-child { border-bottom: none; }
+  .gap-row--header { background-color: var(--color-surface); }
+  .gap-row--header .gap-cell { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); }
+  .gap-row--highlight { background-color: color-mix(in srgb, var(--color-accent) 5%, transparent); }
+  .gap-cell { padding: 0.875rem 1rem; color: var(--color-text-muted); border-right: 1px solid var(--color-border); line-height: 1.5; }
+  .gap-cell:last-child { border-right: none; }
+  .gap-row--highlight .gap-cell { color: var(--color-text); }
+  @media (max-width: 640px) { .gap-row { grid-template-columns: 1fr; } .gap-row--header { display: none; } }
+
+  .link-arrow { font-size: 0.9375rem; color: var(--color-accent); display: inline-block; margin-top: 0.5rem; }
+  .link-arrow:hover { text-decoration: underline; }
+
+  .section--invite { padding: 4.5rem 0; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+</style>

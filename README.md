@@ -1,50 +1,64 @@
-# Ada
+# Ada — Intent compiler for Claude Code
 
-Semantic compiler: intent → governed blueprint → constrained execution.
+**Close the gap between what you mean and what gets built.**
 
-## What Ada Does
+Ada is a semantic intent compiler. You describe what you want to build — at whatever level you think in. Ada runs structured elicitation to surface blocking unknowns, then compiles through a 7-stage pipeline that produces CLAUDE.md, agent files, and pre-tool hooks. Claude Code builds against those governed artifacts instead of against an informal description.
 
-You provide a natural language intent. Ada compiles it through a 7-stage agent pipeline into a deterministic, auditable blueprint. Each stage produces a typed, schema-validated artifact. Provenance gates between stages track entropy and enforce monotonic information gain. A Governor agent makes the final ACCEPT/REJECT/ITERATE decision.
+**The intent gap:** Every AI-assisted development session starts with informal natural language that is never formalized. Claude Code infers your intent. The inference is close. Close is not right. By the time the drift is visible, rewinding is harder than starting over. Ada closes this gap before building starts.
 
-The output is a blueprint that constrains downstream execution (Claude Code sessions, code generation, deployment) — not the code itself.
+```
+$ npm install -g @motherlabs/ada
+$ ada compile
+
+[elicitation — semantic questions, not technical ones]
+
+CTX → INT → PER → ENT → PRO → SYN → GOV
+                                      ↓
+                                 approved 0.94
+                                      ↓
+CLAUDE.md  ←  agents/  ←  hooks/ (247 files)
+                                      ↓
+Claude Code reads CLAUDE.md on every turn and builds inside your intent.
+```
+
+Ada is not a code generator. It is the step before — the translation layer between human intent and governed execution.
+
+**[motherlabs.ai/ada](https://motherlabs.ai/ada)** — full documentation
+
+---
 
 ## Architecture
 
-```
-Intent → Persona → Entity → Process → Synthesis → Verify → Governor
-  ↓        ↓        ↓        ↓          ↓          ↓        ↓
-Sonnet   Sonnet   Sonnet   Sonnet     Opus       Opus     Opus
-  ↓        ↓        ↓        ↓          ↓          ↓        ↓
- gate     gate     gate     gate       gate       gate    ACCEPT
-                                                          REJECT
-                                                          ITERATE
-```
+| Stage | Name       | Output                                   |
+| ----- | ---------- | ---------------------------------------- |
+| CTX   | Context    | Codebase snapshot, vocabulary, packages  |
+| INT   | Intent     | Goals, constraints, unknowns             |
+| PER   | Perception | Domain, stakeholders, language           |
+| ENT   | Entity     | Entities, invariants, bounded contexts   |
+| PRO   | Process    | Workflows, state machines, Hoare triples |
+| SYN   | Synthesis  | Blueprint: architecture + components     |
+| VER   | Verify     | Coverage score, coherence score, drift   |
+| GOV   | Governor   | ACCEPT / REJECT / ITERATE + confidence   |
 
-Each gate validates: Zod schema compliance, entropy below threshold (0.7), entropy monotonicity (must decrease from previous stage), and no unresolved blocking challenges.
+Each stage's output is content-addressed (postcode = git blob SHA). Provenance gates between stages enforce entropy monotonicity. On ACCEPT, the world model is written to git objects.
 
-**Agent lenses** — each agent is blind to the others:
-
-| Stage | Question                | Lens                                                           |
-| ----- | ----------------------- | -------------------------------------------------------------- |
-| INT   | What do you want?       | Goals, constraints, unknowns                                   |
-| PER   | In what world?          | Domain, stakeholders, vocabulary                               |
-| ENT   | What things exist?      | Entities, invariants, bounded contexts                         |
-| PRO   | What happens?           | Workflows, state machines, Hoare triples                       |
-| SYN   | How do they fit?        | Architecture, components, conflict resolution                  |
-| VER   | Is that right?          | Coverage score, coherence score, drift detection               |
-| GOV   | Does this meet the bar? | Full pipeline state, entropy trajectory, ACCEPT/REJECT/ITERATE |
+---
 
 ## Packages
 
-| Package              | Purpose                                                            |
-| -------------------- | ------------------------------------------------------------------ |
-| `@ada/compiler`      | 7-agent pipeline engine, Zod schemas, structured output API calls  |
-| `@ada/provenance`    | Postcode addressing, SQLite store, entropy tracking                |
-| `@ada/orchestrator`  | Compilation loop, Claude Code session spawning, checkpoints        |
-| `@ada/governor`      | Runtime drift detection, confidence tracking, invariant evaluation |
-| `@ada/config-writer` | Generates CLAUDE.md, hooks, settings, skills, agent definitions    |
-| `@ada/mcp-server`    | MCP tools for blueprint inspection and workflow verification       |
-| `@ada/cli`           | Terminal UI (Ink/React) with live stage streaming                  |
+| Package              | Purpose                                                               |
+| -------------------- | --------------------------------------------------------------------- |
+| `@ada/compiler`      | 8-stage pipeline engine, Zod schemas, streaming agents                |
+| `@ada/elicitation`   | Adaptive depth classifier, dialogue engine, session manager           |
+| `@ada/provenance`    | Postcode addressing, SQLite store, entropy tracking                   |
+| `@ada/config-writer` | Generates CLAUDE.md, agent files, hooks, skills, settings             |
+| `@ada/mcp-server`    | MCP authority server: query_constraints, check_drift, get_world_model |
+| `@ada/orchestrator`  | Compilation loop, Claude Code spawning, session checkpoints           |
+| `@ada/governor`      | Runtime drift detection, invariant evaluation                         |
+| `@ada/storage`       | Project run history, global state                                     |
+| `cli`                | Terminal UI (Ink/React) — welcome screen, streaming pipeline          |
+
+---
 
 ## Quick Start
 
@@ -54,35 +68,68 @@ cd ada
 pnpm install
 pnpm build
 
-# Requires Anthropic API key
 export ANTHROPIC_API_KEY=sk-ant-...
-pnpm dev compile "build a REST API for user authentication with JWT tokens"
+ada compile "build a subscription billing system with Stripe"
 ```
+
+Bare `ada` opens the interactive welcome screen. Without an API key, Ada falls back to the `claude` CLI automatically.
+
+---
+
+## What Ada Writes on ACCEPT
+
+```
+CLAUDE.md                           ← lean orientation for every Claude Code session
+.claude/
+  agents/<BoundedContext>-agent.md  ← invariants + workflow steps + state machines
+  skills/<workflow>.md              ← per-workflow execution guide
+  settings.json                     ← MCP config + hook registrations
+hooks/
+  pre-tool/*.sh                     ← ~250 invariant enforcement scripts
+  session-start.sh                  ← world model reference on session start
+.ada/
+  ref                               ← world model pointer: ada/v1 <tree-sha>
+  manifest.json                     ← stage index with postcodes + git SHAs
+  state.json                        ← full checkpoint for MCP tools
+.git/hooks/post-commit              ← ada verify on every commit
+```
+
+World model artifacts are git objects. Provenance: `git log --follow .ada/ref`.
+
+---
 
 ## Design Decisions
 
-**Blind agents.** Each stage sees only its input schema, not other stages' outputs. Prevents coordination drift — the tendency of multi-agent systems to develop consensus errors over extended interactions ([arxiv 2601.04170](https://arxiv.org/abs/2601.04170)).
+**Compiled-along then frozen.** Each stage accumulates context from all prior stages. On ACCEPT, the full accumulated signal is frozen as stationary context. See [docs/CONTEXT.md](docs/CONTEXT.md).
 
-**Schema-constrained outputs.** Every agent produces JSON via Anthropic's native structured outputs (`output_config.format` with `zodOutputFormat()`). Constrained decoding at the token level. Zero parse failures on the API path. CLI fallback retains text extraction with Zod validation.
+**Blind agents.** Each stage sees only its input schema. Prevents coordination drift.
 
-**Entropy monotonicity.** Gates don't just check "is entropy low enough" — they check "did entropy decrease from the previous stage." Monotone chains achieve 68.8% accuracy vs 46.8% for non-monotone ([arxiv 2603.18940](https://arxiv.org/abs/2603.18940)). Shape over magnitude.
+**Entropy monotonicity.** Gates check that entropy decreased from the prior stage — not just that it is low enough. Shape over magnitude.
 
-**Opus on critical stages.** Synthesis, Verify, and Governor run on Opus 4.6 with extended thinking. Earlier stages use Sonnet 4.6. Cost/accuracy tradeoff is intentional — constraint engineering happens in the later stages.
+**Postcodes = git SHAs.** World model artifacts are git blob objects. No reinvented content-addressing. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-**Additive iteration.** When the Governor says ITERATE, the correction appends to the original intent rather than replacing it. The user's words are the source of truth; corrections are additive constraints.
+**Pre-calibrated elicitation.** Questions selected by pure function (no LLM), returned verbatim from axiom-aligned templates.
 
-**Self-compile proof.** `ada compile "build ada"` must Governor ACCEPT. The compiler compiles itself. If that works, the thesis is true. If it doesn't, the architecture is incomplete.
+**Additive iteration.** ITERATE appends corrections to original intent. User's words are never replaced.
 
-## Research Context
+**Self-compile proof.** `ada compile "build ada"` must Governor ACCEPT.
 
-Ada implements what the academic community named as a "Grand Challenge" on March 21, 2026: the automatic translation of informal user intent into checkable formal specifications ([arxiv 2603.17150](https://arxiv.org/abs/2603.17150)).
+---
 
-See [docs/RESEARCH.md](docs/RESEARCH.md) for the full analysis positioning Ada against 15 papers from January–March 2026, including Agent Behavioral Contracts, Agent Drift taxonomy, VibeContract, Loosely-Structured Software, and the Conditional Information Bottleneck.
+## Documentation
+
+| Doc                                          | What it covers                                                |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| [docs/ADA.md](docs/ADA.md)                   | Master index — all docs, hierarchy, status                    |
+| [docs/CONTEXT.md](docs/CONTEXT.md)           | Context architecture: compiled-along vs stationary, doc chain |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Pipeline, postcodes, world model, git-backed design           |
+| [docs/BRAND.md](docs/BRAND.md)               | Identity, voice, vocabulary, claims                           |
+| [docs/RESEARCH.md](docs/RESEARCH.md)         | Positioning against research from Jan–Mar 2026                |
+
+---
 
 ## Status
 
-**v0.1.0-alpha** — All packages built. Structured outputs integrated. Entropy monotonicity gates active. Self-compile test pending.
+**v0.1.0** — All 8 stages live. Elicitation live. World model git-backed. MCP authority server live. Interactive welcome screen. Post-compile Q&A. Auto-spawn Claude Code on ACCEPT.
 
-## License
-
-MIT — [Motherlabs](https://github.com/alexrozex) © 2026
+Motherlabs © 2026 — MIT

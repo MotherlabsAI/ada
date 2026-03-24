@@ -1,0 +1,296 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is CLAUDE.md?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'CLAUDE.md is a file that Claude Code reads on every message turn — not just at the start of a session. It is injected into every context window throughout your session, meaning its contents influence how Claude Code interprets every request and makes every decision. It typically contains what the project is, what it is not, architectural decisions, constraints that apply, and bounded context definitions.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'When does Claude Code read CLAUDE.md?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Claude Code reads CLAUDE.md on every message turn — it is injected into every context window, not just loaded once at session start. This means CLAUDE.md contents are present for every decision Claude Code makes, throughout the entire session.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What should go in CLAUDE.md?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'CLAUDE.md should contain the structural facts about your project that must remain stable across sessions: what the project is and what it is not, architectural decisions that have been made, constraints that apply (technology, scope, approach), bounded context definitions, and what Claude Code should never do. It should not contain implementation details, task lists, or anything session-specific.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How is CLAUDE.md different from a system prompt?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'A system prompt is typically written once and injected uniformly across all interactions. CLAUDE.md is project-specific, version-controlled, and co-located with your codebase. It evolves with your project. It can be read and verified by humans before being used. And when produced by Ada, it traces back to a structured elicitation session — every constraint in it corresponds to something you explicitly stated.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does Ada produce CLAUDE.md?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ada produces CLAUDE.md through a 7-stage compilation pipeline. You describe your project; Ada runs structured elicitation to resolve blocking unknowns; then compiles through intent graph, entity extraction, process synthesis, and governance stages. The output CLAUDE.md is a governed artifact — every constraint in it traces to something you said, verified by the Governor stage before writing to disk.',
+      },
+    },
+  ],
+};
+---
+
+<Layout
+  title="What is CLAUDE.md? How Claude Code uses it every turn | Motherlabs"
+  description="CLAUDE.md is injected into every Claude Code context window — not just session start. Learn what it contains, when it's read, and how Ada produces it from structured intent."
+  schemas={[faqSchema]}
+>
+  <Nav />
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow"><a href="/ada">Ada</a> &rarr; What is CLAUDE.md</p>
+        <h1>CLAUDE.md: the file Claude Code reads on every turn</h1>
+        <p class="hero-sub">
+          Not at session start. On every message turn.
+          Whatever is in this file shapes every decision Claude Code makes,
+          for the entire session.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- What CLAUDE.md is -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>What CLAUDE.md actually is</h2>
+        <p>
+          CLAUDE.md is a plain markdown file that lives in your project root.
+          Claude Code detects it and reads it on every message turn — injecting
+          its contents into the context window before processing your request.
+        </p>
+        <p>
+          That last part is worth repeating: <strong>on every message turn</strong>,
+          not just once at the start of the session. Every time you send a message,
+          the contents of CLAUDE.md are included in what Claude Code reads before
+          it responds.
+        </p>
+        <p>
+          This means CLAUDE.md is not a note to yourself. It is an active constraint
+          layer — present at every decision point, shaping every action Claude Code takes.
+        </p>
+
+        <div class="callout">
+          <p class="callout-text">
+            A common misconception: "Claude Code reads CLAUDE.md at session start."
+            The reality: CLAUDE.md is injected on every context window — throughout
+            the entire session, for every message. Its weight in your token budget
+            is paid repeatedly, which is why what you put in it matters.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- What goes in it -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <h2>What should go in CLAUDE.md</h2>
+        <p>
+          Because CLAUDE.md is read on every turn, it should contain only
+          what needs to be true on every turn. That means structural facts —
+          not implementation details.
+        </p>
+
+        <div class="two-col">
+          <div class="col col--yes">
+            <h3 class="col-label col-label--yes">Include</h3>
+            <ul>
+              <li>What the project is — and what it is <em>not</em></li>
+              <li>Architectural decisions that have been made</li>
+              <li>Technology constraints (what you won't use)</li>
+              <li>Scope boundaries (what is out of scope)</li>
+              <li>Bounded context definitions</li>
+              <li>Naming conventions and vocabulary</li>
+              <li>Invariants that must always hold</li>
+            </ul>
+          </div>
+          <div class="col col--no">
+            <h3 class="col-label col-label--no">Do not include</h3>
+            <ul>
+              <li>Current task lists or in-progress work</li>
+              <li>Implementation details that change</li>
+              <li>Generic instructions ("be helpful")</li>
+              <li>Session-specific context</li>
+              <li>Anything that should live in an agent file instead</li>
+              <li>Descriptions of what you're working on right now</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>
+          The token cost of CLAUDE.md is paid on every turn.
+          Keep it dense with signal — not padded with content that's only
+          relevant sometimes.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Example -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>What a good CLAUDE.md looks like</h2>
+        <p>
+          The defining quality of a well-written CLAUDE.md is that
+          every line constrains something. If a line could be removed
+          without changing Claude Code's behavior, it shouldn't be there.
+        </p>
+
+        <div class="excerpt-block" aria-label="Example CLAUDE.md">
+          <div class="excerpt-label">CLAUDE.md &mdash; example</div>
+          <div class="excerpt-content">
+            <div class="excerpt-line excerpt-heading"># Analytics Dashboard</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-key">What this project is:</div>
+            <div class="excerpt-line excerpt-val">A self-hosted web analytics dashboard. Privacy-first.</div>
+            <div class="excerpt-line excerpt-val">No cookies. Tracks pageviews, unique visitors, referrers.</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-key">What it is not:</div>
+            <div class="excerpt-line excerpt-val">Not a marketing platform. Not a cookie-based tracker.</div>
+            <div class="excerpt-line excerpt-val">Not a SaaS product — single-tenant only.</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-key">Constraints that apply:</div>
+            <div class="excerpt-line excerpt-val">No third-party analytics scripts.</div>
+            <div class="excerpt-line excerpt-val">Data stays on the server. No external egress.</div>
+            <div class="excerpt-line excerpt-val">SQLite only. No managed database services.</div>
+            <div class="excerpt-line excerpt-blank"></div>
+            <div class="excerpt-line excerpt-key">Architecture decisions (final):</div>
+            <div class="excerpt-line excerpt-val">Server-rendered. No client-side framework.</div>
+            <div class="excerpt-line excerpt-val">File-based routing. Minimal JavaScript.</div>
+          </div>
+        </div>
+
+        <p>
+          Every line here is a constraint. None of it is aspirational.
+          Claude Code reads it on every turn and cannot build outside it.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Ada produces it -->
+    <section class="section">
+      <div class="container container--prose">
+        <h2>The problem: writing CLAUDE.md by hand</h2>
+        <p>
+          Writing CLAUDE.md manually has a structural problem: you're writing
+          constraints from memory, not from an explicit formalization of your intent.
+        </p>
+        <p>
+          You'll include what you thought of. You'll miss what you assumed was obvious.
+          The "what it is not" section — the most important one — is the hardest to write
+          without a structured process to surface it.
+        </p>
+        <p>
+          And when Claude Code builds something wrong, you update CLAUDE.md reactively.
+          You're capturing drift after it happened, not preventing it before building starts.
+        </p>
+        <p>
+          Ada solves this by running structured elicitation before compilation.
+          The questions Ada asks are specifically designed to surface the constraints,
+          scope boundaries, and "what it is not" decisions that are hardest to write
+          without a process. The resulting CLAUDE.md traces every constraint
+          back to something you explicitly stated.
+        </p>
+        <a href="/ada" class="link-arrow">How Ada produces CLAUDE.md &rarr;</a>
+      </div>
+    </section>
+
+    <hr class="divider" />
+    <section class="section section--invite">
+      <div class="container container--prose">
+        <div class="install-block">
+          <span class="install-prompt">$</span>
+          <code class="install-cmd">npm install -g @motherlabs/ada</code>
+        </div>
+        <p class="trust-signal">
+          Ada produces CLAUDE.md from structured elicitation — every constraint traced to intent.
+        </p>
+        <a href="/start" class="btn-primary">Get started &rarr;</a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .container { max-width: 72rem; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); }
+  .container--prose { max-width: 44rem; }
+  .divider { border: none; border-top: 1px solid var(--color-border); margin: 0; }
+
+  .page-hero { padding: 4.5rem 0 3.5rem; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
+    color: var(--color-text-dim); margin: 0 0 1.25rem; display: block;
+  }
+  .eyebrow a { color: var(--color-accent); }
+  .page-hero h1 {
+    font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800;
+    letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 1.25rem; max-width: 32rem;
+  }
+  .hero-sub { font-size: 1.0625rem; color: var(--color-text-muted); max-width: 38rem; margin: 0; line-height: 1.7; }
+
+  .section { padding: 4.5rem 0; }
+  .section--surface { background-color: var(--color-surface); }
+  .section p { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.8; margin: 0 0 1.25rem; }
+  .section p:last-child { margin-bottom: 0; }
+  .section h2 { font-size: clamp(1.375rem, 3vw, 1.875rem); font-weight: 700; color: var(--color-text); margin: 0 0 1.5rem; }
+
+  .callout { border-left: 2px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.75rem 0; background-color: var(--color-surface); }
+  .callout-text { font-size: 1rem !important; color: var(--color-text) !important; margin: 0 !important; line-height: 1.7 !important; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1.5rem 0 1.75rem; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+  .col-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 0.75rem; }
+  .col-label--yes { color: #4ade80; }
+  .col-label--no { color: var(--color-text-muted); }
+  .col ul { padding-left: 1.25rem; margin: 0; }
+  .col li { font-size: 0.9375rem; color: var(--color-text-muted); line-height: 1.65; margin-bottom: 0.4rem; }
+
+  .excerpt-block { background: var(--color-surface); border: 1px solid var(--color-border); margin-bottom: 1.5rem; overflow: hidden; }
+  .excerpt-label { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim); padding: 0.625rem 1rem; border-bottom: 1px solid var(--color-border); background-color: color-mix(in srgb, var(--color-border) 30%, var(--color-surface)); }
+  .excerpt-content { padding: 1.25rem 1.25rem 1rem; font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.7; }
+  .excerpt-line { display: block; }
+  .excerpt-heading { color: var(--color-text); font-weight: 500; }
+  .excerpt-key { color: var(--color-text-muted); margin-top: 0.25rem; }
+  .excerpt-val { color: var(--color-text-dim); padding-left: 0.5rem; }
+  .excerpt-blank { height: 0.5rem; }
+
+  .link-arrow { font-size: 0.9375rem; color: var(--color-accent); display: inline-block; margin-top: 0.5rem; }
+  .link-arrow:hover { text-decoration: underline; }
+
+  .section--invite { padding: 4.5rem 0; }
+  .install-block { display: inline-flex; align-items: center; gap: 0.75rem; font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); margin-bottom: 1.25rem; user-select: all; }
+  .install-prompt { color: var(--color-text-dim); }
+  .trust-signal { font-size: 0.875rem !important; color: var(--color-text-dim) !important; margin: 0 0 2rem !important; }
+  .btn-primary { font-size: 0.9375rem; font-weight: 500; color: var(--color-bg); background-color: var(--color-accent); padding: 0.7rem 1.5rem; border-radius: 3px; transition: background-color 0.12s ease; display: inline-block; }
+  .btn-primary:hover { background-color: var(--color-accent-hover); color: var(--color-bg); }
+</style>
