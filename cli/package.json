@@ -16,6 +16,7 @@
   "dependencies": {
     "@ada/compiler": "workspace:*",
     "@ada/config-writer": "workspace:*",
+    "@ada/storage": "workspace:*",
     "@ada/governor": "workspace:*",
     "@ada/mcp-server": "workspace:*",
     "@ada/orchestrator": "workspace:*",
