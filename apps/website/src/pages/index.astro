@@ -277,8 +277,9 @@ const faqSchema = {
       <div class="container container--prose">
         <div class="install-block">
           <span class="install-prompt">$</span>
-          <code class="install-cmd">npm install -g @motherlabs/ada</code>
+          <code class="install-cmd">git clone https://github.com/alexrozex/ada</code>
         </div>
+        <p class="install-note">Early access — npm package coming soon.</p>
         <p class="trust-signal">
           Built by one person. ~400 iterations since late 2024.
         </p>
@@ -652,7 +653,14 @@ const faqSchema = {
     align-items: center;
     gap: 0.75rem;
     font-family: var(--font-mono);
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .install-note {
+    font-size: 0.8125rem;
+    color: var(--color-text-dim);
+    margin: 0 0 1.25rem;
+    font-family: var(--font-mono);
   }
 
   .install-prompt {
