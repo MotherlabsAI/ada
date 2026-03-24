@@ -6,7 +6,7 @@ import Footer from '../components/Footer.astro';
 
 <Layout
   title="Motherlabs — Ada"
-  description="Ada translates what you want to build into something AI can build correctly. Built by Motherlabs — one person, ~400 iterations, the real thing."
+  description="Between what you mean and what gets built, something gets lost. Ada is the step before building — structured intent that Claude Code reads every session."
 >
   <Nav />
 
@@ -15,10 +15,11 @@ import Footer from '../components/Footer.astro';
     <section class="hero">
       <div class="container">
         <h1 class="hero-headline">
-          You know exactly<br />what you want to build.
+          Between what you mean<br />and what gets built,<br />something gets lost.
         </h1>
         <p class="hero-sub">
-          You just can't always say it in a way the AI won't misinterpret.
+          Not because AI isn't capable.<br />
+          Because intent was never structured before building started.
         </p>
         <div class="hero-actions">
           <a href="/start" class="btn-primary">Get started</a>
@@ -27,56 +28,58 @@ import Footer from '../components/Footer.astro';
       </div>
     </section>
 
-    <!-- The experience — no heading, just honest prose -->
+    <!-- The documented problem — no label, just facts -->
     <section class="section">
       <div class="container container--prose">
         <p>
-          You've been building with AI for a while. The output is good.
-          The problem is you're doing something the tools don't acknowledge:
-          holding the whole vision in your head, across every session,
-          re-explaining the architecture, re-establishing what this thing is
-          supposed to be.
+          Natural language is ambiguous. The same words mean different things
+          to different readers. When you describe what you want to build,
+          AI picks an interpretation and acts on it.
         </p>
         <p>
-          You know when it built the wrong thing.
-          You just don't always have the words to say why
-          in a way the next prompt won't misread.
-          So you adjust. And adjust. And you start to wonder
-          if the ceiling is you.
-        </p>
-        <p class="pull">It's not you. It's the missing layer.</p>
-      </div>
-    </section>
-
-    <div class="sep" aria-hidden="true">&#x25C8;</div>
-
-    <!-- Ada enters — not as a product announcement, as relief -->
-    <section class="section">
-      <div class="container container--prose">
-        <p class="intro">Ada is a semantic compiler.</p>
-        <p>
-          You tell it what you want to build &mdash; in whatever language you
-          actually think in. No technical questions. No framework decisions.
-          Ada figures out what it genuinely doesn't know and asks only that.
-          Then it compiles your intent into governed artifacts and gives
-          Claude Code something it cannot misinterpret.
+          If that interpretation drifts from yours, the drift compounds.
+          Every session adds distance between what you originally meant
+          and what is being built. By the time you notice, unwinding it
+          is harder than starting over.
         </p>
         <p>
-          The constraints live in the artifacts.
-          Not in the prompt. Not in your memory.
-          Not in a chat history that degrades between sessions.
-        </p>
-        <p>
-          Ada holds what the project is supposed to be.
-          Claude Code builds against it.
-          You stay at the level you actually operate.
+          Most tools address this after the fact &mdash; better prompts,
+          auto-memory, clearer instructions mid-build. These help.
+          They don't fix the root: your intent was never structured
+          precisely before building started.
         </p>
       </div>
     </section>
 
     <div class="sep" aria-hidden="true">&#x25C8;</div>
 
-    <!-- How it works — clean, no section header -->
+    <!-- Ada — what it actually is and does -->
+    <section class="section">
+      <div class="container container--prose">
+        <p class="lead">Ada is the step before.</p>
+        <p>
+          You tell Ada what you want to build. Ada asks the questions
+          that surface what you actually mean &mdash; not technical questions,
+          questions about what the thing should do and be.
+          Then Ada produces the files Claude Code reads at the start
+          of every session: <code>CLAUDE.md</code>, agents, hooks.
+        </p>
+        <p>
+          Claude Code's auto-memory records what it observed as it worked.
+          Ada records what you intend before it starts.
+          One is retrospective. One is prospective.
+          They are not the same thing.
+        </p>
+        <p>
+          The result: less distance between what you described
+          and what gets built. Not zero distance. Less.
+        </p>
+      </div>
+    </section>
+
+    <div class="sep" aria-hidden="true">&#x25C8;</div>
+
+    <!-- How it works -->
     <section class="section">
       <div class="container container--prose">
         <ol class="pipeline" role="list">
@@ -85,41 +88,41 @@ import Footer from '../components/Footer.astro';
             <div>
               <p class="step-title">You describe what you want to build.</p>
               <p class="step-body">
-                In plain language. At whatever level you think in.
-                Ada doesn't ask about frameworks, patterns, or libraries.
+                In your language. At whatever level you think in.
+                Ada does not ask about frameworks, libraries, or implementation.
               </p>
             </div>
           </li>
           <li class="pipeline-step">
             <span class="step-num">02</span>
             <div>
-              <p class="step-title">Ada asks only what it genuinely doesn't know.</p>
+              <p class="step-title">Ada surfaces what's ambiguous and asks about it.</p>
               <p class="step-body">
-                Semantic questions, not technical ones.
-                What does this need to be? What does it not?
-                The minimum set. No more.
+                What does this need to do? What does it not?
+                Who uses it and how? The minimum set of questions
+                needed to resolve what's unclear.
               </p>
             </div>
           </li>
           <li class="pipeline-step">
             <span class="step-num">03</span>
             <div>
-              <p class="step-title">Ada compiles your intent into a governed blueprint.</p>
+              <p class="step-title">Ada produces the structured context.</p>
               <p class="step-body">
-                This is the artifact. It is authoritative.
-                It persists across sessions.
-                It is not a prompt. It is not a doc. It is a constraint.
+                <code>CLAUDE.md</code>, agents, hooks &mdash; files on disk
+                that you can read and verify against what you originally meant.
+                These are not ephemeral. They persist.
               </p>
             </div>
           </li>
           <li class="pipeline-step">
             <span class="step-num">04</span>
             <div>
-              <p class="step-title">Claude Code builds against it.</p>
+              <p class="step-title">Claude Code reads them. Every session.</p>
               <p class="step-body">
-                Ada governs what can be built.
-                Claude Code builds it.
-                Nothing gets lost in translation.
+                The intent you expressed in step one is in the room
+                every time Claude Code opens a file. Not inferred.
+                Not reconstructed from memory. Present.
               </p>
             </div>
           </li>
@@ -129,22 +132,47 @@ import Footer from '../components/Footer.astro';
 
     <div class="sep" aria-hidden="true">&#x25C8;</div>
 
-    <!-- Lab signal -->
+    <!-- What you actually get -->
     <section class="section">
       <div class="container container--prose">
-        <blockquote class="lab-quote">
-          Built by one person who had this exact problem.
-          ~400 iterations since late 2024.
-          The real thing, not the pitch deck version.
-        </blockquote>
-        <a href="/lab" class="lab-link">About Motherlabs &rarr;</a>
+        <p class="label">What Ada produces</p>
+        <div class="artifact-list">
+          <div class="artifact">
+            <code class="artifact-name">CLAUDE.md</code>
+            <p class="artifact-desc">
+              The project's semantic document. Claude Code reads this
+              automatically at the start of every session.
+              It contains what the project is, what it is not,
+              and what constraints apply.
+            </p>
+          </div>
+          <div class="artifact">
+            <code class="artifact-name">agents/</code>
+            <p class="artifact-desc">
+              Specialized agent definitions scoped to bounded contexts
+              within your project. Each agent knows its domain.
+            </p>
+          </div>
+          <div class="artifact">
+            <code class="artifact-name">hooks/</code>
+            <p class="artifact-desc">
+              Pre-tool guards that run before Claude Code takes actions.
+              They enforce the constraints from your original intent
+              at the boundary where decisions are made.
+            </p>
+          </div>
+        </div>
+        <p class="artifact-note">
+          These are plain files. You can read them, edit them, version them.
+          Ada produces them. Claude Code uses them.
+        </p>
       </div>
     </section>
 
     <!-- Final CTA -->
     <section class="section section--cta">
       <div class="container">
-        <p class="cta-label">Ready when you are.</p>
+        <p class="cta-label">Try it</p>
         <div class="cta-actions">
           <a href="/start" class="btn-primary">Get started</a>
           <a href="/ada" class="btn-ghost">Read about Ada &rarr;</a>
@@ -173,20 +201,19 @@ import Footer from '../components/Footer.astro';
   }
 
   .hero-headline {
-    font-size: clamp(2.25rem, 5vw, 3.75rem);
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
     font-weight: 800;
-    line-height: 1.1;
+    line-height: 1.12;
     letter-spacing: -0.03em;
     color: var(--color-text);
     margin: 0 0 1.5rem;
   }
 
   .hero-sub {
-    font-size: clamp(1.1rem, 2.5vw, 1.25rem);
+    font-size: 1.0625rem;
     color: var(--color-text-muted);
     margin: 0 0 2.5rem;
-    line-height: 1.5;
-    max-width: 32rem;
+    line-height: 1.7;
   }
 
   .hero-actions {
@@ -205,7 +232,6 @@ import Footer from '../components/Footer.astro';
     padding: 0.7rem 1.4rem;
     border-radius: 3px;
     transition: background-color 0.12s ease;
-    letter-spacing: 0.01em;
   }
 
   .btn-primary:hover {
@@ -229,7 +255,6 @@ import Footer from '../components/Footer.astro';
     padding: 5rem 0;
   }
 
-  /* Prose */
   .section p {
     font-size: 1.0625rem;
     color: var(--color-text-muted);
@@ -241,27 +266,28 @@ import Footer from '../components/Footer.astro';
     margin-bottom: 0;
   }
 
-  .pull {
-    font-size: 1.1875rem !important;
-    color: var(--color-text) !important;
-    font-weight: 500;
-    margin-top: 0.5rem !important;
-  }
-
-  .intro {
+  .lead {
     font-size: 1.375rem !important;
     font-weight: 700;
     color: var(--color-text) !important;
     margin-bottom: 1.5rem !important;
   }
 
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--color-accent);
+    background: var(--color-surface-raised);
+    padding: 0.1em 0.35em;
+    border-radius: 2px;
+  }
+
   /* Separator */
   .sep {
     text-align: center;
     font-family: var(--font-mono);
-    font-size: 1.125rem;
+    font-size: 1rem;
     color: var(--color-text-dim);
-    padding: 0;
     user-select: none;
   }
 
@@ -270,8 +296,6 @@ import Footer from '../components/Footer.astro';
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
   }
 
   .pipeline-step {
@@ -310,40 +334,68 @@ import Footer from '../components/Footer.astro';
     line-height: 1.65 !important;
   }
 
-  /* Lab signal */
-  .lab-quote {
-    margin: 0 0 1.25rem;
-    padding: 0;
-    border: none;
-    font-size: 1.0625rem;
-    font-style: italic;
-    color: var(--color-text-muted);
-    line-height: 1.7;
+  /* Artifact list */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem !important;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-dim) !important;
+    margin: 0 0 1.75rem !important;
   }
 
-  .lab-link {
+  .artifact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 1.75rem;
+  }
+
+  .artifact {
+    padding: 1.25rem 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .artifact:last-child {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .artifact-name {
+    display: block;
+    font-family: var(--font-mono);
     font-size: 0.9rem;
-    color: var(--color-text-dim);
-    transition: color 0.12s ease;
+    color: var(--color-accent);
+    background: none;
+    padding: 0;
+    margin-bottom: 0.5rem;
   }
 
-  .lab-link:hover {
-    color: var(--color-text-muted);
+  .artifact-desc {
+    font-size: 0.9375rem !important;
+    color: var(--color-text-muted) !important;
+    margin: 0 !important;
+    line-height: 1.65 !important;
   }
 
-  /* Final CTA */
+  .artifact-note {
+    font-size: 0.9rem !important;
+    color: var(--color-text-dim) !important;
+    font-style: italic;
+  }
+
+  /* CTA */
   .section--cta {
     border-top: 1px solid var(--color-border);
     padding: 4rem 0;
   }
 
   .cta-label {
-    font-size: 0.8rem;
     font-family: var(--font-mono);
+    font-size: 0.75rem !important;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--color-text-dim);
-    margin: 0 0 1.5rem;
+    color: var(--color-text-dim) !important;
+    margin: 0 0 1.5rem !important;
   }
 
   .cta-actions {

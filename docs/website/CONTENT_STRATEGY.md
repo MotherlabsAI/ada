@@ -1,8 +1,42 @@
 # motherlabs.ai — Content Strategy
 
-Derived from: SITE_CONTEXT.md + SITE_IA.md
+Derived from: SITE_CONTEXT.md + SITE_IA.md + battle-tested semantic review
 This document defines WHAT each section says and WHY — not the final copy.
 Copy is written in implementation phase, constrained by this strategy.
+
+## Semantic constraints — what survived the battle test
+
+Every claim on the site must survive these tests:
+
+1. Can it be disproven by a visitor with one Google search? If yes, remove it.
+2. Is it attributing a promise to "AI" without a specific source? If yes, reframe.
+3. Is it a stronger claim than the product can currently guarantee? If yes, soften.
+4. Is it internal vocabulary (governed artifacts, semantic compiler, postcode)? If yes, remove.
+
+**Claims that are dead:**
+
+- "Nothing gets lost in translation" — unprovable promise
+- "Structurally impossible to build the wrong thing" — unprovable promise
+- "No tool exists that does this" — false, competitive landscape is real
+- "Ada governs Claude Code" — implies authority Ada doesn't have
+- "Semantic compiler" — not a standard term, arguable
+- "Governed artifacts" — internal vocabulary, not visitor vocabulary
+- "AI promised you could build from ideas" — attribution problem
+
+**Claims that survived:**
+
+- Natural language is inherently ambiguous — academic fact (ACM literature)
+- Ambiguity at the requirements stage compounds as you build — documented
+- Claude Code reads CLAUDE.md at the start of every session — Anthropic docs
+- Claude Code's auto-memory (MEMORY.md) is retrospective; Ada is prospective — factual distinction
+- Ada does structured requirements elicitation before building starts — verifiable
+- Ada produces CLAUDE.md, agents, hooks — verifiable, inspectable files
+- Ada reduces the distance between intent and output. Not eliminates — reduces. — honest
+
+**The core differentiator that survives all attacks:**
+Ada happens before. MEMORY.md, Cursor Rules, better prompting — these happen during
+or after. Ada is the only step that structures intent before the first file is opened.
+This is factual and specific.
 
 ---
 
@@ -11,32 +45,19 @@ Copy is written in implementation phase, constrained by this strategy.
 ### Hero
 
 **What it says:**
-The clearest, most precise statement of what Ada does — positioned as the gap-closer
-between human intent and governed execution.
+Names the gap without attributing blame. The problem is structural, not a failure
+of AI or of the user.
 
-**Headline direction:**
-Not a tagline. A claim. One sentence that could not apply to any other product.
+**Headline (locked):**
+"Between what you mean and what gets built, something gets lost."
 
-Candidate angles:
+**Sub-headline (locked):**
+"Not because AI isn't capable. Because intent was never structured before building started."
 
-- "The semantic layer between what you want to build and what gets built."
-- "Ada compiles your intent. Claude Code builds it. Nothing gets lost in translation."
-- "From first idea to governed execution — without losing what you meant."
-
-The headline must survive the 5-second test: a builder who uses Claude Code should
-immediately understand why this is different from a prompt wrapper or a chatbot.
-
-**Sub-headline:**
-One sentence that handles the "how": Ada is a semantic compiler. It takes intent as
-input, produces governed artifacts as output, and governs what Claude Code can build.
-
-**CTA:**
-"Get Started" — links to /start. No secondary CTA in the hero. One action.
-
-**Visual treatment (direction, not spec):**
-Minimal. The headline is the hero. No product screenshots at this stage unless the
-glass-box CLI output is visually compelling — in which case a terminal recording
-of Ada running an elicitation session and producing a blueprint is the product proof.
+**Why this headline:**
+It is factually accurate (natural language ambiguity → misalignment is documented).
+It names the experience without blame. It positions Ada as filling a structural gap,
+not as a fix for a broken product. It survives any attempt to argue it.
 
 ---
 
