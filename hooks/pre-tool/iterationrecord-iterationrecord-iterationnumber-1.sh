@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: iterationRecord.iterationNumber >= 1
 # Entity: IterationRecord
-# Description: iteration number must be positive — there is no zeroth iteration
+# Description: Iteration number must be at least 1 — iterations are 1-indexed ordinals
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

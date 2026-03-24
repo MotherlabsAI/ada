@@ -6,335 +6,388 @@
         "hooks": [
           {
             "type": "command",
-            "command": "hooks/pre-tool/intentgraph-intentgraph-rawintent-null-intentgraph-r.sh"
+            "command": "hooks/pre-tool/blueprintcomponentregistry-registry-totalcomponentcount-10.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/intentgraph-intentgraph-goals-length-0.sh"
+            "command": "hooks/pre-tool/blueprintcomponentregistry-registry-components-length-registry-tota.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/intentgraph-intentgraph-postcode-stage-int.sh"
+            "command": "hooks/pre-tool/blueprintcomponentregistry-new-set-registry-components-map-c-c-ordi.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/intentgraph-intentgraph-unknowns-filter-u-u-impact-b.sh"
+            "command": "hooks/pre-tool/blueprintcomponentregistry-registry-pipelinerunid-null-registry-pip.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/intentgoal-intentgoal-id-null-intentgoal-id-length-.sh"
+            "command": "hooks/pre-tool/blueprintcomponentregistry-registry-postcode-null-registry-postcode.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/intentgoal-intentgoal-description-null-intentgoal-d.sh"
+            "command": "hooks/pre-tool/namedblueprintcomponent-component-ordinal-1-component-ordinal-10.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/intentunknown-intentunknown-id-null-intentunknown-id-l.sh"
+            "command": "hooks/pre-tool/namedblueprintcomponent-component-componentid-null-component-com.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/intentunknown-intentunknown-impact-null.sh"
+            "command": "hooks/pre-tool/namedblueprintcomponent-component-registryid-null-component-regi.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/clarificationrequest-clarificationrequest-unknownid-null-clar.sh"
+            "command": "hooks/pre-tool/namedblueprintcomponent-component-name-null-component-name-lengt.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/clarificationrequest-clarificationrequest-question-null-clari.sh"
+            "command": "hooks/pre-tool/namedblueprintcomponent-component-ordinal-3-component-assignedpa.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/clarificationrequest-clarificationrequest-impact-blocking-cla.sh"
+            "command": "hooks/pre-tool/c3assignmentgap-gap-componentordinal-3.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/pipeline-pipeline-stagecount-7.sh"
+            "command": "hooks/pre-tool/c3assignmentgap-gap-isresolved-false-gap-resolvedpackage.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/pipeline-pipeline-stages-length-7.sh"
+            "command": "hooks/pre-tool/c3assignmentgap-gap-isresolved-true-gap-resolvedpackage-.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/pipeline-pipeline-stages-6-gov.sh"
+            "command": "hooks/pre-tool/c3assignmentgap-gap-isresolved-true-gap-resolutionproven.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/stageexecutionrecord-stageexecutionrecord-metadata-temperatur.sh"
+            "command": "hooks/pre-tool/c3assignmentgap-gap-componentid-null-gap-componentid-len.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/stageexecutionrecord-stageexecutionrecord-postcode-stage-stag.sh"
+            "command": "hooks/pre-tool/componentpackagemapping-mapping-assignmentcount-mapping-assignme.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/stageexecutionrecord-stageexecutionrecord-metadata-retrycount.sh"
+            "command": "hooks/pre-tool/componentpackagemapping-mapping-istotal-mapping-assignmentcount-.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/determinismmetadata-determinismmetadata-modelid-null-determi.sh"
+            "command": "hooks/pre-tool/componentpackagemapping-new-set-mapping-assignments-map-a-a-comp.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/determinismmetadata-determinismmetadata-maxtokens-0.sh"
+            "command": "hooks/pre-tool/componentpackagemapping-new-set-mapping-assignments-map-a-a-targ.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/determinismmetadata-determinismmetadata-calldurationms-0.sh"
+            "command": "hooks/pre-tool/componentpackagemapping-mapping-istotal-true-mapping-postcode-nu.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/compilationrun-compilationrun-runid-null-compilationrun.sh"
+            "command": "hooks/pre-tool/componentpackageassignment-assignment-componentordinal-1-assignment.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/compilationrun-compilationrun-completedat-compilationru.sh"
+            "command": "hooks/pre-tool/componentpackageassignment-assignment-isresolved-true-assignment-pr.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/compilationrun-compilationrun-sourceintent-null-compila.sh"
+            "command": "hooks/pre-tool/componentpackageassignment-assignment-componentid-null-assignment-c.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/compilationrun-compilationrun-stages-length-7.sh"
+            "command": "hooks/pre-tool/componentpackageassignment-assignment-mappingid-null-assignment-map.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/pipelinestate-pipelinestate-cumulativeentropy-0-pipeli.sh"
+            "command": "hooks/pre-tool/workspacepackagenode-node-packagename-null-node-packagename-l.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/pipelinestate-pipelinestate-governor-null-pipelinestat.sh"
+            "command": "hooks/pre-tool/workspacepackagenode-node-assignedcomponentids-length-1.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/pipelinestate-pipelinestate-entity-null-pipelinestate-.sh"
+            "command": "hooks/pre-tool/workspacepackagenode-node-pipelinestage-null-node-pipelinesta.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancegate-provenancegate-frompostcode-null-provena.sh"
+            "command": "hooks/pre-tool/ententityregistration-registration-targetregistrytype-entityma.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancegate-provenancegate-topostcode-null-provenanc.sh"
+            "command": "hooks/pre-tool/ententityregistration-registration-provenancerecordpostcode-nu.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancegate-provenancegate-entropyestimate-0-provena.sh"
+            "command": "hooks/pre-tool/ententityregistration-registration-entitymappostcode-null-regi.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancegate-provenancegate-frompostcode-provenancega.sh"
+            "command": "hooks/pre-tool/ententityregistration-registration-sourcecomponentid-null-regi.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/domaincontext-domaincontext-domain-null-domaincontext-.sh"
+            "command": "hooks/pre-tool/ententityregistration-registration-registeredat-0.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/domaincontext-object-keys-domaincontext-ubiquitouslang.sh"
+            "command": "hooks/pre-tool/entitymap-entitymap-entitycount-entitymap-entities.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/domaincontext-domaincontext-postcode-stage-per.sh"
+            "command": "hooks/pre-tool/entitymap-entitymap-pipelinerunid-null-entitymap-p.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/entitymap-entitymap-entities-length-0.sh"
+            "command": "hooks/pre-tool/entitymap-entitymap-postcode-null-entitymap-postco.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/entitymap-entitymap-boundedcontexts-length-0.sh"
+            "command": "hooks/pre-tool/entitymap-entitymap-entitycount-0.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/entitymap-entitymap-boundedcontexts-every-bc-entit.sh"
+            "command": "hooks/pre-tool/provenancechainrecord-chain-hopcount-3.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/entitymap-entitymap-postcode-stage-ent.sh"
+            "command": "hooks/pre-tool/provenancechainrecord-chain-hops-length-chain-hopcount.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/entity-entity-name-null-entity-name-trim-length.sh"
+            "command": "hooks/pre-tool/provenancechainrecord-chain-provenanceintact-chain-hops-every-.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/entity-entity-properties-length-1.sh"
+            "command": "hooks/pre-tool/provenancechainrecord-chain-componentid-null-chain-componentid.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/entity-entity-invariants-length-1.sh"
+            "command": "hooks/pre-tool/provenancechainrecord-chain-hops-0-hopindex-0-chain-hops-1-hop.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/processflow-processflow-workflows-length-0-processfl.sh"
+            "command": "hooks/pre-tool/provenancechainhop-hop-hopindex-0-hop-hopindex-1-hop-hopind.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/processflow-processflow-postcode-stage-pro.sh"
+            "command": "hooks/pre-tool/provenancechainhop-hop-istraced-true-hop-provenancerecordpo.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/processflow-processflow-statemachines-every-sm-sm-st.sh"
+            "command": "hooks/pre-tool/provenancechainhop-hop-istraced-false-hop-provenancerecordp.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/blueprint-blueprint-summary-null-blueprint-summary.sh"
+            "command": "hooks/pre-tool/provenancechainhop-hop-fromlabel-null-hop-fromlabel-length-.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/blueprint-blueprint-datamodel-null.sh"
+            "command": "hooks/pre-tool/provenancechainhop-hop-tolabel-null-hop-tolabel-length-0.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/blueprint-blueprint-processmodel-null.sh"
+            "command": "hooks/pre-tool/provenancechainhop-hop-chainid-null-hop-chainid-length-0.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/blueprint-blueprint-postcode-stage-syn.sh"
+            "command": "hooks/pre-tool/entprovenancerecord-record-stage-ent.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/blueprint-blueprint-architecture-components-length.sh"
+            "command": "hooks/pre-tool/entprovenancerecord-record-postcode-null-record-postcode-len.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/auditreport-auditreport-coveragescore-0-auditreport-.sh"
+            "command": "hooks/pre-tool/entprovenancerecord-record-pipelinerunid-null-record-pipelin.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/auditreport-auditreport-coherencescore-0-auditreport.sh"
+            "command": "hooks/pre-tool/entprovenancerecord-record-timestamp-0.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/auditreport-auditreport-passed-true-auditreport-drif.sh"
+            "command": "hooks/pre-tool/entprovenancerecord-record-subjectid-null-record-subjectid-l.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/auditreport-auditreport-postcode-stage-aud.sh"
+            "command": "hooks/pre-tool/entgaterecord-gate-passed-gate-provenanceintact-gate-a.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/governordecision-governordecision-confidence-0-governorde.sh"
+            "command": "hooks/pre-tool/entgaterecord-gate-evaluatedat-null-gate-state-pending.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/governordecision-governordecision-decision-reject-governo.sh"
+            "command": "hooks/pre-tool/entgaterecord-gate-evaluatedat-null-gate-passed-false-.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/governordecision-governordecision-decision-accept-governo.sh"
+            "command": "hooks/pre-tool/entgaterecord-gate-pipelinerunid-null-gate-pipelinerun.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/governordecision-governordecision-gatepassrate-0-governor.sh"
+            "command": "hooks/pre-tool/entgaterecord-gate-entitycount-0.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/governordecision-governordecision-postcode-stage-gov.sh"
+            "command": "hooks/pre-tool/entblocker-blocker-iscleared-false-blocker-cleareda.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/policyviolation-policyviolation-ruleviolated-null-policy.sh"
+            "command": "hooks/pre-tool/entblocker-blocker-iscleared-true-blocker-clearedat.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/policyviolation-policyviolation-description-null-policyv.sh"
+            "command": "hooks/pre-tool/entblocker-blocker-iscleared-true-blocker-clearance.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/semanticdrift-semanticdrift-location-null-semanticdrif.sh"
+            "command": "hooks/pre-tool/entblocker-blocker-linkedgapid-null-blocker-linkedg.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/semanticdrift-semanticdrift-original-semanticdrift-act.sh"
+            "command": "hooks/pre-tool/entblocker-blocker-pipelinerunid-null-blocker-pipel.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/semanticdrift-semanticdrift-original-null-semanticdrif.sh"
+            "command": "hooks/pre-tool/stalledpipelinerun-run-runid-ml-ent-e80e3c97-v1.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/verificationreport-verificationreport-entitycoverage-0-veri.sh"
+            "command": "hooks/pre-tool/stalledpipelinerun-run-stage-ent.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/verificationreport-verificationreport-invariantcoverage-0-v.sh"
+            "command": "hooks/pre-tool/stalledpipelinerun-run-blockercount-run-blockers-length.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/verificationreport-verificationreport-overallscore-0-verifi.sh"
+            "command": "hooks/pre-tool/stalledpipelinerun-run-resumable-run-blockers-every-b-b-isc.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/verificationreport-verificationreport-blueprintpostcode-nul.sh"
+            "command": "hooks/pre-tool/stalledpipelinerun-run-resumable-false-run-blockers-some-b-.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/verificationreport-verificationreport-passed-true-verificat.sh"
+            "command": "hooks/pre-tool/codebaseintegritystate-state-typescriptcompiles-state-typescrip.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancerecord-provenancerecord-postcode-null-provenanc.sh"
+            "command": "hooks/pre-tool/codebaseintegritystate-state-testsuitepassrate-state-totaltestc.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancerecord-provenancerecord-content-null-provenance.sh"
+            "command": "hooks/pre-tool/codebaseintegritystate-state-regressiondetected-state-failedtes.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancerecord-provenancerecord-timestamp-0.sh"
+            "command": "hooks/pre-tool/codebaseintegritystate-state-capturedat-0.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/iterationrecord-iterationrecord-iterationnumber-1.sh"
+            "command": "hooks/pre-tool/codebaseintegritystate-state-totaltestcount-0-state-failedtestc.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/iterationrecord-iterationrecord-coveragescore-0-iteratio.sh"
+            "command": "hooks/pre-tool/entstageintegrationspec-spec-declaredcomponentcount-10.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/iterationrecord-iterationrecord-governordecision-null.sh"
+            "command": "hooks/pre-tool/entstageintegrationspec-spec-declaredpackagecount-8.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/compileresult-compileresult-blueprint-null.sh"
+            "command": "hooks/pre-tool/entstageintegrationspec-spec-requiredprovenancehopcount-3.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/compileresult-compileresult-governordecision-null.sh"
+            "command": "hooks/pre-tool/entstageintegrationspec-spec-c3gapordinal-3.sh",
+            "timeout": 5
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/compileresult-compileresult-iterationcount-1.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/compileresult-compileresult-status-accepted-compileres.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/compileresult-compileresult-fallback-null-compileresul.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-prefix-ml.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-hash-null-postcodeaddres.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-version-1.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-raw-null-postcodeaddress.sh"
+            "command": "hooks/pre-tool/entstageintegrationspec-spec-sourcedocument-null-spec-sourcedocu.sh",
+            "timeout": 5
           }
         ]
       }

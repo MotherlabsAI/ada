@@ -1,0 +1,9 @@
+#!/bin/bash
+# Invariant: agentFile.model !== null && agentFile.model.length > 0
+# Entity: AgentFile
+# Description: Agent must declare a model — a modelless agent cannot execute
+INPUT=$(cat)
+CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
+# Structural enforcement not possible for this predicate.
+# Manual review required: agentFile.model !== null && agentFile.model.length > 0
+exit 0

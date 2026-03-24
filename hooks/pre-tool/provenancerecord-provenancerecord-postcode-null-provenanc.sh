@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: provenanceRecord.postcode !== null && provenanceRecord.postcode.length > 0
 # Entity: ProvenanceRecord
-# Description: provenance record must carry a postcode
+# Description: Every provenance record must have a postcode — without it the record cannot be referenced in audit chains
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

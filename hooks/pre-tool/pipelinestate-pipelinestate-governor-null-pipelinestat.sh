@@ -1,9 +1,9 @@
 #!/bin/bash
-# Invariant: pipelineState.governor !== null ? pipelineState.synthesis !== null : true
+# Invariant: pipelineState.governor !== null ? pipelineState.verify !== null : true
 # Entity: PipelineState
-# Description: governor decision cannot exist without a synthesis (Blueprint) artifact
+# Description: If a governor decision exists then an audit report must exist — the Governor cannot decide without a completed AuditReport
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.
-# Manual review required: pipelineState.governor !== null ? pipelineState.synthesis !== null : true
+# Manual review required: pipelineState.governor !== null ? pipelineState.verify !== null : true
 exit 0

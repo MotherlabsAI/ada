@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: postcodeAddress.hash !== null && postcodeAddress.hash.length > 0
 # Entity: PostcodeAddress
-# Description: hash must be non-empty — it is the content fingerprint of the artifact
+# Description: Hash must be present — the postcode is the identity of a pipeline artifact and cannot be anonymous
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.
