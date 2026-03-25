@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ada": {
+      "type": "stdio",
+      "command": "ada",
+      "args": ["mcp"],
+      "env": {
+        "ADA_PROJECT_DIR": "${CLAUDE_PROJECT_DIR:-}"
+      }
+    }
+  }
+}

@@ -6,13 +6,44 @@
         "hooks": [
           {
             "type": "command",
-            "command": "hooks/pre-tool-dispatch.sh",
-            "timeout": 30
+            "command": "hooks/pre-tool-dispatch.sh"
           }
         ]
       }
     ],
-    "PostToolUse": [],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|Read|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/post-tool-audit.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/pre-compact.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/session-end.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
@@ -26,10 +57,27 @@
   },
   "mcpServers": {
     "ada": {
-      "command": "ada mcp",
-      "args": []
+      "type": "stdio",
+      "command": "ada",
+      "args": ["mcp"],
+      "env": {
+        "ADA_PROJECT_DIR": "${CLAUDE_PROJECT_DIR:-}"
+      }
     }
   },
-  "model": "claude-sonnet-4-6",
-  "largeContextModel": "claude-opus-4-6"
+  "permissions": {
+    "allow": [
+      "Bash(pnpm *)",
+      "Bash(tsc *)",
+      "Bash(node *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "mcp__ada__*"
+    ]
+  },
+  "env": {
+    "ADA_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}"
+  },
+  "model": "claude-sonnet-4-6"
 }

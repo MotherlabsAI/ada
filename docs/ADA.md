@@ -18,6 +18,22 @@ ADA.md  ←  this file — master index
 ├── BRAND.md            ←  top of the semantic hierarchy — all other docs derive from this
 ├── ARCHITECTURE.md     ←  Ada internals: pipeline, postcodes, world model, git-backed design
 ├── CONTEXT.md          ←  two types of context (compiled-along vs stationary) + meta-chain
+├── docs/STATE.md       ←  technical audit: what is built, where it's shallow, known gaps, research conformance
+├── docs/DIRECTION.md   ←  research-adjusted architectural direction: world-state runtime, hierarchical execution, delegation contracts, verification stack, safe self-improvement
+├── docs/PLAN.md        ←  phased implementation plan: Phase 0 (foundation repair) through Phase 6 (safe self-improvement)
+│
+├── docs/research/
+│   ├── claude-code/
+│   │   ├── INDEX.md             ←  corpus index and file status
+│   │   ├── context-loading.md   ←  CLAUDE.md hierarchy, token budget, @ imports, injection mechanism
+│   │   ├── agent-files.md       ←  frontmatter schema, invocation model, isolation, output routing
+│   │   ├── hooks-system.md      ←  hook types, stdin format, exit codes, blocking behavior
+│   │   ├── mcp-integration.md   ←  server discovery, stdio lifecycle, tool calling, context
+│   │   ├── settings-permissions.md  ←  settings.json schema, permission model, merge behavior
+│   │   └── session-memory.md    ←  MEMORY.md, session lifecycle, context window, persistence
+│   └── synthesis/
+│       ├── ada-output-spec.md   ←  what Ada must produce for Claude Code — gap analysis + priority table
+│       └── closed-loop-design.md  ←  Ada ↔ Claude Code signal map, 17 signals, Phase 5 design
 │
 ├── docs/product/
 │   ├── CAPABILITIES.md ←  what Ada does: [LIVE], [BUILDING], [VISION]
@@ -27,12 +43,14 @@ ADA.md  ←  this file — master index
 │   ├── VIDEO_DEMO.md   ←  the first public demo — structure, what to build, why
 │   └── GROWTH.md       ←  how Ada spreads — distribution mechanism, cold start
 │
-└── docs/website/
-    ├── CONTENT_STRATEGY.md   ←  what each page says and why — battle-tested claims only
-    ├── DESIGN_DIRECTION.md   ←  visual language, palette, ◈, layout grammar
-    ├── DESIGN_PSYCHOLOGY.md  ←  visitor psychology, evidence sequencing, page structure rules
-    ├── SEO_STRATEGY.md       ←  how Ada gets found — search queries, timeline
-    └── IMAGERY.md            ←  what visual assets appear and what never appears
+├── docs/website/
+│   ├── CONTENT_STRATEGY.md   ←  what each page says and why — battle-tested claims only
+│   ├── DESIGN_DIRECTION.md   ←  visual language, palette, ◈, layout grammar
+│   ├── DESIGN_PSYCHOLOGY.md  ←  visitor psychology, evidence sequencing, page structure rules
+│   ├── SEO_STRATEGY.md       ←  how Ada gets found — search queries, timeline
+│   └── IMAGERY.md            ←  what visual assets appear and what never appears
+│
+└── docs/UI_LAUNCH.md         ←  TUI launch screen design: structure, brand decisions, invariants
 ```
 
 ---
@@ -72,12 +90,12 @@ user intent  →  Ada elicits  →  Ada compiles  →  CLAUDE.md + agents + hook
 
 ### Current Product State
 
-| Phase | What                                                    | Status    |
-| ----- | ------------------------------------------------------- | --------- |
-| 1     | Compilation — intent → CLAUDE.md + agents + hooks       | Live      |
-| 2     | Elicitation — structured questioning before compilation | Live      |
-| 3     | World model — artifact store + MCP constraint authority | Live      |
-| 4     | Git-backed world model — postcodes = git SHAs           | Designing |
+| Phase | What                                                    | Status |
+| ----- | ------------------------------------------------------- | ------ |
+| 1     | Compilation — intent → CLAUDE.md + agents + hooks       | Live   |
+| 2     | Elicitation — structured questioning before compilation | Live   |
+| 3     | World model — artifact store + MCP constraint authority | Live   |
+| 4     | Git-backed world model — postcodes = git SHAs           | Live   |
 
 ---
 
@@ -120,6 +138,91 @@ This eliminates custom content-addressing, reduces latency, and gives provenance
 **Key insight:**
 The pipeline structure informs the documentation structure. Both follow: start broad, narrow by need.
 A user doesn't start with the schema. A session doesn't start with the hooks.
+
+---
+
+### docs/research/claude-code/ + docs/research/synthesis/
+
+**Role:** living research corpus on Claude Code's actual behavior — how it loads context, invokes agents, fires hooks, integrates MCP, and manages sessions. Feeds directly into Ada's output optimization and Phase 5 closed-loop design.
+
+**Contains:**
+
+- `context-loading.md` — CLAUDE.md hierarchy (operator/project/user/local), 200-line budget, @ import syntax, `<system-reminder>` injection mechanism, what works vs fails
+- `agent-files.md` — full frontmatter schema (including `maxTurns`, `effort`, `isolation`, `memory`), invocation model (4 methods), context isolation, output routing, Ada-specific findings
+- `hooks-system.md` — hook types, stdin JSON format, exit codes, blocking model _(in progress)_
+- `mcp-integration.md` — server discovery, stdio lifecycle, tool calling protocol _(in progress)_
+- `settings-permissions.md` — settings.json full schema, permission model _(in progress)_
+- `session-memory.md` — MEMORY.md loading, session lifecycle, persistence model _(in progress)_
+- `synthesis/ada-output-spec.md` — gap analysis: Ada's current output vs Claude Code's actual needs, priority table
+- `synthesis/closed-loop-design.md` — 17-signal map (Ada→Claude + Claude→Ada), 5 missing signals, Phase 5 implementation order
+
+**Key invariants:**
+
+- Claims are tagged `[CONFIRMED]` (official docs) / `[INFERRED]` (consistent community reports) / `[UNVERIFIED]`
+- Each file ends with "Implications for Ada" — the actionable section
+- Synthesis files feed directly into implementation PRs
+
+---
+
+### docs/STATE.md
+
+**Role:** technical audit of Ada's actual implementation depth as of 2026-03-24. The honest account of what each pipeline stage does, where it's shallow, where it breaks, and what research says about it. Required reading before making implementation claims.
+
+**Contains:**
+
+- Pipeline Depth Map: each of the 8 stages (CTX→GOV) with `[SOLID]` / `[SHALLOW]` / `[HEURISTIC]` / `[GAP]` / `[RESEARCH NEEDED]` tags and actual edges
+- Output Quality Map: CLAUDE.md, agent files, hooks (~250), world model, `ada verify`
+- Ada + Claude Code pairing patterns — 4 effective patterns documented
+- Known Gaps Summary table: 12 gaps with severity and what must change
+- Research conformance table: 10 papers mapped to Ada's implementation
+- Where research is needed: 6 items that remain unvalidated
+
+**Key invariants:**
+
+- Hook effectiveness is `[HEURISTIC]` — ~250 hooks enforce pattern matching, not formal predicates. Effectiveness is unmeasured.
+- `ada verify` invariant coverage is always near 1.0 by construction — token presence, not semantic enforcement. The score is not meaningful in isolation.
+- PER's `ubiquitousLanguage` map is generated but never written to agent files. Claude Code never sees domain vocabulary.
+- SYN's `openQuestions`, `resolvedConflicts`, and `nonFunctional` are generated and discarded — not in CLAUDE.md or agents.
+
+---
+
+### docs/DIRECTION.md
+
+**Role:** research-adjusted architectural direction. Read before making any architectural decision about Ada's future. Supersedes any prior claim that unconstrained recursive swarms are Ada's target architecture.
+
+**Contains:**
+
+- Updated one-sentence product definition
+- The product gap that drives the extension: Ada is currently compiler-only; the vision requires a governed runtime
+- Six architectural layers that extend (not replace) the current pipeline: world-state runtime, hierarchical execution, delegation contracts, verification stack, safe self-improvement
+- What the Jan–Mar 2026 research supports vs. what it does not yet justify
+- Research source table (12 papers)
+
+**Key invariants:**
+
+- World-state runtime (tracks execution reality) and compiled world model (tracks compiled intent) are separate — never conflate them
+- Delegation contracts are non-optional for any child agent
+- Self-improvement is always offline, benchmarked, and human-approved
+- Governance core is immutable — agents improve around it, not through it
+
+---
+
+### docs/PLAN.md
+
+**Role:** phased implementation plan. Read to understand what is being built, in what order, and why each phase must precede the next.
+
+**Contains:**
+
+- Phase 0: Foundation repair (6 critical bugs that break existing functionality)
+- Phase 1: Feedback loop (PostToolUse audit, PreCompact checkpoint, propose_amendment tool, SessionEnd summary)
+- Phase 2: World-state runtime (versioned execution state, rollback checkpoints, uncertainty tracking)
+- Phase 3: Hierarchical execution (macro planner, micro executor, local repair, independent verifier)
+- Phase 4: Delegation contracts (contract schema, compiler, writer, enforcement, depth tracking)
+- Phase 5: Verification stack (structural, execution, policy, outcome, provenance verifiers)
+- Phase 6: Safe self-improvement (skill extraction, experiment branches, promotion gates)
+- Sequencing rules and current status table
+
+**Key invariant:** Phase 0 must complete before any other phase begins.
 
 ---
 
@@ -296,6 +399,26 @@ text-muted:   #9c9a92
 - Phase 4: Target specific queries
 - Timeline: indexed 3–7 days, "motherlabs ai" query 2–4 weeks, ranking 3–6 months
 - Primary queries Ada can own (specific pain points, not broad category)
+
+---
+
+### docs/UI_LAUNCH.md
+
+**Role:** design authority for the Ada TUI launch screen (`cli/src/ui/welcome.tsx`). Read before modifying the welcome screen.
+
+**Contains:**
+
+- Annotated structure diagram showing all panels and their runtime equivalents
+- Decision rationale for each element: double-border header, animated ◈, pipeline preview, framed input
+- Brand vocabulary fix: why "requirements elicitation · before building starts" replaced the banned "semantic compiler"
+- Source file index and key invariants
+
+**Key invariants:**
+
+- `◈` identity mark must animate on load via `useDiamondBreathe()` — static is incorrect
+- All 8 pipeline stages must appear as pending (`◇`) in the context panel
+- Never use "semantic compiler" on the welcome screen or in any user-facing copy
+- Border structure must mirror runtime: `double` for the outer header, `single` for content panels
 
 ---
 

@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import type { Blueprint, GovernorDecision } from "@ada/compiler";
+import type { Blueprint, GovernorDecision, DomainContext } from "@ada/compiler";
 import { generatePostcode } from "@ada/provenance";
 import { blueprintToCLAUDEMD } from "./claude-md.js";
 import { componentsToAgents } from "./agents.js";
@@ -12,6 +12,7 @@ import type { ConfigGraph } from "./types.js";
 export interface WriteConfigOptions {
   readonly partial?: boolean;
   readonly warnings?: string[];
+  readonly domainContext?: DomainContext;
 }
 
 export function writeConfigGraph(
@@ -31,12 +32,16 @@ export function writeConfigGraph(
   const writtenHooks: string[] = [];
 
   // 1. CLAUDE.md
-  const claudeMdContent = blueprintToCLAUDEMD(blueprint, options?.warnings);
+  const claudeMdContent = blueprintToCLAUDEMD(
+    blueprint,
+    options?.warnings,
+    options?.domainContext,
+  );
   const claudeMdPath = path.join(targetDir, "CLAUDE.md");
   fs.writeFileSync(claudeMdPath, claudeMdContent, "utf8");
 
   // 2. Agent .md files
-  const agents = componentsToAgents(blueprint);
+  const agents = componentsToAgents(blueprint, options?.domainContext);
   for (const agent of agents) {
     const agentPath = path.join(targetDir, agent.path);
     fs.mkdirSync(path.dirname(agentPath), { recursive: true });
@@ -62,11 +67,115 @@ export function writeConfigGraph(
     writtenHooks.push(hookPath);
   }
 
+  // 4b. Feedback loop hooks — audit, compact checkpoint, session end
+  const feedbackHooks: Array<{ file: string; content: string }> = [
+    {
+      file: "hooks/post-tool-audit.sh",
+      content: [
+        "#!/bin/bash",
+        "INPUT=$(cat)",
+        'TOOL_NAME=$(echo "$INPUT" | jq -r \'.tool_name // "unknown"\' 2>/dev/null || echo "unknown")',
+        'SESSION_ID=$(echo "$INPUT" | jq -r \'.session_id // ""\' 2>/dev/null || echo "")',
+        'PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${ADA_PROJECT_DIR:-$(pwd)}}"',
+        'LOG_FILE="$PROJECT_DIR/.ada/session-log.jsonl"',
+        'mkdir -p "$PROJECT_DIR/.ada"',
+        'case "$TOOL_NAME" in',
+        '  Write|Edit|MultiEdit) PATH_HINT=$(echo "$INPUT" | jq -r \'.tool_input.file_path // .tool_input.path // ""\' 2>/dev/null || echo "") ;;',
+        '  Bash) PATH_HINT=$(echo "$INPUT" | jq -r \'.tool_input.command // ""\' 2>/dev/null | cut -c1-80 || echo "") ;;',
+        '  Read) PATH_HINT=$(echo "$INPUT" | jq -r \'.tool_input.file_path // ""\' 2>/dev/null || echo "") ;;',
+        '  *) PATH_HINT="" ;;',
+        "esac",
+        "TS=$(date +%s)",
+        'printf \'{"ts":%d,"session":"%s","tool":"%s","path":"%s"}\\n\' "$TS" "$SESSION_ID" "$TOOL_NAME" "$PATH_HINT" >> "$LOG_FILE"',
+        "exit 0",
+      ].join("\n"),
+    },
+    {
+      file: "hooks/pre-compact.sh",
+      content: [
+        "#!/bin/bash",
+        'PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${ADA_PROJECT_DIR:-$(pwd)}}"',
+        'MANIFEST="$PROJECT_DIR/.ada/manifest.json"',
+        'SESSION_LOG="$PROJECT_DIR/.ada/session-log.jsonl"',
+        'INTENT=""',
+        'RUN_ID=""',
+        'if [ -f "$MANIFEST" ]; then',
+        '  INTENT=$(jq -r \'.intent // ""\' "$MANIFEST" 2>/dev/null | cut -c1-120)',
+        '  RUN_ID=$(jq -r \'.runId // ""\' "$MANIFEST" 2>/dev/null)',
+        "fi",
+        'LAST_TOOL=""',
+        'if [ -f "$SESSION_LOG" ]; then',
+        '  LAST_TOOL=$(tail -1 "$SESSION_LOG" 2>/dev/null | jq -r \'"\\(.tool) \\(.path)"\' 2>/dev/null || echo "")',
+        "fi",
+        'echo "ADA CHECKPOINT — preserve this across compaction."',
+        'echo "Active run: ${RUN_ID:-none}"',
+        'echo "Original intent: ${INTENT:-unknown}"',
+        '[ -n "$LAST_TOOL" ] && echo "Last tool call: $LAST_TOOL"',
+        'echo "After compaction: re-read CLAUDE.md and all .claude/agents/ files."',
+        "exit 0",
+      ].join("\n"),
+    },
+    {
+      file: "hooks/session-end.sh",
+      content: [
+        "#!/bin/bash",
+        "INPUT=$(cat)",
+        'SESSION_ID=$(echo "$INPUT" | jq -r \'.session_id // "unknown"\' 2>/dev/null || echo "unknown")',
+        'END_REASON=$(echo "$INPUT" | jq -r \'.end_reason // "unknown"\' 2>/dev/null || echo "unknown")',
+        'PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${ADA_PROJECT_DIR:-$(pwd)}}"',
+        'SESSIONS_DIR="$PROJECT_DIR/.ada/sessions"',
+        'mkdir -p "$SESSIONS_DIR"',
+        "TS=$(date +%s)",
+        'cat > "$SESSIONS_DIR/${SESSION_ID}.json" <<EOF',
+        '{"sessionId":"$SESSION_ID","endReason":"$END_REASON","completedAt":$TS}',
+        "EOF",
+        "exit 0",
+      ].join("\n"),
+    },
+  ];
+  for (const fh of feedbackHooks) {
+    const fhPath = path.join(targetDir, fh.file);
+    fs.mkdirSync(path.dirname(fhPath), { recursive: true });
+    fs.writeFileSync(fhPath, fh.content, { encoding: "utf8", mode: 0o755 });
+  }
+
+  // 4d. Session-start hook (referenced by settings.json SessionStart entry)
+  const projectLabel = blueprint.summary.split(".")[0]!.slice(0, 80);
+  const sessionStartScript = [
+    "#!/bin/bash",
+    "# Ada session start — world model reference",
+    `echo '  Ada: ${projectLabel}'`,
+    "echo '  World model : .ada/manifest.json'",
+    "echo '  Constraints : ada.query_constraints(scope)'",
+    "echo '  Drift check : ada.check_drift(description)'",
+    "echo ''",
+  ].join("\n");
+  const sessionStartPath = path.join(targetDir, "hooks", "session-start.sh");
+  fs.mkdirSync(path.dirname(sessionStartPath), { recursive: true });
+  fs.writeFileSync(sessionStartPath, sessionStartScript, {
+    encoding: "utf8",
+    mode: 0o755,
+  });
+
   // 5. settings.json
   const settings = buildSettings(hooks);
   const settingsPath = path.join(targetDir, ".claude", "settings.json");
   fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf8");
+
+  // 6. .mcp.json — canonical per-project MCP server config (version-controlled)
+  const mcpConfig = {
+    mcpServers: {
+      ada: {
+        type: "stdio",
+        command: "ada",
+        args: ["mcp"],
+        env: { ADA_PROJECT_DIR: "${CLAUDE_PROJECT_DIR:-}" },
+      },
+    },
+  };
+  const mcpJsonPath = path.join(targetDir, ".mcp.json");
+  fs.writeFileSync(mcpJsonPath, JSON.stringify(mcpConfig, null, 2), "utf8");
 
   const postcode = generatePostcode("CFG", JSON.stringify(blueprint.postcode));
 
@@ -76,6 +185,7 @@ export function writeConfigGraph(
     skills: writtenSkills,
     hooks: writtenHooks,
     settings: settingsPath,
+    mcpJson: mcpJsonPath,
     postcode,
   };
 }
