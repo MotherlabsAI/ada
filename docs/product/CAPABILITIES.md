@@ -86,7 +86,7 @@ Persistent, navigable store of all compiled artifacts.
 
 ### MCP authority server `[LIVE]`
 
-19 tools available in every Claude Code session across 5 categories:
+22 tools available in every Claude Code session across 5 categories:
 
 **World model access (read-only):**
 
@@ -104,6 +104,8 @@ Persistent, navigable store of all compiled artifacts.
 - `ada.propose_skill` — propose a new reusable skill
 - `ada.extract_skills` — extract repeated patterns from session log as skill candidates
 - `ada.log_drift` — record a drift event to the provenance chain
+- `ada.report_implementation_decision` — record a decision that differs from blueprint; feeds back into world model
+- `ada.report_gap` — record a gap discovered during implementation; queued for human review
 
 **Verification:**
 
@@ -145,6 +147,12 @@ User asks anything about the compiled blueprint.
 Ada answers using Anthropic API with full blueprint as system prompt.
 Empty enter proceeds to spawn.
 
+### Headless / non-TTY compilation `[LIVE]`
+
+`ada compile-headless "<intent>"` — runs the full 9-stage pipeline without an interactive terminal.
+Outputs structured JSON or plain summary to stdout. Usable in CI pipelines, scripts, and non-TTY environments.
+Detects non-TTY contexts automatically and falls back to headless mode.
+
 ### Feedback loop `[LIVE]`
 
 Claude Code actions feed back into Ada's world model during and after every session.
@@ -153,6 +161,8 @@ Claude Code actions feed back into Ada's world model during and after every sess
 - `hooks/pre-compact.sh` — checkpoint written to stdout before context compaction; Ada state survives
 - `hooks/session-end.sh` — structured session summary written to `.ada/sessions/{id}.json`
 - `ada.propose_amendment` MCP tool — Claude can flag when blueprint needs updating; queued for human review
+- `ada.report_implementation_decision` MCP tool — Claude records decisions that deviate from blueprint; logged to session record
+- `ada.report_gap` MCP tool — Claude records gaps discovered during implementation; queued for human review
 - `ada review-amendments` CLI — interactive review of queued amendments; approve triggers `ada compile --amend`
 - `ada review-skills` CLI — interactive review of extracted skill candidates; approved skills written to `.claude/skills/`
 
