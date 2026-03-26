@@ -294,6 +294,26 @@ export function componentsToAgents(
       bodyLines.push("");
     }
 
+    // Stakeholders — from PER stage. knowledgeBase, blindSpots, fearSet drive
+    // interface design and error handling priorities for this bounded context.
+    const stakeholders = domainContext?.stakeholders ?? [];
+    if (stakeholders.length > 0) {
+      bodyLines.push("## Stakeholders");
+      for (const s of stakeholders) {
+        bodyLines.push(`- **${s.role}**`);
+        if (s.knowledgeBase.length > 0) {
+          bodyLines.push(`  - Knows: ${s.knowledgeBase.join(", ")}`);
+        }
+        if (s.blindSpots.length > 0) {
+          bodyLines.push(`  - Blind spots: ${s.blindSpots.join(", ")}`);
+        }
+        if (s.fearSet.length > 0) {
+          bodyLines.push(`  - Fears: ${s.fearSet.join(", ")}`);
+        }
+      }
+      bodyLines.push("");
+    }
+
     // Invariants
     if (contextInvariants.length > 0 || entityInvariants.length > 0) {
       bodyLines.push("## Invariants");

@@ -279,15 +279,12 @@ async function runCompileSummary(
     }
   }
 
-  // ── Verification findings (VER drifts + gaps) ────────────────────────────
-  const significantDrifts =
-    verify?.drifts.filter(
-      (d) => d.severity === "critical" || d.severity === "major",
-    ) ?? [];
+  // ── Verification findings — ALL drifts + ALL gaps ────────────────────────
+  const allDrifts = verify?.drifts ?? [];
   const gaps = verify?.gaps ?? [];
-  if (significantDrifts.length > 0 || gaps.length > 0) {
+  if (allDrifts.length > 0 || gaps.length > 0) {
     console.log(`  ${sep}  gaps found during verification\n`);
-    for (const drift of significantDrifts.slice(0, 4)) {
+    for (const drift of allDrifts) {
       console.log(
         wrapText(
           `${glyphs.identity.open}  [${drift.severity}] ${drift.location} — expected "${drift.original}", got "${drift.actual}"`,
@@ -296,7 +293,7 @@ async function runCompileSummary(
         ),
       );
     }
-    for (const gap of gaps.slice(0, 4)) {
+    for (const gap of gaps) {
       console.log(
         wrapText(`${glyphs.identity.open}  ${gap}`, cols - 4, "    "),
       );
@@ -304,14 +301,40 @@ async function runCompileSummary(
     console.log("");
   }
 
-  // ── Governor violations ────────────────────────────────────────────────────
+  // ── Governor violations — all ──────────────────────────────────────────────
   const violations = governorDecision.violations ?? [];
   if (violations.length > 0) {
     console.log(`  ${sep}  policy violations noted\n`);
-    for (const v of violations.slice(0, 4)) {
+    for (const v of violations) {
       console.log(
         wrapText(
           `${glyphs.identity.open}  [${v.severity}] ${v.ruleViolated} — ${v.description}`,
+          cols - 4,
+          "    ",
+        ),
+      );
+    }
+    console.log("");
+  }
+
+  // ── Open questions ─────────────────────────────────────────────────────────
+  const openQuestions = blueprint.openQuestions ?? [];
+  if (openQuestions.length > 0) {
+    console.log(`  ${sep}  open questions\n`);
+    for (const q of openQuestions) {
+      console.log(wrapText(`${glyphs.identity.open}  ${q}`, cols - 4, "    "));
+    }
+    console.log("");
+  }
+
+  // ── Conflicts resolved ─────────────────────────────────────────────────────
+  const resolvedConflicts = blueprint.resolvedConflicts ?? [];
+  if (resolvedConflicts.length > 0) {
+    console.log(`  ${sep}  conflicts resolved\n`);
+    for (const c of resolvedConflicts) {
+      console.log(
+        wrapText(
+          `${glyphs.identity.filled}  ${c.entity} ↔ ${c.process} — ${c.resolution}`,
           cols - 4,
           "    ",
         ),

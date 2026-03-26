@@ -86,6 +86,23 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
+  // 8. Non-functional requirements — performance, security, scalability, etc.
+  // These are listed here so Claude Code doesn't need to open every agent file
+  // to know what quality constraints apply globally.
+  const nfrs = blueprint.nonFunctional ?? [];
+  const nfrsWithCategory = nfrs.filter(
+    (nf): nf is typeof nf & { category: string } =>
+      typeof nf !== "string" && !!nf.category,
+  );
+  if (nfrsWithCategory.length > 0) {
+    lines.push("## Non-Functional Requirements");
+    for (const nf of nfrsWithCategory) {
+      const scope = nf.scope && nf.scope !== "global" ? ` [${nf.scope}]` : "";
+      lines.push(`- **${nf.category}**: ${nf.requirement}${scope}`);
+    }
+    lines.push("");
+  }
+
   // 10. Open questions — unresolved at compile time, Claude Code must handle uncertainty
   if (blueprint.openQuestions.length > 0) {
     lines.push("## Open Questions");
