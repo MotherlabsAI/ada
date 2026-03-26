@@ -19,6 +19,7 @@ import {
   createCheckpoint,
   rollbackTo,
   setTaskStatus,
+  recordFact,
 } from "./tools/runtime-state.js";
 import { getMacroPlan } from "./tools/macro-plan.js";
 import { extractSkills, proposeSkill } from "./tools/skill-extraction.js";
@@ -341,6 +342,38 @@ export async function startServer(): Promise<void> {
         },
       },
       {
+        name: "ada.record_fact",
+        description:
+          "Records a fact about the world state with an explicit confidence score (0–1). Use to track observations from tool outputs (source=tool_output) or logical inferences (source=inferred). High-confidence facts lower the overall uncertainty score; low-confidence facts raise it. The aggregate uncertainty is reflected in ada.get_runtime_state.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            fact: {
+              type: "string" as const,
+              description:
+                "A declarative statement about the current state of the world",
+            },
+            confidence: {
+              type: "number" as const,
+              description:
+                "Confidence in this fact, 0–1 (0=unknown, 0.5=uncertain, 0.9=observed, 1.0=certain)",
+            },
+            source: {
+              type: "string" as const,
+              enum: ["tool_output", "inferred"],
+              description:
+                "Whether this fact was directly observed via a tool or inferred from other facts",
+            },
+            evidencePath: {
+              type: "string" as const,
+              description:
+                "Optional file path that provides evidence for this fact",
+            },
+          },
+          required: ["fact", "confidence", "source"],
+        },
+      },
+      {
         name: "ada.get_runtime_state",
         description:
           "Returns the current world-state snapshot: sessions, tool calls, component execution status, environment facts, and checkpoints. Use when you need to understand what has actually been done vs what was planned.",
@@ -572,6 +605,18 @@ export async function startServer(): Promise<void> {
           args["componentName"] as string,
           args["status"] as "in_progress" | "complete",
           (args["evidence"] as string[]) ?? [],
+        );
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.record_fact": {
+        const r = recordFact(
+          args["fact"] as string,
+          args["confidence"] as number,
+          args["source"] as "tool_output" | "inferred",
+          args["evidencePath"] as string | undefined,
         );
         return {
           content: [{ type: "text" as const, text: r.content }],

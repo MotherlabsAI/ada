@@ -109,6 +109,7 @@ export function buildWorldState(): WorldState {
   const blueprint = loadBlueprint();
   const manifest = loadManifest();
   const explicitStatuses = loadTaskStatuses(projectDir);
+  const explicitFacts = loadFacts(projectDir);
 
   // ── Session metrics ──────────────────────────────────────────────────────
   const sessionIds = new Set(entries.map((e) => e.session).filter(Boolean));
@@ -123,6 +124,8 @@ export function buildWorldState(): WorldState {
 
   // ── Environment facts from filesystem ───────────────────────────────────
   const environmentFacts: EnvironmentFact[] = [];
+
+  // Inferred facts from session log (file writes)
   for (const p of uniqueWritePaths.slice(-50)) {
     const absPath = path.isAbsolute(p) ? p : path.join(projectDir, p);
     const exists = fs.existsSync(absPath);
@@ -135,6 +138,18 @@ export function buildWorldState(): WorldState {
       confidence: exists ? 0.95 : 0.4,
       observedAt: Date.now(),
       evidencePath: p,
+    });
+  }
+
+  // Explicit facts recorded by agents (higher authority than inferred)
+  for (const ef of explicitFacts) {
+    environmentFacts.push({
+      id: ef.id,
+      fact: ef.fact,
+      source: ef.source,
+      confidence: ef.confidence,
+      observedAt: ef.recordedAt,
+      ...(ef.evidencePath !== undefined && { evidencePath: ef.evidencePath }),
     });
   }
 
@@ -184,16 +199,29 @@ export function buildWorldState(): WorldState {
   }
 
   // ── Uncertainty score ────────────────────────────────────────────────────
-  // High uncertainty if: no session log, many inferred facts, no blueprint
-  const hasLog = entries.length > 0;
-  const hasBlueprintMatch =
-    components.length > 0 &&
-    components.some((c) => c.status === "inferred_complete");
-  let uncertaintyScore = 0.5;
-  if (!hasLog) uncertaintyScore = 0.9;
-  else if (!blueprint) uncertaintyScore = 0.8;
-  else if (hasBlueprintMatch) uncertaintyScore = 0.3;
-  else uncertaintyScore = 0.6;
+  // Computed from per-fact confidence when explicit facts exist;
+  // falls back to heuristic when no facts recorded.
+  let uncertaintyScore: number;
+
+  if (explicitFacts.length > 0) {
+    // Average uncertainty across all recorded facts (1 - confidence)
+    const avgUncertainty =
+      explicitFacts.reduce((sum, f) => sum + (1 - f.confidence), 0) /
+      explicitFacts.length;
+    // Blend with baseline heuristic (weight explicit facts more heavily)
+    const hasLog = entries.length > 0;
+    const baseline = !hasLog ? 0.9 : !blueprint ? 0.8 : 0.5;
+    uncertaintyScore = avgUncertainty * 0.7 + baseline * 0.3;
+  } else {
+    const hasLog = entries.length > 0;
+    const hasBlueprintMatch =
+      components.length > 0 &&
+      components.some((c) => c.status === "inferred_complete");
+    if (!hasLog) uncertaintyScore = 0.9;
+    else if (!blueprint) uncertaintyScore = 0.8;
+    else if (hasBlueprintMatch) uncertaintyScore = 0.3;
+    else uncertaintyScore = 0.6;
+  }
 
   // ── Load persisted checkpoints ───────────────────────────────────────────
   const checkpoints = loadCheckpoints(projectDir);
@@ -224,6 +252,74 @@ export function buildWorldState(): WorldState {
     delegationDepth: activeDelegations.length,
     activeDelegations,
   };
+}
+
+// ─── Explicit fact recording (uncertainty tracking) ──────────────────────────
+
+interface ExplicitFact {
+  readonly id: string;
+  readonly fact: string;
+  readonly source: "tool_output" | "inferred";
+  readonly confidence: number;
+  readonly evidencePath?: string;
+  readonly recordedAt: number;
+}
+
+function factsPath(projectDir: string): string {
+  return path.join(projectDir, ".ada", "facts.json");
+}
+
+function loadFacts(projectDir: string): ExplicitFact[] {
+  try {
+    const raw = fs.readFileSync(factsPath(projectDir), "utf8");
+    return JSON.parse(raw) as ExplicitFact[];
+  } catch {
+    return [];
+  }
+}
+
+function saveFacts(projectDir: string, facts: ExplicitFact[]): void {
+  fs.mkdirSync(path.join(projectDir, ".ada"), { recursive: true });
+  fs.writeFileSync(
+    factsPath(projectDir),
+    JSON.stringify(facts, null, 2),
+    "utf8",
+  );
+}
+
+export function recordFact(
+  fact: string,
+  confidence: number,
+  source: "tool_output" | "inferred",
+  evidencePath?: string,
+): { content: string; isError: boolean } {
+  const projectDir = getProjectDir();
+
+  try {
+    const facts = loadFacts(projectDir);
+    const clampedConfidence = Math.max(0, Math.min(1, confidence));
+    const id = `fact-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+    const record: ExplicitFact = {
+      id,
+      fact,
+      source,
+      confidence: clampedConfidence,
+      ...(evidencePath !== undefined && { evidencePath }),
+      recordedAt: Date.now(),
+    };
+
+    saveFacts(projectDir, [...facts, record]);
+
+    const confidencePct = Math.round(clampedConfidence * 100);
+    return {
+      content: `Fact recorded [${id}] — confidence ${confidencePct}% (${source}):\n${fact}`,
+      isError: false,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { content: `Failed to record fact: ${message}`, isError: true };
+  }
 }
 
 // ─── Explicit task status ─────────────────────────────────────────────────────
