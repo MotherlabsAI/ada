@@ -66,9 +66,11 @@ export async function verifyCommand(
 
   if (!fs.existsSync(statePath)) {
     console.error(
-      "Error: no .ada/state.json found — run 'ada compile' first to compile a blueprint",
+      "  ada verify  no blueprint compiled yet — run 'ada compile' first",
     );
-    process.exit(1);
+    // Exit 0: no blueprint is not an error — it's an uncompiled project.
+    // Exit 1 would cause post-commit hooks to surface noisy failures.
+    process.exit(0);
   }
 
   const comment = flags.has("--comment");
