@@ -1,19 +1,132 @@
+import * as fs from "fs";
+import * as path from "path";
 import { spawn } from "@ada/orchestrator";
+import { watch } from "@ada/governor";
+import { loadBlueprintState } from "@ada/compiler";
 import { glyphs } from "../ui/design-system.js";
 
+function buildBlueprintSummary(blueprint: {
+  summary: string;
+  architecture: {
+    pattern: string;
+    components: readonly { name: string; responsibility: string }[];
+  };
+}): string {
+  const componentList = blueprint.architecture.components
+    .map((c) => `  - ${c.name}: ${c.responsibility}`)
+    .join("\n");
+
+  return [
+    `## Ada Blueprint`,
+    ``,
+    blueprint.summary,
+    ``,
+    `**Architecture:** ${blueprint.architecture.pattern}`,
+    ``,
+    `**Components:**`,
+    componentList,
+  ].join("\n");
+}
+
 export async function runCommand(): Promise<void> {
-  console.log(`  ${glyphs.identity.core} launching claude code...`);
+  const cwd = process.cwd();
+  const statePath = path.join(cwd, ".ada", "state.json");
 
-  const events = spawn({
-    workingDir: process.cwd(),
-    outputFormat: "stream-json",
-  });
+  // Load blueprint if one exists — governor watches against it
+  let blueprintSummary: string | undefined;
+  let blueprint: Parameters<typeof watch>[0] | undefined;
 
-  for await (const event of events) {
-    if (event.event.type === "content_block_start") {
-      process.stdout.write(".");
+  if (fs.existsSync(statePath)) {
+    try {
+      const { blueprint: bp } = loadBlueprintState(statePath);
+      blueprint = bp;
+      blueprintSummary = buildBlueprintSummary(bp);
+    } catch {
+      // Corrupt state — run ungoverned, no crash
     }
   }
 
-  console.log("\n  session complete.\n");
+  if (blueprint) {
+    console.log(
+      `  ${glyphs.identity.core} launching claude code with governor...`,
+    );
+  } else {
+    console.log(
+      `  ${glyphs.identity.core} launching claude code (no blueprint — run 'ada compile' first)...`,
+    );
+  }
+
+  const events = spawn({
+    workingDir: cwd,
+    outputFormat: "stream-json",
+    ...(blueprintSummary !== undefined && { blueprintSummary }),
+  });
+
+  if (!blueprint) {
+    // No blueprint — passthrough mode, just stream events
+    for await (const event of events) {
+      if (event.event.type === "content_block_start") {
+        process.stdout.write(".");
+      }
+    }
+    console.log("\n  session complete.\n");
+    return;
+  }
+
+  // Governed mode — pipe events through governor.watch()
+  let driftCount = 0;
+  let checkpointCount = 0;
+
+  for await (const signal of watch(blueprint, events)) {
+    switch (signal.type) {
+      case "DRIFT":
+        driftCount++;
+        if (signal.severity === "critical") {
+          console.error(
+            `\n  ${glyphs.status.fail} drift [${signal.severity}] ${signal.location}: ${signal.detail}`,
+          );
+        }
+        break;
+
+      case "LOW_CONFIDENCE":
+        console.error(
+          `\n  ${glyphs.status.alert} confidence low (${Math.round(signal.confidence * 100)}%) — ${signal.reason}`,
+        );
+        break;
+
+      case "CHECKPOINT":
+        checkpointCount++;
+        process.stdout.write(
+          `\n  ${glyphs.status.pass} checkpoint ${checkpointCount} written\n`,
+        );
+        break;
+
+      case "CONFIDENCE":
+        // Intermediate confidence update — quiet
+        break;
+
+      case "SESSION_COMPLETE": {
+        const pct = Math.round(signal.finalConfidence * 100);
+        const icon =
+          signal.decision === "ACCEPT"
+            ? glyphs.status.pass
+            : signal.decision === "DRIFT"
+              ? glyphs.status.alert
+              : glyphs.status.fail;
+
+        console.log(`\n  ${icon} session complete — confidence ${pct}%`);
+        if (driftCount > 0) {
+          console.log(
+            `  ${driftCount} drift signal${driftCount === 1 ? "" : "s"} detected`,
+          );
+        }
+        if (signal.decision === "HALT") {
+          process.exit(1);
+        }
+        break;
+      }
+    }
+  }
+
+  console.log();
 }
