@@ -136,21 +136,19 @@ Ada gets better at helping you build. Improvements are offline, benchmarked, and
 | -------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0 — Foundation Repair      | **COMPLETE**           | All 6 bugs fixed. Hook timeouts removed.                                                                                                                   |
 | 1 — Feedback Loop          | **COMPLETE**           | All 5 items built and wired: session log, pre-compact, propose_amendment, session-end, review-amendments CLI.                                              |
-| 2 — World-State Runtime    | **PARTIALLY COMPLETE** | `get_runtime_state`, `checkpoint`, `rollback_to` exist. Missing: uncertainty tracking (2.5).                                                               |
-| 3 — Hierarchical Execution | **PARTIALLY COMPLETE** | `get_macro_plan`, `set_task_status` exist. Missing: local repair (3.3), execution orchestrator (3.5).                                                      |
+| 2 — World-State Runtime    | **COMPLETE**           | `get_runtime_state`, `checkpoint`, `rollback_to`, `record_fact` exist. Per-fact confidence tracking drives aggregate uncertainty score.                    |
+| 3 — Hierarchical Execution | **COMPLETE**           | `get_macro_plan`, `set_task_status`, `advance_execution` exist. `report_execution_failure`/`resolve_repair` provide local repair with retry budgets.       |
 | 4 — Delegation Contracts   | **COMPLETE**           | `get_contract`, `enter_delegation`, `exit_delegation` exist. `blueprintToContracts()` in config-writer writes one contract per bounded context on compile. |
 | 5 — Verification Stack     | **PARTIALLY COMPLETE** | 5-layer `ada.verify` exists. Needs real-world validation against live sessions.                                                                            |
-| 6 — Safe Self-Improvement  | **PARTIALLY COMPLETE** | `extract_skills`, `propose_skill`, `review-skills`, `rollback-skill` exist. Missing: experiment branches (6.2).                                            |
+| 6 — Safe Self-Improvement  | **COMPLETE**           | `extract_skills`, `propose_skill`, `review-skills`, `rollback-skill` exist. Experiment branches via `e` option in review-skills.                           |
 
 ---
 
 ## True Gaps — What Is Not Yet Built
 
-These items do not exist in any form and represent the remaining implementation work:
+All planned phases are now complete. The remaining work is real-world validation:
 
-| Item                   | Phase | Description                                                                          |
-| ---------------------- | ----- | ------------------------------------------------------------------------------------ |
-| Local repair           | 3.3   | Micro-level failure handling with defined retry budget before escalation             |
-| Execution orchestrator | 3.5   | Coordinates macro/micro cycle: reads blueprint, spawns executors, routes to verifier |
-| Uncertainty tracking   | 2.5   | Per-fact confidence scores in world-state; sourced facts vs inferred facts           |
-| Experiment branches    | 6.2   | Isolated git branches for testing skill improvements before promotion                |
+| Item                        | Phase | Description                                                                             |
+| --------------------------- | ----- | --------------------------------------------------------------------------------------- |
+| Verification real-world use | 5     | 5-layer ada.verify exists but needs validation against live sessions to tune thresholds |
+| Skill benchmark suite       | 6.2   | Experiment branches create the isolation; automated benchmarking is not yet implemented |

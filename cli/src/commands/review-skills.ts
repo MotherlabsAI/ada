@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as readline from "readline";
+import { spawnSync } from "child_process";
 
 // ─── Types (duplicated from mcp-server to avoid cross-package dep) ────────────
 
@@ -80,6 +81,72 @@ function saveJson(p: string, data: unknown): void {
 
 function ask(rl: readline.Interface, question: string): Promise<string> {
   return new Promise((resolve) => rl.question(question, resolve));
+}
+
+// ─── Git helpers ─────────────────────────────────────────────────────────────
+
+function isGitRepo(dir: string): boolean {
+  const r = spawnSync("git", ["rev-parse", "--git-dir"], {
+    cwd: dir,
+    encoding: "utf8",
+  });
+  return r.status === 0;
+}
+
+function currentBranch(dir: string): string | null {
+  const r = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+    cwd: dir,
+    encoding: "utf8",
+  });
+  return r.status === 0 ? r.stdout.trim() || null : null;
+}
+
+/**
+ * Creates an experiment branch for the skill, writes the file to it,
+ * commits, then returns to the original branch.
+ * Returns the experiment branch name, or null if git is unavailable.
+ */
+function createExperimentBranch(
+  slug: string,
+  skillPath: string,
+  body: string,
+  projectDir: string,
+): string | null {
+  if (!isGitRepo(projectDir)) return null;
+
+  const originalBranch = currentBranch(projectDir);
+  if (!originalBranch) return null;
+
+  const branchName = `ada/skill-experiment/${slug}`;
+
+  // Create and checkout the experiment branch
+  const checkout = spawnSync("git", ["checkout", "-b", branchName], {
+    cwd: projectDir,
+    encoding: "utf8",
+  });
+  if (checkout.status !== 0) return null;
+
+  try {
+    // Write skill file
+    fs.mkdirSync(path.dirname(skillPath), { recursive: true });
+    fs.writeFileSync(skillPath, body, "utf8");
+
+    // Stage and commit
+    spawnSync("git", ["add", skillPath], { cwd: projectDir });
+    spawnSync(
+      "git",
+      ["commit", "-m", `experiment(skills): add ${slug} skill for review`],
+      { cwd: projectDir, encoding: "utf8" },
+    );
+  } finally {
+    // Always return to original branch
+    spawnSync("git", ["checkout", originalBranch], {
+      cwd: projectDir,
+      encoding: "utf8",
+    });
+  }
+
+  return branchName;
 }
 
 // ─── Skill promotion ──────────────────────────────────────────────────────────
@@ -182,7 +249,11 @@ export async function reviewSkillsCommand(): Promise<void> {
     console.log("  └─");
     console.log("");
 
-    const answer = await ask(rl, "  Approve (a), Reject (r), or Skip (s)? ");
+    const gitAvailable = isGitRepo(projectDir);
+    const promptText = gitAvailable
+      ? "  Approve (a), Experiment branch (e), Reject (r), or Skip (s)? "
+      : "  Approve (a), Reject (r), or Skip (s)? ";
+    const answer = await ask(rl, promptText);
     const choice = answer.trim().toLowerCase();
 
     const now = Date.now();
@@ -190,6 +261,58 @@ export async function reviewSkillsCommand(): Promise<void> {
     if (choice === "a" || choice === "approve") {
       const skillPath = promoteSkill(item, projectDir);
       console.log(`  ✓ Promoted → ${skillPath}`);
+    } else if ((choice === "e" || choice === "experiment") && gitAvailable) {
+      const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const skillDir = path.join(projectDir, ".claude", "skills", slug);
+      const skillPath = path.join(skillDir, "SKILL.md");
+      const expBody =
+        "skillBody" in item ? item.skillBody : item.suggestedSkillBody;
+
+      const branchName = createExperimentBranch(
+        slug,
+        skillPath,
+        expBody,
+        projectDir,
+      );
+
+      if (branchName) {
+        console.log(`  ⊙ Experiment branch created: ${branchName}`);
+        console.log(
+          `  Review and merge when satisfied: git merge ${branchName}`,
+        );
+        console.log(
+          `  Discard if not needed:           git branch -D ${branchName}`,
+        );
+      } else {
+        // Git unavailable mid-check — fall back to direct promotion
+        const skillPathFallback = promoteSkill(item, projectDir);
+        console.log(
+          `  ✓ Promoted directly (experiment branch unavailable) → ${skillPathFallback}`,
+        );
+      }
+
+      if (item._source === "candidate") {
+        const all = loadJson<SkillCandidate>(candidatesPath(projectDir));
+        saveJson(
+          candidatesPath(projectDir),
+          all.map((c) =>
+            c.id === item.id
+              ? { ...c, status: "approved", reviewedAt: now }
+              : c,
+          ),
+        );
+      } else {
+        const all = loadJson<SkillProposal>(proposalsPath(projectDir));
+        saveJson(
+          proposalsPath(projectDir),
+          all.map((p) =>
+            p.id === item.id
+              ? { ...p, status: "approved", reviewedAt: now }
+              : p,
+          ),
+        );
+      }
+      approved++;
 
       if (item._source === "candidate") {
         const all = loadJson<SkillCandidate>(candidatesPath(projectDir));
