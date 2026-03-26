@@ -48,6 +48,7 @@ async function runCompile(intentFromArgs: string): Promise<void> {
   await initCommand(intent, {
     noExecute: flags.has("--no-execute"),
     amend: flags.has("--amend"),
+    selfCompile: flags.has("--self"),
   });
 }
 
@@ -108,6 +109,7 @@ async function main(): Promise<void> {
     ada compile "<intent>"   Compile with intent inline
                              --no-execute   Write config only, skip Claude spawn
                              --amend        Extend existing blueprint (reads .ada/state.json)
+                             --self         Self-compilation mode — scan Ada's own packages
 
   Other commands:
     ada scan                 Show what Ada sees in this codebase before compiling

@@ -28,6 +28,8 @@ import {
 export interface InitOptions {
   readonly noExecute?: boolean;
   readonly amend?: boolean;
+  /** When true, Ada is compiling itself — CTX scans Ada's own packages intentionally. */
+  readonly selfCompile?: boolean;
 }
 
 // ─── Stage summary derivation ─────────────────────────────────────────────────
@@ -850,6 +852,7 @@ export async function initCommand(
 
     const result = await compiler.compile(currentIntent, {
       priorBlueprint,
+      selfCompile: options.selfCompile,
       onClarificationNeeded:
         iterationCount === 1 ? handleClarification : undefined,
       onStageStart(stage) {

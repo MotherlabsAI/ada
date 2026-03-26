@@ -285,6 +285,8 @@ function gatherProjectContext(cwd: string): string {
 export interface CompileOptions {
   readonly apiKey?: string | undefined;
   readonly priorBlueprint?: PriorBlueprintContext | undefined;
+  /** When true, Ada is compiling itself — CTX scans Ada's own packages intentionally. */
+  readonly selfCompile?: boolean | undefined;
   readonly onStageStart?: (stage: CompilerStageCode) => void;
   readonly onStageToken?: (event: {
     stage: CompilerStageCode;
@@ -318,6 +320,7 @@ export class MotherCompiler {
       onStageComplete,
       onClarificationNeeded,
       priorBlueprint,
+      selfCompile,
     } = options;
     const gates: Record<string, ProvenanceGate> = {};
     const stageRecords: StageExecutionRecord[] = [];
@@ -386,7 +389,9 @@ export class MotherCompiler {
     }
 
     // ─── Stage 0: Context (CTX) — static codebase analysis ───
-    const codebaseContext: CodebaseContext = analyzeCodebase(cwd);
+    const codebaseContext: CodebaseContext = analyzeCodebase(cwd, {
+      selfCompile: selfCompile ?? false,
+    });
 
     // Set context on agents that benefit from grounding
     this.intentAgent.setCodebaseContext(codebaseContext);
