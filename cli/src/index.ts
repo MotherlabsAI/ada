@@ -19,6 +19,13 @@ const args = process.argv.slice(2);
 const command = args[0];
 const flags = new Set(args.filter((a) => a.startsWith("--")));
 
+/** Extract --out <dir> value from args, returns undefined if not present */
+function extractOutDir(): string | undefined {
+  const idx = args.indexOf("--out");
+  const val = args[idx + 1];
+  return idx !== -1 && val && !val.startsWith("--") ? val : undefined;
+}
+
 // ─── Interactive welcome screen ────────────────────────────────────────────────
 // When `ada` or `ada compile` is invoked without an intent argument,
 // renders the Ink welcome screen and waits for user to type + submit intent.
@@ -45,10 +52,12 @@ async function runCompile(intentFromArgs: string): Promise<void> {
     console.error("  no intent provided — exiting.");
     process.exit(1);
   }
+  const outDir = extractOutDir();
   await initCommand(intent, {
     noExecute: flags.has("--no-execute"),
     amend: flags.has("--amend"),
     selfCompile: flags.has("--self"),
+    ...(outDir !== undefined ? { outDir } : {}),
   });
 }
 
@@ -110,6 +119,8 @@ async function main(): Promise<void> {
                              --no-execute   Write config only, skip Claude spawn
                              --amend        Extend existing blueprint (reads .ada/state.json)
                              --self         Self-compilation mode — scan Ada's own packages
+                             --out <dir>    Write output to <dir> instead of cwd (prevents
+                                            stomping project CLAUDE.md on self-compile)
 
   Other commands:
     ada scan                 Show what Ada sees in this codebase before compiling

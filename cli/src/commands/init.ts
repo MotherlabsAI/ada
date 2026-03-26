@@ -30,6 +30,13 @@ export interface InitOptions {
   readonly amend?: boolean;
   /** When true, Ada is compiling itself — CTX scans Ada's own packages intentionally. */
   readonly selfCompile?: boolean;
+  /**
+   * Redirect compilation output to this directory instead of cwd.
+   * Used by self-compile to avoid stomping the project's own CLAUDE.md,
+   * settings.json, and hooks/ when Ada compiles herself.
+   * Example: --out .ada/self/latest
+   */
+  readonly outDir?: string;
 }
 
 // ─── Stage summary derivation ─────────────────────────────────────────────────
@@ -1023,7 +1030,10 @@ export async function initCommand(
     renderer.onArtifactsWritten(artifactEntries);
 
     // Persist state with fallback
-    const targetDir = process.cwd();
+    const targetDir = options?.outDir
+      ? path.resolve(options.outDir)
+      : process.cwd();
+    if (options?.outDir) fs.mkdirSync(targetDir, { recursive: true });
     const stateDir = path.join(targetDir, ".ada");
     fs.mkdirSync(stateDir, { recursive: true });
     const checkpoint = {
@@ -1056,7 +1066,10 @@ export async function initCommand(
     return;
   }
 
-  const targetDir = process.cwd();
+  const targetDir = options?.outDir
+    ? path.resolve(options.outDir)
+    : process.cwd();
+  if (options?.outDir) fs.mkdirSync(targetDir, { recursive: true });
   const acceptOptions: import("@ada/config-writer").WriteConfigOptions =
     finalResult.pipelineState.persona
       ? { domainContext: finalResult.pipelineState.persona }
