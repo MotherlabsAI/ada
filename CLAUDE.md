@@ -10,6 +10,10 @@
 
 An ENT-stage integration system for the Ada semantic compiler that loads a 10-component blueprint registry, maps components to 8 workspace packages (resolving the C3 ordinal-3 assignment gap), extracts entities into an EntityMap, validates three-hop provenance chains, evaluates the ENT gate, and unblocks the stalled pipeline run ML.ENT.e80e3c97/v1 — all while maintaining codebase integrity (TypeScript compilation, test passage, zero regressions).
 
+## Theoretical Foundation
+
+**Read `docs/FOUNDATION.md` before making any architectural decision.** It explains why the pipeline has the structure it does — not as design choices, but as entailments from a single primitive. Every stage corresponds to a specific structural operation. Changes that don't correspond to a genuine entailment are overhead, not architecture.
+
 ## Working Principles
 
 - Read this file fully before doing anything
