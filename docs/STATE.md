@@ -232,7 +232,7 @@ The hook looks for patterns like `name` in the tool arguments. It does NOT evalu
 
 **Status:** `[SOLID]` as a persistence mechanism.
 
-**MCP tools (19 tools across 15 tool files — all real implementations):**
+**MCP tools (22 tools across 16 tool files — all real implementations):**
 
 Read-only (world model access):
 
@@ -250,6 +250,8 @@ Write / feedback loop:
 - `ada.propose_agent` — queues agent proposal. `[SOLID]`
 - `ada.propose_skill` — writes to `.ada/skill-proposals.json`. `[SOLID]`
 - `ada.extract_skills` — reads session log, extracts repeated patterns, writes to `.ada/skill-candidates.json`. `[SOLID]`
+- `ada.report_implementation_decision` — records a decision Claude Code made that differs from blueprint; writes to `.ada/session-log.jsonl`. `[SOLID]`
+- `ada.report_gap` — records a gap Claude Code discovered during implementation; queued for review. `[SOLID]`
 
 Verification:
 
@@ -413,26 +415,26 @@ As Claude Code's context fills with code, CLAUDE.md's instructions compress unde
 
 ## Known Gaps Summary
 
-| Gap                                                    | Severity | Status                                                                   |
-| ------------------------------------------------------ | -------- | ------------------------------------------------------------------------ |
-| Blueprint missing file tree                            | High     | **CLOSED** — BLD stage derives file tree per component                   |
-| Blueprint missing tech stack resolution                | High     | **CLOSED** — BLD stage selects stack preset                              |
-| Blueprint missing dependency manifest                  | High     | **CLOSED** — BLD stage derives deps + devDeps                            |
-| Blueprint missing acceptance criteria                  | High     | **CLOSED** — BLD stage derives one criterion per BC                      |
-| PER stakeholder vocabulary not written to agents       | High     | config-writer agents.ts: add ubiquitousLanguage section                  |
-| SYN openQuestions/resolvedConflicts not surfaced       | Medium   | Post-compile summary + CLAUDE.md                                         |
-| SYN nonFunctional requirements not in agents/CLAUDE.md | Medium   | config-writer + claude-md.ts                                             |
-| VER gaps and drifts not shown to user                  | High     | Post-compile summary                                                     |
-| GOV violations not shown to user                       | High     | Post-compile summary                                                     |
-| Invariant coverage in `ada verify` is always high      | Critical | Semantic verification needed                                             |
-| Hook effectiveness unmeasured                          | Critical | Controlled experiment needed                                             |
-| No Claude Code → Ada feedback loop                     | High     | **CLOSED** — `propose_amendment`, session log (Phase 1)                  |
-| Workflow step→context assignment is keyword matching   | Medium   | Better bounded context resolution                                        |
-| No per-stage targeted recompilation on ITERATE         | Medium   | Stage-targeted rerun capability                                          |
-| Agent description is low-selectivity                   | Low      | Richer invocation descriptions                                           |
-| --amend stability untested at scale                    | Medium   | Multiple amend cycles on real projects                                   |
-| BUILD.md not referenced in CLAUDE.md template          | Low      | Add pointer to BUILD.md in config-writer claude-md.ts                    |
-| `@ada/ent` not wired into main compiler pipeline       | Medium   | Standalone harness on synthetic fixtures; `engine.ts` uses `EntityAgent` |
+| Gap                                                    | Severity | Status                                                                                                             |
+| ------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| Blueprint missing file tree                            | High     | **CLOSED** — BLD stage derives file tree per component                                                             |
+| Blueprint missing tech stack resolution                | High     | **CLOSED** — BLD stage selects stack preset                                                                        |
+| Blueprint missing dependency manifest                  | High     | **CLOSED** — BLD stage derives deps + devDeps                                                                      |
+| Blueprint missing acceptance criteria                  | High     | **CLOSED** — BLD stage derives one criterion per BC                                                                |
+| PER stakeholder vocabulary not written to agents       | High     | config-writer agents.ts: add ubiquitousLanguage section                                                            |
+| SYN openQuestions/resolvedConflicts not surfaced       | Medium   | Post-compile summary + CLAUDE.md                                                                                   |
+| SYN nonFunctional requirements not in agents/CLAUDE.md | Medium   | config-writer + claude-md.ts                                                                                       |
+| VER gaps and drifts not shown to user                  | High     | Post-compile summary                                                                                               |
+| GOV violations not shown to user                       | High     | Post-compile summary                                                                                               |
+| Invariant coverage in `ada verify` is always high      | Critical | Semantic verification needed                                                                                       |
+| Hook effectiveness unmeasured                          | Critical | Controlled experiment needed                                                                                       |
+| No Claude Code → Ada feedback loop                     | High     | **CLOSED** — `propose_amendment`, `report_implementation_decision`, `report_gap`, session log, `review-amendments` |
+| Workflow step→context assignment is keyword matching   | Medium   | Better bounded context resolution                                                                                  |
+| No per-stage targeted recompilation on ITERATE         | Medium   | Stage-targeted rerun capability                                                                                    |
+| Agent description is low-selectivity                   | Low      | Richer invocation descriptions                                                                                     |
+| --amend stability untested at scale                    | Medium   | Multiple amend cycles on real projects                                                                             |
+| BUILD.md not referenced in CLAUDE.md template          | Low      | Add pointer to BUILD.md in config-writer claude-md.ts                                                              |
+| `@ada/ent` not wired into main compiler pipeline       | Medium   | Standalone harness on synthetic fixtures; `engine.ts` uses `EntityAgent`                                           |
 
 ---
 
