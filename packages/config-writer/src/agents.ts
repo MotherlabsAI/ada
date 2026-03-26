@@ -332,6 +332,12 @@ export function componentsToAgents(
         if (s.fearSet.length > 0) {
           bodyLines.push(`  - Fears: ${s.fearSet.join(", ")}`);
         }
+        const stakeholderVocab = Object.entries(s.vocabulary ?? {});
+        if (stakeholderVocab.length > 0) {
+          bodyLines.push(
+            `  - Vocabulary: ${stakeholderVocab.map(([t, d]) => `"${t}" = ${d}`).join("; ")}`,
+          );
+        }
       }
       bodyLines.push("");
     }
