@@ -13,6 +13,7 @@ import { configCommand } from "./commands/config.js";
 import { hookCommand } from "./commands/hook.js";
 import { reviewSkillsCommand } from "./commands/review-skills.js";
 import { reviewAmendmentsCommand } from "./commands/review-amendments.js";
+import { headlessCommand } from "./commands/headless.js";
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -88,6 +89,11 @@ async function main(): Promise<void> {
     case "scan":
       await scanCommand();
       break;
+    case "compile-headless": {
+      const positional = args.slice(1).filter((a) => !a.startsWith("--"));
+      await headlessCommand(positional);
+      break;
+    }
     case "mcp":
       await mcpCommand();
       break;
@@ -112,6 +118,8 @@ async function main(): Promise<void> {
     ada resume <id>          Resume from checkpoint
     ada review-amendments    Review and apply blueprint amendment queue
     ada review-skills        Review and approve extracted skill candidates
+    ada compile-headless "<intent>" [dir]
+                             Headless compile — no UI, JSON to stdout
     ada mcp                  Start MCP spec authority server (stdio)
 `);
       break;

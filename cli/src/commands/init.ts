@@ -17,6 +17,7 @@ import { writeConfigGraph } from "@ada/config-writer";
 import { writeWorldModel } from "../world-model.js";
 import { AdaStorage } from "@ada/storage";
 import { createCompileRenderer, STAGE_ORDER } from "../ui/terminal.js";
+import type { CompileRenderer } from "../ui/terminal.js";
 import type { ArtifactEntry } from "../ui/artifact-list.js";
 import { glyphs } from "../ui/design-system.js";
 import {
@@ -126,6 +127,56 @@ function wrapText(text: string, width: number, indent: string): string {
   }
   if (current !== indent) lines.push(current);
   return lines.join("\n");
+}
+
+// ─── Plain-text renderer for non-TTY environments ────────────────────────────
+// Used when stdin is not a TTY (CI, piped, subprocess). Ink requires raw mode
+// which is unavailable in these environments.
+
+function createPlainTextRenderer(): CompileRenderer {
+  const total = STAGE_ORDER.length;
+  const stageIndex = new Map<CompilerStageCode, number>(
+    STAGE_ORDER.map((s, i) => [s, i + 1] as [CompilerStageCode, number]),
+  );
+
+  return {
+    onStageStart(stage) {
+      const n = stageIndex.get(stage) ?? "?";
+      process.stdout.write(`[${n}/${total}] ${stage} ...\n`);
+    },
+    onStageToken(_stage, _token) {
+      // suppress token stream in headless mode
+    },
+    onStageCrystallize(_stage, _entropy, _elapsed) {
+      // no-op
+    },
+    onStageComplete(stage, summary, _entropy, _elapsed, _artifact) {
+      const n = stageIndex.get(stage) ?? "?";
+      process.stdout.write(`[${n}/${total}] ${stage} ✓  ${summary}\n`);
+    },
+    onGovernorDecision(decision, gates) {
+      process.stdout.write(
+        `GOV: ${decision.decision}  confidence: ${(decision.confidence * 100).toFixed(0)}%  gates: ${gates.passed}/${gates.total}\n`,
+      );
+    },
+    onIteration(count) {
+      process.stdout.write(`--- iteration ${count} ---\n`);
+    },
+    onArtifactsWritten(artifacts) {
+      process.stdout.write(`\nartifacts written:\n`);
+      for (const a of artifacts) {
+        if (a.written) {
+          process.stdout.write(
+            `  ${a.path}${a.detail ? `  (${a.detail})` : ""}\n`,
+          );
+        }
+      }
+      process.stdout.write("\n");
+    },
+    unmount() {
+      // no-op
+    },
+  };
 }
 
 async function runCompileSummary(
@@ -663,10 +714,16 @@ export async function initCommand(
   // readline and Ink never compete for the terminal at the same time.
   const enrichedIntent = await runElicitationPrePhase(enrichableIntent);
 
-  // Clear screen before mounting the Ink compilation UI
-  process.stdout.write("\x1B[2J\x1B[H");
-
-  const renderer = createCompileRenderer(runId);
+  // Choose renderer based on TTY availability
+  // Non-TTY (CI, piped, subprocess): plain-text progress to stdout
+  // TTY (interactive terminal): Ink UI with animations
+  let renderer: CompileRenderer;
+  if (process.stdin.isTTY) {
+    process.stdout.write("\x1B[2J\x1B[H");
+    renderer = createCompileRenderer(runId);
+  } else {
+    renderer = createPlainTextRenderer();
+  }
   let currentIntent = enrichedIntent;
   let iterationCount = 0;
   let finalResult: import("@ada/compiler").CompileResult | null = null;
@@ -1014,7 +1071,9 @@ export async function initCommand(
   await runCompileSummary(finalResult, intent);
 
   // ── Post-run Q&A — Ada answers questions before spawning Claude Code ───────
-  await runQASession(finalResult);
+  if (process.stdin.isTTY) {
+    await runQASession(finalResult);
+  }
 
   // ── Auto-spawn Claude Code ─────────────────────────────────────────────────
   if (options.noExecute) {
