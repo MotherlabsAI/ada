@@ -30,6 +30,7 @@ import {
   enterDelegation,
   exitDelegation,
 } from "./tools/get-contract.js";
+import { reportImplementationDecision, reportGap } from "./tools/feedback.js";
 
 export async function startServer(): Promise<void> {
   const server = new Server(
@@ -362,6 +363,32 @@ export async function startServer(): Promise<void> {
           },
         },
       },
+      {
+        name: "ada.report_implementation_decision",
+        description:
+          "Report when Claude Code makes an implementation decision that deviates from the blueprint. Stored in .ada/feedback/ and injected into the next 'ada compile --amend' run.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            componentName: { type: "string" as const },
+            decision: { type: "string" as const },
+            rationale: { type: "string" as const },
+          },
+          required: ["componentName", "decision", "rationale"],
+        },
+      },
+      {
+        name: "ada.report_gap",
+        description:
+          "Report when the blueprint is missing something needed for implementation. Stored in .ada/feedback/ and injected into the next 'ada compile --amend' run.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            description: { type: "string" as const },
+          },
+          required: ["description"],
+        },
+      },
     ],
   }));
 
@@ -535,6 +562,24 @@ export async function startServer(): Promise<void> {
       }
       case "ada.get_world_model": {
         const r = getWorldModel(args["stage"] as string | undefined);
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.report_implementation_decision": {
+        const r = reportImplementationDecision(
+          args["componentName"] as string,
+          args["decision"] as string,
+          args["rationale"] as string,
+        );
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.report_gap": {
+        const r = reportGap(args["description"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,

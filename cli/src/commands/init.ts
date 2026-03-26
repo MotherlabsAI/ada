@@ -728,6 +728,50 @@ export async function initCommand(
     } catch {
       // no amendments dir — fine
     }
+
+    // ─── Amend mode: inject feedback records (.ada/feedback/) ──────────────
+    const feedbackDir = path.join(process.cwd(), ".ada", "feedback");
+    try {
+      const feedbackRecords = fs
+        .readdirSync(feedbackDir)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .map((f) => {
+          try {
+            return JSON.parse(
+              fs.readFileSync(path.join(feedbackDir, f), "utf8"),
+            ) as Record<string, unknown>;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean) as Record<string, unknown>[];
+
+      if (feedbackRecords.length > 0) {
+        const feedbackText = feedbackRecords
+          .map((r) => {
+            if (r["type"] === "implementation_decision") {
+              return `[decision:${r["componentName"]}] ${r["decision"]}\nRationale: ${r["rationale"]}`;
+            }
+            if (r["type"] === "gap") {
+              return `[gap] ${r["description"]}`;
+            }
+            return null;
+          })
+          .filter(Boolean)
+          .join("\n\n");
+
+        if (feedbackText) {
+          enrichableIntent =
+            `${enrichableIntent}\n\nImplementation feedback to incorporate:\n\n${feedbackText}`.trim();
+          console.error(
+            `  incorporating ${feedbackRecords.length} feedback record(s)\n`,
+          );
+        }
+      }
+    } catch {
+      // no feedback dir — fine
+    }
   }
 
   // ─── Elicitation pre-phase ───────────────────────────────────────────────
