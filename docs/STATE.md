@@ -70,8 +70,8 @@
 
 **Edges:**
 
-- `[GAP]` Stakeholder vocabulary and fearSet are generated but **never written to agent files**. Claude Code never sees them. The stakeholder data informs ENT/PRO downstream within the pipeline but does not persist to stationary context.
-- `[GAP]` ubiquitousLanguage map is generated but not injected into agent files as canonical terminology. This is the most important output of PER for Claude Code — the terms that must be used consistently — and it goes nowhere.
+- `[SOLID]` Stakeholder vocabulary (per-stakeholder `vocabulary` dict), `knowledgeBase`, `blindSpots`, and `fearSet` are all written to agent files under the `## Stakeholders` section. Closed 2026-03-26.
+- `[SOLID]` `ubiquitousLanguage` map is written to agent files under `## Domain Vocabulary` section with the instruction "Use these exact terms when naming variables, types, and functions." Closed 2026-03-26.
 - `[SHALLOW]` Domain naming is single-attempt. If the INT stage produced a domain description that doesn't match the actual user domain, PER inherits that error without correction.
 
 ---
@@ -421,7 +421,7 @@ As Claude Code's context fills with code, CLAUDE.md's instructions compress unde
 | Blueprint missing tech stack resolution                | High     | **CLOSED** — BLD stage selects stack preset                                                                        |
 | Blueprint missing dependency manifest                  | High     | **CLOSED** — BLD stage derives deps + devDeps                                                                      |
 | Blueprint missing acceptance criteria                  | High     | **CLOSED** — BLD stage derives one criterion per BC                                                                |
-| PER stakeholder vocabulary not written to agents       | High     | config-writer agents.ts: add ubiquitousLanguage section                                                            |
+| PER stakeholder vocabulary not written to agents       | High     | **CLOSED** — ubiquitousLanguage + per-stakeholder vocabulary now in agent files (2026-03-26)                       |
 | SYN openQuestions/resolvedConflicts not surfaced       | Medium   | Post-compile summary + CLAUDE.md                                                                                   |
 | SYN nonFunctional requirements not in agents/CLAUDE.md | Medium   | config-writer + claude-md.ts                                                                                       |
 | VER gaps and drifts not shown to user                  | High     | Post-compile summary                                                                                               |

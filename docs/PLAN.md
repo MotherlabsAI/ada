@@ -1,7 +1,7 @@
 # PLAN.md — Ada Implementation Plan
 
 **Authority:** phased implementation plan derived from docs/DIRECTION.md and docs/STATE.md gap audit.
-**Current date:** 2026-03-24
+**Current date:** 2026-03-26
 **Rule:** Each phase must be complete before the next begins. Phase 0 is a prerequisite for everything.
 
 ---
