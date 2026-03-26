@@ -18,6 +18,7 @@ import {
   getRuntimeState,
   createCheckpoint,
   rollbackTo,
+  setTaskStatus,
 } from "./tools/runtime-state.js";
 import { getMacroPlan } from "./tools/macro-plan.js";
 import { extractSkills, proposeSkill } from "./tools/skill-extraction.js";
@@ -313,6 +314,33 @@ export async function startServer(): Promise<void> {
         inputSchema: { type: "object" as const, properties: {} },
       },
       {
+        name: "ada.set_task_status",
+        description:
+          "Explicitly marks a blueprint component as in_progress or complete. Used by micro executors to track their own work. Updates are merged with file-inference so the macro plan reflects actual execution state. Call when starting a component (in_progress) and when finishing (complete).",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            componentName: {
+              type: "string" as const,
+              description:
+                "Exact component name from the blueprint architecture",
+            },
+            status: {
+              type: "string" as const,
+              enum: ["in_progress", "complete"],
+              description: "New status for the component",
+            },
+            evidence: {
+              type: "array" as const,
+              items: { type: "string" as const },
+              description:
+                "File paths or descriptions that constitute evidence of completion",
+            },
+          },
+          required: ["componentName", "status", "evidence"],
+        },
+      },
+      {
         name: "ada.get_runtime_state",
         description:
           "Returns the current world-state snapshot: sessions, tool calls, component execution status, environment facts, and checkpoints. Use when you need to understand what has actually been done vs what was planned.",
@@ -534,6 +562,17 @@ export async function startServer(): Promise<void> {
       }
       case "ada.get_macro_plan": {
         const r = getMacroPlan();
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.set_task_status": {
+        const r = setTaskStatus(
+          args["componentName"] as string,
+          args["status"] as "in_progress" | "complete",
+          (args["evidence"] as string[]) ?? [],
+        );
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,

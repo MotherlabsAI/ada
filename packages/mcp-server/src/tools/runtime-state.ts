@@ -108,6 +108,7 @@ export function buildWorldState(): WorldState {
   const entries = readSessionLog(sessionLogPath(projectDir));
   const blueprint = loadBlueprint();
   const manifest = loadManifest();
+  const explicitStatuses = loadTaskStatuses(projectDir);
 
   // ── Session metrics ──────────────────────────────────────────────────────
   const sessionIds = new Set(entries.map((e) => e.session).filter(Boolean));
@@ -151,14 +152,33 @@ export function buildWorldState(): WorldState {
         return pl.includes(nameLower) || pl.includes(contextLower);
       });
 
-      const status: ComponentExecutionStatus["status"] =
-        matchingPaths.length > 0 ? "inferred_complete" : "pending";
+      // Explicit status takes precedence over inferred
+      const explicit = explicitStatuses.find(
+        (s) => s.componentName.toLowerCase() === comp.name.toLowerCase(),
+      );
+
+      let status: ComponentExecutionStatus["status"];
+      let evidence: string[];
+
+      if (explicit?.status === "complete") {
+        status = "inferred_complete"; // "complete" maps to inferred_complete for display
+        evidence = [...explicit.evidence, ...matchingPaths].slice(0, 5);
+      } else if (explicit?.status === "in_progress") {
+        status = "in_progress";
+        evidence = [...explicit.evidence, ...matchingPaths].slice(0, 5);
+      } else if (matchingPaths.length > 0) {
+        status = "inferred_complete";
+        evidence = matchingPaths.slice(0, 5);
+      } else {
+        status = "pending";
+        evidence = [];
+      }
 
       components.push({
         name: comp.name,
         boundedContext: comp.boundedContext,
         status,
-        evidence: matchingPaths.slice(0, 5),
+        evidence,
       });
     }
   }
@@ -204,6 +224,78 @@ export function buildWorldState(): WorldState {
     delegationDepth: activeDelegations.length,
     activeDelegations,
   };
+}
+
+// ─── Explicit task status ─────────────────────────────────────────────────────
+
+interface ExplicitTaskStatus {
+  readonly componentName: string;
+  readonly status: "in_progress" | "complete";
+  readonly evidence: readonly string[];
+  readonly updatedAt: number;
+}
+
+function taskStatusPath(projectDir: string): string {
+  return path.join(projectDir, ".ada", "task-status.json");
+}
+
+function loadTaskStatuses(projectDir: string): ExplicitTaskStatus[] {
+  try {
+    const raw = fs.readFileSync(taskStatusPath(projectDir), "utf8");
+    return JSON.parse(raw) as ExplicitTaskStatus[];
+  } catch {
+    return [];
+  }
+}
+
+function saveTaskStatuses(
+  projectDir: string,
+  statuses: ExplicitTaskStatus[],
+): void {
+  fs.mkdirSync(path.join(projectDir, ".ada"), { recursive: true });
+  fs.writeFileSync(
+    taskStatusPath(projectDir),
+    JSON.stringify(statuses, null, 2),
+    "utf8",
+  );
+}
+
+export function setTaskStatus(
+  componentName: string,
+  status: "in_progress" | "complete",
+  evidence: string[],
+): { content: string; isError: boolean } {
+  const projectDir = getProjectDir();
+
+  try {
+    const statuses = loadTaskStatuses(projectDir);
+    const record: ExplicitTaskStatus = {
+      componentName,
+      status,
+      evidence,
+      updatedAt: Date.now(),
+    };
+
+    // Replace existing record for this component or append
+    const idx = statuses.findIndex((s) => s.componentName === componentName);
+    const updated =
+      idx >= 0
+        ? statuses.map((s, i) => (i === idx ? record : s))
+        : [...statuses, record];
+
+    saveTaskStatuses(projectDir, updated);
+
+    const evidenceNote =
+      evidence.length > 0 ? `\nEvidence: ${evidence.join(", ")}` : "";
+
+    return {
+      content: `Task status updated: ${componentName} → ${status}${evidenceNote}\nCall ada.get_macro_plan to see updated execution plan.`,
+      isError: false,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { content: `Failed to set task status: ${message}`, isError: true };
+  }
 }
 
 // ─── Checkpoint management ────────────────────────────────────────────────────
