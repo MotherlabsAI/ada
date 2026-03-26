@@ -17,8 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "hooks/post-tool-audit.sh",
-            "timeout": 5
+            "command": "hooks/post-tool-audit.sh"
           }
         ]
       }
@@ -38,8 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "hooks/session-end.sh",
-            "timeout": 10
+            "command": "hooks/session-end.sh"
           }
         ]
       }

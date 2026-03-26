@@ -84,13 +84,40 @@ Persistent, navigable store of all compiled artifacts.
 - `.ada/state.json` — full checkpoint for MCP tools
 - Non-git repos fall back to `.ada/artifacts/` file-based storage
 
-### MCP authority server `[LIVE as of Phase 3]`
+### MCP authority server `[LIVE]`
 
-Three tools available in every spawned Claude Code session:
+19 tools available in every Claude Code session across 5 categories:
 
-- `ada.query_constraints(scope)` — entity invariants + workflow steps by domain scope
-- `ada.check_drift(description)` — keyword-heuristic alignment check against compiled intent
-- `ada.get_world_model(stage?)` — read manifest or any stage artifact
+**World model access (read-only):**
+
+- `ada.get_blueprint` — full compiled blueprint
+- `ada.get_invariants` — entity invariants by scope
+- `ada.get_workflow` — workflow definitions by name
+- `ada.get_world_model(stage?)` — any stage artifact
+- `ada.query_constraints(scope)` — invariants + workflows by domain scope `[HEURISTIC]`
+- `ada.check_drift(description)` — alignment check against compiled intent `[HEURISTIC]`
+
+**Feedback loop (write):**
+
+- `ada.propose_amendment` — queue a blueprint amendment for human review
+- `ada.propose_agent` — propose a new agent definition
+- `ada.propose_skill` — propose a new reusable skill
+- `ada.extract_skills` — extract repeated patterns from session log as skill candidates
+- `ada.log_drift` — record a drift event to the provenance chain
+
+**Verification:**
+
+- `ada.verify` (static) — string-match coverage against blueprint
+- `ada.verify` (5-layer stack) — structural, execution, policy, outcome, provenance layers
+
+**Runtime / governance:**
+
+- `ada.get_runtime_state` — current world-state snapshot from session log
+- `ada.get_macro_plan` — topologically sorted execution plan from blueprint
+- `ada.checkpoint` — git stash + checkpoint record
+- `ada.rollback_to(checkpoint)` — git stash pop + checkpoint cleanup
+- `ada.get_contract(context)` — delegation contract for a bounded context
+- `ada.enter_delegation` / `ada.exit_delegation` — manage delegation stack
 
 ### Drift detection `[LIVE — static]`
 
@@ -118,9 +145,47 @@ User asks anything about the compiled blueprint.
 Ada answers using Anthropic API with full blueprint as system prompt.
 Empty enter proceeds to spawn.
 
+### Feedback loop `[LIVE]`
+
+Claude Code actions feed back into Ada's world model during and after every session.
+
+- `hooks/post-tool-audit.sh` — every Bash/Edit/Write/Read/MultiEdit call appended to `.ada/session-log.jsonl`
+- `hooks/pre-compact.sh` — checkpoint written to stdout before context compaction; Ada state survives
+- `hooks/session-end.sh` — structured session summary written to `.ada/sessions/{id}.json`
+- `ada.propose_amendment` MCP tool — Claude can flag when blueprint needs updating; queued for human review
+- `ada review-amendments` CLI — interactive review of queued amendments; approve triggers `ada compile --amend`
+- `ada review-skills` CLI — interactive review of extracted skill candidates; approved skills written to `.claude/skills/`
+
+### Runtime governance `[LIVE]`
+
+Ada tracks execution state and can roll back to any checkpoint.
+
+- `ada.get_runtime_state` — reads session log + checkpoint chain, returns world-state snapshot
+- `ada.get_macro_plan` — topological sort from blueprint with completion inference from session log
+- `ada.checkpoint` — `git stash push` + checkpoint record; any significant state is restorable
+- `ada.rollback_to(checkpoint)` — `git stash pop` + cleans all later checkpoints
+- `ada.enter_delegation` / `ada.exit_delegation` — delegation frame management for bounded agent spawning
+- `ada.get_contract(context)` — reads delegation contract for a bounded context
+
 ---
 
 ## In Development `[BUILDING]`
+
+### Execution orchestrator
+
+Coordinates macro/micro execution cycle. Reads compiled blueprint, spawns bounded micro executors with delegation contracts, routes outputs to the independent verifier, updates world-state. Not yet started.
+
+### Micro executor + local repair
+
+Bounded task execution per component under a delegation contract. Handles failures locally with a defined retry budget before escalating to the macro planner. Not yet started.
+
+### Contract compiler
+
+Compiles blueprint components into delegation contracts automatically (one per bounded context). Currently contracts must be written by hand. Not yet started.
+
+### Uncertainty tracking
+
+Per-fact confidence scores in world-state. Sourced facts (from verified tool outputs) carry higher confidence than inferred facts (LLM-derived). Feeds into macro planner decisions. Not yet started.
 
 ### Ongoing drift authority (`ada watch`)
 
