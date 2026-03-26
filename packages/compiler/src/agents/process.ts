@@ -76,8 +76,18 @@ YOUR TASK:
 4. temporalRelation must be one of: enables, requires, concurrent, compensates, guards
 5. failureModes class must be one of: precondition, action, postcondition
 
-Think briefly about the workflows, then output ONLY a JSON object inside a \`\`\`json fence.
-Do NOT write Hoare triples as prose. Do NOT draw diagrams. Do NOT write text after the JSON.
+First, think out loud about the behavior of this system.
+
+Walk through each workflow step by step:
+  ◈ Name the workflow and its trigger
+  ∴ Show the Hoare triple for each step — precondition, action, postcondition
+  ✗ "If this postcondition fails, [consequence] — recovery: [handler]"
+Find the edge cases. What happens when things break? What's the rollback?
+For stateful entities, draw the lifecycle: what transitions exist and what guards them?
+Use ✓ for steps you're certain about, ✗ for risks, ∴ for things you derived.
+
+The reasoning above is for the user to read. The JSON below is for the system.
+Output ONLY a JSON object inside a \`\`\`json fence. Do NOT write text after the JSON.
 
 \`\`\`json
 {

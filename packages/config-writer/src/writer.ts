@@ -7,6 +7,8 @@ import { componentsToAgents } from "./agents.js";
 import { workflowsToSkills } from "./skills.js";
 import { invariantsToHooks } from "./hooks.js";
 import { buildSettings } from "./settings.js";
+import { blueprintToContracts } from "./contracts.js";
+import { buildContractToBuildMD } from "./build-md.js";
 import type { ConfigGraph } from "./types.js";
 
 export interface WriteConfigOptions {
@@ -39,6 +41,14 @@ export function writeConfigGraph(
   );
   const claudeMdPath = path.join(targetDir, "CLAUDE.md");
   fs.writeFileSync(claudeMdPath, claudeMdContent, "utf8");
+
+  // 1b. BUILD.md — only present when BLD stage ran (GOV ACCEPT)
+  let buildMdPath: string | null = null;
+  if (blueprint.build) {
+    const buildMdContent = buildContractToBuildMD(blueprint.build);
+    buildMdPath = path.join(targetDir, "BUILD.md");
+    fs.writeFileSync(buildMdPath, buildMdContent, "utf8");
+  }
 
   // 2. Agent .md files
   const agents = componentsToAgents(blueprint, options?.domainContext);
@@ -157,7 +167,17 @@ export function writeConfigGraph(
     mode: 0o755,
   });
 
-  // 5. settings.json
+  // 5. Delegation contracts — .claude/contracts/{context}.json
+  const contractFiles = blueprintToContracts(blueprint);
+  const writtenContracts: string[] = [];
+  for (const cf of contractFiles) {
+    const cfPath = path.join(targetDir, cf.path);
+    fs.mkdirSync(path.dirname(cfPath), { recursive: true });
+    fs.writeFileSync(cfPath, JSON.stringify(cf.contract, null, 2), "utf8");
+    writtenContracts.push(cfPath);
+  }
+
+  // 6. settings.json
   const settings = buildSettings(hooks);
   const settingsPath = path.join(targetDir, ".claude", "settings.json");
   fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
@@ -181,11 +201,13 @@ export function writeConfigGraph(
 
   return {
     claudeMd: claudeMdPath,
+    buildMd: buildMdPath,
     agents: writtenAgents,
     skills: writtenSkills,
     hooks: writtenHooks,
     settings: settingsPath,
     mcpJson: mcpJsonPath,
+    contracts: writtenContracts,
     postcode,
   };
 }

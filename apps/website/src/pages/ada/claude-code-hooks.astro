@@ -54,7 +54,7 @@ const faqSchema = {
       name: 'How many hooks does a real project need?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'A non-trivial project with multiple bounded contexts, file constraints, scope boundaries, and behavioral guards typically needs dozens to hundreds of hooks. Ada compiles 247 hooks from a structured intent specification — one for each constraint that needs structural enforcement rather than just advisory instruction. Writing them by hand is not practical at that scale.',
+        text: 'A non-trivial project with multiple bounded contexts, file constraints, scope boundaries, and behavioral guards typically needs dozens to hundreds of hooks. Ada compiles pre-built hooks from a structured intent specification — one for each constraint that needs structural enforcement rather than just advisory instruction. Writing them by hand is not practical at that scale.',
       },
     },
   ],
@@ -358,8 +358,8 @@ exit 0</code></pre>
           not things it isn't supposed to block.
         </p>
         <p>
-          Ada's <a href="/ada/how-ada-works" class="inline-link">7-stage compilation pipeline</a>
-          produces 247 hooks from a structured intent specification. They aren't
+          Ada's <a href="/ada/how-ada-works" class="inline-link">8-stage compilation pipeline</a>
+          produces pre-built hooks from a structured intent specification. They aren't
           written by hand — they're compiled. The PRO stage identifies what needs
           enforcement. The SYN stage generates the hook scripts. The GOV stage
           verifies coherence before writing to disk.
@@ -367,8 +367,8 @@ exit 0</code></pre>
 
         <div class="stat-block">
           <div class="stat-item">
-            <span class="stat-num">247</span>
-            <span class="stat-label">hooks compiled from one elicitation session</span>
+            <span class="stat-num">1</span>
+            <span class="stat-label">elicitation session → full hook suite</span>
           </div>
           <div class="stat-item">
             <span class="stat-num">0</span>
@@ -446,7 +446,7 @@ exit 0</code></pre>
             <p class="faq-a">
               A non-trivial project with multiple bounded contexts, file constraints,
               scope boundaries, and behavioral guards typically needs dozens to hundreds
-              of hooks. Ada compiles 247 from one structured intent session.
+              of hooks. Ada compiles a full hook suite from one structured intent session.
               Writing them by hand is not practical — and writing them reactively
               means you're capturing violations after they happen, not preventing
               them before building starts.
@@ -465,7 +465,7 @@ exit 0</code></pre>
           <code class="install-cmd">git clone https://github.com/alexrozex/ada</code>
         </div>
         <p class="trust-signal">
-          Ada compiles 247 hooks from structured intent — every constraint enforced at the tool boundary.
+          Ada compiles pre-built hooks from structured intent — every constraint enforced at the tool boundary.
         </p>
         <div class="cta-row">
           <a href="/start" class="btn-primary">Get started &rarr;</a>

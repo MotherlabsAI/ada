@@ -27,9 +27,12 @@ export interface HookScript {
 
 export interface ConfigGraph {
   readonly claudeMd: string;
+  readonly buildMd: string | null;
   readonly agents: readonly string[];
   readonly skills: readonly string[];
   readonly hooks: readonly string[];
   readonly settings: string;
+  readonly mcpJson: string;
+  readonly contracts: readonly string[];
   readonly postcode: PostcodeAddress;
 }

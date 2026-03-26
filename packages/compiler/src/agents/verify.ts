@@ -74,16 +74,28 @@ ENTITIES: ${entityCount} with ${invariantCount} invariants
 WORKFLOWS: ${workflowCount}
 OPEN QUESTIONS: ${input.blueprint.openQuestions.length}
 
-YOUR TASK: Score the blueprint against the original goals.
+YOUR TASK: Try to break this blueprint. You are adversarial — the burden of proof is on the Blueprint.
+
+First, think out loud about each goal's coverage. Write as if you're auditing the design.
+
+For each goal, ask:
+  ◈ "Is there a component that addresses this goal?"
+  ✓ "That component's postcondition is [X] — this goal is covered."
+  ✗ "No component addresses this — gap found."
+For each constraint: "How could this Blueprint violate this constraint?"
+For each invariant: "Under what conditions could this be false?"
+
+When in doubt, call it a gap. False positives (PASS when should FAIL) ship broken execution.
+False negatives (FAIL when should PASS) just cost one ITERATE loop.
 
 SCORING RULES (follow precisely):
-- Coverage: For each goal, determine if a component, workflow step, or entity addresses it. Coverage = goals addressed / total goals. A goal is "addressed" if ANY component mentions its concern OR a workflow step has a postcondition related to it. Be GENEROUS — partial coverage counts.
-- Coherence: Check if invariants contradict each other or if components have conflicting responsibilities. Coherence = 1.0 minus (contradictions found / total invariants). Most blueprints have high coherence (0.85+) unless there are actual contradictions.
+- Coverage: goals addressed with traceable postconditions / total goals. Partial counts.
+- Coherence: 1.0 minus (contradictions / total invariants). High (0.85+) unless actual contradictions exist.
 - A gap is a goal with NO component, workflow, or entity addressing it at all.
 - Drifts are cases where the blueprint addresses something NOT in the original goals.
 
-Think briefly about each goal's coverage, then output ONLY a JSON object in a \`\`\`json fence.
-Do NOT write prose after the JSON.
+The reasoning above is for the user to read. The JSON below is for the system.
+Output ONLY a JSON object in a \`\`\`json fence. Do NOT write prose after the JSON.
 
 \`\`\`json
 {

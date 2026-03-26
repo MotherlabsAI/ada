@@ -10,7 +10,8 @@ export type CompilerStageCode =
   | "PRO"
   | "SYN"
   | "VER"
-  | "GOV";
+  | "GOV"
+  | "BLD";
 
 // ─── Challenge ───
 
@@ -178,15 +179,87 @@ export interface ResolvedConflict {
   readonly authoritative: "entity" | "process";
 }
 
+export interface BlueprintScope {
+  readonly inScope: readonly string[];
+  readonly outOfScope: readonly string[];
+  readonly assumptions: readonly string[];
+}
+
+export type NonFunctionalCategory =
+  | "performance"
+  | "security"
+  | "scalability"
+  | "reliability"
+  | "maintainability"
+  | "compliance"
+  | "observability";
+
+export interface NonFunctionalRequirement {
+  readonly category: NonFunctionalCategory;
+  readonly requirement: string;
+  readonly predicate?: string; // formal predicate — generates a hook if present
+  readonly scope: string; // bounded context name, or "global"
+  readonly verification: string; // how to confirm this is met
+}
+
+// ─── Compilation Audit ───
+
+export interface CompilationAudit {
+  readonly coverageScore: number;
+  readonly coherenceScore: number;
+  readonly gatePassRate: number;
+  readonly iterationCount: number;
+  readonly governorDecision: GovernorDecisionType;
+  readonly confidence: number;
+  readonly driftCount: number;
+  readonly gapCount: number;
+  readonly violationCount: number;
+}
+
 export interface Blueprint {
   readonly summary: string;
+  readonly scope: BlueprintScope;
   readonly architecture: BlueprintArchitecture;
   readonly dataModel: EntityMap;
   readonly processModel: ProcessFlow;
-  readonly nonFunctional: readonly string[];
+  readonly nonFunctional: readonly NonFunctionalRequirement[];
   readonly openQuestions: readonly string[];
   readonly resolvedConflicts: readonly ResolvedConflict[];
   readonly challenges: readonly Challenge[];
+  readonly audit?: CompilationAudit; // set post-GOV, absent during pipeline
+  readonly build?: BuildContract; // set post-BLD, absent during pipeline
+  readonly postcode: PostcodeAddress;
+}
+
+// ─── BLD Stage — Build Contract ───
+
+export interface FileTreeNode {
+  readonly path: string; // relative to project root, e.g. "src/identity/password-hasher.ts"
+  readonly type: "file" | "directory";
+  readonly purpose: string; // one-line description of what this path contains
+  readonly componentName?: string; // which BlueprintComponent owns this file
+  readonly boundedContext?: string; // which bounded context it belongs to
+}
+
+export interface DependencySpec {
+  readonly componentName: string;
+  readonly packages: readonly string[]; // npm package names, no versions
+  readonly devPackages: readonly string[]; // dev-only npm packages
+}
+
+export interface AcceptanceCriterion {
+  readonly boundedContext: string;
+  readonly criterion: string; // "Done when [actor] can [action]"
+  readonly sourceWorkflow: string; // which workflow this was derived from
+}
+
+export interface BuildContract {
+  readonly stack: string; // e.g. "nextjs-prisma-postgres"
+  readonly stackLabel: string; // e.g. "Next.js + Prisma + PostgreSQL"
+  readonly fileTree: readonly FileTreeNode[];
+  readonly dependencies: readonly DependencySpec[];
+  readonly acceptanceCriteria: readonly AcceptanceCriterion[];
+  readonly gatePass: boolean; // true only when all fields are total (non-empty)
   readonly postcode: PostcodeAddress;
 }
 
@@ -333,6 +406,37 @@ export interface CompileResult {
   readonly iterationCount: number;
   readonly compilationRun: CompilationRun;
   readonly fallback: FallbackBlueprintResult | null;
+}
+
+// ─── Delegation Contracts ───
+
+export interface ContractScope {
+  readonly boundedContext: string;
+  readonly allowedPathGlobs: readonly string[]; // e.g. ["src/payments/**", "packages/payments/**"]
+  readonly forbiddenPathGlobs: readonly string[]; // explicit exclusions
+  readonly allowedTools: readonly string[]; // tool names permitted
+}
+
+export interface DelegationContract {
+  readonly context: string; // bounded context name — unique key
+  readonly componentName: string; // blueprint component this covers
+  readonly scope: ContractScope;
+  readonly stopConditions: readonly string[]; // when agent MUST report up, not continue
+  readonly requiredEvidence: readonly string[]; // what the agent must produce before returning
+  readonly reportingCadence: "on-completion" | "after-each-step" | "on-failure";
+  readonly maxRecursionDepth: number; // 0 = leaf, cannot spawn child agents
+  readonly inheritedPermissions: readonly string[]; // Ada permission tokens allowed
+  readonly compiledAt: number;
+  readonly blueprintPostcode: string;
+}
+
+// ─── Delegation Stack (runtime) ───
+
+export interface DelegationFrame {
+  readonly agentId: string;
+  readonly context: string;
+  readonly enteredAt: number;
+  readonly depth: number; // 0-indexed: root orchestrator is depth 0
 }
 
 // ─── Stage Complete Callback ───

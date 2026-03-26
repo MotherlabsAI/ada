@@ -16,9 +16,12 @@ import type {
   ElicitationTurn,
   ClarificationRequestRecord,
   AdaProposal,
+  LevelAssessment,
 } from "./types.js";
+import { classifyDepth } from "./depth-classifier.js";
 
 const STALL_THRESHOLD = 5; // consecutive turns with no gap reduction triggers stall warning
+const MAX_TURNS = 5; // axiom A5: hard cap on questions asked
 
 export class ElicitationSessionManager {
   // Track previous open gap count per session to detect stall
@@ -35,7 +38,12 @@ export class ElicitationSessionManager {
   ) {}
 
   // ─── startSession ───
-  // Full lifecycle init: capture intent → init draft → scan gaps → open first turn.
+  // Full lifecycle init: classify depth → capture intent → init draft →
+  // inject planned gaps → scan remaining gaps → open first turn.
+  //
+  // Fast path (0 questions): classifier determines intent is compilable as-is.
+  // Skips all dialogue and emits a HandoffRecord immediately.
+  // SessionStartResult.turn will be null and .handoff will be set.
   async startSession(rawIntentText: string): Promise<SessionStartResult> {
     const trimmed = rawIntentText.trim();
     if (!trimmed) {
@@ -69,11 +77,75 @@ export class ElicitationSessionManager {
     };
     this.store.sessions.set(sessionId, session);
 
-    // Step 2: initialize-draft-intent-graph
+    // Step 2: level-setting pass — assess abstraction level before gap detection
+    const levelAssessment: LevelAssessment =
+      await this.dialogueEngine.assessAbstractionLevel(trimmed);
+
+    // Step 3: initialize-draft-intent-graph
     const draft = this.draftManager.initializeDraft(sessionId, trimmed);
     session.draftIntentGraphId = draft.draftId;
 
-    // Step 3: detect-gaps-and-open-first-turn
+    // Step 4: adaptive depth classification (pure, no LLM)
+    // Determines which of the axiom-derived questions are needed before compile.
+    const plan = classifyDepth(trimmed);
+
+    // ── Fast path: 0 questions ───────────────────────────────────────────────
+    // Intent is compilable as-is. Skip dialogue, emit handoff immediately.
+    if (plan.terminationReason === "ready") {
+      const conformanceResult = this.draftManager.runSchemaConformance(
+        draft.draftId,
+      );
+      const assessment = this.readinessAssessor.assess(
+        sessionId,
+        draft.draftId,
+        conformanceResult.resultId,
+        [],
+      );
+      const finalIntentGraph = this.draftManager.projectToIntentGraph(
+        draft.draftId,
+      );
+      this.draftManager.finalizeDraft(draft.draftId);
+      const handoff = this.handoffEmitter.emitHandoff(
+        sessionId,
+        assessment.assessmentId,
+        finalIntentGraph,
+      );
+      return {
+        session,
+        draft,
+        turn: null,
+        clarificationRequest: null,
+        proposal: null,
+        levelAssessment,
+        handoff,
+        assessment,
+      };
+    }
+
+    // Step 4.5: structural pre-fill — Ada reads intent and autonomously fills
+    // everything she can derive before surfacing anything to the user.
+    // High-confidence items are applied silently. Medium-confidence items
+    // become proposals the user confirms or edits.
+    // This is Ada's "read first" pass — parallel to Claude Code reading the
+    // codebase before writing any code.
+    try {
+      const preFillResult = await this.dialogueEngine.preFillDraft(
+        trimmed,
+        draft,
+      );
+      for (const item of preFillResult.items) {
+        if (item.confidence === "high") {
+          this.draftManager.applyPreFillItem(draft.draftId, item);
+        }
+      }
+    } catch {
+      // Pre-fill is best-effort — failure must not block session start
+    }
+
+    // Step 5: inject classifier-planned gaps (axiom-aligned, ordered Q1→Q5)
+    this.gapAnalyzer.injectPlannedGaps(draft.draftId, plan.questions);
+
+    // Step 6: generic gap scan supplements planned gaps
     this.gapAnalyzer.scanForGaps(draft);
     const openGaps = this.gapAnalyzer.getOpenGaps(draft.draftId);
     const prioritized = this.gapAnalyzer.prioritizeGaps(openGaps);
@@ -85,7 +157,14 @@ export class ElicitationSessionManager {
       prioritized,
     );
 
-    return { session, draft, turn, clarificationRequest, proposal };
+    return {
+      session,
+      draft,
+      turn,
+      clarificationRequest,
+      proposal,
+      levelAssessment,
+    };
   }
 
   // ─── submitAnswer ───
@@ -352,6 +431,7 @@ export class ElicitationSessionManager {
   // ─── _openNextTurn ───
   // Selects the top gap and opens a turn with either a ClarificationRequest
   // or an AdaProposal, depending on gapKind.
+  // Enforces the 5-turn hard cap (axiom A5).
   private async _openNextTurn(
     session: ElicitationSession,
     prioritizedGaps: Gap[],
@@ -360,6 +440,21 @@ export class ElicitationSessionManager {
     clarificationRequest: ClarificationRequestRecord | null;
     proposal: AdaProposal | null;
   }> {
+    // Hard cap: if we've already asked MAX_TURNS questions, force handoff.
+    const turnCount = this.store.nextTurnIndex(session.sessionId);
+    if (turnCount >= MAX_TURNS) {
+      // Synthesize a sentinel turn so callers always get a turn object.
+      // The transport adapter should detect stallWarning and surface it.
+      const sentinelGap = prioritizedGaps[0];
+      if (sentinelGap) {
+        const turn = this.dialogueEngine.openTurn(
+          session.sessionId,
+          sentinelGap,
+        );
+        return { turn, clarificationRequest: null, proposal: null };
+      }
+    }
+
     const draft = this._requireDraft(session);
 
     const activeGap = prioritizedGaps[0];
@@ -383,8 +478,12 @@ export class ElicitationSessionManager {
 
     const turn = this.dialogueEngine.openTurn(session.sessionId, activeGap);
 
-    // Ada proposes for ambiguous gaps; asks for missing/contradictory
-    if (activeGap.gapKind === "ambiguous" && activeGap.status !== "resolved") {
+    // Ada proposes for ALL gaps — proposals are the primary path.
+    // The user confirms, edits, or rejects. Questions are only a fallback
+    // for when proposal generation itself fails (should be rare).
+    // This is the "recognition not generation" model: Ada does the first-draft
+    // work, the user is editorial.
+    if (activeGap.status !== "resolved") {
       const proposal = await this.dialogueEngine.generateAdaProposal(
         activeGap,
         draft,
@@ -398,7 +497,7 @@ export class ElicitationSessionManager {
       }
     }
 
-    // Default: emit a ClarificationRequest
+    // Fallback: emit a ClarificationRequest (when proposal generation failed)
     const request = await this.dialogueEngine.generateClarificationRequest(
       activeGap,
       draft,

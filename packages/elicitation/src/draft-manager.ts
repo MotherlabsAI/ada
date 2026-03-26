@@ -17,6 +17,7 @@ import type {
   DraftChallenge,
   DraftTargetField,
   SchemaConformanceResult,
+  PreFillItem,
 } from "./types.js";
 
 // ─── Surface extraction heuristics ───
@@ -114,6 +115,70 @@ export class DraftIntentGraphManager {
 
     this.store.drafts.set(draft.draftId, draft);
     return draft;
+  }
+
+  // ─── applyPreFillItem ───
+  // Applies a single pre-fill item derived by Ada's structural read pass.
+  // Items with confidence "high" are applied silently (no turn tracking).
+  // Creates items with type "derived" / source "derived" to distinguish
+  // from user-stated content.
+  applyPreFillItem(draftId: string, item: PreFillItem): void {
+    const draft = this.store.drafts.get(draftId);
+    if (!draft) throw new Error(`Draft not found: ${draftId}`);
+
+    const id = randomUUID();
+    switch (item.targetField) {
+      case "goals": {
+        const goal: DraftGoal = {
+          id,
+          description: item.value,
+          type: "derived",
+          confidence: "high",
+          sourceTurnId: null,
+        };
+        draft.goals = [...draft.goals, goal];
+        break;
+      }
+      case "constraints": {
+        const constraint: DraftConstraint = {
+          id,
+          description: item.value,
+          source: "derived",
+          confidence: "high",
+          sourceTurnId: null,
+        };
+        draft.constraints = [...draft.constraints, constraint];
+        break;
+      }
+      case "unknowns": {
+        const unknown: DraftUnknown = {
+          id,
+          description: item.value,
+          impact: "scoping",
+          confidence: "high",
+          sourceTurnId: null,
+        };
+        draft.unknowns = [...draft.unknowns, unknown];
+        break;
+      }
+      case "challenges": {
+        const challenge: DraftChallenge = {
+          id,
+          description: item.value,
+          severity: "minor",
+          resolved: false,
+          sourceTurnId: null,
+        };
+        draft.challenges = [...draft.challenges, challenge];
+        break;
+      }
+    }
+
+    draft.revisionCount += 1;
+    draft.lastModifiedAt = Date.now();
+    if (draft.status === "shell") {
+      draft.status = "draft";
+    }
   }
 
   // ─── applyMutation ───

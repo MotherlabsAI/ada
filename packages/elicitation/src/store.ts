@@ -69,7 +69,8 @@ export class ElicitationStore {
     for (const turn of this.turns.values()) {
       if (
         turn.gapId === gapId &&
-        (turn.status === "awaiting_answer" ||
+        (turn.status === "opened" ||
+          turn.status === "awaiting_answer" ||
           turn.status === "needs_clarification")
       ) {
         return turn;

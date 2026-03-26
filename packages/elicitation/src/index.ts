@@ -28,7 +28,11 @@ export type {
   TurnResult,
   LLMProposalOutput,
   LLMRequestOutput,
+  QuestionType,
 } from "./types.js";
+
+export type { PlannedQuestion, ElicitationPlan } from "./depth-classifier.js";
+export { classifyDepth } from "./depth-classifier.js";
 
 export { ElicitationStore } from "./store.js";
 export { GapAnalyzer } from "./gap-analyzer.js";

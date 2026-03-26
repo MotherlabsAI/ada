@@ -21,3 +21,23 @@ export interface AgentFileSpec {
   readonly tools: readonly string[];
   readonly path: string;
 }
+
+export interface ConstraintQueryResult {
+  readonly entities: readonly {
+    readonly name: string;
+    readonly invariants: readonly string[];
+  }[];
+  readonly workflows: readonly {
+    readonly name: string;
+    readonly steps: readonly string[];
+  }[];
+  readonly postcodes: readonly string[];
+}
+
+export interface DriftCheckResult {
+  readonly aligned: boolean;
+  readonly violations: readonly string[];
+  readonly matchedGoals: readonly string[];
+  readonly governorDecision: string;
+  readonly postcodes: readonly string[];
+}

@@ -11,6 +11,7 @@ import type {
   IterationRecord,
   ClarificationRequest,
   ClarificationAnswer,
+  PriorBlueprintContext,
 } from "@ada/compiler";
 import { writeConfigGraph } from "@ada/config-writer";
 import { writeWorldModel } from "../world-model.js";
@@ -25,6 +26,7 @@ import {
 
 export interface InitOptions {
   readonly noExecute?: boolean;
+  readonly amend?: boolean;
 }
 
 // ─── Stage summary derivation ─────────────────────────────────────────────────
@@ -79,6 +81,12 @@ function deriveSummary(stage: CompilerStageCode, ps: PipelineState): string {
         ? `${a.decision} confidence:${a.confidence.toFixed(2)}`
         : "decided";
     }
+    case "BLD": {
+      const a = ps.synthesis;
+      return a?.build
+        ? `${a.build.fileTree.filter((n) => n.type === "file").length} files, ${a.build.stack}`
+        : "contracted";
+    }
   }
 }
 
@@ -91,10 +99,188 @@ const STAGE_ARTIFACTS: Record<CompilerStageCode, keyof PipelineState> = {
   SYN: "synthesis",
   VER: "verify",
   GOV: "governor",
+  BLD: "synthesis", // BLD attaches to synthesis (blueprint.build)
 };
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ─── Post-compile summary ─────────────────────────────────────────────────────
+// Displays a plain-language summary of what was compiled. No user input.
+// Runs after renderer.unmount(), before Q&A session.
+
+function wrapText(text: string, width: number, indent: string): string {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = indent;
+  for (const word of words) {
+    if (current === indent) {
+      current += word;
+    } else if (current.length + 1 + word.length > width) {
+      lines.push(current);
+      current = indent + word;
+    } else {
+      current += " " + word;
+    }
+  }
+  if (current !== indent) lines.push(current);
+  return lines.join("\n");
+}
+
+async function runCompileSummary(
+  result: import("@ada/compiler").CompileResult,
+  rawIntent: string,
+): Promise<void> {
+  const { blueprint, pipelineState, governorDecision } = result;
+  const ig = pipelineState.intent;
+  const persona = pipelineState.persona;
+  const entity = pipelineState.entity;
+  const verify = pipelineState.verify;
+
+  const cols = Math.min(process.stdout.columns ?? 80, 72);
+  const bar = "─".repeat(cols - 2);
+  const sep = glyphs.identity.core; // ◈ — Ada's structural mark
+
+  console.log(`\n  ${bar}\n`);
+
+  // ── What you described ────────────────────────────────────────────────────
+  console.log(`  ${sep}  what you described\n`);
+  const intentPreview =
+    rawIntent.length > 280 ? rawIntent.slice(0, 280) + "…" : rawIntent;
+  console.log(wrapText(intentPreview, cols, "    "));
+  console.log("");
+
+  // ── What I understood ────────────────────────────────────────────────────
+  if (ig && ig.goals.length > 0) {
+    console.log(`  ${sep}  what I understood\n`);
+    for (const goal of ig.goals) {
+      console.log(
+        wrapText(
+          `${glyphs.identity.filled}  ${goal.description}`,
+          cols - 4,
+          "    ",
+        ),
+      );
+    }
+    console.log("");
+  }
+
+  // ── What gets built ───────────────────────────────────────────────────────
+  console.log(`  ${sep}  what gets built\n`);
+  console.log(`    ${blueprint.architecture.pattern}\n`);
+  for (const comp of blueprint.architecture.components) {
+    console.log(
+      wrapText(
+        `${glyphs.pipeline.separator}  ${comp.name}  —  ${comp.responsibility}`,
+        cols - 4,
+        "    ",
+      ),
+    );
+  }
+  console.log("");
+
+  // ── What I excluded ───────────────────────────────────────────────────────
+  const excluded = persona?.excludedConcerns ?? [];
+  const deferredUnknowns =
+    ig?.unknowns.filter((u) => u.impact !== "blocking") ?? [];
+  if (excluded.length > 0 || deferredUnknowns.length > 0) {
+    console.log(`  ${sep}  what I excluded\n`);
+    for (const concern of excluded) {
+      console.log(
+        wrapText(`${glyphs.identity.open}  ${concern}`, cols - 4, "    "),
+      );
+    }
+    for (const u of deferredUnknowns.slice(0, 3)) {
+      console.log(
+        wrapText(`${glyphs.identity.open}  ${u.description}`, cols - 4, "    "),
+      );
+    }
+    console.log("");
+  }
+
+  // ── Rules enforced on every tool call ────────────────────────────────────
+  if (entity && entity.entities.length > 0) {
+    const totalRules = entity.entities.reduce(
+      (s, e) => s + e.invariants.length,
+      0,
+    );
+    if (totalRules > 0) {
+      console.log(`  ${sep}  rules enforced on every tool call\n`);
+      let shown = 0;
+      outer: for (const ent of entity.entities) {
+        for (const inv of ent.invariants) {
+          if (shown >= 6) break outer;
+          console.log(
+            wrapText(
+              `${glyphs.pipeline.separator}  ${ent.name}: ${inv.description}`,
+              cols - 4,
+              "    ",
+            ),
+          );
+          shown++;
+        }
+      }
+      if (totalRules > shown) {
+        console.log(`\n    … and ${totalRules - shown} more`);
+      }
+      console.log("");
+    }
+  }
+
+  // ── Verification findings (VER drifts + gaps) ────────────────────────────
+  const significantDrifts =
+    verify?.drifts.filter(
+      (d) => d.severity === "critical" || d.severity === "major",
+    ) ?? [];
+  const gaps = verify?.gaps ?? [];
+  if (significantDrifts.length > 0 || gaps.length > 0) {
+    console.log(`  ${sep}  gaps found during verification\n`);
+    for (const drift of significantDrifts.slice(0, 4)) {
+      console.log(
+        wrapText(
+          `${glyphs.identity.open}  [${drift.severity}] ${drift.location} — expected "${drift.original}", got "${drift.actual}"`,
+          cols - 4,
+          "    ",
+        ),
+      );
+    }
+    for (const gap of gaps.slice(0, 4)) {
+      console.log(
+        wrapText(`${glyphs.identity.open}  ${gap}`, cols - 4, "    "),
+      );
+    }
+    console.log("");
+  }
+
+  // ── Governor violations ────────────────────────────────────────────────────
+  const violations = governorDecision.violations ?? [];
+  if (violations.length > 0) {
+    console.log(`  ${sep}  policy violations noted\n`);
+    for (const v of violations.slice(0, 4)) {
+      console.log(
+        wrapText(
+          `${glyphs.identity.open}  [${v.severity}] ${v.ruleViolated} — ${v.description}`,
+          cols - 4,
+          "    ",
+        ),
+      );
+    }
+    console.log("");
+  }
+
+  // ── Stats footer ──────────────────────────────────────────────────────────
+  const compCount = blueprint.architecture.components.length;
+  const entityCount = entity?.entities.length ?? 0;
+  const ruleCount =
+    entity?.entities.reduce((s, e) => s + e.invariants.length, 0) ?? 0;
+  const conf = (governorDecision.confidence * 100).toFixed(0);
+
+  console.log(`  ${bar}`);
+  console.log(
+    `  confidence ${conf}%  ${glyphs.pipeline.separator}  ${compCount} components  ${glyphs.pipeline.separator}  ${entityCount} entities  ${glyphs.pipeline.separator}  ${ruleCount} rules`,
+  );
+  console.log(`  ${bar}\n`);
 }
 
 // ─── Post-run Q&A session ──────────────────────────────────────────────────────
@@ -127,7 +313,7 @@ ${blueprintContext}`;
     new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
 
   console.log(
-    `\n  ${glyphs.chevron} compilation complete. ask ada anything, or press enter to spawn claude code.\n`,
+    `\n  ${glyphs.chevron} if anything looks off, ask now — or press enter to spawn claude code.\n`,
   );
 
   while (true) {
@@ -210,6 +396,9 @@ function writeGitHook(projectDir: string): void {
 // If 0 questions: returns rawIntent unchanged.
 
 async function runElicitationPrePhase(rawIntent: string): Promise<string> {
+  // Skip elicitation in non-interactive environments (piped stdin, CI, etc.)
+  if (!process.stdin.isTTY) return rawIntent;
+
   const plan = classifyDepth(rawIntent);
 
   if (plan.terminationReason === "ready") {
@@ -221,8 +410,11 @@ async function runElicitationPrePhase(rawIntent: string): Promise<string> {
     output: process.stdout,
   });
 
-  const ask = (prompt: string): Promise<string> =>
-    new Promise((resolve) => rl.question(prompt, (ans) => resolve(ans.trim())));
+  const ask = (prompt: string, fallback = ""): Promise<string> =>
+    new Promise((resolve) => {
+      rl.once("close", () => resolve(fallback));
+      rl.question(prompt, (ans) => resolve(ans.trim()));
+    });
 
   const n = plan.questionCount;
   console.log(
@@ -238,49 +430,160 @@ async function runElicitationPrePhase(rawIntent: string): Promise<string> {
     return rawIntent;
   }
 
-  const qas: { question: string; answer: string }[] = [];
+  const context: { label: string; value: string }[] = [];
   let sessionId = startResult.session.sessionId;
   let currentTurnId = startResult.turn.turnId;
   let clarificationRequest = startResult.clarificationRequest;
+  let proposal = startResult.proposal;
 
-  while (clarificationRequest) {
-    console.log(`  ${glyphs.chevron} ${clarificationRequest.question}`);
-    if (clarificationRequest.suggestedDefault) {
-      console.log(`     Default: ${clarificationRequest.suggestedDefault}`);
+  while (clarificationRequest || proposal) {
+    if (proposal) {
+      // Ada proposes — user confirms, edits, or rejects
+      console.log(`  ${glyphs.chevron} ${proposal.rationale}`);
+      console.log(`\n     proposal: ${proposal.proposedText}`);
+      const answer = await ask(
+        `\n  > (enter to accept, type to edit, 'no' to reject) `,
+        "",
+      );
+      console.log("");
+
+      let disposition: "accepted" | "modified" | "rejected";
+      let modifiedText: string | undefined;
+
+      if (
+        !answer ||
+        answer.toLowerCase() === "yes" ||
+        answer.toLowerCase() === "y"
+      ) {
+        disposition = "accepted";
+      } else if (
+        answer.toLowerCase() === "no" ||
+        answer.toLowerCase() === "n"
+      ) {
+        disposition = "rejected";
+      } else {
+        disposition = "modified";
+        modifiedText = answer;
+      }
+
+      const appliedText =
+        disposition === "modified"
+          ? modifiedText!
+          : disposition === "accepted"
+            ? proposal.proposedText
+            : null;
+
+      if (appliedText) {
+        context.push({ label: proposal.targetField, value: appliedText });
+      }
+
+      const result = await manager.submitProposalDisposition(
+        sessionId,
+        proposal.proposalId,
+        disposition,
+        modifiedText,
+      );
+
+      if (result.handoff || !result.nextTurn) break;
+
+      currentTurnId = result.nextTurn.turnId;
+      clarificationRequest = result.clarificationRequest ?? null;
+      proposal = result.proposal ?? null;
+    } else if (clarificationRequest) {
+      // Fallback: direct question (only when proposal generation fails)
+      console.log(`  ${glyphs.chevron} ${clarificationRequest.question}`);
+      if (clarificationRequest.suggestedDefault) {
+        console.log(`     Default: ${clarificationRequest.suggestedDefault}`);
+      }
+
+      const answer = await ask(`\n  > `);
+      console.log("");
+
+      const finalAnswer = answer || clarificationRequest.suggestedDefault || "";
+      if (!finalAnswer) break;
+
+      context.push({
+        label: clarificationRequest.question,
+        value: finalAnswer,
+      });
+
+      const result = await manager.submitAnswer(
+        sessionId,
+        currentTurnId,
+        finalAnswer,
+      );
+
+      if (result.handoff || !result.nextTurn) break;
+
+      currentTurnId = result.nextTurn.turnId;
+      clarificationRequest = result.clarificationRequest ?? null;
+      proposal = result.proposal ?? null;
     }
-
-    const answer = await ask(`\n  > `);
-    console.log("");
-
-    if (!answer) break; // empty = user override, stop asking
-
-    qas.push({ question: clarificationRequest.question, answer });
-
-    const result = await manager.submitAnswer(sessionId, currentTurnId, answer);
-
-    if (result.handoff || !result.nextTurn) break;
-
-    currentTurnId = result.nextTurn.turnId;
-    clarificationRequest = result.clarificationRequest;
   }
 
   rl.close();
 
-  if (qas.length === 0) return rawIntent;
+  if (context.length === 0) return rawIntent;
 
-  // Build enriched intent — appended Q&A context for INT stage extraction
+  // Build enriched intent — appended context for INT stage extraction
   const lines = [rawIntent, ""];
-  for (const { question, answer } of qas) {
-    if (answer) {
-      lines.push(`Additional context — ${question}`);
-      lines.push(answer);
-      lines.push("");
-    }
+  for (const { label, value } of context) {
+    lines.push(`Additional context — ${label}`);
+    lines.push(value);
+    lines.push("");
   }
   return lines.join("\n").trim();
 }
 
 // ─── Init command ─────────────────────────────────────────────────────────────
+
+function loadPriorBlueprint(cwd: string): PriorBlueprintContext | undefined {
+  const statePath = path.join(cwd, ".ada", "state.json");
+  if (!fs.existsSync(statePath)) return undefined;
+  try {
+    const state = JSON.parse(fs.readFileSync(statePath, "utf8")) as Record<
+      string,
+      unknown
+    >;
+    const bp = state["blueprint"] as Record<string, unknown> | undefined;
+    const ps = state["pipelineState"] as Record<string, unknown> | undefined;
+    if (!bp || !ps) return undefined;
+
+    const arch = bp["architecture"] as Record<string, unknown> | undefined;
+    const ig = ps["intent"] as Record<string, unknown> | undefined;
+    const persona = ps["persona"] as Record<string, unknown> | undefined;
+
+    return {
+      summary: typeof bp["summary"] === "string" ? bp["summary"] : "",
+      architecturePattern:
+        typeof arch?.["pattern"] === "string" ? arch["pattern"] : "",
+      components: Array.isArray(arch?.["components"])
+        ? (arch["components"] as Array<Record<string, unknown>>).map((c) => ({
+            name: String(c["name"] ?? ""),
+            responsibility: String(c["responsibility"] ?? ""),
+            boundedContext: String(c["boundedContext"] ?? ""),
+          }))
+        : [],
+      goals: Array.isArray(ig?.["goals"])
+        ? (ig["goals"] as Array<Record<string, unknown>>).map((g) => ({
+            id: String(g["id"] ?? ""),
+            description: String(g["description"] ?? ""),
+          }))
+        : [],
+      constraints: Array.isArray(ig?.["constraints"])
+        ? (ig["constraints"] as Array<Record<string, unknown>>).map((c) => ({
+            id: String(c["id"] ?? ""),
+            description: String(c["description"] ?? ""),
+          }))
+        : [],
+      excludedConcerns: Array.isArray(persona?.["excludedConcerns"])
+        ? (persona["excludedConcerns"] as unknown[]).map(String)
+        : [],
+    };
+  } catch {
+    return undefined;
+  }
+}
 
 export async function initCommand(
   intent: string,
@@ -288,14 +591,82 @@ export async function initCommand(
 ): Promise<void> {
   const runId = `ML-${Math.floor(Date.now() / 1000)}`;
   const compiler = new MotherCompiler();
-  const renderer = createCompileRenderer(runId);
   const maxIterations = parseInt(process.env["ADA_MAX_ITERATIONS"] ?? "3", 10);
+
+  // ─── Amend mode: load prior blueprint as frozen context ──────────────────
+  const priorBlueprint = options.amend
+    ? loadPriorBlueprint(process.cwd())
+    : undefined;
+  if (options.amend && !priorBlueprint) {
+    console.error(
+      "  --amend: no compiled blueprint found — run 'ada compile' first",
+    );
+    process.exit(1);
+  }
+  if (priorBlueprint) {
+    console.error(
+      `\n  amending blueprint  ${glyphs.pipeline.separator}  ${priorBlueprint.components.length} existing components\n`,
+    );
+  }
+
+  // ─── Amend mode: inject approved amendments into intent ──────────────────
+  let enrichableIntent = intent;
+  if (options.amend) {
+    const amendDir = path.join(process.cwd(), ".ada", "amendments");
+    try {
+      const approvedAmendments = fs
+        .readdirSync(amendDir)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .map((f) => {
+          try {
+            return JSON.parse(
+              fs.readFileSync(path.join(amendDir, f), "utf8"),
+            ) as {
+              stage: string;
+              field: string;
+              proposed: string;
+              rationale: string;
+              status: string;
+            };
+          } catch {
+            return null;
+          }
+        })
+        .filter(
+          (a): a is NonNullable<typeof a> =>
+            a !== null && a.status === "approved",
+        );
+
+      if (approvedAmendments.length > 0) {
+        const amendmentText = approvedAmendments
+          .map(
+            (a) =>
+              `[${a.stage}.${a.field}] ${a.proposed}\nRationale: ${a.rationale}`,
+          )
+          .join("\n\n");
+        enrichableIntent =
+          `${intent}\n\nApproved amendments to incorporate:\n\n${amendmentText}`.trim();
+        console.error(
+          `  incorporating ${approvedAmendments.length} approved amendment(s)\n`,
+        );
+      }
+    } catch {
+      // no amendments dir — fine
+    }
+  }
 
   // ─── Elicitation pre-phase ───────────────────────────────────────────────
   // Ask 0–5 axiom-aligned questions before compiling. Classifier decides.
   // Returns enriched intent if questions were asked, otherwise original.
-  const enrichedIntent = await runElicitationPrePhase(intent);
+  // IMPORTANT: renderer is created AFTER elicitation completes so that
+  // readline and Ink never compete for the terminal at the same time.
+  const enrichedIntent = await runElicitationPrePhase(enrichableIntent);
 
+  // Clear screen before mounting the Ink compilation UI
+  process.stdout.write("\x1B[2J\x1B[H");
+
+  const renderer = createCompileRenderer(runId);
   let currentIntent = enrichedIntent;
   let iterationCount = 0;
   let finalResult: import("@ada/compiler").CompileResult | null = null;
@@ -305,6 +676,12 @@ export async function initCommand(
   const handleClarification = async (
     requests: readonly ClarificationRequest[],
   ): Promise<readonly ClarificationAnswer[]> => {
+    // Skip in non-interactive environments — use suggested defaults
+    if (!process.stdin.isTTY) {
+      return requests
+        .filter((r) => r.suggestedDefault)
+        .map((r) => ({ unknownId: r.unknownId, answer: r.suggestedDefault! }));
+    }
     renderer.unmount();
     const rl = readline.createInterface({
       input: process.stdin,
@@ -317,6 +694,8 @@ export async function initCommand(
     );
     for (const req of requests) {
       const answer = await new Promise<string>((resolve) => {
+        // Resolve with default if stdin closes before user answers (non-interactive)
+        rl.once("close", () => resolve(req.suggestedDefault ?? ""));
         rl.question(`  ${glyphs.identity.open} ${req.question}\n  > `, (ans) =>
           resolve(ans.trim()),
         );
@@ -325,7 +704,11 @@ export async function initCommand(
         answers.push({ unknownId: req.unknownId, answer });
       }
     }
-    rl.close();
+    try {
+      rl.close();
+    } catch {
+      /* already closed */
+    }
     console.log("");
     return answers;
   };
@@ -342,6 +725,7 @@ export async function initCommand(
     let stageStart = Date.now();
 
     const result = await compiler.compile(currentIntent, {
+      priorBlueprint,
       onClarificationNeeded:
         iterationCount === 1 ? handleClarification : undefined,
       onStageStart(stage) {
@@ -473,11 +857,18 @@ export async function initCommand(
       ...uncertaintyMarkers.map((m) => `[${m.stageCode}] ${m.description}`),
     ];
 
+    const fallbackOptions: import("@ada/config-writer").WriteConfigOptions = {
+      partial: true,
+      warnings,
+      ...(finalResult.pipelineState.persona
+        ? { domainContext: finalResult.pipelineState.persona }
+        : {}),
+    };
     const configGraph = writeConfigGraph(
       bestIteration.blueprint,
       bestIteration.governorDecision,
       process.cwd(),
-      { partial: true, warnings },
+      fallbackOptions,
     );
 
     const artifactEntries: ArtifactEntry[] = [
@@ -539,10 +930,15 @@ export async function initCommand(
   }
 
   const targetDir = process.cwd();
+  const acceptOptions: import("@ada/config-writer").WriteConfigOptions =
+    finalResult.pipelineState.persona
+      ? { domainContext: finalResult.pipelineState.persona }
+      : {};
   const configGraph = writeConfigGraph(
     finalResult.blueprint,
     decision,
     targetDir,
+    acceptOptions,
   );
 
   writeWorldModel(finalResult, runId, targetDir);
@@ -614,6 +1010,9 @@ export async function initCommand(
   await sleep(2000);
   renderer.unmount();
 
+  // ── Readable post-compile summary ──────────────────────────────────────────
+  await runCompileSummary(finalResult, intent);
+
   // ── Post-run Q&A — Ada answers questions before spawning Claude Code ───────
   await runQASession(finalResult);
 
@@ -631,7 +1030,7 @@ export async function initCommand(
     .slice(0, 1000)
     .replace(/'/g, "'\\''");
   const initialPrompt =
-    "Read CLAUDE.md, then read all agent files in .claude/agents/. Follow the build order and session protocol. Begin building now.";
+    "Read CLAUDE.md fully. Read all agent files in .claude/agents/. The compiled world model is at .ada/manifest.json — use ada.query_constraints(scope) before modifying any entity, ada.check_drift(description) before structural changes. Follow the build order. Begin building now.";
 
   // Write the command to a temp script so osascript do script doesn't need
   // to embed the full command string (avoids escaping corruption with long
@@ -639,20 +1038,93 @@ export async function initCommand(
   const scriptContent = [
     "#!/bin/bash",
     `cd '${targetDir.replace(/'/g, "'\\''")}'`,
+    // Set ADA_PROJECT_DIR so the MCP server resolves world model artifacts
+    // from the correct project directory regardless of where it spawns.
+    `export ADA_PROJECT_DIR='${targetDir.replace(/'/g, "'\\''")}'`,
     `exec claude --permission-mode auto --append-system-prompt '${summaryLine}' '${initialPrompt}'`,
     "",
   ].join("\n");
   const scriptPath = path.join(os.tmpdir(), `ada-spawn-${Date.now()}.sh`);
   fs.writeFileSync(scriptPath, scriptContent, { mode: 0o755 });
 
-  cpSpawn(
-    "osascript",
-    [
-      "-e",
-      `tell application "Terminal" to do script "bash '${scriptPath}'"`,
-      "-e",
-      `tell application "Terminal" to activate`,
-    ],
-    { detached: true, stdio: "ignore" },
-  ).unref();
+  spawnInTerminal(scriptPath, targetDir);
+}
+
+function spawnInTerminal(scriptPath: string, targetDir: string): void {
+  if (process.platform === "darwin") {
+    cpSpawn(
+      "osascript",
+      [
+        "-e",
+        `tell application "Terminal" to do script "bash '${scriptPath}'"`,
+        "-e",
+        `tell application "Terminal" to activate`,
+      ],
+      { detached: true, stdio: "ignore" },
+    ).unref();
+    return;
+  }
+
+  if (process.platform === "win32") {
+    // Write a .bat file for Windows — reuse the same base name.
+    // Read back the sh script to extract the exec line rather than duplicating
+    // the full argument string here.
+    const batPath = scriptPath.replace(/\.sh$/, ".bat");
+    const shLines = fs.readFileSync(scriptPath, "utf8").split("\n");
+    const execLine = shLines.find((l) => l.startsWith("exec claude")) ?? "";
+    const winExecLine = execLine.replace(/^exec /, "");
+    const winBat = [
+      `@echo off`,
+      `cd /d "${targetDir}"`,
+      `set ADA_PROJECT_DIR=${targetDir}`,
+      winExecLine,
+    ].join("\r\n");
+    fs.writeFileSync(batPath, winBat, { mode: 0o755 });
+    cpSpawn("cmd", ["/c", "start", "cmd", "/k", batPath], {
+      detached: true,
+      stdio: "ignore",
+    }).unref();
+    return;
+  }
+
+  // Linux — try common terminal emulators in preference order
+  const emulators = [
+    "gnome-terminal",
+    "xterm",
+    "konsole",
+    "x-terminal-emulator",
+  ];
+
+  for (const emulator of emulators) {
+    try {
+      let child;
+      if (emulator === "gnome-terminal") {
+        child = cpSpawn(emulator, ["--", "bash", scriptPath], {
+          detached: true,
+          stdio: "ignore",
+        });
+      } else if (emulator === "konsole") {
+        child = cpSpawn(emulator, ["-e", "bash", scriptPath], {
+          detached: true,
+          stdio: "ignore",
+        });
+      } else {
+        // xterm and x-terminal-emulator both accept -e
+        child = cpSpawn(emulator, ["-e", `bash '${scriptPath}'`], {
+          detached: true,
+          stdio: "ignore",
+        });
+      }
+      child.unref();
+      // If spawn didn't throw synchronously, assume it succeeded
+      return;
+    } catch {
+      // emulator not found — try the next one
+    }
+  }
+
+  // No terminal emulator found (headless / CI) — instruct the user
+  console.log(
+    `\n  No terminal emulator found. Run manually:\n\n    bash '${scriptPath}'\n`,
+  );
 }

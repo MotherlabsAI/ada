@@ -50,13 +50,18 @@ CONSTRAINTS:
 
 IMPORTANT: Your domain analysis must match the RAW INTENT above, not the environment you're running in. If the intent says "hello world CLI", the domain is CLI development, not AI pipelines or semantic compilers. Ground yourself in what the user actually asked for.
 
-YOUR TASK: Analyze the domain for this specific project.
-1. Name the domain — be specific but proportional to the intent's complexity
-2. Identify stakeholders, their knowledge, blind spots, and fears
-3. Define vocabulary terms that have specific meaning in this domain
-4. List at least 5 things this system is NOT (excluded concerns)
+First, think out loud about this domain. Write as if you're situating yourself in the user's world.
 
-Think briefly, then output ONLY a JSON object inside a \`\`\`json fence.
+◈ Name the domain — not generic, specific to what the user is actually building.
+For each stakeholder you identify, explain:
+  — what they know and take for granted
+  — what they fear going wrong
+  — what words they use that mean something specific in this world
+What does this world EXCLUDE? Close every door that isn't a feature.
+Use ∴ for things you're deriving from context, ✗ for risks or missing information, ✓ for things you're certain about.
+
+The reasoning above is for the user to read. The JSON below is for the system.
+Then output ONLY a JSON object inside a \`\`\`json fence.
 Do NOT write prose after the JSON.
 
 \`\`\`json

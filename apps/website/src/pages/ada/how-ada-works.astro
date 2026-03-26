@@ -12,7 +12,7 @@ const faqSchema = {
       name: 'How does Ada work step by step?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Ada works in four phases: (1) You install Ada and run `ada compile` in your project directory. (2) Ada runs structured elicitation — a focused session where it asks the minimum questions needed to resolve blocking unknowns. You answer in plain language. (3) Ada compiles your answers through a 7-stage pipeline: CTX (codebase context), INT (intent graph), PER (persona mapping), ENT (entity extraction), PRO (process synthesis), SYN (synthesis), GOV (governance). (4) Files land on disk — CLAUDE.md, agents/, and hooks/. You read them, verify they match your intent, then hand them to Claude Code.',
+        text: 'Ada works in two arcs. Compile arc: (1) You run `ada compile`. (2) Ada elicits — asks the minimum questions to resolve blocking unknowns. (3) Ada compiles through 8 stages: CTX, INT, PER, ENT, PRO, SYN, VER, GOV. (4) Files land: CLAUDE.md, agents/, contracts/, hooks/. Runtime arc: (5) Ada stays in the room — PostToolUse hooks log every tool call to a session log. (6) The macro planner calls `ada.get_macro_plan` to get the dependency-ordered task list. (7) It delegates bounded tasks to domain agents operating under typed delegation contracts. (8) An independent verifier checks each output against blueprint postconditions. (9) `ada.verify` runs a 5-layer stack: structural, execution, policy, outcome, provenance. (10) `ada.extract_skills` finds repeated session patterns and proposes skill candidates for human approval.',
       },
     },
     {
@@ -44,8 +44,8 @@ const faqSchema = {
 ---
 
 <Layout
-  title="How Ada works — step by step guide to the intent compiler | Motherlabs"
-  description="Ada runs in 4 phases: install, elicitation (semantic questions), 7-stage compilation, and CLAUDE.md, agents, and hooks on disk. No technical knowledge required — Ada works at the semantic level."
+  title="How Ada works — semantic compiler + governed runtime | Motherlabs"
+  description="Ada runs in two arcs: compile (elicitation + 8-stage pipeline + artifacts on disk) and runtime (world-state tracking, macro/micro execution, delegation contracts, 5-layer verification, skill extraction). No technical knowledge required."
   schemas={[faqSchema]}
 >
   <Nav />
@@ -56,8 +56,8 @@ const faqSchema = {
         <p class="eyebrow"><a href="/ada">Ada</a> &rarr; How Ada Works</p>
         <h1>How Ada works</h1>
         <p class="hero-sub">
-          From `ada compile` to CLAUDE.md, agents, and hooks on disk.
-          Four phases. No technical knowledge required.
+          Two arcs: compile and runtime. Ada compiles your intent, then stays in the room.
+          No technical knowledge required.
         </p>
       </div>
     </section>
@@ -148,7 +148,7 @@ const faqSchema = {
       <div class="container container--prose">
         <div class="phase-marker">
           <span class="phase-num">Phase 03</span>
-          <h2>7-stage compilation</h2>
+          <h2>8-stage compilation</h2>
         </div>
 
         <p>
@@ -231,6 +231,111 @@ const faqSchema = {
           as you need, always within the intent Ada encoded.
           When scope changes significantly: re-run Ada to update the artifacts.
         </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Phase 5: Runtime -->
+    <section class="section">
+      <div class="container container--prose">
+        <div class="phase-marker">
+          <span class="phase-num">Phase 05</span>
+          <h2>Runtime — Ada stays in the room</h2>
+        </div>
+
+        <p>
+          After compile, Ada doesn't disappear. Every tool call Claude Code makes
+          is logged to a session record. Ada tracks world-state — what components
+          have been implemented, which files were written, what decisions were made.
+        </p>
+
+        <p>
+          The <strong>macro planner agent</strong> reads <code class="inline-code">ada.get_macro_plan</code>
+          at the start of each session. It gets a dependency-ordered task list: what's done,
+          what's next, what's blocked. It delegates bounded units of work to domain agents
+          under typed <strong>delegation contracts</strong>.
+        </p>
+
+        <p>
+          A delegation contract is a typed bound on what an agent can do:
+          allowed file paths, permitted tools, stop conditions, required evidence before
+          returning, and a max recursion depth. No unconstrained spawning.
+          Every child agent knows exactly what it's allowed to do and when it must report up.
+        </p>
+
+        <div class="output-block">
+          <div class="output-row">
+            <code class="output-file">ada.get_macro_plan</code>
+            <span class="output-action">dependency-ordered task list</span>
+          </div>
+          <div class="output-row">
+            <code class="output-file">ada.get_contract</code>
+            <span class="output-action">typed scope + stop conditions</span>
+          </div>
+          <div class="output-row">
+            <code class="output-file">ada.verify</code>
+            <span class="output-action">5-layer verification stack</span>
+          </div>
+          <div class="output-row">
+            <code class="output-file">ada.check_drift</code>
+            <span class="output-action">alignment with compiled intent</span>
+          </div>
+        </div>
+
+        <p>
+          The <strong>independent verifier</strong> — separated from the executor —
+          checks each completed task against blueprint postconditions and entity invariants.
+          It cannot self-report success on work it implemented.
+        </p>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- Phase 6: Improvement -->
+    <section class="section section--surface">
+      <div class="container container--prose">
+        <div class="phase-marker">
+          <span class="phase-num">Phase 06</span>
+          <h2>Self-improvement — offline, benchmarked, human-approved</h2>
+        </div>
+
+        <p>
+          Ada observes its own sessions. When the same implementation pattern
+          appears across multiple sessions — the same sequence of files created,
+          the same tool sequence, the same bounded context — Ada proposes it as
+          a skill candidate.
+        </p>
+
+        <p>
+          Skill candidates go into a review queue. You run <code class="inline-code">ada review-skills</code>
+          and see each candidate with its evidence: which sessions it came from,
+          what files were produced, what the proposed skill prompt looks like.
+          You approve or reject. Approved skills land in <code class="inline-code">.claude/skills/</code>
+          and are available in the next Claude Code session.
+        </p>
+
+        <p>
+          The governance core is immutable. Compiled intent, entity invariants,
+          and delegation contracts cannot be touched by self-improvement.
+          Ada improves workflows and skills. It does not rewrite the constitution.
+        </p>
+
+        <div class="output-block">
+          <div class="output-row">
+            <code class="output-file">ada.extract_skills</code>
+            <span class="output-action">analyze session patterns</span>
+          </div>
+          <div class="output-row">
+            <code class="output-file">ada review-skills</code>
+            <span class="output-action">human approval required</span>
+          </div>
+          <div class="output-row">
+            <code class="output-file">ada review-amendments</code>
+            <span class="output-action">apply blueprint corrections</span>
+          </div>
+        </div>
       </div>
     </section>
 

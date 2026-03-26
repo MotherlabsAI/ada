@@ -46,6 +46,15 @@ export abstract class ElicitationTransportAdapter {
   async drive(rawIntentText: string): Promise<void> {
     const startResult = await this.sessionManager.startSession(rawIntentText);
 
+    // Fast path: 0-question — classifier determined intent is compilable as-is.
+    // Session is already complete; no dialogue loop needed.
+    if (startResult.handoff) {
+      if (startResult.assessment) {
+        await this.presentReadinessStatus(startResult.assessment);
+      }
+      return;
+    }
+
     // Present first turn
     if (startResult.clarificationRequest) {
       await this.presentClarificationRequest(startResult.clarificationRequest);
@@ -54,7 +63,8 @@ export abstract class ElicitationTransportAdapter {
     }
 
     const sessionId = startResult.session.sessionId;
-    let currentTurnId = startResult.turn.turnId;
+    // turn is non-null here because we returned early above if handoff was set
+    let currentTurnId = startResult.turn!.turnId;
 
     // Dialogue loop
     while (true) {

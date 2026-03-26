@@ -17,7 +17,42 @@ import type {
   DraftTargetField,
   LLMProposalOutput,
   LLMRequestOutput,
+  LevelAssessment,
+  PreFillItem,
+  PreFillResult,
 } from "./types.js";
+
+// Axiom-aligned question templates for each QuestionType (A9, A10).
+// These are shown to the LLM as the question frame — it expands them with
+// the raw intent context and option-framing per A10.
+const QUESTION_HINT_FRAMES: Record<string, string> = {
+  // scope_boundary intentionally omitted — Ada always proposes scope, never asks the user to define it.
+  // Asking "what should this NOT include?" is unanswerable without knowing what Ada might include.
+  // The PROPOSAL_HINT_FRAMES entry handles this via Ada's own scope derivation.
+  primary_actor:
+    "When someone opens this for the first time, who are they and what's the one thing they're trying to do?",
+  failure_conditions:
+    "What would make this system dangerous or useless? What should it absolutely never do or allow to happen?",
+  workflow_disambiguation:
+    "Walk me through what happens from the moment the primary user arrives. What do they do first, then what?",
+  business_rule:
+    "This domain usually has strict rules around this area. Does your system handle these the standard way, or is there something specific about your situation I should know?",
+};
+
+// Framing hints for proposals — used to tell the LLM what kind of structural
+// decision it's proposing for and how to frame the proposal.
+const PROPOSAL_HINT_FRAMES: Record<string, string> = {
+  scope_boundary:
+    "Frame this as: 'I'm modeling this system's scope as [specific scope]. It handles [X] but not [Y]. Standard scoping for this type of project. Does this match?'",
+  primary_actor:
+    "Frame this as: 'I'm modeling the primary user as [actor] who needs to [core goal]. Does this match how you're thinking about it?'",
+  failure_conditions:
+    "Frame this as: 'I'm adding this constraint: [constraint]. This captures a rule that's critical for this type of system based on [intent words or domain]. Does this apply?'",
+  workflow_disambiguation:
+    "Frame this as: 'I'm modeling the main workflow as: [sequence]. This is the standard flow for this type of system. Does this match your vision?'",
+  business_rule:
+    "Frame this as: 'I'm applying this rule: [rule]. Standard practice in this domain. Does this apply to your system or do you handle it differently?'",
+};
 
 const FIELD_LABELS: Record<DraftTargetField, string> = {
   goals: "goals (what the system should accomplish)",
@@ -77,6 +112,7 @@ function callCLIText(prompt: string): Promise<string> {
       "claude",
       [
         "--print",
+        "--verbose",
         "--output-format",
         "stream-json",
         "--model",
@@ -100,14 +136,21 @@ function callCLIText(prompt: string): Promise<string> {
         try {
           const event = JSON.parse(trimmed) as Record<string, unknown>;
           const inner = (event["event"] ?? event) as Record<string, unknown>;
-          if (inner["type"] === "content_block_delta") {
-            const delta = inner["delta"] as Record<string, unknown> | undefined;
-            if (delta?.["type"] === "text_delta") {
-              accumulated += String(delta["text"] ?? "");
+          if (inner["type"] === "assistant") {
+            const msg = inner["message"] as Record<string, unknown> | undefined;
+            const content = msg?.["content"] as
+              | Array<Record<string, unknown>>
+              | undefined;
+            if (Array.isArray(content)) {
+              for (const block of content) {
+                if (block["type"] === "text") {
+                  accumulated += String(block["text"] ?? "");
+                }
+              }
             }
           }
         } catch {
-          accumulated += trimmed + "\n";
+          /* skip unparseable lines */
         }
       }
     });
@@ -156,6 +199,137 @@ export class DialogueEngine {
     private readonly gapAnalyzer: GapAnalyzer,
   ) {}
 
+  // ─── assessAbstractionLevel ───
+  // Level-setting pass: run before first gap detection.
+  // Determines whether the user's raw intent is at the right abstraction level.
+  // Returns coaching advice if the intent is too technical or too vague.
+  async assessAbstractionLevel(rawIntent: string): Promise<LevelAssessment> {
+    const prompt = `You are Ada, a semantic intent elicitation assistant. Evaluate the abstraction level of this user intent:
+
+"${rawIntent.slice(0, 600)}"
+
+Assess whether this intent is:
+- "too_technical": focuses on implementation details (specific libraries, frameworks, patterns, database choices, hosting, etc.) rather than what the system should do for users
+- "too_vague": so abstract that key behaviors, users, or goals cannot be inferred (e.g., "build me an app", "make a website")
+- "appropriate": describes what the system should do and for whom at a semantic level — concrete enough to compile, without prescribing implementation
+
+If NOT appropriate, write 1-2 sentences of coaching to help the user reframe their intent at the right level.
+
+Respond ONLY with a JSON object:
+{
+  "level": "too_technical" | "too_vague" | "appropriate",
+  "coaching": "..." | null
+}`;
+
+    try {
+      const raw = await callLLM(prompt);
+      const jsonStr = extractJSON(raw);
+      if (jsonStr) {
+        const obj = JSON.parse(jsonStr) as Record<string, unknown>;
+        const level = String(obj["level"] ?? "");
+        if (
+          level === "too_technical" ||
+          level === "too_vague" ||
+          level === "appropriate"
+        ) {
+          const coaching =
+            obj["coaching"] != null ? String(obj["coaching"]).trim() : null;
+          return { level, coaching: coaching || null };
+        }
+      }
+    } catch {
+      /* fall through to default */
+    }
+
+    return { level: "appropriate", coaching: null };
+  }
+
+  // ─── preFillDraft ───
+  // Ada's structural read pass: one LLM call to derive everything that can be
+  // inferred from the intent before asking the user anything.
+  //
+  // "high" confidence items are applied silently to the draft.
+  // "medium" confidence items surface as proposals for user confirmation.
+  //
+  // This is the "read first, propose unresolvables" model — parallel to how
+  // Claude Code reads the codebase before writing any code.
+  async preFillDraft(
+    rawIntentText: string,
+    _draft: DraftIntentGraph,
+  ): Promise<PreFillResult> {
+    const prompt = `You are Ada, a semantic intent compiler. Read this raw intent and fill in everything you can confidently derive — before asking the user anything.
+
+Think like a senior engineer reading a brief: understand the domain, fill in what any competent builder in this space would already know from the intent.
+
+Raw intent: "${rawIntentText.slice(0, 800)}"
+
+Derive items for: goals (what the system accomplishes), constraints (what it must/must not do), unknowns (genuinely unresolved decisions), challenges (real risks).
+
+For each item assign confidence:
+- "high": certain from the intent text itself or universal convention for this domain type (applied silently — user never sees)
+- "medium": good inference, standard practice in this domain, but user may have different preferences (surfaced as a proposal for confirmation)
+
+Rules:
+- Be proportional. Simple intent → 2–4 items total. Do NOT over-extract.
+- "high" confidence only for things clearly stated in the intent or universally true for this domain.
+- Derive failure conditions from domain knowledge (e.g. payment system must never double-charge).
+- Don't create items you're not at least "medium" confident about.
+- Reference specific words from the intent in your rationale.
+
+Return ONLY a JSON object:
+{
+  "items": [
+    {
+      "targetField": "goals" | "constraints" | "unknowns" | "challenges",
+      "value": "concrete, specific, actionable statement",
+      "rationale": "why Ada derived this — reference specific intent words or domain conventions",
+      "confidence": "high" | "medium"
+    }
+  ]
+}`;
+
+    try {
+      const raw = await callLLM(prompt);
+      const jsonStr = extractJSON(raw);
+      if (jsonStr) {
+        const obj = JSON.parse(jsonStr) as Record<string, unknown>;
+        const rawItems = Array.isArray(obj["items"]) ? obj["items"] : [];
+        const validFields = new Set<string>([
+          "goals",
+          "constraints",
+          "unknowns",
+          "challenges",
+        ]);
+        const items: PreFillItem[] = [];
+        for (const item of rawItems) {
+          const r = item as Record<string, unknown>;
+          const tf = String(r["targetField"] ?? "");
+          const val = String(r["value"] ?? "").trim();
+          const rat = String(r["rationale"] ?? "").trim();
+          const conf = String(r["confidence"] ?? "");
+          if (
+            validFields.has(tf) &&
+            val.length > 5 &&
+            rat.length > 5 &&
+            (conf === "high" || conf === "medium")
+          ) {
+            items.push({
+              targetField: tf as PreFillItem["targetField"],
+              value: val,
+              rationale: rat,
+              confidence: conf,
+            });
+          }
+        }
+        return { items, derivedAt: Date.now() };
+      }
+    } catch {
+      /* fall through — pre-fill is best-effort, not required */
+    }
+
+    return { items: [], derivedAt: Date.now() };
+  }
+
   // ─── openTurn ───
   openTurn(sessionId: string, gap: Gap): ElicitationTurn {
     // Idempotency: don't open a second turn for the same gap
@@ -185,6 +359,8 @@ export class DialogueEngine {
 
   // ─── generateClarificationRequest ───
   // Uses LLM to generate a targeted question about the gap.
+  // When gap.questionHint is set, uses an axiom-aligned question frame
+  // instead of the generic gap-type framing (A9, A10).
   async generateClarificationRequest(
     gap: Gap,
     draft: DraftIntentGraph,
@@ -197,6 +373,29 @@ export class DialogueEngine {
       conflictContext = `\nConflicting values:\n- Goal: "${gap.conflictingFieldA}"\n- Constraint: "${gap.conflictingFieldB ?? ""}"\n`;
     }
 
+    // If the gap was injected by the adaptive depth classifier, use the
+    // targeted question frame directly — no LLM rewrite needed.
+    // The hint frames are pre-calibrated (A9, A10); rewriting them degrades quality.
+    const hintFrame = gap.questionHint
+      ? (QUESTION_HINT_FRAMES[gap.questionHint] ?? null)
+      : null;
+
+    if (hintFrame) {
+      // Use frame verbatim — it's already axiom-aligned and tested.
+      const id = `crr-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      return {
+        clarificationRequestId: id,
+        unknownId: gap.gapId,
+        gapId: gap.gapId,
+        question: hintFrame,
+        impact,
+        suggestedDefault: null,
+        createdAt: Date.now(),
+      };
+    }
+
+    const hintInstruction = "";
+
     const prompt = `You are Ada, a semantic intent elicitation assistant. A user has described their project intent and you have identified a gap.
 
 Raw intent: "${draft.rawIntent}"
@@ -205,14 +404,14 @@ Gap kind: ${gap.gapKind}
 Gap severity: ${gap.severity}${conflictContext}
 Existing goals: ${draft.goals.map((g) => g.description).join("; ") || "none"}
 Existing constraints: ${draft.constraints.map((c) => c.description).join("; ") || "none"}
-
+${hintInstruction}
 Generate a clear, specific question to ask the user to resolve this gap. The question should:
 - Be direct and understandable to a non-technical user
 - Explain why this information matters
 - Reference their raw intent when helpful
 - NOT ask about technical implementation choices (libraries, frameworks, etc.)
 ${gap.gapKind === "contradictory" ? "- Ask the user to resolve the contradiction between the two conflicting values above" : ""}
-${gap.gapKind === "missing" ? "- Offer a concrete example or suggestion if helpful" : ""}
+${gap.gapKind === "missing" && !hintFrame ? "- Offer a concrete example or suggestion if helpful" : ""}
 
 Respond ONLY with a JSON object:
 {
@@ -268,30 +467,44 @@ Respond ONLY with a JSON object:
   }
 
   // ─── generateAdaProposal ───
-  // Uses LLM to propose a concrete value for an ambiguous gap field.
-  // Caller must have already called openTurn for this gap so a turn record exists.
+  // Uses LLM to propose a concrete value for a gap field.
+  // This is the primary path for ALL gaps — Ada proposes her best answer,
+  // the user confirms, edits, or rejects. Questions are only a fallback.
   async generateAdaProposal(
     gap: Gap,
     draft: DraftIntentGraph,
   ): Promise<AdaProposal | null> {
     const fieldLabel = FIELD_LABELS[gap.targetField];
+    const hintFrame = gap.questionHint
+      ? (PROPOSAL_HINT_FRAMES[gap.questionHint] ?? null)
+      : null;
 
-    const prompt = `You are Ada, a semantic intent elicitation assistant. Based on the user's raw intent, propose a specific, concrete value for a ${gap.targetField} field.
+    const contradictionContext =
+      gap.gapKind === "contradictory" && gap.conflictingFieldA
+        ? `\nConflict to resolve:\n- A: "${gap.conflictingFieldA}"\n- B: "${gap.conflictingFieldB ?? ""}"\n`
+        : "";
+
+    const prompt = `You are Ada, a semantic intent compiler. You've analyzed the user's intent and need to propose a concrete decision — not ask a question.
 
 Raw intent: "${draft.rawIntent}"
-Field to fill: ${fieldLabel}
-Existing goals: ${draft.goals.map((g) => g.description).join("; ") || "none"}
-Existing constraints: ${draft.constraints.map((c) => c.description).join("; ") || "none"}
+Field: ${fieldLabel}
+Gap kind: ${gap.gapKind}${contradictionContext}
+Known goals: ${draft.goals.map((g) => g.description).join("; ") || "none"}
+Known constraints: ${draft.constraints.map((c) => c.description).join("; ") || "none"}
+${hintFrame ? `\nProposal framing guidance:\n${hintFrame}` : ""}
 
-Propose a single, clear, concrete value for the ${gap.targetField} field that:
-- Directly follows from the raw intent
-- Is specific enough to be actionable
-- Avoids technical implementation details
+Your job: propose Ada's specific, concrete decision for this field.
+- State the decision clearly (not a question)
+- Reference specific words from the intent or domain conventions as rationale
+- The rationale should end with "Does this match?" so the user knows they're confirming, not answering from scratch
+- Be specific enough to be actionable — avoid vague generalities
+- Avoid technical implementation choices (frameworks, libraries, hosting, etc.)
+${gap.gapKind === "contradictory" ? "- Propose a resolution to the conflict above — pick one or propose a synthesis" : ""}
 
 Respond ONLY with a JSON object:
 {
-  "proposedText": "...",
-  "rationale": "..."
+  "proposedText": "the concrete proposed value — a specific, actionable statement",
+  "rationale": "Ada's reasoning ending with 'Does this match?'"
 }`;
 
     let parsed: LLMProposalOutput | null = null;

@@ -31,6 +31,11 @@ const STAGE_META: Record<
     verb: "govern",
     question: "does this meet the bar?",
   },
+  BLD: {
+    name: "BUILD",
+    verb: "contract",
+    question: "what exactly gets built?",
+  },
 };
 
 // ─── Spinner selection by stage ───────────────────────────────────────────────

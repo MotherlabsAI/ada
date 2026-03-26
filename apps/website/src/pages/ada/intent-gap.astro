@@ -38,7 +38,7 @@ const faqSchema = {
       name: 'How does Ada close the intent gap?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Ada closes the intent gap by formalizing intent before building starts. It runs structured elicitation to surface blocking unknowns, then compiles through a 7-stage pipeline (CTX → INT → PER → ENT → PRO → SYN → GOV) that produces governed artifacts — CLAUDE.md, agent files, and hook files. These artifacts encode intent structurally. Claude Code builds against them rather than against an informal description.',
+        text: 'Ada closes the intent gap by formalizing intent before building starts. It runs structured elicitation to surface blocking unknowns, then compiles through an 8-stage pipeline (CTX → INT → PER → ENT → PRO → SYN → VER → GOV) that produces CLAUDE.md, agent files, and hook files. These artifacts encode intent structurally. Claude Code builds against them rather than against an informal description.',
       },
     },
     {
@@ -221,7 +221,7 @@ const faqSchema = {
           These are the questions that reveal the intent gap before it becomes wrong code.
         </p>
         <p>
-          The answers are compiled through a 7-stage pipeline into governed artifacts:
+          The answers are compiled through an 8-stage pipeline into
           CLAUDE.md (read on every turn), agent files, and hook files.
           These encode intent structurally — not as a description, but as a constraint layer.
         </p>

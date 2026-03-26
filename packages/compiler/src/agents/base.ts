@@ -13,7 +13,10 @@ import type {
 } from "../types.js";
 import type { PostcodeAddress } from "@ada/provenance";
 import { generatePostcode, type StageCode } from "@ada/provenance";
-import type { CodebaseContext } from "../context/types.js";
+import type {
+  CodebaseContext,
+  PriorBlueprintContext,
+} from "../context/types.js";
 import { decorateWithContext } from "../context/prompt-decorator.js";
 
 export interface AgentResult<T> {
@@ -122,9 +125,14 @@ export abstract class Agent<TInput, TOutput> {
   abstract readonly lens: string;
 
   private _codebaseContext: CodebaseContext | null = null;
+  private _priorBlueprint: PriorBlueprintContext | null = null;
 
   setCodebaseContext(ctx: CodebaseContext): void {
     this._codebaseContext = ctx;
+  }
+
+  setPriorBlueprint(prior: PriorBlueprintContext): void {
+    this._priorBlueprint = prior;
   }
 
   protected abstract buildPrompt(input: TInput): string;
@@ -215,8 +223,8 @@ export abstract class Agent<TInput, TOutput> {
     };
   }
 
-  // ─── CLI fallback: uses OAuth, no streaming, text extraction ───
-  private callCLI(prompt: string): Promise<string> {
+  // ─── CLI fallback: uses OAuth, streams reasoning tokens via stream-json ───
+  private callCLI(prompt: string, callbacks?: AgentCallbacks): Promise<string> {
     return new Promise((resolve) => {
       const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ada-"));
       const promptFile = path.join(tmpDir, "prompt.txt");
@@ -227,8 +235,9 @@ export abstract class Agent<TInput, TOutput> {
         "claude",
         [
           "--print",
+          "--verbose",
           "--output-format",
-          "text",
+          "stream-json",
           "--model",
           this.model,
           "--dangerously-skip-permissions",
@@ -240,14 +249,50 @@ export abstract class Agent<TInput, TOutput> {
         },
       );
 
-      let stdout = "";
+      let accumulated = "";
       let stderr = "";
+
+      let lineBuffer = "";
       proc.stdout.on("data", (chunk: Buffer) => {
-        stdout += chunk.toString();
+        lineBuffer += chunk.toString();
+        const lines = lineBuffer.split("\n");
+        lineBuffer = lines.pop() ?? "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            const event = JSON.parse(trimmed) as Record<string, unknown>;
+            const inner = (event["event"] ?? event) as Record<string, unknown>;
+            if (inner["type"] === "assistant") {
+              // stream-json --verbose: text lives in message.content[n].text
+              const msg = inner["message"] as
+                | Record<string, unknown>
+                | undefined;
+              const content = msg?.["content"] as
+                | Array<Record<string, unknown>>
+                | undefined;
+              if (Array.isArray(content)) {
+                for (const block of content) {
+                  if (block["type"] === "text") {
+                    const text = String(block["text"] ?? "");
+                    if (text) {
+                      accumulated += text;
+                      callbacks?.onToken?.(text);
+                    }
+                  }
+                }
+              }
+            }
+          } catch {
+            // Non-JSON line — ignore (hooks produce non-JSON preamble)
+          }
+        }
       });
+
       proc.stderr.on("data", (chunk: Buffer) => {
         stderr += chunk.toString();
       });
+
       input.pipe(proc.stdin);
 
       proc.on("close", (code) => {
@@ -262,9 +307,10 @@ export abstract class Agent<TInput, TOutput> {
             this.stageCode,
             `CLI stderr (exit ${code}): ${stderr.slice(0, 500)}`,
           );
-        if (!stdout)
-          debugLog(this.stageCode, `CLI empty stdout (exit ${code})`);
-        resolve(stdout);
+        if (!accumulated)
+          debugLog(this.stageCode, `CLI empty output (exit ${code})`);
+        callbacks?.onComplete?.(accumulated);
+        resolve(accumulated);
       });
 
       proc.on("error", (err) => {
@@ -275,12 +321,12 @@ export abstract class Agent<TInput, TOutput> {
           /* cleanup */
         }
         debugLog(this.stageCode, `CLI spawn error: ${err.message}`);
-        resolve("");
+        resolve(accumulated || "");
       });
 
       setTimeout(() => {
         proc.kill();
-        resolve(stdout || "");
+        resolve(accumulated || "");
       }, 300_000);
     });
   }
@@ -349,6 +395,7 @@ export abstract class Agent<TInput, TOutput> {
         prompt,
         this._codebaseContext,
         this.stageCode,
+        this._priorBlueprint ?? undefined,
       );
     }
     debugLog(
@@ -370,8 +417,8 @@ export abstract class Agent<TInput, TOutput> {
       if (parsed === null) retryCount++;
       parseFailure = parsed === null;
     } else {
-      // ─── CLI fallback: text extraction ───
-      let rawText = await this.callCLI(prompt);
+      // ─── CLI fallback: stream-json text extraction ───
+      let rawText = await this.callCLI(prompt, callbacks);
       let textResult = this.tryParseText(rawText);
       parsed = textResult.success ? textResult.parsed : null;
       error = textResult.error;

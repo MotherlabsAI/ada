@@ -3,6 +3,7 @@
 **Authority:** describes Ada's current product state.
 All claims are verifiable from the codebase or explicitly tagged.
 Status tags: `[LIVE]` `[BUILDING]` `[VISION]`
+**Implementation depth:** docs/STATE.md — actual edges, gaps, and `[SOLID]`/`[SHALLOW]`/`[HEURISTIC]` ratings per feature
 
 Do not imply a BUILDING or VISION feature is LIVE.
 
@@ -11,8 +12,8 @@ Do not imply a BUILDING or VISION feature is LIVE.
 ## What Ada Does
 
 Input: natural language intent — at whatever level the user operates.
-Output: `CLAUDE.md`, agent definitions, pre-tool hooks.
-Position: before building starts. That is Ada's categorical role.
+Output: `CLAUDE.md`, agent definitions, pre-tool hooks, queryable world model.
+Position: before building starts — and present throughout.
 
 ---
 
@@ -23,97 +24,135 @@ Position: before building starts. That is Ada's categorical role.
 Structured dialogue that surfaces and resolves ambiguity in user intent
 before compilation begins.
 
-- Identifies blocking unknowns in the stated intent
-- Asks the minimum necessary questions — semantic, not technical
-- Questions are about what the thing should do and be, not how to build it
-- User answers in plain language at whatever abstraction level they operate
-- No framework, library, or implementation questions
+- Adaptive depth classifier (pure function, no LLM) assigns 0–5 questions
+- Questions are about what the thing should do, not how to build it
+- Pre-calibrated axiom-aligned frames — returned verbatim, no LLM rewriting
+- Terminal clears cleanly between elicitation and compile UI — no overlap
 
 ### Compilation pipeline
 
-Multi-stage processing of elicited intent into structured context files.
+9-stage processing of elicited intent into structured context files.
 
-Stages: `CTX → INT → PER → ENT → PRO → SYN → VER → GOV`
+Stages: `CTX → INT → PER → ENT → PRO → SYN → VER → GOV → BLD`
 
-Each stage reduces ambiguity. Each stage produces an artifact.
-Stages do not proceed until the prior stage's output is coherent.
+Stages CTX–GOV reduce ambiguity through LLM reasoning. BLD is deterministic — no LLM, pure structural derivation from the accepted blueprint.
+Provenance gates between stages enforce entropy monotonicity.
+
+### Output: `BUILD.md` `[LIVE as of 2026-03-25]`
+
+Concrete build contract derived deterministically from the accepted blueprint.
+Only written on GOV ACCEPT.
+
+- **Stack** — one of 4 named presets, keyword-matched from architecture pattern + summary
+- **Acceptance criteria** — one per bounded context, derived from workflow postconditions
+- **File tree** — one directory per bounded context, one `.ts` + co-located `.test.ts` per component
+- **Dependencies** — deduped base stack packages + per-component responsibility keyword matching
 
 ### Output: `CLAUDE.md`
 
-The primary persistent context file Claude Code reads every session.
+Lean orientation file. Summary, components, build order, Ada MCP tool list.
+Detail lives in agent files, not here.
 
-- Contains: what the project is, what it is not, constraints that apply
-- Injected into Claude Code's context automatically before the first message
-- Produced from elicited intent — not written by the user
-- Plain language — user can read and verify it matches their original intent
+### Output: `.claude/agents/`
 
-### Output: `agents/`
+Per-bounded-context files containing invariants, workflow steps with Hoare
+triples, and state machines. Loaded per context, not all at once.
 
-Specialized agent definition files scoped to bounded contexts within the project.
-Each agent knows its domain and its constraints.
-Prevents cross-domain contamination during Claude Code sessions.
+### Output: `hooks/pre-tool/*.sh`
 
-### Output: `hooks/`
+~250 pre-tool guard scripts, one per entity invariant.
+Run before every tool call Claude Code makes. Deterministic enforcement
+outside the context window.
 
-Pre-tool guard scripts that run before Claude Code takes actions.
-Enforce constraints from the original intent at the boundary where decisions are made.
-Approximately 250 hooks per compilation covering entity invariants.
+### Output: `hooks/session-start.sh`
+
+Prints world model location and MCP tool names at the start of every session.
 
 ### Governor gate
 
-Quality gate that evaluates compilations before handoff to Claude Code.
-
 - Rejects compilations below coherence threshold
-- Iterates — if rejected, Ada revises and resubmits
-- Ensures output is internally consistent before Claude Code sees it
-- The gate is the reason Ada's output is structured, not approximate
+- Iterates — if rejected, Ada revises and resubmits (up to 3 iterations)
+- Fallback: picks best iteration by composite score if ACCEPT never reached
+
+### World model `[LIVE as of Phase 3/4]`
+
+Persistent, navigable store of all compiled artifacts.
+
+- Git-backed: each stage artifact written as git blob object
+- `.ada/ref` = `ada/v1 <tree-sha>` — world model pointer
+- `.ada/manifest.json` — stage index with postcodes + git SHAs
+- `.ada/state.json` — full checkpoint for MCP tools
+- Non-git repos fall back to `.ada/artifacts/` file-based storage
+
+### MCP authority server `[LIVE as of Phase 3]`
+
+Three tools available in every spawned Claude Code session:
+
+- `ada.query_constraints(scope)` — entity invariants + workflow steps by domain scope
+- `ada.check_drift(description)` — keyword-heuristic alignment check against compiled intent
+- `ada.get_world_model(stage?)` — read manifest or any stage artifact
+
+### Drift detection `[LIVE — static]`
+
+`ada verify` scans the codebase against the compiled blueprint.
+Run manually or triggered automatically on every commit via `.git/hooks/post-commit`.
+Output: coverage score, coherence score, semantic drift findings.
+Current implementation: static analysis (string matching). No LLM call.
 
 ### Provenance
 
-Every artifact is addressable and traceable to the original intent.
-Each stage output has a provenance address.
-Any artifact can be verified against the original intent at any point.
+Every artifact is addressable and traceable to original intent.
+Provenance chain: `git log --follow .ada/ref`.
+Each stage calls `store.record()` with postcode, content, parent postcode.
+
+### Interactive welcome screen
+
+`ada` or `ada compile` opens Ink TUI welcome screen.
+Logo, Ada identity, styled prompt, keyboard hints.
+Elicitation → compile renderer → post-compile Q&A → Claude Code spawn.
+
+### Post-compile Q&A
+
+After ACCEPT, Ada stays alive as readline interface.
+User asks anything about the compiled blueprint.
+Ada answers using Anthropic API with full blueprint as system prompt.
+Empty enter proceeds to spawn.
 
 ---
 
 ## In Development `[BUILDING]`
 
-### World model / artifact store
+### Ongoing drift authority (`ada watch`)
 
-Persistent, navigable store of all compiled artifacts.
-Goal: every stage artifact queryable after compilation ends.
-Example: "what did Ada decide about the payment flow?" returns an
-authoritative answer from the compiled artifact, not from memory.
-
-### Drift detection
-
-Detection of changes that contradict the original compiled intent.
-Trigger: a proposed code change or a new session instruction.
-Output: flagged contradiction with reference to the original decision.
+`ada watch` — monitors `.ada/provenance.db` for drift signals.
+Triggered on commit or file change. Re-runs verify agent against codebase + compiled blueprint.
+Surfaces drift with postcode evidence. Not yet started.
 
 ### Impact analysis
 
 Given a change to X: what else in the compiled model is affected?
-Prerequisite: world model must be live first.
+Requires ongoing drift authority as prerequisite.
+
+### Natural language queries against compiled context
+
+"What did Ada decide about X?" returns authoritative answer from the artifact.
+Not a summary from memory — a provenance-addressed answer.
+Requires richer MCP query layer.
 
 ---
 
 ## Vision `[VISION]`
 
-### Ongoing authority
-
-Ada watches commits and flags semantic drift from compiled intent.
-Ada as semantic guardian for the lifetime of the project, not just the start.
-
-### Natural language queries against compiled context
-
-"What did we decide about X?" returns answer from the provenance-addressed artifact.
-Not a summary from memory. An answer from the artifact.
-
 ### Intent version history
 
 How intent evolved from first description through all iterations.
 Navigable. Reversible. Auditable.
+Foundation: git-backed world model already provides the diff history via `git log --follow .ada/ref`.
+
+### Multi-project authority
+
+Ada as semantic authority across multiple projects.
+Single installation, cross-project drift detection, shared entity vocabulary.
 
 ---
 

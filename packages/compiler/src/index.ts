@@ -35,7 +35,11 @@ export type {
   ProcessFlow,
   BlueprintComponent,
   BlueprintArchitecture,
+  BlueprintScope,
+  NonFunctionalCategory,
+  NonFunctionalRequirement,
   ResolvedConflict,
+  CompilationAudit,
   Blueprint,
   SemanticDrift,
   AuditReport,
@@ -55,6 +59,13 @@ export type {
   CompileStatus,
   CompileResult,
   StageCompleteEvent,
+  ContractScope,
+  DelegationContract,
+  DelegationFrame,
+  FileTreeNode,
+  DependencySpec,
+  AcceptanceCriterion,
+  BuildContract,
 } from "./types.js";
 
 export { IntentAgent } from "./agents/intent.js";
@@ -68,10 +79,12 @@ export {
 } from "./agents/synthesis.js";
 export { VerifyAgent, type VerifyInput } from "./agents/verify.js";
 export { GovernorAgent } from "./agents/governor.js";
+export { deriveBuildContract } from "./agents/bld.js";
 
 export { analyzeCodebase, decorateWithContext } from "./context/index.js";
 export type {
   CodebaseContext,
+  PriorBlueprintContext,
   TypeRegistryEntry,
   TypeField,
   ConstantEntry,

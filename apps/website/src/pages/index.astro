@@ -10,7 +10,7 @@ const softwareSchema = {
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'macOS, Linux, Windows',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  description: 'Ada structures your intent before Claude Code starts — producing CLAUDE.md, agents, and hooks that Claude Code reads every session. Requirements elicitation before building begins.',
+  description: 'Ada compiles human intent into governed world-state machines for Claude Code and bounded agents. Semantic compilation + world-state runtime — build complex systems that feel as simple as a calculator.',
   url: 'https://motherlabs.ai',
   publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
 };
@@ -24,7 +24,7 @@ const faqSchema = {
       name: 'What is Ada?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Ada closes the intent gap. You describe what you want to build — in plain language, no technical vocabulary required. Ada runs structured elicitation to surface blocking unknowns, then compiles your intent into CLAUDE.md, agent files, and hook files that Claude Code reads every session. It runs before development, not during.',
+        text: 'Ada is a semantic operating system. You describe what you want to build in plain language. Ada compiles your intent through an 8-stage pipeline into CLAUDE.md, agent files, delegation contracts, and hooks. Then it stays in the room — tracking world-state as Claude Code builds, running a 5-layer verification stack, enforcing bounded contracts on every agent, and learning from session patterns to improve over time.',
       },
     },
     {
@@ -56,8 +56,8 @@ const faqSchema = {
 ---
 
 <Layout
-  title="Ada — Close the intent gap before Claude Code starts | Motherlabs"
-  description="Ada structures your intent before Claude Code starts. Requirements elicitation that produces CLAUDE.md, agents, and hooks — less distance between what you mean and what gets built."
+  title="Ada — Semantic operating system for Claude Code | Motherlabs"
+  description="Ada compiles intent into governed world-state machines. 8-stage semantic pipeline, world-state runtime, bounded delegation contracts, 5-layer verification. Build complex agent systems that feel as simple as a calculator."
   schemas={[softwareSchema, faqSchema]}
 >
   <Nav />
@@ -70,27 +70,23 @@ const faqSchema = {
         <img src="/intent-notes.jpg" alt="" class="hero-image" loading="eager" decoding="async" />
       </div>
       <div class="container hero-content">
-        <h1 class="hero-headline">
-          Between what you mean<br />and what gets built,<br />something gets lost.
-        </h1>
-        <p class="hero-sub">
-          Not because AI isn't capable.<br />
-          Because intent was never structured before building started.
-        </p>
-        <div class="hero-actions">
-          <a href="/start" class="btn-primary">Get started</a>
-          <a href="/ada" class="btn-ghost">What is Ada? &rarr;</a>
+
+        <div class="hero-left">
+          <p class="hero-label">Semantic operating system</p>
+          <h1 class="hero-headline">
+            Intent in.<br />Governed<br />execution out.
+          </h1>
+          <p class="hero-sub">
+            Eight compilation stages. World-state runtime.
+            Bounded execution contracts. Ada stays in the room.
+          </p>
+          <div class="hero-actions">
+            <a href="/start" class="btn-primary">Get started</a>
+            <a href="/ada" class="btn-ghost">How it works &rarr;</a>
+          </div>
         </div>
-      </div>
-    </section>
 
-    <!-- ─── ADA CLI DEMO ──────────────────────────────────────────────────── -->
-    <hr class="divider" />
-    <section class="demo-section">
-      <div class="container">
-        <div class="demo-wrap">
-
-          <!-- Compile block -->
+        <div class="hero-right">
           <div class="compile-block" aria-label="Ada compile output">
             <div class="compile-prompt">
               <span class="prompt-char">$</span>
@@ -134,46 +130,62 @@ const faqSchema = {
               </div>
             </div>
             <div class="compile-output">
-              <div class="output-row output-row--claude">
+              <div class="output-row">
                 <span class="output-file">CLAUDE.md</span>
                 <span class="output-action">written</span>
               </div>
-              <div class="output-row output-row--agents">
+              <div class="output-row">
                 <span class="output-file">agents/</span>
                 <span class="output-action">8 files written</span>
               </div>
-              <div class="output-row output-row--hooks">
+              <div class="output-row">
+                <span class="output-file">contracts/</span>
+                <span class="output-action">delegation bounds written</span>
+              </div>
+              <div class="output-row">
                 <span class="output-file">hooks/</span>
                 <span class="output-action">pre-tool guards written</span>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Callout annotations -->
-          <div class="callouts">
-            <div class="callout callout--gov">
-              <div class="callout-dot"></div>
-              <div class="callout-body">
-                <span class="callout-label">GOV — approved 0.94</span>
-                <p class="callout-text">Semantic coherence validated. The Governor scores your intent against the compiled blueprint before writing any files.</p>
-              </div>
-            </div>
-            <div class="callout callout--claude">
-              <div class="callout-dot"></div>
-              <div class="callout-body">
-                <span class="callout-label">CLAUDE.md</span>
-                <p class="callout-text">Injected into every Claude Code context window, every session. Not a one-time setup — a persistent intent anchor.</p>
-              </div>
-            </div>
-            <div class="callout callout--hooks">
-              <div class="callout-dot"></div>
-              <div class="callout-body">
-                <span class="callout-label">hooks/</span>
-                <p class="callout-text">Pre-tool guards that enforce your constraints at every tool call boundary. Before Claude Code acts, not after.</p>
-              </div>
+      </div>
+    </section>
+
+    <!-- ─── OUTPUT ──────────────────────────────────────────────────────── -->
+    <hr class="divider" />
+    <section class="output-section animate-in">
+      <div class="container">
+        <div class="callouts">
+          <div class="callout">
+            <div class="callout-dot"></div>
+            <div class="callout-body">
+              <span class="callout-label">GOV — 0.94</span>
+              <p class="callout-text">Semantic gate. The Governor scores coherence between your intent and the compiled blueprint before anything is written.</p>
             </div>
           </div>
-
+          <div class="callout">
+            <div class="callout-dot"></div>
+            <div class="callout-body">
+              <span class="callout-label">CLAUDE.md</span>
+              <p class="callout-text">Compiled intent. Injected into every Claude Code context window — every session, every turn.</p>
+            </div>
+          </div>
+          <div class="callout">
+            <div class="callout-dot"></div>
+            <div class="callout-body">
+              <span class="callout-label">hooks/</span>
+              <p class="callout-text">Pre-tool guards. Your constraints enforced at the execution boundary — before Claude Code acts, not after.</p>
+            </div>
+          </div>
+          <div class="callout">
+            <div class="callout-dot"></div>
+            <div class="callout-body">
+              <span class="callout-label">World-state runtime</span>
+              <p class="callout-text">Ada tracks what has actually been built — world-state, session log, component progress — and runs a 5-layer verification stack as execution proceeds.</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -190,7 +202,11 @@ const faqSchema = {
           </div>
           <div class="output-item">
             <code class="out-file">agents/</code>
-            <span class="out-desc">Specialist agents scoped to bounded contexts. Each knows its domain and its constraints.</span>
+            <span class="out-desc">Macro planner, micro executors, independent verifier — plus specialist agents scoped to each bounded context.</span>
+          </div>
+          <div class="output-item">
+            <code class="out-file">contracts/</code>
+            <span class="out-desc">Delegation contracts. Each agent gets typed scope, stop conditions, required evidence, and a max recursion depth — no unconstrained spawning.</span>
           </div>
           <div class="output-item">
             <code class="out-file">hooks/</code>
@@ -255,41 +271,58 @@ const faqSchema = {
     height: 100%;
     object-fit: cover;
     object-position: center 25%;
-    opacity: 0.09;
+    opacity: 0.42;
     display: block;
   }
 
   /* Light mode: less opacity since image is bright */
   @media (prefers-color-scheme: light) {
-    .hero-image { opacity: 0.06; }
+    .hero-image { opacity: 0.34; }
   }
-  [data-theme="light"] .hero-image { opacity: 0.06; }
-  [data-theme="dark"] .hero-image { opacity: 0.09; }
+  [data-theme="light"] .hero-image { opacity: 0.34; }
+  [data-theme="dark"] .hero-image { opacity: 0.42; }
 
   .hero-content {
     position: relative;
     z-index: 1;
     padding-top: 6rem;
     padding-bottom: 6rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6rem;
+    align-items: center;
+  }
+
+  .hero-left {
+    max-width: 28rem;
+  }
+
+  .hero-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 1.25rem;
   }
 
   .hero-headline {
     font-family: var(--font-serif);
-    font-size: clamp(2.5rem, 5.5vw, 4.25rem);
+    font-size: clamp(2.5rem, 5vw, 3.75rem);
     font-weight: 400;
     line-height: 1.08;
     letter-spacing: -0.015em;
     color: var(--color-text);
     margin: 0 0 1.5rem;
-    max-width: 18ch;
   }
 
   .hero-sub {
-    font-size: 1.0625rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
     color: var(--color-text-muted);
     line-height: 1.75;
-    margin: 0 0 2.75rem;
-    max-width: 36rem;
+    margin: 0 0 2.5rem;
   }
 
   .hero-actions {
@@ -297,6 +330,10 @@ const faqSchema = {
     align-items: center;
     gap: 1.5rem;
     flex-wrap: wrap;
+  }
+
+  .hero-right {
+    flex-shrink: 0;
   }
 
   /* Buttons */
@@ -326,19 +363,12 @@ const faqSchema = {
     color: var(--color-text);
   }
 
-  /* ── Demo section ────────────────────────────────────────────────────── */
-  .demo-section {
-    padding: 5rem 0;
+  /* ── Output/callout section ──────────────────────────────────────────── */
+  .output-section {
+    padding: 4rem 0;
   }
 
-  .demo-wrap {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 4rem;
-    align-items: start;
-  }
-
-  /* Compile block */
+  /* Compile block — in hero */
   .compile-block {
     font-family: var(--font-mono);
     font-size: 0.875rem;
@@ -425,12 +455,11 @@ const faqSchema = {
   .output-file   { color: var(--color-text); font-weight: 500; }
   .output-action { color: var(--color-text-dim); }
 
-  /* Callouts */
+  /* Callouts — horizontal row */
   .callouts {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    padding-top: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
   }
 
   .callout {
@@ -547,21 +576,35 @@ const faqSchema = {
   }
 
   /* ── Mobile ──────────────────────────────────────────────────────────── */
-  @media (max-width: 768px) {
-    .demo-wrap {
+  @media (max-width: 900px) {
+    .hero-content {
       grid-template-columns: 1fr;
-      gap: 2.5rem;
+      gap: 3rem;
+    }
+
+    .hero-right {
+      order: -1;
     }
 
     .compile-block {
       min-width: 0;
       width: 100%;
     }
+
+    .callouts {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
   }
 
   @media (max-width: 640px) {
     .hero {
-      min-height: 75vh;
+      min-height: auto;
+    }
+
+    .hero-content {
+      padding-top: 4rem;
+      padding-bottom: 4rem;
     }
 
     .hero-headline {

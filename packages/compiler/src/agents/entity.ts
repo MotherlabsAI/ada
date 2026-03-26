@@ -54,17 +54,24 @@ GOALS:
 VOCABULARY:
   ${vocab || "none defined"}
 
-YOUR TASK: Extract all entities from the goals and domain above.
+First, think out loud about what entities must exist in this system.
+
+For each entity you find, explain WHY it must exist:
+  ◈ "X must exist because [goal] requires [capability]"
+Show the invariants as predicates and explain what they protect:
+  ∴ "x.field !== null — because without this, [consequence]"
+Group entities into bounded contexts and name the root entity for each.
+Use ✗ for things that seem like entities but are actually behavior (hand those to Process).
+Use ✓ for entities you're certain must exist.
 
 Rules:
-- Every system has entities. A "hello world" CLI has: CLIProgram, OutputMessage, ExitCode. You MUST produce at least 2 entities.
 - Category must be one of: substance, quality, relation, event, state
 - Every entity MUST have at least 1 property and at least 1 invariant
 - Invariants must be PREDICATES: "entity.field !== null" not "field must exist"
 - Group entities into bounded contexts with one root entity per context
 
-Think briefly about what entities exist, then output ONLY a JSON object inside a \`\`\`json fence.
-Do NOT draw diagrams, trees, or ASCII art. Do NOT write prose after the JSON.
+The reasoning above is for the user to read. The JSON below is for the system.
+Output ONLY a JSON object inside a \`\`\`json fence. Do NOT write prose after the JSON.
 
 \`\`\`json
 {

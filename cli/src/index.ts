@@ -1,44 +1,61 @@
 #!/usr/bin/env node
 
+import React from "react";
+import { render } from "ink";
+import { WelcomeScreen } from "./ui/welcome.js";
 import { initCommand } from "./commands/init.js";
-import { compileCommand } from "./commands/compile.js";
 import { runCommand } from "./commands/run.js";
 import { resumeCommand } from "./commands/resume.js";
 import { verifyCommand } from "./commands/verify.js";
+import { scanCommand } from "./commands/scan.js";
 import { mcpCommand } from "./commands/mcp.js";
 import { configCommand } from "./commands/config.js";
+import { hookCommand } from "./commands/hook.js";
+import { reviewSkillsCommand } from "./commands/review-skills.js";
+import { reviewAmendmentsCommand } from "./commands/review-amendments.js";
 
 const args = process.argv.slice(2);
 const command = args[0];
 const flags = new Set(args.filter((a) => a.startsWith("--")));
 
+// ─── Interactive welcome screen ────────────────────────────────────────────────
+// When `ada` or `ada compile` is invoked without an intent argument,
+// renders the Ink welcome screen and waits for user to type + submit intent.
+
+async function promptForIntent(): Promise<string> {
+  let resolveIntent!: (s: string) => void;
+  const intentPromise = new Promise<string>((resolve) => {
+    resolveIntent = resolve;
+  });
+  const { waitUntilExit } = render(
+    React.createElement(WelcomeScreen, { onSubmit: resolveIntent }),
+  );
+  await waitUntilExit();
+  return intentPromise;
+}
+
+async function runCompile(intentFromArgs: string): Promise<void> {
+  let intent = intentFromArgs;
+  if (!intent) {
+    intent = await promptForIntent();
+    process.stdout.write("\n");
+  }
+  if (!intent) {
+    console.error("  no intent provided — exiting.");
+    process.exit(1);
+  }
+  await initCommand(intent, {
+    noExecute: flags.has("--no-execute"),
+    amend: flags.has("--amend"),
+  });
+}
+
 async function main(): Promise<void> {
   switch (command) {
-    case "init": {
-      const positional = args.slice(1).filter((a) => !a.startsWith("--"));
-      const intent = positional.join(" ");
-      if (!intent) {
-        console.error('Usage: ada init "your intent here" [--no-execute]');
-        process.exit(1);
-      }
-      await initCommand(intent, { noExecute: flags.has("--no-execute") });
-      break;
-    }
+    // Primary user-facing command
     case "compile": {
       const positional = args.slice(1).filter((a) => !a.startsWith("--"));
-      const intent = positional.join(" ");
-      if (!intent) {
-        console.error(
-          'Usage: ada compile "<natural language intent>" [--output <file>] [--strict]',
-        );
-        process.exit(1);
-      }
-      const outputIdx = args.indexOf("--output");
-      const outputFile = outputIdx !== -1 ? args[outputIdx + 1] : undefined;
-      await compileCommand(intent, {
-        ...(outputFile !== undefined ? { output: outputFile } : {}),
-        strict: flags.has("--strict"),
-      });
+      await runCompile(positional.join(" ").trim());
       break;
     }
     case "config":
@@ -59,37 +76,52 @@ async function main(): Promise<void> {
     case "verify":
       await verifyCommand(flags);
       break;
+    case "hook":
+      hookCommand(args.slice(1));
+      break;
+    case "review-amendments":
+      await reviewAmendmentsCommand();
+      break;
+    case "review-skills":
+      await reviewSkillsCommand();
+      break;
+    case "scan":
+      await scanCommand();
+      break;
     case "mcp":
       await mcpCommand();
       break;
     case "--help":
     case "-h":
-    case undefined:
       console.log(`
-  \u25C8 ada — semantic compiler for Claude Code
-  by Motherlabs
+  \u25C8 ada  \u00B7  semantic compiler by Motherlabs
 
-  Commands:
-    ada compile "<intent>"   Compile intent → blueprint JSON (stdout)
-                             --output <file>   Write blueprint to file
-                             --strict          Exit 3 on governance violations
-    ada init "<intent>"      Compile intent → config graph → spawn Claude Code
-                             --no-execute      Write config only, skip Claude spawn
-    ada config set-key       Persist API key for a provider
-                             --provider <name> --key <value>
-                             --provider <name> --env <VAR>
-                             --no-verify       Skip liveness check
-    ada run                  Spawn Claude Code with governor watching
-    ada resume <id>          Resume from checkpoint
+  Usage:
+    ada                      Open interactively — Ada prompts for intent
+    ada compile              Open interactively — Ada prompts for intent
+    ada compile "<intent>"   Compile with intent inline
+                             --no-execute   Write config only, skip Claude spawn
+                             --amend        Extend existing blueprint (reads .ada/state.json)
+
+  Other commands:
+    ada scan                 Show what Ada sees in this codebase before compiling
     ada verify               Verify codebase against compiled blueprint
-                             --comment     Output as GitHub PR comment markdown
-                             --json        Output raw JSON report
+    ada hook install         Install pre-push hook — ada verify runs before every push
+    ada hook uninstall       Remove the hook
+    ada config set-key       Persist API key
+    ada resume <id>          Resume from checkpoint
+    ada review-amendments    Review and apply blueprint amendment queue
+    ada review-skills        Review and approve extracted skill candidates
     ada mcp                  Start MCP spec authority server (stdio)
 `);
       break;
+    // Bare `ada` — interactive compile mode
+    case undefined:
+      await runCompile("");
+      break;
     default:
-      console.error(`Unknown command: ${command}`);
-      console.error('Run "ada --help" for usage');
+      console.error(`  unknown command: ${command}`);
+      console.error('  run "ada --help" for usage');
       process.exit(1);
   }
 }

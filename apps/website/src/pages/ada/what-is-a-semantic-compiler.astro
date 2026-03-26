@@ -316,7 +316,7 @@ const faqSchema = {
           The pipeline does not proceed until each stage passes its gate.
         </p>
 
-        <div class="compile-block" aria-label="Ada 7-stage pipeline">
+        <div class="compile-block" aria-label="Ada 8-stage pipeline">
           <div class="compile-prompt">
             <span class="prompt-char">$</span>
             <span class="prompt-cmd">ada compile</span>
@@ -368,7 +368,7 @@ const faqSchema = {
           the output traces cleanly back to the input.
         </p>
         <p>
-          The 7-stage structure means the compilation is not a single inference step.
+          The 8-stage structure means the compilation is not a single inference step.
           Each stage validates what it produces before the next stage begins.
           Ambiguity that is not resolved in INT cannot propagate silently to ENT.
           The pipeline is gated, not streaming.

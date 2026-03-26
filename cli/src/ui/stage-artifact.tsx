@@ -507,5 +507,12 @@ export function StageArtifact({
       return <VerifyArtifact data={artifact as AuditReport} />;
     case "GOV":
       return <GovernorArtifact data={artifact as GovernorDecision} />;
+    case "BLD":
+      return (
+        <Box paddingX={1}>
+          <Text color={palette.text.dim}>{"  "}</Text>
+          <Text color={palette.semantic.verified}>BUILD.md written</Text>
+        </Box>
+      );
   }
 }

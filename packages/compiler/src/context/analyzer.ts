@@ -94,9 +94,163 @@ function extractConstants(
   return entries;
 }
 
+function scanPackage(
+  pkgRoot: string,
+  pkgName: string,
+  projectRoot: string,
+): { types: TypeRegistryEntry[]; constants: ConstantEntry[]; deps: string[] } {
+  // Try src/ first, then the package root itself
+  const srcDir = path.join(pkgRoot, "src");
+  const tsFiles = fs.existsSync(srcDir) ? walkTs(srcDir) : walkTs(pkgRoot);
+
+  const types: TypeRegistryEntry[] = [];
+  const constants: ConstantEntry[] = [];
+  let deps: string[] = [];
+
+  // Read deps from package.json if present
+  const pkgJsonPath = path.join(pkgRoot, "package.json");
+  if (fs.existsSync(pkgJsonPath)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8")) as Record<
+        string,
+        unknown
+      >;
+      const rawDeps = pkg["dependencies"] as Record<string, string> | undefined;
+      const rawDev = pkg["devDependencies"] as
+        | Record<string, string>
+        | undefined;
+      const all = { ...rawDeps, ...rawDev };
+      deps = Object.keys(all).filter(
+        (d) => !d.startsWith("@types/") && !d.startsWith("typescript"),
+      );
+    } catch {
+      /* skip malformed */
+    }
+  }
+
+  for (const filePath of tsFiles) {
+    const source = fs.readFileSync(filePath, "utf8");
+    const relPath = path.relative(projectRoot, filePath);
+    types.push(...extractTypes(source, relPath, pkgName));
+    constants.push(...extractConstants(source, relPath, pkgName));
+  }
+
+  return { types, constants, deps };
+}
+
+function resolveProjectName(projectRoot: string): string {
+  const pkgJsonPath = path.join(projectRoot, "package.json");
+  if (fs.existsSync(pkgJsonPath)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8")) as Record<
+        string,
+        unknown
+      >;
+      if (typeof pkg["name"] === "string" && pkg["name"]) return pkg["name"];
+    } catch {
+      /* skip */
+    }
+  }
+  return path.basename(projectRoot);
+}
+
 export function analyzeCodebase(projectRoot: string): CodebaseContext {
   const packagesDir = path.join(projectRoot, "packages");
-  if (!fs.existsSync(packagesDir)) {
+
+  const monorepoPackages = fs.existsSync(packagesDir)
+    ? fs.readdirSync(packagesDir).filter((d) => {
+        const p = path.join(packagesDir, d, "package.json");
+        return (
+          fs.existsSync(p) &&
+          fs.statSync(path.join(packagesDir, d)).isDirectory()
+        );
+      })
+    : [];
+
+  const allTypes: TypeRegistryEntry[] = [];
+  const allConstants: ConstantEntry[] = [];
+  const boundaries: PackageBoundary[] = [];
+
+  if (monorepoPackages.length > 0) {
+    // ── Monorepo path: scan each package under packages/ ──────────────────
+    for (const pkgDir of monorepoPackages) {
+      const pkgRoot = path.join(packagesDir, pkgDir);
+      const pkgJsonPath = path.join(pkgRoot, "package.json");
+      let pkgName = `${pkgDir}`;
+      try {
+        const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8")) as Record<
+          string,
+          unknown
+        >;
+        if (typeof pkg["name"] === "string") pkgName = pkg["name"];
+      } catch {
+        /* skip */
+      }
+
+      const { types, constants, deps } = scanPackage(
+        pkgRoot,
+        pkgName,
+        projectRoot,
+      );
+      allTypes.push(...types);
+      allConstants.push(...constants);
+      boundaries.push({
+        name: pkgName,
+        types: types.map((t) => t.name),
+        dependencies: deps.filter((d) =>
+          monorepoPackages.some((p) => d.includes(p)),
+        ),
+      });
+    }
+  } else {
+    // ── Standalone project: scan src/, app/, lib/, then root .ts files ────
+    const projectName = resolveProjectName(projectRoot);
+    const candidateDirs = ["src", "app", "lib", "pages", "components"].map(
+      (d) => path.join(projectRoot, d),
+    );
+
+    const dirsToScan = candidateDirs.filter(
+      (d) => fs.existsSync(d) && fs.statSync(d).isDirectory(),
+    );
+
+    // Fall back to root-level .ts files if no standard dirs found
+    if (dirsToScan.length === 0) {
+      const rootTs = fs
+        .readdirSync(projectRoot)
+        .filter(
+          (f) =>
+            f.endsWith(".ts") && !f.endsWith(".d.ts") && f !== "node_modules",
+        )
+        .map((f) => path.join(projectRoot, f));
+
+      for (const filePath of rootTs) {
+        const source = fs.readFileSync(filePath, "utf8");
+        const relPath = path.relative(projectRoot, filePath);
+        allTypes.push(...extractTypes(source, relPath, projectName));
+        allConstants.push(...extractConstants(source, relPath, projectName));
+      }
+    } else {
+      for (const dir of dirsToScan) {
+        for (const filePath of walkTs(dir)) {
+          const source = fs.readFileSync(filePath, "utf8");
+          const relPath = path.relative(projectRoot, filePath);
+          allTypes.push(...extractTypes(source, relPath, projectName));
+          allConstants.push(...extractConstants(source, relPath, projectName));
+        }
+      }
+    }
+
+    if (allTypes.length > 0 || allConstants.length > 0) {
+      const { deps } = scanPackage(projectRoot, projectName, projectRoot);
+      boundaries.push({
+        name: projectName,
+        types: allTypes.map((t) => t.name),
+        dependencies: deps,
+      });
+    }
+  }
+
+  if (allTypes.length === 0 && allConstants.length === 0) {
     const postcode = generatePostcode("CTX", "empty");
     return {
       typeRegistry: [],
@@ -107,57 +261,9 @@ export function analyzeCodebase(projectRoot: string): CodebaseContext {
     };
   }
 
-  const allTypes: TypeRegistryEntry[] = [];
-  const allConstants: ConstantEntry[] = [];
-  const boundaries: PackageBoundary[] = [];
-
-  const packageDirs = fs.readdirSync(packagesDir).filter((d) => {
-    const pkgJson = path.join(packagesDir, d, "package.json");
-    return fs.existsSync(pkgJson);
-  });
-
-  for (const pkgDir of packageDirs) {
-    const pkgJsonPath = path.join(packagesDir, pkgDir, "package.json");
-    let pkgName = `@ada/${pkgDir}`;
-    let deps: string[] = [];
-
-    try {
-      const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8")) as Record<
-        string,
-        unknown
-      >;
-      if (typeof pkg["name"] === "string") pkgName = pkg["name"];
-      const rawDeps = pkg["dependencies"] as Record<string, string> | undefined;
-      if (rawDeps) {
-        deps = Object.keys(rawDeps).filter((d) => d.startsWith("@ada/"));
-      }
-    } catch {
-      /* skip malformed */
-    }
-
-    const srcDir = path.join(packagesDir, pkgDir, "src");
-    const tsFiles = walkTs(srcDir);
-    const pkgTypes: string[] = [];
-
-    for (const filePath of tsFiles) {
-      const source = fs.readFileSync(filePath, "utf8");
-      const relPath = path.relative(projectRoot, filePath);
-
-      const types = extractTypes(source, relPath, pkgName);
-      allTypes.push(...types);
-      pkgTypes.push(...types.map((t) => t.name));
-
-      const constants = extractConstants(source, relPath, pkgName);
-      allConstants.push(...constants);
-    }
-
-    boundaries.push({ name: pkgName, types: pkgTypes, dependencies: deps });
-  }
-
   // Vocabulary: unique type names, sorted
   const vocabulary = [...new Set(allTypes.map((t) => t.name))].sort();
 
-  // Generate postcode from content hash
   const contentForHash = JSON.stringify({
     vocabulary,
     constants: allConstants.map((c) => c.name),

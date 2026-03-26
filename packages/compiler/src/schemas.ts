@@ -238,10 +238,67 @@ const openQuestionItem = z.union([
   z.record(z.unknown()).transform((obj) => JSON.stringify(obj)),
 ]);
 
+// scope: accept object or fall back to empty arrays
+const blueprintScopeSchema = z
+  .object({
+    inScope: z.array(z.string()).default([]),
+    outOfScope: z.array(z.string()).default([]),
+    assumptions: z.array(z.string()).default([]),
+  })
+  .default({ inScope: [], outOfScope: [], assumptions: [] });
+
+const nonFunctionalCategoryValues = [
+  "performance",
+  "security",
+  "scalability",
+  "reliability",
+  "maintainability",
+  "compliance",
+  "observability",
+] as const;
+
+// nonFunctional: accept structured objects OR legacy strings, coerce to NonFunctionalRequirement
+const nonFunctionalRequirementSchema = z.any().transform((val) => {
+  if (typeof val === "string") {
+    return {
+      category: "maintainability" as const,
+      requirement: val,
+      predicate: undefined,
+      scope: "global",
+      verification: val,
+    };
+  }
+  if (val && typeof val === "object") {
+    const obj = val as Record<string, unknown>;
+    const rawCat = String(obj["category"] ?? "maintainability").toLowerCase();
+    const category = (
+      nonFunctionalCategoryValues.includes(rawCat as never)
+        ? rawCat
+        : "maintainability"
+    ) as (typeof nonFunctionalCategoryValues)[number];
+    return {
+      category,
+      requirement: String(obj["requirement"] ?? obj["description"] ?? val),
+      predicate:
+        obj["predicate"] != null ? String(obj["predicate"]) : undefined,
+      scope: String(obj["scope"] ?? "global"),
+      verification: String(obj["verification"] ?? obj["requirement"] ?? val),
+    };
+  }
+  return {
+    category: "maintainability" as const,
+    requirement: String(val),
+    predicate: undefined,
+    scope: "global",
+    verification: String(val),
+  };
+});
+
 export const blueprintSchema = z.object({
   summary: z.string(),
+  scope: blueprintScopeSchema,
   architecture: blueprintArchitectureSchema,
-  nonFunctional: z.array(z.string()).default([]),
+  nonFunctional: z.array(nonFunctionalRequirementSchema).default([]),
   openQuestions: z.array(openQuestionItem).default([]),
   resolvedConflicts: z.array(resolvedConflictSchema).default([]),
   challenges: z.array(challengeSchema).default([]),

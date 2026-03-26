@@ -5,6 +5,7 @@ import { ProcessAgent } from "./agents/process.js";
 import { SynthesisAgent } from "./agents/synthesis.js";
 import { VerifyAgent } from "./agents/verify.js";
 import { GovernorAgent } from "./agents/governor.js";
+import { deriveBuildContract } from "./agents/bld.js";
 import { buildGate } from "./gate.js";
 import type {
   Blueprint,
@@ -21,8 +22,13 @@ import type {
 import * as fs from "fs";
 import * as path from "path";
 import type { PostcodeAddress } from "@ada/provenance";
+import { ProvenanceStore } from "@ada/provenance";
 import { analyzeCodebase } from "./context/analyzer.js";
-import type { CodebaseContext } from "./context/types.js";
+import { groundIntent } from "./web-grounding.js";
+import type {
+  CodebaseContext,
+  PriorBlueprintContext,
+} from "./context/types.js";
 
 function gatherProjectContext(cwd: string): string {
   const fragments: string[] = [];
@@ -110,6 +116,7 @@ function gatherProjectContext(cwd: string): string {
 
 export interface CompileOptions {
   readonly apiKey?: string | undefined;
+  readonly priorBlueprint?: PriorBlueprintContext | undefined;
   readonly onStageStart?: (stage: CompilerStageCode) => void;
   readonly onStageToken?: (event: {
     stage: CompilerStageCode;
@@ -142,11 +149,18 @@ export class MotherCompiler {
       onStageToken,
       onStageComplete,
       onClarificationNeeded,
+      priorBlueprint,
     } = options;
     const gates: Record<string, ProvenanceGate> = {};
     const stageRecords: StageExecutionRecord[] = [];
     let cumulativeEntropy = 1.0;
     let previousPostcode: PostcodeAddress | null = null;
+
+    // ─── Provenance store — wired into every stage ───
+    const cwd = process.cwd();
+    const adaDir = path.join(cwd, ".ada");
+    fs.mkdirSync(adaDir, { recursive: true });
+    const store = new ProvenanceStore(path.join(adaDir, "provenance.db"));
 
     const emitAndGate = (
       stage: CompilerStageCode,
@@ -155,7 +169,11 @@ export class MotherCompiler {
       contentScore: number, // renamed from invariantCount — measures structured content produced
       unresolvedUnknowns: number,
       parseFailure: boolean,
+      content: string,
     ): void => {
+      const upstreams = previousPostcode ? [previousPostcode.raw] : [];
+      store.record(postcode, upstreams, content);
+
       if (previousPostcode) {
         const gate = buildGate({
           fromPostcode: previousPostcode,
@@ -200,7 +218,6 @@ export class MotherCompiler {
     }
 
     // ─── Stage 0: Context (CTX) — static codebase analysis ───
-    const cwd = process.cwd();
     const codebaseContext: CodebaseContext = analyzeCodebase(cwd);
 
     // Set context on agents that benefit from grounding
@@ -208,11 +225,25 @@ export class MotherCompiler {
     this.entityAgent.setCodebaseContext(codebaseContext);
     this.synthesisAgent.setCodebaseContext(codebaseContext);
 
+    // Prior blueprint — injected into INT and SYN for --amend runs
+    if (priorBlueprint) {
+      this.intentAgent.setPriorBlueprint(priorBlueprint);
+      this.synthesisAgent.setPriorBlueprint(priorBlueprint);
+    }
+
     // Emit CTX gate
     onStageStart?.("CTX");
     const ctxContentScore =
       codebaseContext.vocabulary.length + codebaseContext.constants.length;
-    emitAndGate("CTX", codebaseContext.postcode, [], ctxContentScore, 0, false);
+    emitAndGate(
+      "CTX",
+      codebaseContext.postcode,
+      [],
+      ctxContentScore,
+      0,
+      false,
+      JSON.stringify(codebaseContext),
+    );
     stageRecords.push({
       stageCode: "CTX",
       metadata: {
@@ -226,9 +257,10 @@ export class MotherCompiler {
       postcode: codebaseContext.postcode,
     });
 
-    // ─── Enrich intent with project context (raw text fallback) ───
+    // ─── Enrich intent with project context + web grounding ───
     const projectContext = gatherProjectContext(cwd);
-    const enrichedIntent = projectContext ? intent + projectContext : intent;
+    const webContext = await groundIntent(intent);
+    const enrichedIntent = intent + (projectContext ?? "") + (webContext ?? "");
 
     // ─── Stage 1: Intent (excavate) ───
     onStageStart?.("INT");
@@ -256,6 +288,7 @@ export class MotherCompiler {
       intContent,
       intentGraph.unknowns.length,
       intentResult.parseFailure,
+      JSON.stringify(intentGraph),
     );
 
     // ─── Clarification checkpoint ───
@@ -328,6 +361,7 @@ export class MotherCompiler {
       perContent,
       0,
       personaResult.parseFailure,
+      JSON.stringify(domainContext),
     );
 
     // ─── Stage 3: Entity (crystallize) ───
@@ -361,6 +395,7 @@ export class MotherCompiler {
       entContent,
       intentGraph.unknowns.filter((u) => u.impact === "blocking").length,
       entityResult.parseFailure,
+      JSON.stringify(entityMap),
     );
 
     // ─── Stage 4: Process (choreograph) ───
@@ -398,6 +433,7 @@ export class MotherCompiler {
       proSteps + proStates + proEdges,
       0,
       processResult.parseFailure,
+      JSON.stringify(processFlow),
     );
 
     // ─── Stage 5: Synthesis (compose) ───
@@ -414,6 +450,7 @@ export class MotherCompiler {
     const synthesisOutput = synthesisResult.output;
     const blueprint: Blueprint = {
       summary: synthesisOutput.summary,
+      scope: synthesisOutput.scope,
       architecture: synthesisOutput.architecture,
       dataModel: entityMap,
       processModel: processFlow,
@@ -435,6 +472,7 @@ export class MotherCompiler {
       synContent,
       blueprint.openQuestions.length,
       synthesisResult.parseFailure,
+      JSON.stringify(blueprint),
     );
 
     // ─── Stage 6: Verify (challenge) ───
@@ -464,6 +502,7 @@ export class MotherCompiler {
       verContent,
       auditReport.gaps.length,
       verifyResult.parseFailure,
+      JSON.stringify(auditReport),
     );
 
     // ─── Stage 7: Governor (govern) ───
@@ -501,10 +540,58 @@ export class MotherCompiler {
       govContent,
       0,
       governorResult.parseFailure,
+      JSON.stringify(governorDecision),
     );
+
+    // Attach audit snapshot to blueprint — persists with the artifact
+    const blueprintWithAudit: Blueprint = {
+      ...blueprint,
+      audit: {
+        coverageScore: governorDecision.coverageScore,
+        coherenceScore: governorDecision.coherenceScore,
+        gatePassRate: governorDecision.gatePassRate,
+        iterationCount: 1, // updated at the call site if iterating
+        governorDecision: governorDecision.decision,
+        confidence: governorDecision.confidence,
+        driftCount: auditReport.drifts.length,
+        gapCount: auditReport.gaps.length,
+        violationCount: governorDecision.violations.length,
+      },
+    };
+
+    // ─── Stage 8: Build Contract (BLD) — deterministic derivation ───
+    // Only runs on ACCEPT. Pure structural derivation — no LLM call.
+    let blueprintFinal: Blueprint = blueprintWithAudit;
+    if (governorDecision.decision === "ACCEPT") {
+      onStageStart?.("BLD");
+      const buildContract = deriveBuildContract(blueprintWithAudit);
+      blueprintFinal = { ...blueprintWithAudit, build: buildContract };
+      stageRecords.push({
+        stageCode: "BLD",
+        metadata: {
+          modelId: "deterministic",
+          temperature: 0,
+          extendedThinking: false,
+          maxTokens: 0,
+          retryCount: 0,
+          callDurationMs: 0,
+        },
+        postcode: buildContract.postcode,
+      });
+      emitAndGate(
+        "BLD",
+        buildContract.postcode,
+        [],
+        buildContract.fileTree.filter((n) => n.type === "file").length,
+        buildContract.gatePass ? 0 : 1,
+        !buildContract.gatePass,
+        JSON.stringify(buildContract),
+      );
+    }
 
     const finalState: PipelineState = {
       ...pipelineState,
+      synthesis: blueprintFinal,
       governor: governorDecision,
     };
     const status =
@@ -525,7 +612,7 @@ export class MotherCompiler {
     };
 
     return {
-      blueprint,
+      blueprint: blueprintFinal,
       governorDecision,
       pipelineState: finalState,
       status,

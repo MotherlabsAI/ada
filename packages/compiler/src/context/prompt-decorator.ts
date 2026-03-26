@@ -1,21 +1,29 @@
-import type { CodebaseContext } from "./types.js";
+import type { CodebaseContext, PriorBlueprintContext } from "./types.js";
 import type { CompilerStageCode } from "../types.js";
 
 export function decorateWithContext(
   prompt: string,
   ctx: CodebaseContext,
   stage: CompilerStageCode,
+  prior?: PriorBlueprintContext,
 ): string {
+  let result = prompt;
   switch (stage) {
     case "INT":
-      return prompt + formatVocabulary(ctx);
+      result += formatVocabulary(ctx);
+      if (prior) result += formatPriorBlueprint(prior, "INT");
+      break;
     case "ENT":
-      return prompt + formatTypeRegistry(ctx);
+      result += formatTypeRegistry(ctx);
+      break;
     case "SYN":
-      return prompt + formatPackageBoundaries(ctx);
+      result += formatPackageBoundaries(ctx);
+      if (prior) result += formatPriorBlueprint(prior, "SYN");
+      break;
     default:
-      return prompt;
+      break;
   }
+  return result;
 }
 
 function formatVocabulary(ctx: CodebaseContext): string {
@@ -65,5 +73,49 @@ function formatPackageBoundaries(ctx: CodebaseContext): string {
     section += `${pkg.name}: ${types}${deps}\n`;
   }
   section += "--- END PACKAGE BOUNDARIES ---";
+  return section;
+}
+
+function formatPriorBlueprint(
+  prior: PriorBlueprintContext,
+  stage: "INT" | "SYN",
+): string {
+  let section =
+    "\n\n--- PRIOR BLUEPRINT (already compiled — your output must EXTEND this, not replace it) ---\n";
+  section += `Existing summary: ${prior.summary}\n`;
+
+  if (stage === "INT") {
+    if (prior.goals.length > 0) {
+      section += `Existing goals (preserve these, add new ones):\n`;
+      for (const g of prior.goals) {
+        section += `  - ${g.description}\n`;
+      }
+    }
+    if (prior.constraints.length > 0) {
+      section += `Existing constraints (preserve these):\n`;
+      for (const c of prior.constraints) {
+        section += `  - ${c.description}\n`;
+      }
+    }
+    if (prior.excludedConcerns.length > 0) {
+      section += `Already excluded (do not re-introduce): ${prior.excludedConcerns.join(", ")}\n`;
+    }
+    section +=
+      "Instruction: extract goals from the NEW intent above. Include all existing goals plus any new ones the new intent adds. Do not drop existing goals.\n";
+  }
+
+  if (stage === "SYN") {
+    section += `Existing architecture: ${prior.architecturePattern}\n`;
+    if (prior.components.length > 0) {
+      section += `Existing components (keep these, add new ones as needed):\n`;
+      for (const c of prior.components) {
+        section += `  - ${c.name} (${c.boundedContext}): ${c.responsibility}\n`;
+      }
+    }
+    section +=
+      "Instruction: produce an architecture that includes all existing components plus any new components required by the new intent. Do not remove existing components unless they directly conflict with the new intent.\n";
+  }
+
+  section += "--- END PRIOR BLUEPRINT ---";
   return section;
 }

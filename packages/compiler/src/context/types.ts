@@ -33,3 +33,18 @@ export interface CodebaseContext {
   readonly packageBoundaries: readonly PackageBoundary[];
   readonly postcode: PostcodeAddress;
 }
+
+// Prior compiled blueprint — injected into INT and SYN stages during --amend runs.
+// Allows new intent to be additive rather than a full replacement.
+export interface PriorBlueprintContext {
+  readonly summary: string;
+  readonly architecturePattern: string;
+  readonly components: readonly {
+    name: string;
+    responsibility: string;
+    boundedContext: string;
+  }[];
+  readonly goals: readonly { id: string; description: string }[];
+  readonly constraints: readonly { id: string; description: string }[];
+  readonly excludedConcerns: readonly string[];
+}

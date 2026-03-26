@@ -54,7 +54,7 @@ const faqSchema = {
       name: 'Does Ada require technical vocabulary to formalize intent?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'No. Ada\'s elicitation stage is designed to work at whatever level you think in. You do not need to use terms like entity, bounded context, or state machine. Ada asks questions at the semantic level — what the system should do, what it should not do, what decisions you have already made — and performs the translation to governed artifacts autonomously. The formalization is the compiler\'s job, not yours.',
+        text: 'No. Ada\'s elicitation stage is designed to work at whatever level you think in. You do not need to use terms like entity, bounded context, or state machine. Ada asks questions at the semantic level — what the system should do, what it should not do, what decisions you have already made — and performs the translation to CLAUDE.md, agent files, and hooks autonomously. The formalization is the compiler\'s job, not yours.',
       },
     },
   ],
@@ -311,10 +311,10 @@ OUT OF SCOPE: Mobile view, alerts,
               <h3>Compiled — Ada output</h3>
             </div>
             <p>
-              Intent compiled through a semantic pipeline into governed artifacts:
+              Intent compiled through a semantic pipeline into
               CLAUDE.md (hot memory), agent files (domain specialists), and hooks
-              (structural enforcement at every tool boundary). The artifact is not written —
-              it is compiled from structured elicitation. Constraints are enforced,
+              (structural enforcement at every tool boundary). These are not written —
+              they are compiled from structured elicitation. Constraints are enforced,
               not described. This is full formalization.
             </p>
           </div>
@@ -342,7 +342,7 @@ OUT OF SCOPE: Mobile view, alerts,
         <h2>Ada's position: a semantic compiler for intent</h2>
         <p>
           Ada is a semantic compiler. It takes informal intent as input
-          and produces governed artifacts as output — the same relationship
+          and produces CLAUDE.md, agent files, and hooks as output — the same relationship
           a TypeScript compiler has to source code, or a schema validator
           has to a JSON document.
         </p>
@@ -431,7 +431,7 @@ OUT OF SCOPE: Mobile view, alerts,
               No. Ada's elicitation stage works at whatever level you think in.
               You do not need to use terms like entity, bounded context, or state machine.
               Ada asks questions at the semantic level and performs the translation to
-              governed artifacts autonomously. The formalization is the compiler's job, not yours.
+              CLAUDE.md, agent files, and hooks autonomously. The formalization is the compiler's job, not yours.
             </p>
           </div>
         </div>

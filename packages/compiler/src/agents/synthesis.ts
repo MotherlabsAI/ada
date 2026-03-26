@@ -3,6 +3,8 @@ import { Agent } from "./base.js";
 import { DEV_OPUS } from "../models.js";
 import type {
   BlueprintArchitecture,
+  BlueprintScope,
+  NonFunctionalRequirement,
   ResolvedConflict,
   Challenge,
   IntentGraph,
@@ -15,8 +17,9 @@ import { blueprintSchema } from "../schemas.js";
 
 export interface SynthesisOutput {
   readonly summary: string;
+  readonly scope: BlueprintScope;
   readonly architecture: BlueprintArchitecture;
-  readonly nonFunctional: readonly string[];
+  readonly nonFunctional: readonly NonFunctionalRequirement[];
   readonly openQuestions: readonly string[];
   readonly resolvedConflicts: readonly ResolvedConflict[];
   readonly challenges: readonly Challenge[];
@@ -69,8 +72,16 @@ export class SynthesisAgent extends Agent<SynthesisInput, SynthesisOutput> {
   protected getDefaultOutput(input: SynthesisInput): SynthesisOutput {
     return {
       summary: input.intentGraph.rawIntent,
+      scope: { inScope: [], outOfScope: [], assumptions: [] },
       architecture: { pattern: "unknown", rationale: "", components: [] },
-      nonFunctional: [],
+      nonFunctional: [
+        {
+          category: "maintainability",
+          requirement: "TypeScript strict mode",
+          scope: "global",
+          verification: "tsc --noEmit exits 0",
+        },
+      ],
       openQuestions: [],
       resolvedConflicts: [],
       challenges: [],
@@ -153,16 +164,25 @@ CRITICAL RULES:
 - "openQuestions" must be an array of STRINGS like ["What handles session resume?"] — NOT objects
 - "resolvedConflicts[].authoritative" must be either "entity" or "process" — NOT a description
 - "summary" must describe what the system DOES — NOT repeat the raw intent
+- "scope.inScope" must list what this system explicitly builds (1 item per goal, plain language)
+- "scope.outOfScope" must copy from EXCLUDED above — everything this system does NOT do
+- "scope.assumptions" must list things assumed true that were not explicitly stated (from resolved unknowns)
+- "nonFunctional" must be an array of OBJECTS with: category (one of: performance, security, scalability, reliability, maintainability, compliance, observability), requirement (what must hold), predicate (optional formal predicate — omit if not formalizable), scope (bounded context name or "global"), verification (how to confirm)
 - DO NOT leave any array empty if upstream data exists to populate it
 
 The reasoning above is for the user to read. The JSON below is for the system.
 Return the structured result in a \`\`\`json code fence:
 \`\`\`json
 {
-  "summary": "A CLI tool that compiles human intent into governed Claude Code execution through a 7-stage sequential pipeline with provenance tracking and governor authority.",
+  "summary": "A CLI tool that compiles human intent into governed Claude Code execution through an 8-stage sequential pipeline with provenance tracking and governor authority.",
+  "scope": {
+    "inScope": ["8-stage compilation pipeline", "intent elicitation via CLI", "CLAUDE.md + agent + hook output"],
+    "outOfScope": ["GUI or web interface", "code execution", "cloud deployment", "project scaffolding"],
+    "assumptions": ["Users have Node.js >= 18 installed", "Projects use TypeScript or JavaScript"]
+  },
   "architecture": {
     "pattern": "gated-sequential-pipeline",
-    "rationale": "The 7 compilation stages require sequential execution because each stage depends on the previous stage output. Provenance gates between stages enforce entropy reduction.",
+    "rationale": "The 8 compilation stages require sequential execution because each stage depends on the previous stage output. Provenance gates between stages enforce entropy reduction.",
     "components": [
       {
         "name": "IntentParser",
@@ -180,7 +200,11 @@ Return the structured result in a \`\`\`json code fence:
       }
     ]
   },
-  "nonFunctional": ["TypeScript strict mode with noImplicitAny", "Node.js >= 18", "Anthropic API models only"],
+  "nonFunctional": [
+    {"category": "maintainability", "requirement": "TypeScript strict mode with noImplicitAny", "scope": "global", "verification": "tsc --noEmit exits 0"},
+    {"category": "reliability", "requirement": "Node.js >= 18 runtime", "scope": "global", "verification": "engines field in package.json"},
+    {"category": "security", "requirement": "Anthropic API models only — no third-party model calls", "predicate": "api.baseURL.startsWith('https://api.anthropic.com')", "scope": "global", "verification": "grep for non-Anthropic API endpoints"}
+  ],
   "openQuestions": ["How does session resume work after a crash?", "What is the retry policy for failed stages?"],
   "resolvedConflicts": [{"entity": "Pipeline has status field", "process": "Workflow defines status transitions", "resolution": "Process owns transitions, Entity owns valid states", "authoritative": "process"}],
   "challenges": [{"id": "CH1", "description": "Provenance chain integrity across iterations", "severity": "major", "resolved": false}]

@@ -1,21 +1,30 @@
 {
-  "name": "@ada/cli",
+  "name": "@motherlabs/ada",
   "version": "0.1.0",
-  "private": true,
+  "description": "Ada — semantic compiler. Turn intent into governed Claude Code sessions.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "ada": "dist/index.js"
+    "ada": "./dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
   },
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'no tests yet'"
+    "test": "echo 'no tests yet'",
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
     "@ada/compiler": "workspace:*",
     "@ada/config-writer": "workspace:*",
+    "@ada/elicitation": "workspace:*",
     "@ada/storage": "workspace:*",
     "@ada/governor": "workspace:*",
     "@ada/mcp-server": "workspace:*",

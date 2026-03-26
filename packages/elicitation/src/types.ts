@@ -1,5 +1,7 @@
 import type { IntentGraph } from "@ada/compiler";
 import type { PostcodeAddress } from "@ada/provenance";
+import type { QuestionType } from "./depth-classifier.js";
+export type { QuestionType };
 
 // ─── Session State Machine ───
 
@@ -133,6 +135,9 @@ export interface Gap {
   suppressedReason: string | null;
   readonly conflictingFieldA?: string;
   readonly conflictingFieldB?: string;
+  // Set by adaptive depth classifier — overrides generic question generation
+  // with an axiom-aligned targeted prompt.
+  readonly questionHint?: QuestionType;
 }
 
 // ─── ClarificationRequestRecord ───
@@ -236,12 +241,23 @@ export interface ProposalDisposition {
 
 // ─── Session orchestration results ───
 
+export interface LevelAssessment {
+  readonly level: "too_technical" | "too_vague" | "appropriate";
+  readonly coaching: string | null;
+}
+
 export interface SessionStartResult {
   readonly session: ElicitationSession;
   readonly draft: DraftIntentGraph;
-  readonly turn: ElicitationTurn;
+  // null when the adaptive depth classifier determines 0 questions are needed
+  // and the session fast-paths directly to handoff.
+  readonly turn: ElicitationTurn | null;
   readonly clarificationRequest: ClarificationRequestRecord | null;
   readonly proposal: AdaProposal | null;
+  readonly levelAssessment: LevelAssessment;
+  // Set on 0-question fast path — session is already complete at start.
+  readonly handoff?: HandoffRecord | null;
+  readonly assessment?: CompilationReadinessAssessment | null;
 }
 
 export interface TurnResult {
@@ -264,4 +280,19 @@ export interface LLMRequestOutput {
   readonly question: string;
   readonly impact: "blocking" | "scoping" | "implementation";
   readonly suggestedDefault: string | null;
+}
+
+// ─── PreFill ───
+
+export interface PreFillItem {
+  readonly targetField: DraftTargetField;
+  readonly value: string;
+  readonly rationale: string;
+  // "high" → applied silently to the draft; "medium" → surfaces as proposal for user confirmation
+  readonly confidence: "high" | "medium";
+}
+
+export interface PreFillResult {
+  readonly items: readonly PreFillItem[];
+  readonly derivedAt: number;
 }

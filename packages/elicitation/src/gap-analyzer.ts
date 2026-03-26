@@ -7,6 +7,7 @@ import type {
   GapKind,
   GapSeverity,
 } from "./types.js";
+import type { PlannedQuestion } from "./depth-classifier.js";
 
 const SEVERITY_RANK: Record<GapSeverity, number> = {
   blocking: 3,
@@ -138,6 +139,54 @@ export class GapAnalyzer {
     }
 
     return newGaps;
+  }
+
+  // ─── injectPlannedGaps ───
+  // Called by session manager after classifyDepth() to pre-seed the gap store
+  // with axiom-derived questions before the generic scanner runs.
+  // Each planned question becomes a Gap with a questionHint that overrides
+  // the dialogue engine's generic question generation.
+  injectPlannedGaps(
+    draftId: string,
+    questions: readonly PlannedQuestion[],
+  ): Gap[] {
+    const now = Date.now();
+    const injected: Gap[] = [];
+
+    for (const q of questions) {
+      // De-duplicate: skip if an open gap with the same hint already exists.
+      let exists = false;
+      for (const g of this.store.gaps.values()) {
+        if (
+          g.draftId === draftId &&
+          g.questionHint === q.type &&
+          !g.resolved &&
+          g.status !== "suppressed"
+        ) {
+          exists = true;
+          break;
+        }
+      }
+      if (exists) continue;
+
+      const gap: Gap = {
+        gapId: randomUUID(),
+        draftId,
+        targetField: q.targetField as DraftTargetField,
+        gapKind: "missing",
+        severity: q.priority === "mandatory" ? "blocking" : "high",
+        status: "open",
+        detectedAt: now,
+        resolved: false,
+        resolvedByTurnId: null,
+        suppressedReason: null,
+        questionHint: q.type,
+      };
+      this.store.gaps.set(gap.gapId, gap);
+      injected.push(gap);
+    }
+
+    return injected;
   }
 
   // ─── prioritizeGaps ───
