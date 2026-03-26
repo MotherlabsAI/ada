@@ -114,6 +114,7 @@ export interface DiffResult {
   readonly entityCoverage: number;
   readonly invariantCoverage: number;
   readonly componentCoverage: number;
+  readonly invariantTiers: import("./types.js").InvariantTierBreakdown;
 }
 
 export function diffBlueprintAgainstCode(
@@ -197,44 +198,54 @@ export function diffBlueprintAgainstCode(
     }
   }
 
-  // 2. Check invariants
+  // 2. Check invariants — three-tier scoring
   let totalInvariants = 0;
-  let enforcedInvariants = 0;
+  let tieredEnforced = 0;
+  let tieredMentioned = 0;
+  let tieredPresent = 0;
+  let tieredAbsent = 0;
 
   for (const entity of entities) {
     for (const inv of entity.invariants) {
       totalInvariants++;
 
-      // Extract key terms from the predicate to search for enforcement
-      const predicateTerms = extractPredicateTerms(inv.predicate);
-      let enforced = false;
+      const tier = classifyInvariant(inv.predicate, inv.description, snapshot);
 
-      for (const term of predicateTerms) {
-        const refs = searchInFiles(snapshot, term);
-        if (refs.length > 0) {
-          enforced = true;
+      switch (tier) {
+        case "enforced":
+          tieredEnforced++;
           break;
-        }
-      }
-
-      if (enforced) {
-        enforcedInvariants++;
-      } else {
-        allFindings.push(
-          finding(
-            "missing-invariant",
-            "major",
-            75,
-            `Invariant not enforced: ${inv.description}`,
-            `Blueprint invariant "${inv.predicate}" for entity "${entity.name}" has no apparent enforcement in code. Expected to find validation, assertion, or guard logic.`,
-            null,
-            null,
-            traceInvariant(entity.name, inv.predicate, intentGraph),
-          ),
-        );
+        case "mentioned":
+          tieredMentioned++;
+          break;
+        case "present":
+          tieredPresent++;
+          break;
+        default:
+          tieredAbsent++;
+          allFindings.push(
+            finding(
+              "missing-invariant",
+              "major",
+              75,
+              `Invariant not enforced: ${inv.description}`,
+              `Blueprint invariant "${inv.predicate}" for entity "${entity.name}" has no apparent enforcement in code. Expected to find validation, assertion, or guard logic.`,
+              null,
+              null,
+              traceInvariant(entity.name, inv.predicate, intentGraph),
+            ),
+          );
       }
     }
   }
+
+  const invariantTiers: import("./types.js").InvariantTierBreakdown = {
+    enforced: tieredEnforced,
+    mentioned: tieredMentioned,
+    present: tieredPresent,
+    absent: tieredAbsent,
+    total: totalInvariants,
+  };
 
   // 3. Check components
   let totalComponents = 0;
@@ -335,8 +346,9 @@ export function diffBlueprintAgainstCode(
   const contextResults = buildContextResults(blueprint, filtered);
 
   const entityCoverage = totalEntities > 0 ? foundEntities / totalEntities : 1;
+  // invariantCoverage now counts only tier-1 (enforced) — honest metric
   const invariantCoverage =
-    totalInvariants > 0 ? enforcedInvariants / totalInvariants : 1;
+    totalInvariants > 0 ? tieredEnforced / totalInvariants : 1;
   const componentCoverage =
     totalComponents > 0 ? foundComponents / totalComponents : 1;
 
@@ -346,6 +358,7 @@ export function diffBlueprintAgainstCode(
     entityCoverage,
     invariantCoverage,
     componentCoverage,
+    invariantTiers,
   };
 }
 
@@ -388,6 +401,92 @@ function buildContextResults(
       invariantsEnforced,
     };
   });
+}
+
+// ─── Three-tier invariant matching ────────────────────────────────────────────
+// Tier 1 (enforced):  full comparison expression found  e.g. ".name !== null"
+// Tier 2 (mentioned): property name term found           e.g. "name"
+// Tier 3 (present):   description keyword found          e.g. "null", "unique"
+// Tier 4 (absent):    nothing found at all
+
+function extractFullPredicatePatterns(predicate: string): string[] {
+  // Extract patterns like ".propName !== null", ".propName > 0", ".propName === 3"
+  const patterns: string[] = [];
+
+  // Match dotted property access with comparison operator
+  const compRe =
+    /\.\s*(\w+)\s*(===|!==|==|!=|>=|<=|>|<)\s*(\w+|null|true|false|"[^"]*")/g;
+  let m: RegExpExecArray | null;
+  while ((m = compRe.exec(predicate)) !== null) {
+    // Build a regex-safe pattern for the comparison (without the object prefix)
+    const prop = m[1]!;
+    const op = m[2]!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const val = m[3]!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    patterns.push(`\\.${prop}\\s*${op}\\s*${val}`);
+  }
+
+  return [...new Set(patterns)];
+}
+
+function extractDescriptionKeywords(description: string): string[] {
+  // Extract meaningful nouns/verbs from the description to use as fallback signal
+  const stopWords = new Set([
+    "the",
+    "a",
+    "an",
+    "is",
+    "are",
+    "must",
+    "should",
+    "has",
+    "have",
+    "not",
+    "that",
+    "this",
+    "for",
+    "and",
+    "or",
+    "if",
+    "be",
+    "to",
+    "of",
+    "in",
+    "it",
+    "at",
+    "by",
+    "as",
+    "on",
+  ]);
+  return description
+    .toLowerCase()
+    .split(/\W+/)
+    .filter((w) => w.length > 3 && !stopWords.has(w))
+    .slice(0, 5); // cap at 5 keywords for performance
+}
+
+type InvariantMatchTier = "enforced" | "mentioned" | "present" | "absent";
+
+function classifyInvariant(
+  predicate: string,
+  description: string,
+  snapshot: CodebaseSnapshot,
+): InvariantMatchTier {
+  // Tier 1: full comparison expression
+  for (const pattern of extractFullPredicatePatterns(predicate)) {
+    if (searchInFiles(snapshot, pattern).length > 0) return "enforced";
+  }
+
+  // Tier 2: property name terms (existing behaviour)
+  for (const term of extractPredicateTerms(predicate)) {
+    if (searchInFiles(snapshot, term).length > 0) return "mentioned";
+  }
+
+  // Tier 3: description keyword
+  for (const kw of extractDescriptionKeywords(description)) {
+    if (searchInFiles(snapshot, kw).length > 0) return "present";
+  }
+
+  return "absent";
 }
 
 function extractPredicateTerms(predicate: string): string[] {

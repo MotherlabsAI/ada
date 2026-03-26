@@ -15,9 +15,26 @@ export function formatTerminal(report: VerificationReport): string {
   lines.push(
     `  Entity coverage:    ${bar(report.entityCoverage)} ${pct(report.entityCoverage)}`,
   );
-  lines.push(
-    `  Invariant coverage: ${bar(report.invariantCoverage)} ${pct(report.invariantCoverage)}`,
-  );
+  // Show honest three-tier invariant breakdown when available
+  if (report.invariantTiers && report.invariantTiers.total > 0) {
+    const t = report.invariantTiers;
+    const enforcedPct = pct(t.enforced / t.total);
+    const mentionedPct = pct(t.mentioned / t.total);
+    const presentPct = pct(t.present / t.total);
+    lines.push(
+      `  Invariant enforced: ${bar(t.enforced / t.total)} ${enforcedPct}  (full expression found)`,
+    );
+    lines.push(
+      `  Invariant mentioned:${bar(t.mentioned / t.total)} ${mentionedPct}  (property name found)`,
+    );
+    lines.push(
+      `  Invariant present:  ${bar(t.present / t.total)} ${presentPct}  (keyword found)`,
+    );
+  } else {
+    lines.push(
+      `  Invariant coverage: ${bar(report.invariantCoverage)} ${pct(report.invariantCoverage)}`,
+    );
+  }
   lines.push(
     `  Component coverage: ${bar(report.componentCoverage)} ${pct(report.componentCoverage)}`,
   );

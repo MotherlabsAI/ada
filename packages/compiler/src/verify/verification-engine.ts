@@ -78,5 +78,6 @@ export function verify(options: VerifyOptions): VerificationReport {
     passed,
     blueprintPostcode: blueprint.postcode.raw,
     postcode,
+    invariantTiers: diff.invariantTiers,
   };
 }

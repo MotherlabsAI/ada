@@ -40,6 +40,19 @@ export interface BoundedContextResult {
   readonly invariantsEnforced: number;
 }
 
+/** Three-tier invariant coverage breakdown (approach 3 from STATE.md). */
+export interface InvariantTierBreakdown {
+  /** Invariants where a full comparison expression is found in code. */
+  readonly enforced: number;
+  /** Invariants where a property name is found but not the full expression. */
+  readonly mentioned: number;
+  /** Invariants where only a description keyword is found. */
+  readonly present: number;
+  /** Invariants with no trace at all. */
+  readonly absent: number;
+  readonly total: number;
+}
+
 export interface VerificationReport {
   readonly findings: readonly VerificationFinding[];
   readonly contextResults: readonly BoundedContextResult[];
@@ -50,4 +63,6 @@ export interface VerificationReport {
   readonly passed: boolean;
   readonly blueprintPostcode: string;
   readonly postcode: PostcodeAddress;
+  /** Honest three-tier breakdown. invariantCoverage counts only "enforced" tier. */
+  readonly invariantTiers?: InvariantTierBreakdown;
 }
