@@ -9,21 +9,70 @@ import type {
   PackageBoundary,
 } from "./types.js";
 
-function walkTs(dir: string): string[] {
+// Directory names that are always excluded when walking TypeScript source files.
+// These prevent scanning of build artifacts, VCS data, and Ada's own generated
+// context directories from contaminating a target project's type registry.
+const DEFAULT_EXCLUDE_NAMES = new Set([
+  "node_modules",
+  "dist",
+  ".ada",
+  ".git",
+  ".claude",
+  ".next",
+  ".turbo",
+  ".svelte-kit",
+  "coverage",
+  "__pycache__",
+]);
+
+function walkTs(
+  dir: string,
+  excludeNames: Set<string> = DEFAULT_EXCLUDE_NAMES,
+): string[] {
   const results: string[] = [];
   if (!fs.existsSync(dir)) return results;
 
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
-    if (entry.name === "node_modules" || entry.name === "dist") continue;
+    if (excludeNames.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      results.push(...walkTs(full));
+      results.push(...walkTs(full, excludeNames));
     } else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".d.ts")) {
       results.push(full);
     }
   }
   return results;
+}
+
+// Finds Ada's own install root by walking up from the executing binary.
+// Returns null if Ada can't identify itself (e.g. in test environments).
+function findAdaInstallRoot(): string | null {
+  try {
+    const exePath = process.argv[1];
+    if (!exePath) return null;
+    let dir = path.resolve(path.dirname(exePath));
+    for (let i = 0; i < 8; i++) {
+      const pkgPath = path.join(dir, "package.json");
+      if (fs.existsSync(pkgPath)) {
+        try {
+          const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as Record<
+            string,
+            unknown
+          >;
+          if (pkg["name"] === "ada") return dir;
+        } catch {
+          /* skip malformed */
+        }
+      }
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+  } catch {
+    /* skip */
+  }
+  return null;
 }
 
 function extractTypes(
@@ -98,10 +147,13 @@ function scanPackage(
   pkgRoot: string,
   pkgName: string,
   projectRoot: string,
+  excludeNames: Set<string> = DEFAULT_EXCLUDE_NAMES,
 ): { types: TypeRegistryEntry[]; constants: ConstantEntry[]; deps: string[] } {
   // Try src/ first, then the package root itself
   const srcDir = path.join(pkgRoot, "src");
-  const tsFiles = fs.existsSync(srcDir) ? walkTs(srcDir) : walkTs(pkgRoot);
+  const tsFiles = fs.existsSync(srcDir)
+    ? walkTs(srcDir, excludeNames)
+    : walkTs(pkgRoot, excludeNames);
 
   const types: TypeRegistryEntry[] = [];
   const constants: ConstantEntry[] = [];
@@ -154,11 +206,48 @@ function resolveProjectName(projectRoot: string): string {
   return path.basename(projectRoot);
 }
 
-export function analyzeCodebase(projectRoot: string): CodebaseContext {
-  const packagesDir = path.join(projectRoot, "packages");
+export interface AnalyzeOptions {
+  /** Extra directory names to exclude (merged with defaults). */
+  readonly excludePatterns?: string[];
+  /** When true, skips Ada install-path exclusion even if projectRoot !== adaRoot. */
+  readonly selfCompile?: boolean;
+}
+
+export function analyzeCodebase(
+  projectRoot: string,
+  options: AnalyzeOptions = {},
+): CodebaseContext {
+  const resolvedRoot = path.resolve(projectRoot);
+
+  // Build the exclusion set for walkTs
+  const excludeNames = new Set(DEFAULT_EXCLUDE_NAMES);
+  for (const p of options.excludePatterns ?? []) excludeNames.add(p);
+
+  // Detect Ada's install root. If this compilation targets a different directory,
+  // skip Ada's own packages/ dir to prevent Ada-internal types from leaking into
+  // the target project's type registry.
+  const adaRoot = findAdaInstallRoot();
+  const isSelfCompile =
+    options.selfCompile === true ||
+    (adaRoot != null && path.resolve(adaRoot) === resolvedRoot);
+
+  const packagesDir = path.join(resolvedRoot, "packages");
 
   const monorepoPackages = fs.existsSync(packagesDir)
     ? fs.readdirSync(packagesDir).filter((d) => {
+        // When not self-compiling, skip Ada's own packages subdirectories if
+        // they happen to appear under projectRoot (e.g. user runs `ada compile`
+        // from Ada's own repo directory for a non-Ada intent).
+        if (!isSelfCompile && adaRoot) {
+          const fullPkgPath = path.join(packagesDir, d);
+          const adaPkgsDir = path.join(path.resolve(adaRoot), "packages");
+          if (
+            fullPkgPath.startsWith(adaPkgsDir + path.sep) ||
+            fullPkgPath === adaPkgsDir
+          ) {
+            return false;
+          }
+        }
         const p = path.join(packagesDir, d, "package.json");
         return (
           fs.existsSync(p) &&
@@ -190,7 +279,8 @@ export function analyzeCodebase(projectRoot: string): CodebaseContext {
       const { types, constants, deps } = scanPackage(
         pkgRoot,
         pkgName,
-        projectRoot,
+        resolvedRoot,
+        excludeNames,
       );
       allTypes.push(...types);
       allConstants.push(...constants);
@@ -204,9 +294,9 @@ export function analyzeCodebase(projectRoot: string): CodebaseContext {
     }
   } else {
     // ── Standalone project: scan src/, app/, lib/, then root .ts files ────
-    const projectName = resolveProjectName(projectRoot);
+    const projectName = resolveProjectName(resolvedRoot);
     const candidateDirs = ["src", "app", "lib", "pages", "components"].map(
-      (d) => path.join(projectRoot, d),
+      (d) => path.join(resolvedRoot, d),
     );
 
     const dirsToScan = candidateDirs.filter(
@@ -216,24 +306,24 @@ export function analyzeCodebase(projectRoot: string): CodebaseContext {
     // Fall back to root-level .ts files if no standard dirs found
     if (dirsToScan.length === 0) {
       const rootTs = fs
-        .readdirSync(projectRoot)
+        .readdirSync(resolvedRoot)
         .filter(
           (f) =>
-            f.endsWith(".ts") && !f.endsWith(".d.ts") && f !== "node_modules",
+            f.endsWith(".ts") && !f.endsWith(".d.ts") && !excludeNames.has(f),
         )
-        .map((f) => path.join(projectRoot, f));
+        .map((f) => path.join(resolvedRoot, f));
 
       for (const filePath of rootTs) {
         const source = fs.readFileSync(filePath, "utf8");
-        const relPath = path.relative(projectRoot, filePath);
+        const relPath = path.relative(resolvedRoot, filePath);
         allTypes.push(...extractTypes(source, relPath, projectName));
         allConstants.push(...extractConstants(source, relPath, projectName));
       }
     } else {
       for (const dir of dirsToScan) {
-        for (const filePath of walkTs(dir)) {
+        for (const filePath of walkTs(dir, excludeNames)) {
           const source = fs.readFileSync(filePath, "utf8");
-          const relPath = path.relative(projectRoot, filePath);
+          const relPath = path.relative(resolvedRoot, filePath);
           allTypes.push(...extractTypes(source, relPath, projectName));
           allConstants.push(...extractConstants(source, relPath, projectName));
         }
@@ -241,7 +331,12 @@ export function analyzeCodebase(projectRoot: string): CodebaseContext {
     }
 
     if (allTypes.length > 0 || allConstants.length > 0) {
-      const { deps } = scanPackage(projectRoot, projectName, projectRoot);
+      const { deps } = scanPackage(
+        resolvedRoot,
+        projectName,
+        resolvedRoot,
+        excludeNames,
+      );
       boundaries.push({
         name: projectName,
         types: allTypes.map((t) => t.name),
