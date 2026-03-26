@@ -116,6 +116,8 @@ export interface WorkflowStep {
   readonly name: string;
   readonly hoareTriple: HoareTriple;
   readonly failureModes: readonly FailureMode[];
+  /** Set by SYN stage when the step can be attributed to a specific context. */
+  readonly boundedContext?: string;
   readonly temporalRelation:
     | "enables"
     | "requires"

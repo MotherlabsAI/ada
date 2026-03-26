@@ -169,6 +169,8 @@ const workflowStepSchema = z.object({
     ["enables", "requires", "concurrent", "compensates", "guards"],
     "enables",
   ),
+  /** Optional: set by SYN stage to enable direct context-based assignment. */
+  boundedContext: z.string().optional(),
 });
 
 const stateTransitionSchema = z.object({

@@ -210,6 +210,9 @@ export function componentsToAgents(
     contextEntities.set(bc.name, bc);
   }
 
+  // Track which workflow steps have been assigned to avoid duplication
+  const assignedStepKeys = new Set<string>();
+
   for (const comp of blueprint.architecture.components) {
     const name = `${comp.boundedContext}-agent`;
     const fileName = `${name}.md`;
@@ -225,13 +228,15 @@ export function componentsToAgents(
       .flatMap((e) => e.invariants.map((inv) => ({ entity: e.name, ...inv })));
 
     // ── Workflow steps assigned to this context ───────────────────────────────
-    // Match steps by name/hoare content against entity names or component name.
+    // Primary: use step.boundedContext if set by SYN stage (exact match).
+    // Fallback: keyword matching against entity names and component name.
+    // Deduplication: each step key (workflow:name) appears in exactly one agent.
     const contextTerms = [
       ...entityNames.map((n) => n.toLowerCase()),
       comp.name.toLowerCase(),
       comp.boundedContext.toLowerCase(),
     ];
-    const stepMentions = (
+    const stepMentionsFallback = (
       step: (typeof blueprint.processModel.workflows)[number]["steps"][number],
     ): boolean => {
       const haystack = [
@@ -246,8 +251,25 @@ export function componentsToAgents(
     };
     const assignedSteps = blueprint.processModel.workflows.flatMap((wf) =>
       wf.steps
-        .filter(stepMentions)
-        .map((step) => ({ workflow: wf.name, ...step })),
+        .filter((step) => {
+          // Tier 1: use explicit boundedContext if available
+          if (step.boundedContext) {
+            return (
+              step.boundedContext.toLowerCase() ===
+              comp.boundedContext.toLowerCase()
+            );
+          }
+          // Tier 2: keyword matching, but only if this step isn't already
+          // claimed by a prior component (deduplication via assignedStepKeys)
+          const key = `${wf.name}:${step.name}`;
+          if (assignedStepKeys.has(key)) return false;
+          return stepMentionsFallback(step);
+        })
+        .map((step) => {
+          const key = `${wf.name}:${step.name}`;
+          assignedStepKeys.add(key);
+          return { workflow: wf.name, ...step };
+        }),
     );
 
     // ── State machines for entities in this context ───────────────────────────
