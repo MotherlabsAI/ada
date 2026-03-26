@@ -25,7 +25,7 @@ const DEFAULT_EXCLUDE_NAMES = new Set([
   "__pycache__",
 ]);
 
-function walkTs(
+export function walkTs(
   dir: string,
   excludeNames: Set<string> = DEFAULT_EXCLUDE_NAMES,
 ): string[] {

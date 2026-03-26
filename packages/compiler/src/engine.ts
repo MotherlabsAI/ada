@@ -41,7 +41,7 @@ function normaliseText(s: string): string {
 }
 
 /** Returns the fraction of content words that overlap between two strings. */
-function wordOverlap(a: string, b: string): number {
+export function wordOverlap(a: string, b: string): number {
   const stopwords = new Set([
     "the",
     "a",
@@ -123,7 +123,7 @@ function looksLikeContradiction(newGoal: string, priorGoal: string): boolean {
  * - Merges near-duplicate constraints (overlap ≥ 0.65)
  * - Adds challenges for apparent contradictions with prior goals
  */
-function mergeAmendGoals(
+export function mergeAmendGoals(
   intentGraph: import("./types.js").IntentGraph,
   prior: PriorBlueprintContext,
 ): import("./types.js").IntentGraph {

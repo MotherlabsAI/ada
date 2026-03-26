@@ -464,9 +464,13 @@ function extractDescriptionKeywords(description: string): string[] {
     .slice(0, 5); // cap at 5 keywords for performance
 }
 
-type InvariantMatchTier = "enforced" | "mentioned" | "present" | "absent";
+export type InvariantMatchTier =
+  | "enforced"
+  | "mentioned"
+  | "present"
+  | "absent";
 
-function classifyInvariant(
+export function classifyInvariant(
   predicate: string,
   description: string,
   snapshot: CodebaseSnapshot,
