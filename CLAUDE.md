@@ -1,4 +1,6 @@
-# An ENT-stage integration system for the Ada semantic compiler that loads a 10-component blueprint registry, maps components to 8 workspace packages (resolving the C3 ordinal-3 assignment gap), extracts entities into an EntityMap, validates three-hop provenance chains, evaluates the ENT gate, and unblocks the stalled pipeline run ML
+@~/.claude/PROJECTS.md
+
+# ada-claude — Semantic Compiler
 
 ## Status: COMPILED — standalone integration harness (not wired into main compiler pipeline)
 
