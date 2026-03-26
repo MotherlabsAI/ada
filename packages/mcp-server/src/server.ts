@@ -34,6 +34,7 @@ import {
 } from "./tools/get-contract.js";
 import { reportImplementationDecision, reportGap } from "./tools/feedback.js";
 import { reportExecutionFailure, resolveRepair } from "./tools/local-repair.js";
+import { advanceExecution } from "./tools/execution-orchestrator.js";
 
 export async function startServer(): Promise<void> {
   const server = new Server(
@@ -314,6 +315,22 @@ export async function startServer(): Promise<void> {
         description:
           "Returns the ordered execution plan for the compiled blueprint. Uses dependency analysis to sequence components and world-state to mark already-complete tasks. Call at the start of any multi-component implementation session.",
         inputSchema: { type: "object" as const, properties: {} },
+      },
+      {
+        name: "ada.advance_execution",
+        description:
+          "Advances the execution cycle: reads the macro plan, selects the next unblocked pending task, enters delegation for its bounded context, and returns a detailed execution brief. Call at the start of each implementation task in a multi-component session. When the task is done, call ada.set_task_status(complete) + ada.exit_delegation, then ada.advance_execution again for the next task.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            agentId: {
+              type: "string" as const,
+              description:
+                "Unique identifier for this agent/session (e.g. the session UUID or agent name)",
+            },
+          },
+          required: ["agentId"],
+        },
       },
       {
         name: "ada.set_task_status",
@@ -637,6 +654,13 @@ export async function startServer(): Promise<void> {
       }
       case "ada.get_macro_plan": {
         const r = getMacroPlan();
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.advance_execution": {
+        const r = advanceExecution(args["agentId"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
