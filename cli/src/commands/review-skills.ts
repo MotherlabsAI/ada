@@ -31,6 +31,17 @@ interface SkillProposal {
   reviewedAt: number | null;
 }
 
+// ─── Skill history record (for rollback) ─────────────────────────────────────
+
+interface SkillHistoryRecord {
+  id: string;
+  name: string;
+  slug: string;
+  skillPath: string;
+  promotedAt: number;
+  rolledBackAt: number | null;
+}
+
 // ─── Paths ────────────────────────────────────────────────────────────────────
 
 function getProjectDir(): string {
@@ -47,6 +58,10 @@ function candidatesPath(d: string): string {
 
 function proposalsPath(d: string): string {
   return path.join(d, ".ada", "skill-proposals.json");
+}
+
+function skillHistoryPath(d: string): string {
+  return path.join(d, ".ada", "skill-history.json");
 }
 
 // ─── I/O helpers ─────────────────────────────────────────────────────────────
@@ -79,6 +94,20 @@ function promoteSkill(
   fs.mkdirSync(skillDir, { recursive: true });
   const skillPath = path.join(skillDir, "SKILL.md");
   fs.writeFileSync(skillPath, body, "utf8");
+
+  // Record in skill history for rollback support
+  const histPath = skillHistoryPath(projectDir);
+  const history = loadJson<SkillHistoryRecord>(histPath);
+  const record: SkillHistoryRecord = {
+    id: item.id,
+    name: item.name,
+    slug,
+    skillPath,
+    promotedAt: Date.now(),
+    rolledBackAt: null,
+  };
+  saveJson(histPath, [...history, record]);
+
   return skillPath;
 }
 
@@ -221,6 +250,67 @@ export async function reviewSkillsCommand(): Promise<void> {
     console.log(
       "  Skills written to .claude/skills/ — available in next Claude Code session.",
     );
+    console.log("  To undo any skill: ada rollback-skill <name>");
   }
+  console.log("");
+}
+
+// ─── Rollback command ─────────────────────────────────────────────────────────
+
+export function rollbackSkillCommand(nameArg: string): void {
+  const projectDir = getProjectDir();
+  const histPath = skillHistoryPath(projectDir);
+  const history = loadJson<SkillHistoryRecord>(histPath);
+
+  // Match by name (case-insensitive) or slug
+  const target = history.find(
+    (r) =>
+      r.rolledBackAt === null &&
+      (r.name.toLowerCase() === nameArg.toLowerCase() ||
+        r.slug === nameArg.toLowerCase().replace(/[^a-z0-9]+/g, "-")),
+  );
+
+  if (!target) {
+    const activeNames = history
+      .filter((r) => r.rolledBackAt === null)
+      .map((r) => r.name);
+
+    if (activeNames.length === 0) {
+      console.error("  No promoted skills to roll back.");
+    } else {
+      console.error(`  No skill matching "${nameArg}" found.`);
+      console.error(`  Active skills: ${activeNames.join(", ")}`);
+    }
+    process.exit(1);
+  }
+
+  // Remove the skill file
+  if (fs.existsSync(target.skillPath)) {
+    fs.unlinkSync(target.skillPath);
+    // Remove empty skill dir if present
+    const skillDir = path.dirname(target.skillPath);
+    try {
+      const remaining = fs.readdirSync(skillDir);
+      if (remaining.length === 0) fs.rmdirSync(skillDir);
+    } catch {
+      // Dir not empty or already gone — fine
+    }
+    console.log(`  ✓ Removed ${target.skillPath}`);
+  } else {
+    console.log(
+      `  Skill file not found at ${target.skillPath} — clearing record anyway.`,
+    );
+  }
+
+  // Mark rolled back in history
+  saveJson(
+    histPath,
+    history.map((r) =>
+      r.id === target.id ? { ...r, rolledBackAt: Date.now() } : r,
+    ),
+  );
+
+  console.log(`  ✓ Rolled back skill: ${target.name}`);
+  console.log("  Changes take effect in next Claude Code session.");
   console.log("");
 }

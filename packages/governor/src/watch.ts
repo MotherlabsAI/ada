@@ -8,11 +8,12 @@ import { evaluateInvariants } from "./drift.js";
 export async function* watch(
   blueprint: Blueprint,
   events: AsyncIterable<ClaudeEvent>,
-  confidenceThreshold: number = 0.7
+  confidenceThreshold: number = 0.7,
 ): AsyncGenerator<GovernorSignal> {
   const confidence = new ConfidenceTracker(confidenceThreshold);
   let sessionId = "";
   let hasEmittedConfidence = false;
+  let hasEmittedLowConfidence = false;
 
   try {
     for await (const event of events) {
@@ -35,7 +36,10 @@ export async function* watch(
       }
 
       // On SubagentStop — checkpoint + postcondition check
-      if (event.event.type === "message_stop" && event.parent_tool_use_id !== null) {
+      if (
+        event.event.type === "message_stop" &&
+        event.parent_tool_use_id !== null
+      ) {
         if (!hasEmittedConfidence) {
           hasEmittedConfidence = true;
           yield { type: "CONFIDENCE", value: confidence.current };
@@ -53,12 +57,14 @@ export async function* watch(
         yield { type: "CHECKPOINT", sessionId, timestamp: Date.now() };
       }
 
-      // Low confidence warning
-      if (confidence.isLow) {
+      // Low confidence warning — emit once when threshold is crossed, not on every event
+      if (confidence.isLow && !hasEmittedLowConfidence) {
+        hasEmittedLowConfidence = true;
         yield {
           type: "LOW_CONFIDENCE",
           confidence: confidence.current,
-          reason: "Accumulated drift signals reduced confidence below threshold",
+          reason:
+            "Accumulated drift signals reduced confidence below threshold",
         };
       }
     }
@@ -73,9 +79,12 @@ export async function* watch(
   }
 
   // Session complete
-  const finalDecision = confidence.current >= 0.8 ? "ACCEPT" as const
-    : confidence.current >= 0.5 ? "DRIFT" as const
-    : "HALT" as const;
+  const finalDecision =
+    confidence.current >= 0.8
+      ? ("ACCEPT" as const)
+      : confidence.current >= 0.5
+        ? ("DRIFT" as const)
+        : ("HALT" as const);
 
   yield {
     type: "SESSION_COMPLETE",

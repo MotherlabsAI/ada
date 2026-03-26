@@ -11,7 +11,10 @@ import { scanCommand } from "./commands/scan.js";
 import { mcpCommand } from "./commands/mcp.js";
 import { configCommand } from "./commands/config.js";
 import { hookCommand } from "./commands/hook.js";
-import { reviewSkillsCommand } from "./commands/review-skills.js";
+import {
+  reviewSkillsCommand,
+  rollbackSkillCommand,
+} from "./commands/review-skills.js";
 import { reviewAmendmentsCommand } from "./commands/review-amendments.js";
 import { headlessCommand } from "./commands/headless.js";
 
@@ -96,6 +99,19 @@ async function main(): Promise<void> {
     case "review-skills":
       await reviewSkillsCommand();
       break;
+    case "rollback-skill": {
+      const skillName = args
+        .slice(1)
+        .filter((a) => !a.startsWith("--"))
+        .join(" ")
+        .trim();
+      if (!skillName) {
+        console.error("Usage: ada rollback-skill <name>");
+        process.exit(1);
+      }
+      rollbackSkillCommand(skillName);
+      break;
+    }
     case "scan":
       await scanCommand();
       break;
@@ -131,6 +147,7 @@ async function main(): Promise<void> {
     ada resume <id>          Resume from checkpoint
     ada review-amendments    Review and apply blueprint amendment queue
     ada review-skills        Review and approve extracted skill candidates
+    ada rollback-skill <name>  Remove a promoted skill (git-safe rollback)
     ada compile-headless "<intent>" [dir]
                              Headless compile — no UI, JSON to stdout
     ada mcp                  Start MCP spec authority server (stdio)
