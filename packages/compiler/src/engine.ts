@@ -30,6 +30,174 @@ import type {
   PriorBlueprintContext,
 } from "./context/types.js";
 
+// ─── Amend merge helpers ───────────────────────────────────────────────────────
+
+function normaliseText(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Returns the fraction of content words that overlap between two strings. */
+function wordOverlap(a: string, b: string): number {
+  const stopwords = new Set([
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "but",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "by",
+    "from",
+    "that",
+    "this",
+    "it",
+    "is",
+    "are",
+    "be",
+    "as",
+    "so",
+    "if",
+    "not",
+    "no",
+    "do",
+    "does",
+    "can",
+    "will",
+    "should",
+    "must",
+    "have",
+    "has",
+    "had",
+    "was",
+    "were",
+  ]);
+  const wordsOf = (s: string) =>
+    new Set(
+      normaliseText(s)
+        .split(" ")
+        .filter((w) => w.length > 2 && !stopwords.has(w)),
+    );
+  const wa = wordsOf(a);
+  const wb = wordsOf(b);
+  if (wa.size === 0 || wb.size === 0) return 0;
+  let shared = 0;
+  for (const w of wa) if (wb.has(w)) shared++;
+  return shared / Math.max(wa.size, wb.size);
+}
+
+const CONTRADICTION_SIGNALS = [
+  "not",
+  "no",
+  "never",
+  "without",
+  "avoid",
+  "remove",
+  "stop",
+  "prevent",
+  "disallow",
+  "reject",
+];
+
+function looksLikeContradiction(newGoal: string, priorGoal: string): boolean {
+  const nn = normaliseText(newGoal);
+  const np = normaliseText(priorGoal);
+  const hasNegation = CONTRADICTION_SIGNALS.some((s) => nn.includes(s));
+  if (!hasNegation) return false;
+  // Contradiction: new goal negates something + shares keywords with prior goal
+  return wordOverlap(newGoal, priorGoal) > 0.35;
+}
+
+/**
+ * Post-process INT output when --amend is active.
+ * - Removes goals that are near-duplicates of prior goals (overlap ≥ 0.65)
+ * - Merges near-duplicate constraints (overlap ≥ 0.65)
+ * - Adds challenges for apparent contradictions with prior goals
+ */
+function mergeAmendGoals(
+  intentGraph: import("./types.js").IntentGraph,
+  prior: PriorBlueprintContext,
+): import("./types.js").IntentGraph {
+  const DEDUP_THRESHOLD = 0.65;
+  const CONTRADICTION_THRESHOLD = 0.4;
+
+  const newGoals = intentGraph.goals.filter((ng) => {
+    // Drop if it is a near-duplicate of any prior goal
+    return !prior.goals.some(
+      (pg) => wordOverlap(ng.description, pg.description) >= DEDUP_THRESHOLD,
+    );
+  });
+
+  const newConstraints = intentGraph.constraints.filter((nc) => {
+    return !prior.constraints.some(
+      (pc) => wordOverlap(nc.description, pc.description) >= DEDUP_THRESHOLD,
+    );
+  });
+
+  // Detect contradictions between new goals and prior goals
+  const contradictionChallenges: import("./types.js").Challenge[] = [];
+  for (const ng of intentGraph.goals) {
+    for (const pg of prior.goals) {
+      if (
+        looksLikeContradiction(ng.description, pg.description) &&
+        wordOverlap(ng.description, pg.description) >= CONTRADICTION_THRESHOLD
+      ) {
+        contradictionChallenges.push({
+          id: `amend-contradiction-${ng.id}-${pg.id}`,
+          description: `Possible contradiction between amend goal "${ng.description.slice(0, 80)}" and prior goal "${pg.description.slice(0, 80)}"`,
+          severity: "major",
+          resolved: false,
+        });
+      }
+    }
+  }
+
+  const deduped = newGoals.length < intentGraph.goals.length;
+  const dedupedConstraints =
+    newConstraints.length < intentGraph.constraints.length;
+
+  return {
+    ...intentGraph,
+    goals: newGoals,
+    constraints: newConstraints,
+    challenges: [
+      ...intentGraph.challenges,
+      ...contradictionChallenges,
+      ...(deduped
+        ? [
+            {
+              id: "amend-dedup-goals",
+              description: `${intentGraph.goals.length - newGoals.length} goal(s) deduplicated against prior blueprint`,
+              severity: "minor" as const,
+              resolved: true,
+            },
+          ]
+        : []),
+      ...(dedupedConstraints
+        ? [
+            {
+              id: "amend-dedup-constraints",
+              description: `${intentGraph.constraints.length - newConstraints.length} constraint(s) deduplicated against prior blueprint`,
+              severity: "minor" as const,
+              resolved: true,
+            },
+          ]
+        : []),
+    ],
+  };
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 function gatherProjectContext(cwd: string): string {
   const fragments: string[] = [];
 
@@ -290,6 +458,13 @@ export class MotherCompiler {
       intentResult.parseFailure,
       JSON.stringify(intentGraph),
     );
+
+    // ─── Amend mode: structured goal deduplication ───
+    // Remove near-duplicate goals/constraints that the INT agent re-derived
+    // from the prior blueprint context it was given. Flag contradictions.
+    if (priorBlueprint) {
+      intentGraph = mergeAmendGoals(intentGraph, priorBlueprint);
+    }
 
     // ─── Clarification checkpoint ───
     // If project context was available, auto-resolve blocking unknowns
