@@ -7,11 +7,12 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "echo 'no tests yet'"
+    "test": "node --test dist/*.test.js"
   },
   "dependencies": {
     "@ada/compiler": "workspace:*",
-    "@ada/orchestrator": "workspace:*"
+    "@ada/orchestrator": "workspace:*",
+    "@ada/provenance": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
