@@ -147,6 +147,9 @@ importers:
       '@ada/orchestrator':
         specifier: workspace:*
         version: link:../orchestrator
+      '@ada/provenance':
+        specifier: workspace:*
+        version: link:../provenance
     devDependencies:
       '@types/node':
         specifier: ^25.5.0
