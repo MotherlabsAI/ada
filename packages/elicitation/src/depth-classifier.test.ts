@@ -43,6 +43,33 @@ test("trivial domain: 'calculator' → 0 questions", () => {
   assert.equal(plan.terminationReason, "ready");
 });
 
+// ─── Self-referential fast path ───────────────────────────────────────────────
+
+test("self-referential: PER stage improvement → 0 questions", () => {
+  const plan = classifyDepth(
+    "improve Ada's PER stage vocabulary persistence — make ubiquitousLanguage and stakeholder vocabulary written to agent files",
+  );
+  assert.equal(plan.questionCount, 0);
+  assert.equal(plan.terminationReason, "ready");
+  assert.equal(plan.confidence, "high");
+});
+
+test("self-referential: depth-classifier improvement → 0 questions", () => {
+  const plan = classifyDepth(
+    "improve the depth-classifier to stop asking technical questions users cannot answer",
+  );
+  assert.equal(plan.questionCount, 0);
+  assert.equal(plan.terminationReason, "ready");
+});
+
+test("self-referential: blueprint reference → 0 questions", () => {
+  const plan = classifyDepth(
+    "add invariant validation to the blueprint compilation stage",
+  );
+  assert.equal(plan.questionCount, 0);
+  assert.equal(plan.terminationReason, "ready");
+});
+
 // ─── Trivial domain + long intent — NOT fast path ─────────────────────────────
 
 test("trivial domain with >15 words does NOT skip — goes to signal analysis", () => {
@@ -55,33 +82,53 @@ test("trivial domain with >15 words does NOT skip — goes to signal analysis", 
 
 // ─── Vague / broad intent → multiple questions ────────────────────────────────
 
-test("vague one-sentence: 'I want to build an app' → 3+ questions", () => {
+test("vague one-sentence: 'I want to build an app' → scope question (actor derivable)", () => {
+  // 'app' is scope-ambiguous but actor is derivable from context — only scope_boundary fires
   const plan = classifyDepth("I want to build an app");
   assert.ok(
-    plan.questionCount >= 3,
-    `expected >= 3 questions, got ${plan.questionCount}`,
+    plan.questionCount >= 1,
+    `expected >= 1 question, got ${plan.questionCount}`,
   );
   assert.equal(plan.terminationReason, "needs_elicitation");
-});
-
-test("broad platform: 'a marketplace for services' → 3+ questions", () => {
-  const plan = classifyDepth("a marketplace for services");
-  assert.ok(
-    plan.questionCount >= 3,
-    `expected >= 3, got ${plan.questionCount}`,
-  );
-  // should include scope_boundary (marketplace is scope-ambiguous)
   const types = plan.questions.map((q) => q.type);
   assert.ok(types.includes("scope_boundary"), "should ask scope_boundary");
+  // Q2 (primary_actor) no longer fires unless multi-actor vocab present
+  assert.ok(
+    !types.includes("primary_actor"),
+    "should NOT ask primary_actor for single-product intent",
+  );
+  // Q3 (failure_conditions) no longer fires for non-regulated domains
+  assert.ok(
+    !types.includes("failure_conditions"),
+    "should NOT ask failure_conditions for generic app",
+  );
 });
 
-test("vague platform: 'I need a platform' → includes scope and actor questions", () => {
+test("broad platform: 'a marketplace for services' → scope + actor questions", () => {
+  // 'marketplace' is both scope-ambiguous and multi-actor → Q1 + Q2
+  const plan = classifyDepth("a marketplace for services");
+  const types = plan.questions.map((q) => q.type);
+  assert.ok(types.includes("scope_boundary"), "should ask scope_boundary");
+  assert.ok(
+    types.includes("primary_actor"),
+    "should ask primary_actor for multi-actor domain",
+  );
+  // Q3 should not fire — marketplace is not a regulated high-invariant domain here
+  assert.ok(
+    !types.includes("failure_conditions"),
+    "should NOT ask failure_conditions for non-regulated marketplace",
+  );
+});
+
+test("vague platform: 'I need a platform' → scope question only (actor and failures derivable)", () => {
+  // 'platform' is scope-ambiguous but no multi-actor, no regulated domain
+  // failure_conditions no longer fires for non-regulated generic intents
   const plan = classifyDepth("I need a platform");
   const types = plan.questions.map((q) => q.type);
   assert.ok(types.includes("scope_boundary"), "should ask scope_boundary");
   assert.ok(
-    types.includes("failure_conditions"),
-    "should ask failure_conditions",
+    !types.includes("failure_conditions"),
+    "should NOT ask failure_conditions — Ada derives standard failures from domain knowledge",
   );
 });
 

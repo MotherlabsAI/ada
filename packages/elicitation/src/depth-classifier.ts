@@ -6,15 +6,20 @@
 // Governs which of the 5 axiom-derived questions to ask before compilation.
 // Derived from first-principles research (project_elicitation_axioms.md).
 //
-// Priority stack (from axioms A4, A7):
-//   Q1 scope_boundary      — always: highest entropy reduction
-//   Q2 primary_actor       — always: grounds workflow derivation
-//   Q3 failure_conditions  — always: becomes invariants directly
+// Core principle: Ada asks only what she genuinely cannot derive.
+// Actor, scope, and failure conditions are usually derivable from domain
+// knowledge and CTX output. Only genuine unknowns — things only the user
+// knows — should ever reach the user.
+//
+// Priority stack:
+//   Q1 scope_boundary      — conditional: broad scope vocab without limits
+//   Q2 primary_actor       — conditional: only genuine multi-actor ambiguity
+//   Q3 failure_conditions  — conditional: high-invariant regulated domains only
 //   Q4 workflow_disambiguation — conditional: novel/complex domain only
 //   Q5 business_rule       — conditional: high-invariant domain only
 //
 // Hard cap: 5 questions (axiom A5).
-// Zero questions: well-known trivial domain, intent ≤ 15 words.
+// Zero questions: trivial domain, self-referential, specific technical intent.
 
 export type QuestionType =
   | "scope_boundary"
@@ -170,6 +175,25 @@ const HIGH_INVARIANT_KEYWORDS: readonly string[] = [
   "tax",
 ];
 
+// Self-referential / internal improvement patterns — fast path.
+// These intents reference concrete technical components by name, so actor
+// is always "the system" and scope is bounded by the component reference.
+const SELF_REFERENTIAL_PATTERNS: readonly RegExp[] = [
+  /\bada\b/i,
+  /\b(per|ent|pro|syn|ver|gov|bld|ctx|int)\s+(stage|phase|step|agent)\b/i,
+  /\bpipeline\s+stage\b/i,
+  /\bcompiler\s+(stage|pipeline|agent|phase)\b/i,
+  /\belicitation\b/i,
+  /\bdepth.?classifier\b/i,
+  /\bmcp\s+(server|tool)\b/i,
+  /\bbluepri?nt\b/i,
+  /\bpostcode\b/i,
+  /\bprovenance\b/i,
+  /\binvariant\b/i,
+  /\bubiquitous.?language\b/i,
+  /\bstakeholder\s+vocab\b/i,
+];
+
 // Workflow complexity patterns — trigger Q4 (workflow disambiguation).
 // Signals non-obvious multi-step coordination between actors or systems.
 const WORKFLOW_COMPLEXITY_PATTERNS: readonly RegExp[] = [
@@ -220,9 +244,12 @@ export function classifyDepth(rawIntent: string): ElicitationPlan {
   const wordCount = text.split(/\s+/).filter(Boolean).length;
   const domainLabel = detectDomain(text);
   const isTrivialDomain = KNOWN_TRIVIAL_DOMAINS.some(([p]) => p.test(text));
+  const isSelfReferential = matchesAnyPattern(text, SELF_REFERENTIAL_PATTERNS);
+  const hasScopeAmbiguity = matchesAnyKeyword(text, SCOPE_AMBIGUOUS_KEYWORDS);
+  const hasMultiActor = matchesAnyKeyword(text, MULTI_ACTOR_KEYWORDS);
+  const isHighInvariant = matchesAnyKeyword(text, HIGH_INVARIANT_KEYWORDS);
 
-  // ── Fast path: trivial well-known domain with concise intent ─────────────
-  // Scope, actor, and workflow are all inferable. Zero questions needed.
+  // ── Fast path 1: trivial well-known domain with concise intent ────────────
   if (isTrivialDomain && wordCount <= 15) {
     return {
       questionCount: 0,
@@ -234,14 +261,46 @@ export function classifyDepth(rawIntent: string): ElicitationPlan {
     };
   }
 
+  // ── Fast path 2: self-referential / internal system improvement ───────────
+  // Intent names concrete technical components → actor is the system,
+  // scope is bounded by the component name, failures are standard (don't break tests).
+  if (isSelfReferential) {
+    return {
+      questionCount: 0,
+      questions: [],
+      skipReason:
+        "Intent references concrete technical components — actor, scope, and standard failure conditions are all derivable.",
+      confidence: "high",
+      domainLabel,
+      terminationReason: "ready",
+    };
+  }
+
+  // ── Fast path 3: specific technical intent (high word count, no ambiguity) ─
+  // Long intents with concrete vocabulary and no multi-actor confusion are
+  // self-defining — Ada has enough signal to derive everything.
+  if (
+    wordCount >= 20 &&
+    !hasScopeAmbiguity &&
+    !hasMultiActor &&
+    !isHighInvariant
+  ) {
+    return {
+      questionCount: 0,
+      questions: [],
+      skipReason:
+        "Intent is sufficiently specific — scope, actor, and constraints are all derivable from the description.",
+      confidence: "low",
+      domainLabel,
+      terminationReason: "ready",
+    };
+  }
+
   const questions: PlannedQuestion[] = [];
 
   // ── Q1: Scope boundary ───────────────────────────────────────────────────
-  // Needed when the intent uses broad scope vocabulary without explicit limits.
-  // Ada proposes scope (not asks) — this gap always produces a proposal, not a question.
-  // Do NOT fire on wordCount alone: detailed intents are usually specific enough for Ada to derive scope.
+  // Only when intent uses broad scope vocabulary AND hasn't limited it.
   const hasScopeLimiting = matchesAnyPattern(text, SCOPE_LIMITING_PATTERNS);
-  const hasScopeAmbiguity = matchesAnyKeyword(text, SCOPE_AMBIGUOUS_KEYWORDS);
 
   if (!hasScopeLimiting && hasScopeAmbiguity) {
     questions.push({
@@ -253,38 +312,35 @@ export function classifyDepth(rawIntent: string): ElicitationPlan {
   }
 
   // ── Q2: Primary actor + core need ────────────────────────────────────────
-  // Needed if multi-actor vocabulary or actor is not stated.
-  // Primary actor determines core workflow → entity model → architecture.
-  const hasMultiActor = matchesAnyKeyword(text, MULTI_ACTOR_KEYWORDS);
-  const hasExplicitActor =
-    /\bfor\s+(users?|customers?|clients?|employees?|admins?|managers?|teachers?|students?|team members?)\b/i.test(
-      text,
-    );
-
-  if (hasMultiActor || (!hasExplicitActor && wordCount >= 4)) {
+  // ONLY fire for genuine multi-actor domains where Ada cannot determine which
+  // side is primary (marketplace, two-sided platforms, etc.).
+  // Removed: "!hasExplicitActor && wordCount >= 4" — this fired on almost
+  // everything. For single-product intents, Ada derives the actor from context.
+  if (hasMultiActor) {
     questions.push({
       type: "primary_actor",
-      rationale: hasMultiActor
-        ? "Multi-actor domain — primary actor and their core goal must be determined before compilation"
-        : "Actor not explicitly stated; ambiguous actor produces wrong workflow",
+      rationale:
+        "Multi-actor domain — which side is primary determines the entire entity model and architecture",
       priority: "mandatory",
       targetField: "goals",
     });
   }
 
   // ── Q3: Failure conditions ────────────────────────────────────────────────
-  // Always ask unless explicitly present (A2: omissions are the #1 failure mode).
-  // Failure conditions become invariants directly — highest-value question.
+  // ONLY fire for high-invariant regulated domains where standard failure
+  // conditions are insufficient (payment, medical, legal).
+  // Removed: "always ask unless present" — non-technical users cannot answer
+  // this. Ada derives standard failure conditions from domain knowledge.
   const hasFailureConditions = matchesAnyPattern(
     text,
     FAILURE_CONDITION_PATTERNS,
   );
 
-  if (!hasFailureConditions) {
+  if (!hasFailureConditions && isHighInvariant) {
     questions.push({
       type: "failure_conditions",
       rationale:
-        "No failure conditions or invariants stated — these become the most critical constraints in the compiled blueprint",
+        "Regulated domain — domain-specific failure conditions and invariants must be explicit before compilation",
       priority: "mandatory",
       targetField: "constraints",
     });
@@ -309,8 +365,6 @@ export function classifyDepth(rawIntent: string): ElicitationPlan {
 
   // ── Q5: Business rule ─────────────────────────────────────────────────────
   // Conditional: only for high-invariant domains (money, health, legal, scheduling).
-  const isHighInvariant = matchesAnyKeyword(text, HIGH_INVARIANT_KEYWORDS);
-
   if (isHighInvariant) {
     questions.push({
       type: "business_rule",
