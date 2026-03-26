@@ -33,6 +33,7 @@ import {
   exitDelegation,
 } from "./tools/get-contract.js";
 import { reportImplementationDecision, reportGap } from "./tools/feedback.js";
+import { reportExecutionFailure, resolveRepair } from "./tools/local-repair.js";
 
 export async function startServer(): Promise<void> {
   const server = new Server(
@@ -342,6 +343,47 @@ export async function startServer(): Promise<void> {
         },
       },
       {
+        name: "ada.report_execution_failure",
+        description:
+          "Reports a failure during component execution and receives a repair directive: retry (with attempts remaining) or escalate (max retries reached — surface to human). Call when a component implementation attempt fails. If the directive is escalate, call ada.report_gap and do not retry.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            componentName: {
+              type: "string" as const,
+              description: "The blueprint component that failed",
+            },
+            failureDescription: {
+              type: "string" as const,
+              description:
+                "What went wrong — be specific enough to inform the next attempt",
+            },
+            maxRetries: {
+              type: "number" as const,
+              description:
+                "Maximum retry budget for this component (default: 3)",
+            },
+          },
+          required: ["componentName", "failureDescription"],
+        },
+      },
+      {
+        name: "ada.resolve_repair",
+        description:
+          "Marks a component's repair cycle as resolved after a successful retry. Clears the failure count so future failures start fresh. Call after a retry attempt succeeds.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            componentName: {
+              type: "string" as const,
+              description:
+                "The blueprint component that was successfully repaired",
+            },
+          },
+          required: ["componentName"],
+        },
+      },
+      {
         name: "ada.record_fact",
         description:
           "Records a fact about the world state with an explicit confidence score (0–1). Use to track observations from tool outputs (source=tool_output) or logical inferences (source=inferred). High-confidence facts lower the overall uncertainty score; low-confidence facts raise it. The aggregate uncertainty is reflected in ada.get_runtime_state.",
@@ -606,6 +648,24 @@ export async function startServer(): Promise<void> {
           args["status"] as "in_progress" | "complete",
           (args["evidence"] as string[]) ?? [],
         );
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.report_execution_failure": {
+        const r = reportExecutionFailure(
+          args["componentName"] as string,
+          args["failureDescription"] as string,
+          args["maxRetries"] !== undefined ? (args["maxRetries"] as number) : 3,
+        );
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.resolve_repair": {
+        const r = resolveRepair(args["componentName"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
