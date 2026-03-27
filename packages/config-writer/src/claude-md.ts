@@ -18,120 +18,71 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 1. Title
+  // 1. Title + summary
   lines.push(`# ${blueprint.summary.split(".")[0]}`);
   lines.push("");
-
-  // 2. What this project is (concise)
-  lines.push("## Summary");
   lines.push(blueprint.summary);
   lines.push("");
 
-  // 3. Out of scope — what Ada explicitly ruled out. Claude Code must not build these.
-  // Prefer blueprint.scope.outOfScope (from SYN); fall back to domainContext.excludedConcerns (from PER).
+  // 2. Out of scope — safety constraint, always inline
   const outOfScope = blueprint.scope?.outOfScope?.length
     ? blueprint.scope.outOfScope
     : (domainContext?.excludedConcerns ?? []);
   if (outOfScope.length > 0) {
     lines.push("## Out of Scope");
-    lines.push(
-      "Ada explicitly excluded these during compilation. Do not build them:",
-    );
+    lines.push("Ada explicitly excluded these. Do not build them:");
     for (const exc of outOfScope) {
       lines.push(`- ${exc}`);
     }
     lines.push("");
   }
 
-  // 4. Working Principles
-  lines.push("## Working Principles");
-  lines.push(
-    "- Read this file and all `.claude/agents/` files before doing anything",
-  );
-  lines.push(
-    "- Delegate to specialist agents by bounded context, in build order",
-  );
-  lines.push(
-    "- Do NOT circumvent hook enforcement — hooks enforce entity invariants",
-  );
-  lines.push("- Verify postconditions after each step before proceeding");
-  lines.push("");
-
-  // 4. Architecture
-  lines.push("## Architecture");
-  lines.push(`**Pattern:** ${blueprint.architecture.pattern}`);
-  lines.push(`**Rationale:** ${blueprint.architecture.rationale}`);
-  lines.push("");
-
-  // 5. Components — one line each, topologically ordered (= build order).
-  // Invariants, workflow steps, state machines → agent files.
+  // 3. Build order — component names only, no inline detail
   const components = blueprint.architecture.components;
   if (components.length > 0) {
-    lines.push("## Components");
-    lines.push("_Build in order shown. Each line is one bounded context._");
-    lines.push("");
     const ordered = topologicalSort(components);
+    lines.push("## Build Order");
     for (let i = 0; i < ordered.length; i++) {
       const c = ordered[i]!;
-      const deps =
-        c.dependencies.length > 0 ? ` ← ${c.dependencies.join(", ")}` : "";
-      lines.push(
-        `${i + 1}. **${c.name}** \`${c.boundedContext}\` — ${c.responsibility}${deps}`,
-      );
+      lines.push(`${i + 1}. **${c.name}** \`${c.boundedContext}\``);
     }
-    lines.push("");
-    lines.push(
-      "> Invariants, workflows, state machines → `.claude/agents/` | Query: `ada.query_constraints(scope)`",
-    );
     lines.push("");
   }
 
-  // 8. Non-functional requirements — performance, security, scalability, etc.
-  // These are listed here so Claude Code doesn't need to open every agent file
-  // to know what quality constraints apply globally.
-  const nfrs = blueprint.nonFunctional ?? [];
-  const nfrsWithCategory = nfrs.filter(
-    (nf): nf is typeof nf & { category: string } =>
-      typeof nf !== "string" && !!nf.category,
+  // 4. Ada MCP — pull context on demand, never push
+  lines.push("## Ada MCP");
+  lines.push(
+    "The MCP server is the spec authority. Pull context on demand — never assume from memory.",
   );
-  if (nfrsWithCategory.length > 0) {
-    lines.push("## Non-Functional Requirements");
-    for (const nf of nfrsWithCategory) {
-      const scope = nf.scope && nf.scope !== "global" ? ` [${nf.scope}]` : "";
-      lines.push(`- **${nf.category}**: ${nf.requirement}${scope}`);
-    }
-    lines.push("");
-  }
-
-  // 10. Open questions — unresolved at compile time, Claude Code must handle uncertainty
-  if (blueprint.openQuestions.length > 0) {
-    lines.push("## Open Questions");
-    lines.push(
-      "These were not resolved during compilation. Address them before or during implementation:",
-    );
-    for (const q of blueprint.openQuestions) {
-      lines.push(`- ${q}`);
-    }
-    lines.push("");
-  }
-
-  // 11. Done criteria — nonFunctional requirements only
-  // Workflow postconditions live in .ada/artifacts/ — query via ada.query_constraints
-  lines.push("## Done");
-  for (const nf of blueprint.nonFunctional) {
-    if (typeof nf === "string") {
-      lines.push(`- [ ] ${nf}`);
-    } else {
-      const label = nf.predicate
-        ? `${nf.requirement} (\`${nf.predicate}\`)`
-        : nf.requirement;
-      const scope = nf.scope !== "global" ? ` [${nf.scope}]` : "";
-      lines.push(`- [ ] ${label}${scope}`);
-    }
-  }
+  lines.push("");
+  lines.push(
+    "**Start of every task:** call `ada.advance_execution(agentId)` — returns your task brief, bounded context contract, and execution instructions.",
+  );
+  lines.push("");
+  lines.push("**Before modifying any entity:**");
+  lines.push(
+    "- `ada.query_constraints(entityName)` — get invariants and constraints",
+  );
+  lines.push(
+    "- `ada.check_drift(description)` — verify a planned action against original intent",
+  );
+  lines.push("");
+  lines.push("**During execution:**");
+  lines.push(
+    "- `ada.get_contract(boundedContext)` — read your delegation contract",
+  );
+  lines.push(
+    "- `ada.get_workflow(workflowName)` — get step-by-step workflow with Hoare triples",
+  );
+  lines.push(
+    "- `ada.report_execution_failure(component, description)` — request retry guidance",
+  );
+  lines.push(
+    "- `ada.set_task_status(component, 'complete', [evidence])` — mark complete",
+  );
   lines.push("");
 
-  // 11b. Compilation audit — health snapshot from VER + GOV stages
+  // 5. Compilation health (small, valuable)
   if (blueprint.audit) {
     const a = blueprint.audit;
     const pct = (n: number) => `${(n * 100).toFixed(0)}%`;
@@ -139,51 +90,18 @@ export function blueprintToCLAUDEMD(
     lines.push(
       `**Decision:** ${a.governorDecision}  **Confidence:** ${pct(a.confidence)}  **Gates:** ${pct(a.gatePassRate)}`,
     );
-    lines.push(
-      `**Coverage:** ${pct(a.coverageScore)}  **Coherence:** ${pct(a.coherenceScore)}  **Drifts:** ${a.driftCount}  **Gaps:** ${a.gapCount}`,
-    );
     if (a.violationCount > 0) {
       lines.push(
-        `> ${a.violationCount} policy violation(s) noted — query \`ada.get_world_model("GOV")\` for details`,
+        `> ${a.violationCount} policy violation(s) — query \`ada.get_world_model("GOV")\` for details`,
       );
     }
     lines.push("");
   }
 
-  // 11. Ada MCP — world model query interface
-  lines.push("## Ada MCP");
-  lines.push(
-    "Ada world model is queryable via MCP. Before modifying any entity or workflow:",
-  );
-  lines.push(
-    "- `ada.query_constraints(scope)` — get invariants for any domain scope",
-  );
-  lines.push(
-    "- `ada.check_drift(description)` — verify a planned action against original intent",
-  );
-  lines.push(
-    "- `ada.get_world_model(stage?)` — read any compiled stage artifact",
-  );
-  lines.push("");
-
-  // 12. Semantic drift
-  lines.push("## Semantic Drift");
-  lines.push(
-    "Ada verifies codebase alignment after each push. Before starting work:",
-  );
-  lines.push(
-    "- If `.ada/drift.md` exists: read it — Ada has flagged semantic violations",
-  );
-  lines.push("- Run `ada verify` at any time to check current alignment");
-  lines.push(
-    "- Run `ada hook install` once to automate this check on every push",
-  );
-  lines.push("");
-
-  // 13. Session start protocol
+  // 6. Session protocol
   lines.push("## This Session");
   lines.push(
-    "You are the lead agent. Read this file and all `.claude/agents/` files. Delegate by bounded context in build order. Verify postconditions before each next step.",
+    "You are the lead agent. Call `ada.advance_execution(agentId)` to get your first task. Follow the execution brief. Verify postconditions before marking complete.",
   );
   lines.push("");
 

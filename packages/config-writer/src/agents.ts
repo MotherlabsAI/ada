@@ -197,96 +197,29 @@ function buildOrchestrationAgents(blueprint: Blueprint): AgentFile[] {
 
 export function componentsToAgents(
   blueprint: Blueprint,
-  domainContext?: DomainContext,
+  _domainContext?: DomainContext,
 ): AgentFile[] {
   const agents: AgentFile[] = [...buildOrchestrationAgents(blueprint)];
-
-  // Build a lookup: boundedContext → entities
-  const contextEntities = new Map<
-    string,
-    (typeof blueprint.dataModel.boundedContexts)[number]
-  >();
-  for (const bc of blueprint.dataModel.boundedContexts) {
-    contextEntities.set(bc.name, bc);
-  }
-
-  // Track which workflow steps have been assigned to avoid duplication
-  const assignedStepKeys = new Set<string>();
 
   for (const comp of blueprint.architecture.components) {
     const name = `${comp.boundedContext}-agent`;
     const fileName = `${name}.md`;
 
-    // ── Bounded context boundary ──────────────────────────────────────────────
-    const bc = contextEntities.get(comp.boundedContext);
-    const entityNames = bc ? bc.entities : [];
+    const description = `Use when ${comp.boundedContext} tasks arise. Owns ${comp.name}. Does not modify files outside ${comp.boundedContext}.`;
 
-    // ── Invariants for this context ───────────────────────────────────────────
-    const contextInvariants = bc?.invariants ?? [];
-    const entityInvariants = blueprint.dataModel.entities
-      .filter((e) => entityNames.includes(e.name))
-      .flatMap((e) => e.invariants.map((inv) => ({ entity: e.name, ...inv })));
-
-    // ── Workflow steps assigned to this context ───────────────────────────────
-    // Primary: use step.boundedContext if set by SYN stage (exact match).
-    // Fallback: keyword matching against entity names and component name.
-    // Deduplication: each step key (workflow:name) appears in exactly one agent.
-    const contextTerms = [
-      ...entityNames.map((n) => n.toLowerCase()),
-      comp.name.toLowerCase(),
-      comp.boundedContext.toLowerCase(),
-    ];
-    const stepMentionsFallback = (
-      step: (typeof blueprint.processModel.workflows)[number]["steps"][number],
-    ): boolean => {
-      const haystack = [
-        step.name,
-        step.hoareTriple.precondition,
-        step.hoareTriple.action,
-        step.hoareTriple.postcondition,
-      ]
-        .join(" ")
-        .toLowerCase();
-      return contextTerms.some((term) => haystack.includes(term));
-    };
-    const assignedSteps = blueprint.processModel.workflows.flatMap((wf) =>
-      wf.steps
-        .filter((step) => {
-          // Tier 1: use explicit boundedContext if available
-          if (step.boundedContext) {
-            return (
-              step.boundedContext.toLowerCase() ===
-              comp.boundedContext.toLowerCase()
-            );
-          }
-          // Tier 2: keyword matching, but only if this step isn't already
-          // claimed by a prior component (deduplication via assignedStepKeys)
-          const key = `${wf.name}:${step.name}`;
-          if (assignedStepKeys.has(key)) return false;
-          return stepMentionsFallback(step);
-        })
-        .map((step) => {
-          const key = `${wf.name}:${step.name}`;
-          assignedStepKeys.add(key);
-          return { workflow: wf.name, ...step };
-        }),
+    // Get entity names for this bounded context (for MCP directive hints)
+    const bc = blueprint.dataModel.boundedContexts.find(
+      (b) => b.name === comp.boundedContext,
     );
+    const entityNames = bc?.entities ?? [];
 
-    // ── State machines for entities in this context ───────────────────────────
-    const assignedStateMachines = blueprint.processModel.stateMachines.filter(
-      (sm) =>
-        entityNames.some((en) => en.toLowerCase() === sm.entity.toLowerCase()),
-    );
-
-    // ── Build body ────────────────────────────────────────────────────────────
     const bodyLines: string[] = [];
 
     bodyLines.push(`# ${comp.name} Agent`);
     bodyLines.push("");
-    bodyLines.push(`${comp.responsibility}`);
+    bodyLines.push(comp.responsibility);
     bodyLines.push("");
 
-    // Bounded context boundary
     bodyLines.push("## Bounded Context");
     bodyLines.push(`**Context:** ${comp.boundedContext}`);
     if (entityNames.length > 0) {
@@ -300,183 +233,78 @@ export function componentsToAgents(
     }
     bodyLines.push("");
 
-    // Domain vocabulary — terms from PER stage ubiquitousLanguage
-    const vocabEntries = domainContext
-      ? Object.entries(domainContext.ubiquitousLanguage)
-      : [];
-    if (vocabEntries.length > 0) {
-      bodyLines.push("## Domain Vocabulary");
-      bodyLines.push(
-        "Use these exact terms when naming variables, types, and functions.",
-      );
-      bodyLines.push("");
-      for (const [term, definition] of vocabEntries) {
-        bodyLines.push(`- **${term}** — ${definition}`);
-      }
-      bodyLines.push("");
-    }
-
-    // Stakeholders — from PER stage. knowledgeBase, blindSpots, fearSet drive
-    // interface design and error handling priorities for this bounded context.
-    const stakeholders = domainContext?.stakeholders ?? [];
-    if (stakeholders.length > 0) {
-      bodyLines.push("## Stakeholders");
-      for (const s of stakeholders) {
-        bodyLines.push(`- **${s.role}**`);
-        if (s.knowledgeBase.length > 0) {
-          bodyLines.push(`  - Knows: ${s.knowledgeBase.join(", ")}`);
-        }
-        if (s.blindSpots.length > 0) {
-          bodyLines.push(`  - Blind spots: ${s.blindSpots.join(", ")}`);
-        }
-        if (s.fearSet.length > 0) {
-          bodyLines.push(`  - Fears: ${s.fearSet.join(", ")}`);
-        }
-        const stakeholderVocab = Object.entries(s.vocabulary ?? {});
-        if (stakeholderVocab.length > 0) {
-          bodyLines.push(
-            `  - Vocabulary: ${stakeholderVocab.map(([t, d]) => `"${t}" = ${d}`).join("; ")}`,
-          );
-        }
-      }
-      bodyLines.push("");
-    }
-
-    // Invariants
-    if (contextInvariants.length > 0 || entityInvariants.length > 0) {
-      bodyLines.push("## Invariants");
-      bodyLines.push(
-        "These MUST hold at all times. Hooks enforce them at tool boundaries.",
-      );
-      bodyLines.push("");
-      for (const inv of contextInvariants) {
-        bodyLines.push(`- \`${inv.predicate}\` — ${inv.description}`);
-      }
-      for (const inv of entityInvariants) {
-        bodyLines.push(
-          `- \`${inv.predicate}\` (${inv.entity}) — ${inv.description}`,
-        );
-      }
-      bodyLines.push("");
-    }
-
-    // Workflow steps with Hoare triples
-    if (assignedSteps.length > 0) {
-      bodyLines.push("## Workflow Steps");
-      for (const step of assignedSteps) {
-        bodyLines.push(`### ${step.name} (${step.workflow})`);
-        bodyLines.push(`- **Pre:** ${step.hoareTriple.precondition}`);
-        bodyLines.push(`- **Action:** ${step.hoareTriple.action}`);
-        bodyLines.push(`- **Post:** ${step.hoareTriple.postcondition}`);
-        if (step.failureModes.length > 0) {
-          bodyLines.push("- **Failure modes:**");
-          for (const fm of step.failureModes) {
-            bodyLines.push(
-              `  - ${fm.class}: ${fm.description} → ${fm.handler}`,
-            );
-          }
-        }
-        bodyLines.push("");
-      }
-    }
-
-    // State machines
-    if (assignedStateMachines.length > 0) {
-      bodyLines.push("## State Machines");
-      for (const sm of assignedStateMachines) {
-        bodyLines.push(`### ${sm.entity}`);
-        bodyLines.push(`**States:** ${sm.states.join(" → ")}`);
-        if (sm.transitions.length > 0) {
-          bodyLines.push("**Transitions:**");
-          for (const t of sm.transitions) {
-            bodyLines.push(
-              `- ${t.from} → ${t.to} (trigger: ${t.trigger}; guard: ${t.guard})`,
-            );
-          }
-        }
-        bodyLines.push("");
-      }
-    }
-
-    // Resolved decisions — conflicts between entity model and process model, resolved by SYN
-    // These are the hardest-won decisions in the compilation. Claude Code must not re-litigate them.
-    const contextTermsLower = contextTerms;
-    const relevantConflicts = blueprint.resolvedConflicts.filter((rc) => {
-      const haystack =
-        `${rc.entity} ${rc.process} ${rc.resolution}`.toLowerCase();
-      return contextTermsLower.some((term) => haystack.includes(term));
-    });
-    if (relevantConflicts.length > 0) {
-      bodyLines.push("## Resolved Decisions");
-      bodyLines.push(
-        "These conflicts were resolved during compilation. Do not revisit them.",
-      );
-      bodyLines.push("");
-      for (const rc of relevantConflicts) {
-        bodyLines.push(
-          `- **${rc.entity} vs ${rc.process}:** ${rc.resolution} _(authoritative: ${rc.authoritative})_`,
-        );
-      }
-      bodyLines.push("");
-    }
-
-    // Acceptance criteria
-    const postconditions = assignedSteps.map(
-      (step) => `- [ ] ${step.hoareTriple.postcondition}`,
-    );
-    bodyLines.push("## Acceptance Criteria");
-    bodyLines.push(
-      postconditions.length > 0
-        ? postconditions.join("\n")
-        : "- [ ] Component builds without errors",
-    );
-    bodyLines.push("");
-
-    // Out of scope — agents are isolated, they don't read CLAUDE.md, so repeat here
+    // Out of scope — agents are isolated from CLAUDE.md, repeat safety constraint
     const globalOutOfScope = blueprint.scope?.outOfScope ?? [];
     if (globalOutOfScope.length > 0) {
       bodyLines.push("## Out of Scope");
-      bodyLines.push("These were explicitly excluded during compilation:");
       for (const exc of globalOutOfScope) {
         bodyLines.push(`- ${exc}`);
       }
       bodyLines.push("");
     }
 
-    // Non-functional requirements scoped to this bounded context or global
-    const scopedNFRs = blueprint.nonFunctional.filter((nf) => {
-      if (typeof nf === "string") return false;
-      return nf.scope === "global" || nf.scope === comp.boundedContext;
-    });
-    if (scopedNFRs.length > 0) {
-      bodyLines.push("## Non-Functional Requirements");
-      for (const nf of scopedNFRs) {
-        if (typeof nf === "string") continue;
-        const label = nf.predicate
-          ? `${nf.requirement} (\`${nf.predicate}\`)`
-          : nf.requirement;
-        bodyLines.push(
-          `- **[${nf.category}]** ${label} — _verify: ${nf.verification}_`,
-        );
-      }
-      bodyLines.push("");
+    // MCP authority — pull all spec content on demand
+    bodyLines.push("## Spec Authority (MCP)");
+    bodyLines.push(
+      "Pull spec content from the MCP server. Do not rely on memory for invariants, workflows, or constraints.",
+    );
+    bodyLines.push("");
+    bodyLines.push("**Session start:**");
+    bodyLines.push(
+      `- \`ada.get_contract("${comp.boundedContext}")\` — read your delegation contract and scope`,
+    );
+    bodyLines.push("");
+    bodyLines.push("**Before modifying any entity:**");
+    for (const entityName of entityNames.slice(0, 3)) {
+      bodyLines.push(
+        `- \`ada.query_constraints("${entityName}")\` — invariants for ${entityName}`,
+      );
     }
-
-    // Prohibited actions
-    bodyLines.push("## Prohibited Actions");
-    bodyLines.push("- Do NOT modify files outside this bounded context");
-    bodyLines.push("- Do NOT circumvent hook enforcement");
-    bodyLines.push("- Do NOT violate invariants listed above");
+    if (entityNames.length > 3) {
+      bodyLines.push(
+        `- \`ada.query_constraints("<entityName>")\` — for any other entity in this context`,
+      );
+    }
+    if (entityNames.length === 0) {
+      bodyLines.push(
+        `- \`ada.query_constraints("<entityName>")\` — invariants for any entity you touch`,
+      );
+    }
+    bodyLines.push("");
+    bodyLines.push("**During implementation:**");
+    bodyLines.push(
+      "- `ada.get_workflow(workflowName)` — step-by-step workflow with Hoare triples",
+    );
+    bodyLines.push(
+      "- `ada.check_drift(description)` — verify planned action against original intent",
+    );
+    bodyLines.push(
+      "- `ada.report_execution_failure(component, description)` — request retry guidance",
+    );
+    bodyLines.push("");
+    bodyLines.push("**When complete:**");
+    bodyLines.push(
+      `- \`ada.set_task_status("${comp.name}", "complete", [<evidence paths>])\``,
+    );
+    bodyLines.push(
+      "- `ada.exit_delegation(agentId)` — release delegation and signal macro planner",
+    );
     bodyLines.push("");
 
-    const description = `Use when ${comp.boundedContext} tasks arise. Owns ${comp.name}. Does not modify files outside ${comp.boundedContext}.`;
+    bodyLines.push("## Prohibited Actions");
+    bodyLines.push(`- Do NOT modify files outside ${comp.boundedContext}`);
+    bodyLines.push("- Do NOT circumvent hook enforcement");
+    bodyLines.push(
+      "- Do NOT proceed without querying constraints for any entity you modify",
+    );
+    bodyLines.push("");
 
     const frontmatter = [
       "---",
       `name: ${name}`,
       `description: ${description}`,
       `model: claude-sonnet-4-6`,
-      `tools: [Bash, Read, Write, Edit, Glob, Grep]`,
+      `tools: [Bash, Read, Write, Edit, Glob, Grep, mcp__ada__get_contract, mcp__ada__query_constraints, mcp__ada__get_workflow, mcp__ada__check_drift, mcp__ada__log_drift, mcp__ada__set_task_status, mcp__ada__exit_delegation, mcp__ada__report_execution_failure]`,
       `maxTurns: 30`,
       "---",
       "",
@@ -486,7 +314,7 @@ export function componentsToAgents(
       name,
       description,
       model: "claude-sonnet-4-6",
-      tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep"],
+      tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "mcp__ada__*"],
       status: "",
       body: frontmatter + bodyLines.join("\n"),
       path: `.claude/agents/${fileName}`,

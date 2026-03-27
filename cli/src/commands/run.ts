@@ -5,42 +5,17 @@ import { watch } from "@ada/governor";
 import { loadBlueprintState } from "@ada/compiler";
 import { glyphs } from "../ui/design-system.js";
 
-function buildBlueprintSummary(blueprint: {
-  summary: string;
-  architecture: {
-    pattern: string;
-    components: readonly { name: string; responsibility: string }[];
-  };
-}): string {
-  const componentList = blueprint.architecture.components
-    .map((c) => `  - ${c.name}: ${c.responsibility}`)
-    .join("\n");
-
-  return [
-    `## Ada Blueprint`,
-    ``,
-    blueprint.summary,
-    ``,
-    `**Architecture:** ${blueprint.architecture.pattern}`,
-    ``,
-    `**Components:**`,
-    componentList,
-  ].join("\n");
-}
-
 export async function runCommand(): Promise<void> {
   const cwd = process.cwd();
   const statePath = path.join(cwd, ".ada", "state.json");
 
   // Load blueprint if one exists — governor watches against it
-  let blueprintSummary: string | undefined;
   let blueprint: Parameters<typeof watch>[0] | undefined;
 
   if (fs.existsSync(statePath)) {
     try {
       const { blueprint: bp } = loadBlueprintState(statePath);
       blueprint = bp;
-      blueprintSummary = buildBlueprintSummary(bp);
     } catch {
       // Corrupt state — run ungoverned, no crash
     }
@@ -59,7 +34,6 @@ export async function runCommand(): Promise<void> {
   const events = spawn({
     workingDir: cwd,
     outputFormat: "stream-json",
-    ...(blueprintSummary !== undefined && { blueprintSummary }),
   });
 
   if (!blueprint) {
