@@ -1154,7 +1154,10 @@ export async function initCommand(
   await runCompileSummary(finalResult, intent);
 
   // ── Post-run Q&A — Ada answers questions before spawning Claude Code ───────
+  // Ink pauses stdin during its lifecycle. Resume it before readline takes over,
+  // otherwise the first rl.question() receives EOF immediately (empty answer → skip).
   if (process.stdin.isTTY) {
+    process.stdin.resume();
     await runQASession(finalResult);
   }
 
@@ -1168,22 +1171,16 @@ export async function initCommand(
 
   console.log(`\n  ${glyphs.chevron} spawning claude in new terminal...\n`);
 
-  const summaryLine = finalResult.blueprint.summary
-    .slice(0, 1000)
-    .replace(/'/g, "'\\''");
   const initialPrompt =
-    "Read CLAUDE.md fully. Read all agent files in .claude/agents/. The compiled world model is at .ada/manifest.json — use ada.query_constraints(scope) before modifying any entity, ada.check_drift(description) before structural changes. Follow the build order. Begin building now.";
+    "Read CLAUDE.md fully. Read all agent files in .claude/agents/. Call ada.advance_execution(agentId) to get your first task brief. Follow the build order. Begin building now.";
 
-  // Write the command to a temp script so osascript do script doesn't need
-  // to embed the full command string (avoids escaping corruption with long
-  // blueprint summaries containing Unicode or special characters).
   const scriptContent = [
     "#!/bin/bash",
     `cd '${targetDir.replace(/'/g, "'\\''")}'`,
     // Set ADA_PROJECT_DIR so the MCP server resolves world model artifacts
     // from the correct project directory regardless of where it spawns.
     `export ADA_PROJECT_DIR='${targetDir.replace(/'/g, "'\\''")}'`,
-    `exec claude --permission-mode auto --append-system-prompt '${summaryLine}' '${initialPrompt}'`,
+    `exec claude --permission-mode auto '${initialPrompt}'`,
     "",
   ].join("\n");
   const scriptPath = path.join(os.tmpdir(), `ada-spawn-${Date.now()}.sh`);
