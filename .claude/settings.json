@@ -6,7 +6,391 @@
         "hooks": [
           {
             "type": "command",
-            "command": "hooks/pre-tool-dispatch.sh"
+            "command": "hooks/pre-tool/blueprintcomponentregistry-registry-totalcomponentcount-10.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprintcomponentregistry-registry-components-length-10.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprintcomponentregistry-registry-registryid-null-registry-regist.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprintcomponentregistry-registry-pipelinerunid-null-registry-pip.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprintcomponentregistry-new-set-registry-components-map-c-c-ordi.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/blueprintcomponentregistry-registry-components-every-c-c-ordinal-0-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/namedblueprintcomponent-component-componentid-null-component-com.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/namedblueprintcomponent-component-ordinal-0-component-ordinal-9.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/namedblueprintcomponent-component-name-null-component-name-lengt.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/namedblueprintcomponent-component-registryid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/workspacepackagenode-node-packagename-null-node-packagename-l.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/workspacepackagenode-node-assignedcomponentids-length-1-node-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/workspacepackagenode-node-pipelinestage-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/componentpackagemapping-mapping-assignmentcount-10.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/componentpackagemapping-mapping-assignments-length-10.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/componentpackagemapping-new-set-mapping-assignments-map-a-a-targ.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/componentpackagemapping-mapping-collapserecords-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/componentpackagemapping-mapping-istotal-true.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/componentpackagemapping-mapping-assignments-every-a-a-isresolved.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/componentpackageassignment-assignment-componentordinal-0-assignment.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/componentpackageassignment-assignment-assignmentid-null-assignment-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/componentpackageassignment-assignment-isresolved-true-assignment-ta.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/componentpackageassignment-assignment-isresolved-true-assignment-pr.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/collapserecord-record-primarycomponentid-record-collaps.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/collapserecord-record-primarycomponentordinal-record-co.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/collapserecord-record-targetpackage-null-record-targetp.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/collapserecord-record-collapserationale-null-record-col.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/c3assignmentgap-gap-componentordinal-3.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/c3assignmentgap-gap-isresolved-true-gap-resolvedpackage-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/c3assignmentgap-gap-isresolved-true-gap-resolutionproven.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/c3assignmentgap-gap-isresolved-false-gap-resolvedpackage.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/c3assignmentgap-gap-candidatepackages-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/canonicalentity-entity-entityid-null-entity-entityid-len.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/canonicalentity-entity-label-null-entity-label-length-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/canonicalentity-entity-sourcecomponentid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/canonicalentity-entity-provenancepostcode-null-entity-pr.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/canonicalentity-entity-invariants-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ententityregistration-registration-registrationid-null-registr.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ententityregistration-registration-sourcecomponentid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ententityregistration-registration-provenancerecordpostcode-nu.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ententityregistration-registration-entitymappostcode-null-regi.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ententitymap-map-entitycount-map-entities-length.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ententitymap-map-entitycount-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ententitymap-map-postcode-null-map-postcode-length-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ententitymap-new-set-map-entities-map-e-e-canonicalen.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/ententitymap-map-entities-every-e-e-pipelinerunid-map.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechainrecord-record-hopcount-3.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechainrecord-record-hops-length-3.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechainrecord-record-hops-0-hopindex-0-record-hops-1-h.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechainrecord-record-chainid-null-record-chainid-lengt.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechainrecord-record-provenanceintact-record-hops-ever.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechainhop-hop-hopindex-0-hop-hopindex-1-hop-hopind.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechainhop-hop-istraced-true-hop-provenancerecordpo.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechainhop-hop-fromlabel-null-hop-fromlabel-length-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechainhop-hop-tolabel-null-hop-tolabel-length-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechainhop-hop-chainid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entprovenancerecord-record-postcode-null-record-postcode-sta.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entprovenancerecord-record-stage-ent.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entprovenancerecord-record-recordid-null-record-recordid-len.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entprovenancerecord-record-timestamp-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entgaterecord-gate-passed-gate-entitycount-1-gate-prov.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entgaterecord-gate-passed-true-gate-state-pass-gate-st.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entgaterecord-gate-passed-true-gate-evaluatedat-null-t.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entgaterecord-gate-gateid-null-gate-gateid-length-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entstageresult-result-passed-true-result-gatestate-pass.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entstageresult-result-postcode-null-result-postcode-sta.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entstageresult-result-entitymapid-null-result-entitymap.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entstageresult-result-gateid-null-result-gateid-length-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entstageresult-result-producedat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entblocker-blocker-iscleared-true-blocker-clearedat.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entblocker-blocker-iscleared-true-blocker-clearance.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entblocker-blocker-linkedgapid-null-blocker-linkedg.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entblocker-blocker-iscleared-false-blocker-cleareda.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/stalledpipelinerun-run-runid-ml-ent-e80e3c97-v1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/stalledpipelinerun-run-stage-ent.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/stalledpipelinerun-run-blockercount-run-blockers-length.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/stalledpipelinerun-run-resumable-run-blockers-every-b-b-isc.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/stalledpipelinerun-run-blockercount-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/monoreposourcefile-file-filepath-null-file-filepath-length-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/monoreposourcefile-file-mustbeauthored-file-mustbemodified.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/monoreposourcefile-file-mustbeauthored-file-mustbemodified.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/monoreposourcefile-file-relatedgoals-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/workspacepackage-pkg-packagename-null-pkg-packagename-len.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/workspacepackage-pkg-tsconfigpath-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/workspacepackage-pkg-packagejsonpath-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/workspacepackage-pkg-srcroot-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/typescriptcompilationunit-unit-passed-unit-errorcount-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/typescriptcompilationunit-unit-errorcount-unit-errors-length.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/typescriptcompilationunit-unit-packagename-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/typescriptcompilationunit-unit-evaluatedat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/typescripterror-error-errorcode-null-error-errorcode-len.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/typescripterror-error-filepath-null-error-filepath-lengt.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/typescripterror-error-line-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/testsuiteresult-suite-totaltests-suite-passedtests-suite.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/testsuiteresult-suite-passed-suite-failedtests-0-suite-r.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/testsuiteresult-suite-regressioncount-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/testsuiteresult-suite-evaluatedat-0.sh"
           }
         ]
       }
@@ -32,16 +416,6 @@
         ]
       }
     ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "hooks/session-end.sh"
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [
@@ -51,13 +425,25 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/session-end.sh"
+          }
+        ]
+      }
     ]
   },
   "mcpServers": {
     "ada": {
       "type": "stdio",
       "command": "ada",
-      "args": ["mcp"],
+      "args": [
+        "mcp"
+      ],
       "env": {
         "ADA_PROJECT_DIR": "${CLAUDE_PROJECT_DIR:-}"
       }

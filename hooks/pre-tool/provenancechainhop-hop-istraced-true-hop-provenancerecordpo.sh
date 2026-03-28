@@ -1,11 +1,8 @@
 #!/bin/bash
 # Invariant: hop.isTraced === true ? hop.provenanceRecordPostcode !== null : true
 # Entity: ProvenanceChainHop
-# Description: a traced hop must carry a provenance postcode as evidence; without it the trace claim is unverifiable
-# Context guard: only enforce during an active Ada pipeline run
-# Drains stdin first to avoid broken pipe, then exits cleanly if not in Ada context
+# Description: a hop claimed as traced must carry a provenance postcode — a traced hop with null postcode is an unverifiable claim
 INPUT=$(cat)
-[ -z "$ADA_PIPELINE_RUN_ID" ] && exit 0
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.
 # Manual review required: hop.isTraced === true ? hop.provenanceRecordPostcode !== null : true

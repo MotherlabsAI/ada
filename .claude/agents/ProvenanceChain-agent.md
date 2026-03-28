@@ -1,143 +1,112 @@
 ---
 name: ProvenanceChain-agent
-description: Use when validates that each component's provenance chain has exactly 3 hops (hopindex 0, 1, 2), each hop is traced (istraced === true with a non-null provenancerecordpostcode), and the chain is intact (provenanceintact === hops.every(h => h.istraced)). drives the provenancechainrecord state machine through incomplete → validating → intact (or broken → partially_reconstructed). uses @ada/provenance postcodeaddress to verify postcode validity. tasks arise in the ProvenanceChain domain.
+description: Use when ProvenanceChain tasks arise. Owns ProvenanceChainValidator. Does not modify files outside ProvenanceChain.
 model: claude-sonnet-4-6
 tools: [Bash, Read, Write, Edit, Glob, Grep]
-status: GHOST
+maxTurns: 30
 ---
 # ProvenanceChainValidator Agent
 
-Validates that each component's provenance chain has exactly 3 hops (hopIndex 0, 1, 2), each hop is traced (isTraced === true with a non-null provenanceRecordPostcode), and the chain is intact (provenanceIntact === hops.every(h => h.isTraced)). Drives the ProvenanceChainRecord state machine through INCOMPLETE → VALIDATING → INTACT (or BROKEN → PARTIALLY_RECONSTRUCTED). Uses @ada/provenance PostcodeAddress to verify postcode validity.
+Constructs and validates three-hop ProvenanceChainRecord entries. Each chain has exactly 3 ProvenanceChainHop entries (hopIndex 0, 1, 2) tracing from intent through blueprint through component to entity. Validates that each hop's isTraced === true and provenanceRecordPostcode is populated. Sets provenanceIntact based on all hops being traced. Produces ENTProvenanceRecord entries with 'ML'-prefixed postcodes and stage === 'ENT'.
 
 ## Bounded Context
 **Context:** ProvenanceChain
 **Entities:** ProvenanceChainRecord, ProvenanceChainHop, ENTProvenanceRecord
-**Interfaces:** buildChain(componentId: string, records: ENTProvenanceRecord[]): ProvenanceChainRecord, validateChain(chain: ProvenanceChainRecord): ProvenanceChainRecord, getHop(chain: ProvenanceChainRecord, hopIndex: number): ProvenanceChainHop | null, getChainState(chain: ProvenanceChainRecord): 'INCOMPLETE' | 'VALIDATING' | 'INTACT' | 'BROKEN' | 'PARTIALLY_RECONSTRUCTED', isIntact(chain: ProvenanceChainRecord): boolean
-**Dependencies:** EntityRegistrar
+**Interfaces:** buildChain(entityRegistration: ENTEntityRegistration, mapping: ComponentPackageMapping): ProvenanceChainRecord, validateHop(hop: ProvenanceChainHop): boolean, validateChain(chain: ProvenanceChainRecord): ProvenanceChainRecord, isIntact(chain: ProvenanceChainRecord): boolean
+**Dependencies:** EntityExtractor, ComponentPackageMapper
+
+## Domain Vocabulary
+Use these exact terms when naming variables, types, and functions.
+
+- **BlueprintComponentRegistry** — Typed, ordered registry of exactly 10 BlueprintComponent definitions — the source artifact for Ada compilation
+- **ComponentPackageMapping** — Explicit mapping resolving 10 blueprint components to exactly 8 WorkspacePackageNode targets, with collapse logic for the two excess components
+- **C3AssignmentGap** — Named typed artifact for a missing component-to-package assignment; the specific instance at ordinal-3 must be explicitly resolved in this work
+- **CanonicalEntity** — A normalized, validated entity extracted from a BlueprintComponent, keyed into the EntityMap
+- **EntityMap** — The keyed output map of CanonicalEntity instances produced by the ENT stage
+- **ProvenanceChainRecord** — A typed record containing exactly three ProvenanceChainHop entries — the three-hop invariant is non-negotiable
+- **ProvenanceChainHop** — A single provenance step; exactly three must exist per ProvenanceChainRecord
+- **ENTGateRecord** — The typed evaluation record for the ENT gate
+- **ENTGateState** — The enumerated pass/fail state of the ENT gate — must reach passing terminal for a valid ENTStageResult
+- **ENTStageResult** — The complete, gate-validated output of the ENT stage consumed by downstream pipeline stages
+- **PipelineRun** — A versioned execution instance of the Ada semantic compilation pipeline
+- **WorkspacePackageNode** — A typed node for a pnpm workspace package; exactly 8 are valid targets in this monorepo's ComponentPackageMapping
+- **ordinal-3** — The specific positional index in the BlueprintComponentRegistry where the C3AssignmentGap occurs
+- **collapse** — The deliberate mapping of two blueprint components to a single WorkspacePackageNode, reducing 10 components to 8 package targets
+- **ENT stage** — The named intermediate stage of the Ada semantic compilation pipeline responsible for entity extraction, package mapping, and provenance validation
+
+## Stakeholders
+- **Pipeline Infrastructure Engineer**
+  - Knows: Multi-stage compiler pipeline architecture with named gates and records, BlueprintComponentRegistry as the canonical source-of-truth for component definitions, Ordinal-indexed component slots and what C3AssignmentGap means at a specific ordinal, ComponentPackageMapping cardinality rules (10 components → 8 packages implies collapse), ProvenanceChainRecord three-hop invariant and what constitutes a valid hop, ENTGateRecord / ENTGateState evaluation semantics, pnpm workspace package boundary rules, TypeScript strict-mode compilation requirements across the monorepo
+  - Blind spots: Which two components share a package in the 10→8 collapse — may assume it's obvious from naming, Whether the C3AssignmentGap resolver is already partially implemented or entirely absent, Whether provenance hop construction is manual or derived from registry traversal, That ENTGateState may have multiple failure modes beyond the gap
+  - Fears: C3AssignmentGap at ordinal-3 is silently ignored and the gate passes with corrupt mapping, ProvenanceChainRecord has two or four hops instead of three, causing downstream validation to reject silently, The 10→8 collapse uses the wrong pair of components, breaking CanonicalEntity identity, TypeScript type errors introduced by new types that shadow or conflict with existing vocabulary types, Existing tests regress because a shared registry fixture was mutated, The PipelineRun remains stalled because ENTGateState never reaches the passing terminal, Package boundary violations cause pnpm workspace resolution to fail at build time
+  - Vocabulary: "Ada" = The named semantic entity being compiled through the pipeline — not a programming language; "compile" = Execute the full ENT-stage transformation: load registry → map packages → extract entities → validate provenance → evaluate gate; "ENT stage" = The named intermediate compilation stage responsible for entity extraction and validation before downstream emission; "BlueprintComponentRegistry" = Typed registry holding exactly 10 ordered BlueprintComponent definitions — the source representation; "ComponentPackageMapping" = The typed mapping from 10 blueprint components to 8 WorkspacePackageNode entries, with explicit collapse/exclusion logic; "C3AssignmentGap" = A named, typed artifact representing a missing or unresolvable component-to-package assignment at a specific ordinal position; "ordinal-3" = The zero- or one-indexed slot in the component registry where the assignment gap occurs — must be resolved explicitly; "CanonicalEntity" = The normalized, validated entity instance extracted from a BlueprintComponent and placed into the EntityMap; "EntityMap" = The keyed output structure of the ENT stage, mapping entity identifiers to CanonicalEntity instances; "ProvenanceChainRecord" = A typed record capturing exactly three ProvenanceChainHop entries tracing the entity's transformation lineage; "ProvenanceChainHop" = A single step in the provenance chain — source, transformation, and destination — must number exactly three; "ENTGateRecord" = The typed record evaluated at the end of the ENT stage to determine pass/fail; "ENTGateState" = The enumerated state of the gate — expected terminal value is passing; "ENTStageResult" = The typed output of the entire ENT stage, consumed by downstream pipeline stages; "PipelineRun" = A versioned execution instance of the Ada compilation pipeline, identified by ML.ENT.e80e3c97/v1; "WorkspacePackageNode" = A typed node representing a pnpm workspace package — exactly 8 are valid targets in this monorepo; "10-package monorepo" = The monorepo contains 10 workspace packages total, but only 8 are valid mapping targets for this blueprint
+- **Downstream Stage Consumer (post-ENT pipeline stages)**
+  - Knows: ENTStageResult schema and expected shape of EntityMap, That provenance chains entering their stage have exactly three hops, Package assignment correctness — they depend on WorkspacePackageNode identity
+  - Blind spots: Internal ENT implementation details, How C3AssignmentGap was resolved, Which components were collapsed in the 10→8 mapping
+  - Fears: Receiving a partially populated EntityMap with missing ordinal-3 entity, Provenance chain length invariant violated, breaking their own chain extension logic, ENTGateState not in passing terminal, causing their stage to fail on input validation
+  - Vocabulary: "ENTStageResult" = Their input — must be fully populated and gate-passing; "EntityMap" = The primary data structure they consume from ENT output; "provenance" = Audit trail they may re-validate or extend with additional hops
+- **PipelineRun ML.ENT.e80e3c97/v1 (the stalled execution instance)**
+  - Knows: Its own versioned identity and stage position, That it is blocked at ENT and cannot emit a result
+  - Blind spots: Why it is stalled — it cannot self-diagnose the C3AssignmentGap
+  - Fears: Permanent stall with no resolution path, Being restarted with incorrect registry state, compounding the gap
+  - Vocabulary: "stalled" = ENTGateState has not reached passing terminal — execution is suspended awaiting valid ENTStageResult
 
 ## Invariants
 These MUST hold at all times. Hooks enforce them at tool boundaries.
 
-- `context.chains.every(c => c.hopCount === 3)` — every chain in this context must have exactly 3 hops; the three-hop requirement is a context-level invariant
-- `context.provenanceRecords.every(r => r.stage === 'ENT')` — all provenance records in the ENT chain context must be scoped to the ENT stage
-- `chain.hopCount === 3` (ProvenanceChainRecord) — three-hop is a correctness invariant declared by G2; a chain with fewer hops is incomplete and cannot pass the gate
-- `chain.hops.length === chain.hopCount` (ProvenanceChainRecord) — the hop array length must equal the declared hopCount or the record is internally inconsistent
-- `chain.provenanceIntact === chain.hops.every(h => h.isTraced)` (ProvenanceChainRecord) — chain integrity is exactly the conjunction of all hop tracings; partial tracing means the chain is not intact
-- `chain.componentId !== null && chain.componentId.length > 0` (ProvenanceChainRecord) — the chain must reference a component or it floats free of the registry and cannot be correlated
-- `chain.hops[0].hopIndex === 0 && chain.hops[1].hopIndex === 1 && chain.hops[2].hopIndex === 2` (ProvenanceChainRecord) — hops must be in ordinal order within the tuple; out-of-order hops produce incorrect lineage tracing
-- `hop.hopIndex === 0 || hop.hopIndex === 1 || hop.hopIndex === 2` (ProvenanceChainHop) — hop indices must be exactly one of the three valid positions; any other value is outside the three-hop structure
-- `hop.isTraced === true ? hop.provenanceRecordPostcode !== null : true` (ProvenanceChainHop) — a traced hop must carry a provenance postcode as evidence; without it the trace claim is unverifiable
-- `hop.isTraced === false ? hop.provenanceRecordPostcode === null : true` (ProvenanceChainHop) — an untraced hop must not claim a postcode — that would be false evidence of tracing
-- `hop.fromLabel !== null && hop.fromLabel.length > 0` (ProvenanceChainHop) — the source of the hop must be labeled or the lineage link cannot be read
-- `hop.toLabel !== null && hop.toLabel.length > 0` (ProvenanceChainHop) — the destination of the hop must be labeled or the lineage link cannot be read
-- `hop.chainId !== null && hop.chainId.length > 0` (ProvenanceChainHop) — the hop must reference its parent chain or it is an orphaned link that cannot be correlated
-- `record.stage === "ENT"` (ENTProvenanceRecord) — ENTProvenanceRecords are scoped to the ENT stage; records from other stages are different entities
-- `record.postcode !== null && record.postcode.length > 0` (ENTProvenanceRecord) — the record must have its own postcode so hop records can reference it as evidence
-- `record.pipelineRunId !== null && record.pipelineRunId.length > 0` (ENTProvenanceRecord) — the record must be bound to a run or it cannot be correlated with gate evaluation
-- `record.timestamp > 0` (ENTProvenanceRecord) — timestamp must be a positive epoch value; zero means the record was never actually committed
-- `record.subjectId !== null && record.subjectId.length > 0` (ENTProvenanceRecord) — the record must name the entity it describes or it is uninterpretable provenance
+- `chain.hopCount === 3 && chain.hops.length === 3` — the provenance chain context enforces the three-hop invariant — no chain in this context may have fewer or more than three hops
+- `chain.provenanceIntact === chain.hops.every(h => h.isTraced && h.provenanceRecordPostcode !== null)` — provenance is only intact when all three hops are traced with valid postcodes
+- `record.hopCount === 3` (ProvenanceChainRecord) — the three-hop invariant is non-negotiable — a chain with fewer or more hops is structurally invalid for this stage
+- `record.hops.length === 3` (ProvenanceChainRecord) — the hops tuple must contain exactly three entries matching the declared hopCount
+- `record.hops[0].hopIndex === 0 && record.hops[1].hopIndex === 1 && record.hops[2].hopIndex === 2` (ProvenanceChainRecord) — hops must appear in strict index order 0, 1, 2 — out-of-order hops corrupt the causal chain
+- `record.chainId !== null && record.chainId.length > 0` (ProvenanceChainRecord) — a chain without an ID cannot be referenced by the ENTGateRecord during provenance verification
+- `record.provenanceIntact === record.hops.every(h => h.isTraced)` (ProvenanceChainRecord) — the provenanceIntact flag must reflect the actual traced state of all hops — a mismatch is a false provenance claim
+- `hop.hopIndex === 0 || hop.hopIndex === 1 || hop.hopIndex === 2` (ProvenanceChainHop) — hop index must be one of the three valid positions — any other value is outside the three-hop schema
+- `hop.isTraced === true ? hop.provenanceRecordPostcode !== null : true` (ProvenanceChainHop) — a hop claimed as traced must carry a provenance postcode — a traced hop with null postcode is an unverifiable claim
+- `hop.fromLabel !== null && hop.fromLabel.length > 0` (ProvenanceChainHop) — a hop without a source label has no identifiable origin in the causal chain
+- `hop.toLabel !== null && hop.toLabel.length > 0` (ProvenanceChainHop) — a hop without a destination label has no identifiable target in the causal chain
+- `hop.chainId !== null` (ProvenanceChainHop) — a hop not bound to a chain ID is an orphaned structural fragment that cannot be validated
+- `record.postcode !== null && record.postcode.startsWith('ML')` (ENTProvenanceRecord) — ENT provenance records must carry a valid ML-prefixed postcode to participate in the chain
+- `record.stage === 'ENT'` (ENTProvenanceRecord) — a provenance record for a different stage cannot be used as evidence in an ENT three-hop chain
+- `record.recordId !== null && record.recordId.length > 0` (ENTProvenanceRecord) — a record without an ID cannot be referenced by a ProvenanceChainHop
+- `record.timestamp > 0` (ENTProvenanceRecord) — a zero or negative timestamp indicates an uninitialized record that was never committed
 
-## Workflow Steps
-### load-and-validate-blueprint-registry (ENT-stage-integration)
-- **Pre:** BlueprintComponentRegistry exists for pipelineRunId with totalComponentCount=10 and postcode is set
-- **Action:** read all 10 NamedBlueprintComponents from registry, assert count matches totalComponentCount, verify each has ordinal, name, responsibility, boundedContext
-- **Post:** 10 NamedBlueprintComponents are in memory, ordered by ordinal 0–9, each field non-null
-- **Failure modes:**
-  - precondition: registry postcode missing or pipelineRunId not matched — registry was never written → emit REGISTRY_NOT_FOUND blocker, halt ENT stage, surface error to pipeline governor
-  - action: component count in registry body differs from totalComponentCount — registry is corrupt or partially written → emit REGISTRY_CORRUPT blocker, log discrepancy, halt and await re-registration of blueprint
-  - postcondition: one or more NamedBlueprintComponents have null boundedContext or assignedPackage field — incomplete schema → flag affected component IDs, emit COMPONENT_SCHEMA_INCOMPLETE, prevent assignment phase from starting
-
-### assign-components-to-workspace-packages (ENT-stage-integration)
-- **Pre:** 10 NamedBlueprintComponents loaded; 8 WorkspacePackageNodes exist with known packageNames; no ComponentPackageMapping exists for this pipelineRunId
-- **Action:** iterate components by ordinal, match each to a targetPackage using boundedContext affinity rules, write one ComponentPackageAssignment per component, write ComponentPackageMapping with assignmentCount and isTotal flag
-- **Post:** ComponentPackageMapping exists with assignmentCount=10; each ComponentPackageAssignment has targetPackage set; isTotal=true only if all 10 are resolved; each WorkspacePackageNode has its assignedComponentIds updated
-- **Failure modes:**
-  - action: component at ordinal 3 (C3) has no matching WorkspacePackageNode by boundedContext — C3AssignmentGap is created with isResolved=false → create C3AssignmentGap record with candidatePackages populated from fuzzy match; set ComponentPackageMapping.isTotal=false; do NOT halt — continue assigning remaining components; proceed to gap-resolution step
-  - action: two components map to same targetPackage in a context where package capacity is exceeded — collision → log collision, apply secondary affinity rule (responsibility keyword match), reassign lower-priority component, re-evaluate
-  - postcondition: assignmentCount < 10 after full iteration — at least one component was silently dropped → compare component IDs in assignments vs registry, identify missing IDs, emit ASSIGNMENT_INCOMPLETE, block extraction phase
-
-### resolve-C3-assignment-gap (ENT-stage-integration)
-- **Pre:** C3AssignmentGap exists for pipelineRunId with isResolved=false and candidatePackages is non-empty; ComponentPackageMapping.isTotal=false
-- **Action:** evaluate candidatePackages using responsibility-text similarity score; select highest-scoring package as resolvedPackage; write ENTProvenanceRecord for resolution decision; update C3AssignmentGap.isResolved=true and resolvedPackage; update corresponding ComponentPackageAssignment.targetPackage; set ComponentPackageMapping.isTotal=true
-- **Post:** C3AssignmentGap.state=RESOLVED; ComponentPackageAssignment for ordinal 3 has targetPackage non-null and isResolved=true; ComponentPackageMapping.isTotal=true; resolutionProvenancePostcode written
-- **Failure modes:**
-  - precondition: candidatePackages is empty — no fuzzy match was possible during assignment phase → transition C3AssignmentGap to FAILED state; emit C3_UNRESOLVABLE blocker; escalate to human governor decision; pipeline remains stalled
-  - action: similarity scores are tied across multiple candidatePackages — deterministic selection not possible → apply tiebreak rule: prefer package with fewest currently assigned components; if still tied, select lexicographically first packageName; log tiebreak rationale in ENTProvenanceRecord
-  - postcondition: resolutionProvenancePostcode not written — provenance event failed to persist → mark C3AssignmentGap as RESOLVED but flag provenanceIntact risk; retry provenance write up to 3 times; if exhausted, emit PROVENANCE_WRITE_FAILURE and flag ProvenanceChainRecord as incomplete for this component
-
-### extract-and-register-entities-into-entity-map (ENT-stage-integration)
-- **Pre:** ComponentPackageMapping.isTotal=true; all 10 ComponentPackageAssignments have isResolved=true; EntityMap for pipelineRunId does not yet exist or has entityCount=0
-- **Action:** for each ComponentPackageAssignment, read the NamedBlueprintComponent's name and responsibility, extract entity names using semantic parse, create one ENTEntityRegistration per extracted entity with sourceComponentId and targetRegistryType, write entityMapPostcode and provenanceRecordPostcode per registration, accumulate into EntityMap
-- **Post:** EntityMap exists with entityCount >= 10 (at least one entity per component); each ENTEntityRegistration has registeredAt timestamp, entityMapPostcode, and provenanceRecordPostcode non-null; EntityMap.postcode is written
-- **Failure modes:**
-  - precondition: ComponentPackageMapping.isTotal=false at time of extraction — gap was not resolved before this step executed → abort extraction; emit EXTRACTION_BLOCKED_BY_GAP; ensure C3 gap resolution step is replayed before retry
-  - action: semantic parse of a component's responsibility yields zero entity names — component has ambiguous or empty responsibility text → emit ENTITY_EXTRACTION_EMPTY for that sourceComponentId; use component name itself as fallback entity name; register with a LOW_CONFIDENCE flag on the ENTEntityRegistration
-  - postcondition: EntityMap.postcode not written — map accumulation succeeded but final write failed → retry EntityMap write with exponential backoff; if all retries fail, mark EntityMap as DRAFT state and block gate evaluation until postcode is confirmed
-
-### validate-three-hop-provenance-chain (ENT-stage-integration)
-- **Pre:** EntityMap.postcode exists; at least one ENTEntityRegistration per component exists with provenanceRecordPostcode set; ProvenanceChainRecord for pipelineRunId does not yet have provenanceIntact=true
-- **Action:** for each component, construct ProvenanceChainRecord with hopCount=3; trace hop 0: BlueprintComponentRegistry postcode → ComponentPackageAssignment provenanceRecordPostcode; trace hop 1: ComponentPackageAssignment → ENTEntityRegistration provenanceRecordPostcode; trace hop 2: ENTEntityRegistration → EntityMap postcode; mark each ProvenanceChainHop.isTraced; set ProvenanceChainRecord.provenanceIntact based on all hops traced
-- **Post:** ProvenanceChainRecord exists for pipelineRunId with hopCount=3; all ProvenanceChainHops have isTraced=true; ProvenanceChainRecord.provenanceIntact=true; ProvenanceChainRecord.postcode written
-- **Failure modes:**
-  - action: hop 1 fromLabel postcode does not match any known ComponentPackageAssignment provenanceRecordPostcode — postcode mismatch breaks chain → mark that ProvenanceChainHop.isTraced=false; set ProvenanceChainRecord.provenanceIntact=false; emit PROVENANCE_HOP_BROKEN with hop index; gate evaluation will receive provenanceIntact=false and fail unless compensated
-  - action: C3 resolution provenance record was never written (from earlier failure mode) — hop involving C3 component cannot be traced → attempt to reconstruct C3 provenance from C3AssignmentGap.resolutionProvenancePostcode; if not recoverable, mark chain broken for C3 component only; emit PARTIAL_PROVENANCE_CHAIN
-  - postcondition: ProvenanceChainRecord.postcode not written — validation succeeded but record persistence failed → retry write; if failed, gate evaluation proceeds with in-memory provenanceIntact value but emits PROVENANCE_RECORD_UNPERSISTED warning; treat as soft failure unless gate is configured strict
-
-### evaluate-ENT-gate (ENT-stage-integration)
-- **Pre:** EntityMap.entityCount >= 1; ProvenanceChainRecord.provenanceIntact is determined (true or false); no uncleared ENT blockers remain in active state
-- **Action:** read entityCount from EntityMap; read provenanceIntact from ProvenanceChainRecord; read allBlockersCleared by querying active blocker list for pipelineRunId; compute passed = (entityCount > 0 AND provenanceIntact AND allBlockersCleared); write ENTGateRecord with evaluatedAt timestamp and governorDecisionPostcode; set ENTGateRecord.state
-- **Post:** ENTGateRecord exists with passed=true or passed=false; evaluatedAt is set; if passed=true then pipeline run advances past ENT stage; if passed=false then pipeline run remains at ENT stage with GATE_FAILED state
-- **Failure modes:**
-  - precondition: active blockers still exist — C3 gap or provenance failure was never cleared → set allBlockersCleared=false; ENTGateRecord.passed=false; emit GATE_BLOCKED_BY_OPEN_BLOCKERS; pipeline run transitions to BLOCKED state
-  - action: governorDecisionPostcode write fails — gate computed a result but cannot record the decision → retry postcode write; if exhausted, still record ENTGateRecord with passed value but flag DECISION_UNANCHORED; treat as audit risk, not pipeline block
-  - postcondition: passed=true but pipeline run does not advance — downstream stage listener missed the gate event → re-emit gate-passed event with ENTGateRecord.gateId; if pipeline run still stalled after re-emit, escalate to pipeline governor for manual stage advancement
-
-### diagnose-stall-cause (unblock-stalled-pipeline-run)
-- **Pre:** pipelineRunId ML.ENT.e80e3c97/v1 exists in STALLED state; ENT stage is the current stage
-- **Action:** query C3AssignmentGap for pipelineRunId — check isResolved; query ENTGateRecord for pipelineRunId — check if evaluated; query active blockers for pipelineRunId; query ProvenanceChainRecord for provenanceIntact; query EntityMap for entityCount
-- **Post:** stall cause is classified into one of: GAP_UNRESOLVED, GATE_NOT_EVALUATED, EXTRACTION_NOT_STARTED, PROVENANCE_BROKEN, UNKNOWN; cause is logged with evidence postcodes
-- **Failure modes:**
-  - action: no C3AssignmentGap record exists and ComponentPackageMapping.isTotal=false — assignment phase never wrote the gap record → synthesize C3AssignmentGap from ComponentPackageMapping data; set state=OPEN; proceed as if gap was just detected
-  - postcondition: stall cause classified as UNKNOWN — no diagnostic query returned useful state → emit STALL_UNDIAGNOSABLE; request full re-execution of ENT stage from load-and-validate-blueprint-registry step; preserve existing EntityMap if present to avoid data loss
-
-### clear-open-blockers-and-gaps (unblock-stalled-pipeline-run)
-- **Pre:** stall cause is identified; C3AssignmentGap.isResolved=false OR active blockers exist for pipelineRunId
-- **Action:** if cause=GAP_UNRESOLVED: execute resolve-C3-assignment-gap sub-workflow; if cause=PROVENANCE_BROKEN: re-execute validate-three-hop-provenance-chain; if cause=EXTRACTION_NOT_STARTED: execute extract-and-register-entities sub-workflow; mark cleared blockers as RESOLVED with resolution timestamp
-- **Post:** C3AssignmentGap.isResolved=true; no active blockers remain for pipelineRunId; ComponentPackageMapping.isTotal=true
-- **Failure modes:**
-  - precondition: stall cause was UNKNOWN and re-execution was requested — re-execution conflicts with partially-written EntityMap → archive existing EntityMap as EntityMap.state=SUPERSEDED before re-executing; create fresh EntityMap to avoid duplicate entity registrations
-  - action: C3 gap resolution fails again (candidatePackages empty) — root cause is unresolvable by automation → transition pipeline run to AWAITING_HUMAN_INPUT state; emit human-escalation event with C3AssignmentGap details; do not retry automatically
-  - postcondition: active blockers still exist after resolution attempts — a blocker's clear condition was not met → log each remaining blocker ID with its unmet clear condition; emit BLOCKERS_NOT_CLEARED; prevent gate re-evaluation until all are resolved
-
-### resume-pipeline-run-through-ENT-gate (unblock-stalled-pipeline-run)
-- **Pre:** pipelineRunId is in STALLED state; C3AssignmentGap.isResolved=true; EntityMap.entityCount >= 10; ProvenanceChainRecord.provenanceIntact=true; no active blockers
-- **Action:** transition pipeline run from STALLED to RESUMING; re-execute evaluate-ENT-gate step; on gate passed, transition pipeline run to ADVANCED; write final ENTGateRecord with passed=true
-- **Post:** pipeline run ML.ENT.e80e3c97/v1 is no longer in STALLED state; ENTGateRecord.passed=true; pipeline run state=ADVANCED; next stage is triggered
-- **Failure modes:**
-  - precondition: EntityMap.entityCount < 10 — extraction was incomplete despite gap resolution → identify which component IDs have no ENTEntityRegistration; re-execute extraction for those components only (partial re-extraction); do not duplicate existing registrations
-  - action: gate evaluates but passed=false — a condition regressed during resume (e.g. provenance became broken during re-execution) → transition pipeline run back to BLOCKED (not STALLED); emit RESUME_FAILED_GATE_REJECTED with ENTGateRecord.gateId; require fresh diagnosis before next unblock attempt
-  - postcondition: pipeline run advances but next stage does not start — downstream listener not subscribed to gate-passed event for this pipelineRunId → re-emit gate-passed event with explicit pipelineRunId and ENTGateRecord.gateId; verify downstream stage subscription; if still unresponsive, escalate to pipeline governor
-
-### verify-codebase-integrity-after-changes (unblock-stalled-pipeline-run)
-- **Pre:** pipeline run has advanced past ENT stage; any TypeScript source files were modified during ENT integration implementation
-- **Action:** run TypeScript compiler with --noEmit; run existing test suite; verify no new type errors; verify all pre-existing tests pass; check that no ENT-stage entity files were accidentally deleted or overwritten
-- **Post:** TypeScript compilation exits with code 0; test suite passes with zero new failures; codebase is in consistent state with all ENT integration changes applied
-- **Failure modes:**
-  - action: TypeScript compilation fails — a new type was introduced without proper interface declaration or an import is missing → identify failing file and line; revert only the offending change if isolated; if entangled with ENT logic, roll back entire ENT implementation changeset and re-implement with correct types
-  - action: existing tests fail — a refactor of an assignment or provenance function changed behavior relied on by prior tests → run failing tests in isolation; determine if test expectation is now wrong (update test) or implementation regressed (fix implementation); do not suppress tests
-  - postcondition: compilation passes but runtime behavior is incorrect — types are satisfied but logic produces wrong entityCount or wrong gate result → add integration test that asserts entityCount=10 and passed=true for a known fixture pipelineRunId; run test; fix logic until test passes
+## State Machines
+### ProvenanceChainRecord
+**States:** uninitialized → tracing → intact → broken → repairing
+**Transitions:**
+- uninitialized → tracing (trigger: provenance chain validation step begins for this componentId; guard: ProvenanceChainRecord exists with hopCount=3 AND hops array has 3 ProvenanceChainHop entries)
+- uninitialized → tracing (trigger: ProvenanceChainRecord auto-initialized during gap resolution provenance write; guard: componentId is the ordinal-3 collapsed component AND resolution provenance record exists)
+- tracing → intact (trigger: all 3 hops verified with isTraced=true and non-null provenanceRecordPostcode; guard: hopCount=3 AND every ProvenanceChainHop.isTraced=true AND no hop has null provenanceRecordPostcode)
+- tracing → broken (trigger: any hop found with isTraced=false or null provenanceRecordPostcode; guard: at least one ProvenanceChainHop has isTraced=false OR provenanceRecordPostcode=null)
+- broken → repairing (trigger: PROVENANCE_HOP_BREAK handler initiates re-extraction of missing canonical entity; guard: missing CanonicalEntity for this componentId can be re-extracted from NamedBlueprintComponent)
+- repairing → intact (trigger: re-extraction and re-tracing of broken hop succeeds; guard: re-extracted CanonicalEntity is written to ENTEntityMap AND hop is re-traced with isTraced=true)
+- repairing → broken (trigger: re-extraction fails — CanonicalEntity cannot be reconstructed; guard: NamedBlueprintComponent for this componentId lacks sufficient schema to construct CanonicalEntity)
 
 ## Acceptance Criteria
-- [ ] 10 NamedBlueprintComponents are in memory, ordered by ordinal 0–9, each field non-null
-- [ ] ComponentPackageMapping exists with assignmentCount=10; each ComponentPackageAssignment has targetPackage set; isTotal=true only if all 10 are resolved; each WorkspacePackageNode has its assignedComponentIds updated
-- [ ] C3AssignmentGap.state=RESOLVED; ComponentPackageAssignment for ordinal 3 has targetPackage non-null and isResolved=true; ComponentPackageMapping.isTotal=true; resolutionProvenancePostcode written
-- [ ] EntityMap exists with entityCount >= 10 (at least one entity per component); each ENTEntityRegistration has registeredAt timestamp, entityMapPostcode, and provenanceRecordPostcode non-null; EntityMap.postcode is written
-- [ ] ProvenanceChainRecord exists for pipelineRunId with hopCount=3; all ProvenanceChainHops have isTraced=true; ProvenanceChainRecord.provenanceIntact=true; ProvenanceChainRecord.postcode written
-- [ ] ENTGateRecord exists with passed=true or passed=false; evaluatedAt is set; if passed=true then pipeline run advances past ENT stage; if passed=false then pipeline run remains at ENT stage with GATE_FAILED state
-- [ ] stall cause is classified into one of: GAP_UNRESOLVED, GATE_NOT_EVALUATED, EXTRACTION_NOT_STARTED, PROVENANCE_BROKEN, UNKNOWN; cause is logged with evidence postcodes
-- [ ] C3AssignmentGap.isResolved=true; no active blockers remain for pipelineRunId; ComponentPackageMapping.isTotal=true
-- [ ] pipeline run ML.ENT.e80e3c97/v1 is no longer in STALLED state; ENTGateRecord.passed=true; pipeline run state=ADVANCED; next stage is triggered
-- [ ] TypeScript compilation exits with code 0; test suite passes with zero new failures; codebase is in consistent state with all ENT integration changes applied
+- [ ] Component builds without errors
+
+## Out of Scope
+These were explicitly excluded during compilation:
+- Ada (ISO/IEC 8652) programming language — Ada here refers to the semantic entity being compiled, not the language
+- ML model training, inference, weights, or neural architecture — this is pipeline infrastructure, not ML research
+- Stages other than ENT — upstream ingestion stages and downstream emission stages
+- Runtime execution or deployment of the compiled Ada entity — scope ends at a passing ENTStageResult
+- UI, frontend, dashboard, or visualization of pipeline state — purely backend infrastructure
+- External API integrations or network I/O — all operations are within monorepo workspace boundaries
+- Database schema design or persistence layer implementation — registry is an in-memory or typed in-process structure
+- CI/CD pipeline configuration — this is about the semantic compiler pipeline, not the deployment pipeline
+- Adding new vocabulary types or parallel type structures — must use existing typed vocabulary (C4)
+- Components 4-10 mapping details beyond resolving ordinal-3 — only the C3AssignmentGap at ordinal-3 is the named gap
+- Changing the monorepo package count — the 10-package structure is fixed; only the 8-target mapping is in scope
+- Provenance chains with any hop count other than exactly three — two-hop and four-hop variants are out of scope (C7)
+
+## Non-Functional Requirements
+- **[maintainability]** All components must use existing vocabulary types from @ada/ent, @ada/compiler, and @ada/provenance — no parallel type structures invented — _verify: Code review confirming all type imports trace to declared package exports listed in package boundaries_
+- **[reliability]** Provenance chains must contain exactly 3 hops with indices 0, 1, 2 and provenanceIntact must equal the conjunction of all hops being traced (`chain.hopCount === 3 && chain.hops.length === 3 && chain.provenanceIntact === chain.hops.every(h => h.isTraced)`) — _verify: Unit test constructing a chain and validating hop count and integrity calculation_
+- **[observability]** All ENTProvenanceRecord postcodes must start with 'ML' prefix and declare stage === 'ENT' (`record.postcode.startsWith('ML') && record.stage === 'ENT'`) — _verify: Unit test asserting provenance records conform to postcode and stage conventions_
+- **[performance]** ENT stage execution should complete within the same order of magnitude as other pipeline stages — no blocking I/O or external calls — _verify: All operations are in-memory typed transformations; no network or filesystem I/O beyond source file reads_
+- **[scalability]** Component and entity structures must not hardcode counts — the 10-component and 8-package constraints are validated at runtime, not baked into array indices — _verify: Code review confirming registry.totalComponentCount and mapping.assignmentCount are checked dynamically_
 
 ## Prohibited Actions
 - Do NOT modify files outside this bounded context

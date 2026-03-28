@@ -3,7 +3,9 @@
     "ada": {
       "type": "stdio",
       "command": "ada",
-      "args": ["mcp"],
+      "args": [
+        "mcp"
+      ],
       "env": {
         "ADA_PROJECT_DIR": "${CLAUDE_PROJECT_DIR:-}"
       }

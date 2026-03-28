@@ -1,0 +1,76 @@
+{
+  "context": "GateEvaluation",
+  "componentName": "ENTGateEvaluator",
+  "scope": {
+    "boundedContext": "GateEvaluation",
+    "allowedPathGlobs": [
+      "src/gateevaluation/**",
+      "packages/gateevaluation/**",
+      "apps/gateevaluation/**",
+      "lib/gateevaluation/**"
+    ],
+    "forbiddenPathGlobs": [
+      "!src/blueprintregistry/**",
+      "!packages/blueprintregistry/**",
+      "!apps/blueprintregistry/**",
+      "!lib/blueprintregistry/**",
+      "!src/packagemapping/**",
+      "!packages/packagemapping/**",
+      "!apps/packagemapping/**",
+      "!lib/packagemapping/**",
+      "!src/packagemapping/**",
+      "!packages/packagemapping/**",
+      "!apps/packagemapping/**",
+      "!lib/packagemapping/**",
+      "!src/entityextraction/**",
+      "!packages/entityextraction/**",
+      "!apps/entityextraction/**",
+      "!lib/entityextraction/**",
+      "!src/provenancechain/**",
+      "!packages/provenancechain/**",
+      "!apps/provenancechain/**",
+      "!lib/provenancechain/**",
+      "!src/pipelineexecution/**",
+      "!packages/pipelineexecution/**",
+      "!apps/pipelineexecution/**",
+      "!lib/pipelineexecution/**",
+      "!src/monorepostructure/**",
+      "!packages/monorepostructure/**",
+      "!apps/monorepostructure/**",
+      "!lib/monorepostructure/**",
+      "!src/monorepostructure/**",
+      "!packages/monorepostructure/**",
+      "!apps/monorepostructure/**",
+      "!lib/monorepostructure/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "stopConditions": [
+    "Any invariant violation detected",
+    "Two consecutive tool failures on the same operation",
+    "Implementation diverges from compiled blueprint intent"
+  ],
+  "requiredEvidence": [
+    "Component builds without TypeScript errors",
+    "No pre-existing tests broken"
+  ],
+  "reportingCadence": "on-completion",
+  "maxRecursionDepth": 2,
+  "inheritedPermissions": [
+    "Bash(pnpm *)",
+    "Bash(tsc *)",
+    "Bash(node *)",
+    "Bash(git status)",
+    "Bash(git diff *)",
+    "mcp__ada__*"
+  ],
+  "compiledAt": 1774669051697,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"69cc92ee\",\"version\":1,\"raw\":\"ML.SYN.69cc92ee/v1\"}"
+}

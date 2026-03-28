@@ -1,0 +1,77 @@
+{
+  "context": "PackageMapping",
+  "componentName": "ComponentPackageMapper",
+  "scope": {
+    "boundedContext": "PackageMapping",
+    "allowedPathGlobs": [
+      "src/packagemapping/**",
+      "packages/packagemapping/**",
+      "apps/packagemapping/**",
+      "lib/packagemapping/**"
+    ],
+    "forbiddenPathGlobs": [
+      "!src/blueprintregistry/**",
+      "!packages/blueprintregistry/**",
+      "!apps/blueprintregistry/**",
+      "!lib/blueprintregistry/**",
+      "!src/entityextraction/**",
+      "!packages/entityextraction/**",
+      "!apps/entityextraction/**",
+      "!lib/entityextraction/**",
+      "!src/provenancechain/**",
+      "!packages/provenancechain/**",
+      "!apps/provenancechain/**",
+      "!lib/provenancechain/**",
+      "!src/gateevaluation/**",
+      "!packages/gateevaluation/**",
+      "!apps/gateevaluation/**",
+      "!lib/gateevaluation/**",
+      "!src/pipelineexecution/**",
+      "!packages/pipelineexecution/**",
+      "!apps/pipelineexecution/**",
+      "!lib/pipelineexecution/**",
+      "!src/monorepostructure/**",
+      "!packages/monorepostructure/**",
+      "!apps/monorepostructure/**",
+      "!lib/monorepostructure/**",
+      "!src/monorepostructure/**",
+      "!packages/monorepostructure/**",
+      "!apps/monorepostructure/**",
+      "!lib/monorepostructure/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "stopConditions": [
+    "Any invariant violation detected",
+    "Two consecutive tool failures on the same operation",
+    "Implementation diverges from compiled blueprint intent",
+    "Failure mode reached: fewer than 8 WorkspacePackageNode records found for this pipeline stage — package scaffold is incomplete; ComponentPackageAssignment creation for ordinal-3 component fails because candidatePackages has more than one entry and no tiebreaker rule is defined — C3AssignmentGap remains open; assignmentCount written as 10 but isTotal remains false because one or more assignments have isResolved=false after collapse logic runs",
+    "Failure mode reached: no existing ComponentPackageAssignment targets the top-ranked package — ordinal-3 would be the sole occupant, making it an assignment not a collapse; primaryComponent identified for collapse is itself already a collapsedComponent in another CollapseRecord — cascade collapse is not supported; CollapseRecord is written but ComponentPackageMapping.collapseRecords now has 3 entries — one too many collapses, total distinct packages would be 7 not 8",
+    "Failure mode reached: pnpm workspace configuration does not declare one or more of the 8 WorkspacePackageNode packages — packages are invisible to the workspace build graph; import graph scan discovers a circular dependency between two ENT-stage packages — e.g. entity-extraction imports from provenance-chain and vice versa; affected file list is incomplete because some packages use dynamic require() instead of static imports — these are invisible to static analysis"
+  ],
+  "requiredEvidence": [
+    "ComponentPackageMapping has assignmentCount=10 AND assignments array contains 10 ComponentPackageAssignment records AND each assignment has isResolved=false initially AND collapseRecords array is populated for the two collapse events needed to achieve 10→8 mapping",
+    "ComponentPackageMapping.isTotal=true AND assignmentCount=10 AND collapseRecords.length=2 AND postcode is written and valid AND exactly 8 distinct targetPackage values appear across all assignments",
+    "CollapseRecord is written with all fields populated AND collapseRationale is non-null AND both primaryComponentOrdinal and collapsedComponentOrdinal are recorded AND the CollapseRecord is appended to ComponentPackageMapping.collapseRecords",
+    "affected MonorepoSourceFile list is complete AND dependency graph shows all transitive import chains AND no circular dependencies exist among ENT-stage type definitions"
+  ],
+  "reportingCadence": "on-completion",
+  "maxRecursionDepth": 1,
+  "inheritedPermissions": [
+    "Bash(pnpm *)",
+    "Bash(tsc *)",
+    "Bash(node *)",
+    "Bash(git status)",
+    "Bash(git diff *)",
+    "mcp__ada__*"
+  ],
+  "compiledAt": 1774669051697,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"69cc92ee\",\"version\":1,\"raw\":\"ML.SYN.69cc92ee/v1\"}"
+}

@@ -1,12 +1,9 @@
 #!/bin/bash
-# Invariant: record.stage === "ENT"
+# Invariant: record.stage === 'ENT'
 # Entity: ENTProvenanceRecord
-# Description: ENTProvenanceRecords are scoped to the ENT stage; records from other stages are different entities
-# Context guard: only enforce during an active Ada pipeline run
-# Drains stdin first to avoid broken pipe, then exits cleanly if not in Ada context
+# Description: a provenance record for a different stage cannot be used as evidence in an ENT three-hop chain
 INPUT=$(cat)
-[ -z "$ADA_PIPELINE_RUN_ID" ] && exit 0
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.
-# Manual review required: record.stage === "ENT"
+# Manual review required: record.stage === 'ENT'
 exit 0

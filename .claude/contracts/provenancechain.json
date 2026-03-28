@@ -1,0 +1,80 @@
+{
+  "context": "ProvenanceChain",
+  "componentName": "ProvenanceChainValidator",
+  "scope": {
+    "boundedContext": "ProvenanceChain",
+    "allowedPathGlobs": [
+      "src/provenancechain/**",
+      "packages/provenancechain/**",
+      "apps/provenancechain/**",
+      "lib/provenancechain/**"
+    ],
+    "forbiddenPathGlobs": [
+      "!src/blueprintregistry/**",
+      "!packages/blueprintregistry/**",
+      "!apps/blueprintregistry/**",
+      "!lib/blueprintregistry/**",
+      "!src/packagemapping/**",
+      "!packages/packagemapping/**",
+      "!apps/packagemapping/**",
+      "!lib/packagemapping/**",
+      "!src/packagemapping/**",
+      "!packages/packagemapping/**",
+      "!apps/packagemapping/**",
+      "!lib/packagemapping/**",
+      "!src/entityextraction/**",
+      "!packages/entityextraction/**",
+      "!apps/entityextraction/**",
+      "!lib/entityextraction/**",
+      "!src/gateevaluation/**",
+      "!packages/gateevaluation/**",
+      "!apps/gateevaluation/**",
+      "!lib/gateevaluation/**",
+      "!src/pipelineexecution/**",
+      "!packages/pipelineexecution/**",
+      "!apps/pipelineexecution/**",
+      "!lib/pipelineexecution/**",
+      "!src/monorepostructure/**",
+      "!packages/monorepostructure/**",
+      "!apps/monorepostructure/**",
+      "!lib/monorepostructure/**",
+      "!src/monorepostructure/**",
+      "!packages/monorepostructure/**",
+      "!apps/monorepostructure/**",
+      "!lib/monorepostructure/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "stopConditions": [
+    "Any invariant violation detected",
+    "Two consecutive tool failures on the same operation",
+    "Implementation diverges from compiled blueprint intent",
+    "Failure mode reached: ProvenanceChainRecord count is less than 10 — some components never had a chain initialized, likely because the collapsed component at ordinal-3 did not get its own chain; a ProvenanceChainHop has isTraced=false because the toLabel entity does not exist in ENTEntityMap — extraction was skipped for this component; one or more ProvenanceChainRecord entries have provenanceIntact=false — gate evaluation will fail if this is not corrected",
+    "Failure mode reached: ProvenanceChainRecord for ordinal-3 component does not exist — it was never initialized because the component was flagged as a gap component; postcode computation for resolution record fails due to missing actorId — resolution was performed by an automated process with no actor context; C3AssignmentGap.state is written as resolved but isResolved remains false due to a partial write failure — state and flag are inconsistent",
+    "Failure mode reached: pnpm workspace configuration does not declare one or more of the 8 WorkspacePackageNode packages — packages are invisible to the workspace build graph; import graph scan discovers a circular dependency between two ENT-stage packages — e.g. entity-extraction imports from provenance-chain and vice versa; affected file list is incomplete because some packages use dynamic require() instead of static imports — these are invisible to static analysis"
+  ],
+  "requiredEvidence": [
+    "all 10 ProvenanceChainRecord entries have provenanceIntact=true AND every ProvenanceChainHop has isTraced=true AND no hop has a null provenanceRecordPostcode",
+    "C3AssignmentGap.state=resolved AND resolutionProvenancePostcode is non-null AND ProvenanceChainRecord for ordinal-3 has a hop referencing the resolution provenance AND C3AssignmentGap.resolvedPackage is set",
+    "affected MonorepoSourceFile list is complete AND dependency graph shows all transitive import chains AND no circular dependencies exist among ENT-stage type definitions"
+  ],
+  "reportingCadence": "on-completion",
+  "maxRecursionDepth": 1,
+  "inheritedPermissions": [
+    "Bash(pnpm *)",
+    "Bash(tsc *)",
+    "Bash(node *)",
+    "Bash(git status)",
+    "Bash(git diff *)",
+    "mcp__ada__*"
+  ],
+  "compiledAt": 1774669051697,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"69cc92ee\",\"version\":1,\"raw\":\"ML.SYN.69cc92ee/v1\"}"
+}

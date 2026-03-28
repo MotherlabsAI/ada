@@ -1,11 +1,8 @@
 #!/bin/bash
 # Invariant: new Set(mapping.assignments.map(a => a.targetPackage)).size === 8
 # Entity: ComponentPackageMapping
-# Description: exactly 8 distinct target packages must appear in a total mapping matching the 10→8 spec
-# Context guard: only enforce during an active Ada pipeline run
-# Drains stdin first to avoid broken pipe, then exits cleanly if not in Ada context
+# Description: exactly 8 distinct target packages must appear — more or fewer violates the 10→8 mapping invariant
 INPUT=$(cat)
-[ -z "$ADA_PIPELINE_RUN_ID" ] && exit 0
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.
 # Manual review required: new Set(mapping.assignments.map(a => a.targetPackage)).size === 8

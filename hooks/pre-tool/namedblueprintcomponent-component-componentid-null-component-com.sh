@@ -1,11 +1,8 @@
 #!/bin/bash
 # Invariant: component.componentId !== null && component.componentId.length > 0
 # Entity: NamedBlueprintComponent
-# Description: without a stable ID the component cannot be referenced by assignments or gap records
-# Context guard: only enforce during an active Ada pipeline run
-# Drains stdin first to avoid broken pipe, then exits cleanly if not in Ada context
+# Description: a component without an ID cannot be referenced in assignments, gaps, or provenance chains
 INPUT=$(cat)
-[ -z "$ADA_PIPELINE_RUN_ID" ] && exit 0
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.
 # Manual review required: component.componentId !== null && component.componentId.length > 0

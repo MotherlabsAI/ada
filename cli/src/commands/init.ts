@@ -3,7 +3,6 @@ import * as os from "os";
 import * as path from "path";
 import * as readline from "readline";
 import { spawn as cpSpawn } from "child_process";
-import Anthropic from "@anthropic-ai/sdk";
 import { MotherCompiler } from "@ada/compiler";
 import type {
   CompilerStageCode,
@@ -364,83 +363,6 @@ async function runCompileSummary(
     `  confidence ${conf}%  ${glyphs.pipeline.separator}  ${compCount} components  ${glyphs.pipeline.separator}  ${entityCount} entities  ${glyphs.pipeline.separator}  ${ruleCount} rules`,
   );
   console.log(`  ${bar}\n`);
-}
-
-// ─── Post-run Q&A session ──────────────────────────────────────────────────────
-// After ACCEPT, Ada stays alive to answer questions before spawning Claude Code.
-
-async function runQASession(
-  result: import("@ada/compiler").CompileResult,
-): Promise<void> {
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-
-  const blueprintContext = [
-    `BLUEPRINT: ${result.blueprint.summary}`,
-    `ARCHITECTURE: ${result.blueprint.architecture.pattern} — ${result.blueprint.architecture.rationale}`,
-    `COMPONENTS: ${result.blueprint.architecture.components.map((c) => `${c.name} (${c.boundedContext})`).join(", ")}`,
-    `DECISION: ${result.governorDecision.decision} (confidence: ${result.governorDecision.confidence.toFixed(2)})`,
-    `ENTITIES: ${result.pipelineState.entity?.entities.map((e) => e.name).join(", ") ?? "none"}`,
-    `WORKFLOWS: ${result.pipelineState.process?.workflows.map((w) => w.name).join(", ") ?? "none"}`,
-  ].join("\n");
-
-  const systemPrompt = `You are Ada, a semantic compiler that just compiled a software blueprint. Answer questions about what was compiled. Be concise and precise. Reference the blueprint content directly.
-
-${blueprintContext}`;
-
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  const ask = (q: string): Promise<string> =>
-    new Promise((resolve) => rl.question(q, (a) => resolve(a.trim())));
-
-  console.log(
-    `\n  ${glyphs.chevron} if anything looks off, ask now — or press enter to spawn claude code.\n`,
-  );
-
-  while (true) {
-    const input = await ask(`  ${glyphs.identity.open} `);
-
-    if (!input) {
-      // Empty input → proceed to spawn
-      break;
-    }
-    if (input === "exit" || input === "quit" || input === "q") {
-      rl.close();
-      process.exit(0);
-    }
-
-    if (!apiKey) {
-      console.log(
-        `\n  ${glyphs.chevron} (no API key — set ANTHROPIC_API_KEY to enable Q&A)\n`,
-      );
-      continue;
-    }
-
-    try {
-      const client = new Anthropic({ apiKey });
-      process.stdout.write("\n  ");
-      const stream = client.messages.stream({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: [{ role: "user", content: input }],
-      });
-      stream.on("text", (text) => {
-        // Indent continuation lines
-        process.stdout.write(text.replace(/\n/g, "\n  "));
-      });
-      await stream.finalMessage();
-      process.stdout.write("\n\n");
-    } catch (e) {
-      console.log(
-        `\n  ${glyphs.chevron} error: ${e instanceof Error ? e.message : String(e)}\n`,
-      );
-    }
-  }
-
-  rl.close();
 }
 
 // ─── Git hook: close the feedback loop ────────────────────────────────────────
@@ -1152,14 +1074,6 @@ export async function initCommand(
 
   // ── Readable post-compile summary ──────────────────────────────────────────
   await runCompileSummary(finalResult, intent);
-
-  // ── Post-run Q&A — Ada answers questions before spawning Claude Code ───────
-  // Ink pauses stdin during its lifecycle. Resume it before readline takes over,
-  // otherwise the first rl.question() receives EOF immediately (empty answer → skip).
-  if (process.stdin.isTTY) {
-    process.stdin.resume();
-    await runQASession(finalResult);
-  }
 
   // ── Auto-spawn Claude Code ─────────────────────────────────────────────────
   if (options.noExecute) {
