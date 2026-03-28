@@ -1,0 +1,28 @@
+{
+  "name": "@ada/pipelineexecution",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test dist/pipeline-orchestrator.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@ada/blueprintregistry": "workspace:*",
+    "@ada/componentpackagebinding": "workspace:*",
+    "@ada/ent": "workspace:*",
+    "@ada/entgate": "workspace:*",
+    "@ada/entityextraction": "workspace:*",
+    "@ada/provenanceaudit": "workspace:*",
+    "@ada/workspacepackages": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^5.7.0"
+  }
+}

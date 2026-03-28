@@ -1,9 +1,9 @@
 #!/bin/bash
-# Invariant: entProvenanceRecord.postcode !== null && entProvenanceRecord.postcode.startsWith('ML.')
+# Invariant: entProvenanceRecord.postcode !== null && entProvenanceRecord.postcode.length > 0
 # Entity: ENTProvenanceRecord
-# Description: postcodes must use the ML namespace prefix matching PostcodeAddress.prefix; non-ML postcodes are from a different pipeline and corrupt ENT chain verification
+# Description: without a postcode no ProvenanceChainHop can reference this record and the chain is broken
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.
-# Manual review required: entProvenanceRecord.postcode !== null && entProvenanceRecord.postcode.startsWith('ML.')
+# Manual review required: entProvenanceRecord.postcode !== null && entProvenanceRecord.postcode.length > 0
 exit 0

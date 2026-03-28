@@ -33,7 +33,7 @@ Escalate to human (stop and ask) when:
 - The macro plan shows all tasks blocked
 
 ## Bounded Contexts in this Project
-C3GapDetector (GapResolution), CollapseStrategyResolver (GapResolution), PackageMappingFinalizer (PackageAssignment), BlueprintRegistryLoader (ComponentRegistry), CanonicalEntityExtractor (EntityExtraction), ThreeHopProvenanceValidator (ProvenanceVerification), ENTGateEvaluator (ENTGate), PipelineUnblocker (PipelineExecution), WorkspaceTypeGuard (WorkspaceStructure), TestRegressionGuard (WorkspaceStructure)
+PipelineOrchestrator (PipelineExecution), BlueprintRegistryLoader (BlueprintRegistry), C3GapCollapseResolver (ComponentPackageBinding), EntityExtractor (EntityExtraction), ProvenanceChainValidator (ProvenanceAudit), ENTGateEvaluator (ENTGate), WorkspacePackageScanner (WorkspacePackages)
 
 ## Prohibited Actions
 - Do NOT write, edit, or delete any file

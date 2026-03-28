@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: compileResult.governorDecision !== null
 # Entity: CompileResult
-# Description: Governor decision must be present — without it the compile result has no authoritative gate outcome
+# Description: governor decision is mandatory; without it no authority has sanctioned the result
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

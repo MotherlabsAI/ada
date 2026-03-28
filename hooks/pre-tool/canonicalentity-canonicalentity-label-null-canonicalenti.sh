@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: canonicalEntity.label !== null && canonicalEntity.label.length > 0
 # Entity: CanonicalEntity
-# Description: a canonical entity with no label cannot be matched to a component name or registered in the EntityMap meaningfully
+# Description: an unlabelled canonical entity cannot be matched against blueprint components or provenance records
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

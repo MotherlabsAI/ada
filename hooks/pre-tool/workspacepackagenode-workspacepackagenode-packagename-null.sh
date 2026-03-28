@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: workspacePackageNode.packageName !== null
 # Entity: WorkspacePackageNode
-# Description: every workspace package must have a unique name; null names make package-to-component routing impossible
+# Description: without a packageName the node cannot be referenced by any ComponentPackageAssignment
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

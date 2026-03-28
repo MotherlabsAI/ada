@@ -10,42 +10,30 @@
       "lib/entgate/**"
     ],
     "forbiddenPathGlobs": [
-      "!src/gapresolution/**",
-      "!packages/gapresolution/**",
-      "!apps/gapresolution/**",
-      "!lib/gapresolution/**",
-      "!src/gapresolution/**",
-      "!packages/gapresolution/**",
-      "!apps/gapresolution/**",
-      "!lib/gapresolution/**",
-      "!src/packageassignment/**",
-      "!packages/packageassignment/**",
-      "!apps/packageassignment/**",
-      "!lib/packageassignment/**",
-      "!src/componentregistry/**",
-      "!packages/componentregistry/**",
-      "!apps/componentregistry/**",
-      "!lib/componentregistry/**",
-      "!src/entityextraction/**",
-      "!packages/entityextraction/**",
-      "!apps/entityextraction/**",
-      "!lib/entityextraction/**",
-      "!src/provenanceverification/**",
-      "!packages/provenanceverification/**",
-      "!apps/provenanceverification/**",
-      "!lib/provenanceverification/**",
       "!src/pipelineexecution/**",
       "!packages/pipelineexecution/**",
       "!apps/pipelineexecution/**",
       "!lib/pipelineexecution/**",
-      "!src/workspacestructure/**",
-      "!packages/workspacestructure/**",
-      "!apps/workspacestructure/**",
-      "!lib/workspacestructure/**",
-      "!src/workspacestructure/**",
-      "!packages/workspacestructure/**",
-      "!apps/workspacestructure/**",
-      "!lib/workspacestructure/**"
+      "!src/blueprintregistry/**",
+      "!packages/blueprintregistry/**",
+      "!apps/blueprintregistry/**",
+      "!lib/blueprintregistry/**",
+      "!src/componentpackagebinding/**",
+      "!packages/componentpackagebinding/**",
+      "!apps/componentpackagebinding/**",
+      "!lib/componentpackagebinding/**",
+      "!src/entityextraction/**",
+      "!packages/entityextraction/**",
+      "!apps/entityextraction/**",
+      "!lib/entityextraction/**",
+      "!src/provenanceaudit/**",
+      "!packages/provenanceaudit/**",
+      "!apps/provenanceaudit/**",
+      "!lib/provenanceaudit/**",
+      "!src/workspacepackages/**",
+      "!packages/workspacepackages/**",
+      "!apps/workspacepackages/**",
+      "!lib/workspacepackages/**"
     ],
     "allowedTools": [
       "Read",
@@ -60,13 +48,13 @@
     "Any invariant violation detected",
     "Two consecutive tool failures on the same operation",
     "Implementation diverges from compiled blueprint intent",
-    "Failure mode reached: ENTEntityMap.entityCount > 0 is not met — entity extraction ran but no entities accumulated, map is empty; Gate evaluation reads stale cached values — ComponentPackageMapping.isTotal reads as false from cache though DB value is true; ENTStageResult is written with passing=true but ENTBlocker.isCleared remains false — the blocker-clearance step was not triggered by the gate evaluation"
+    "Failure mode reached: active ENTBlocker record is found for pipelineRunId ML.ENT.e80e3c97/v1 — a previous gate evaluation registered a blocker that was never cleared; ENTGateRecord for ML.ENT.e80e3c97/v1 does not exist — gate configuration was never registered for this pipeline version; ENTEntityRegistration entries fail gate criteria evaluation — one or more registrations have mismatched targetRegistryType or invalid entityMapPostcode; ENTStageResult is produced with passing status but EntityMap.postcode does not match the postcode recorded in ENTGateRecord — late postcode divergence after gate evaluation"
   ],
   "requiredEvidence": [
-    "ENTStageResult exists with passing=true; ENTGateRecord references this pipelineRunId; all gate condition checks are recorded in ENTGateRecord"
+    "ENTStageResult.status = 'passing', no active ENTBlocker exists for ML.ENT.e80e3c97/v1, PipelineState.gates includes ENT gate as passed, PipelineState.pipelineState transitions to 'emitting'"
   ],
   "reportingCadence": "on-completion",
-  "maxRecursionDepth": 1,
+  "maxRecursionDepth": 2,
   "inheritedPermissions": [
     "Bash(pnpm *)",
     "Bash(tsc *)",
@@ -75,6 +63,6 @@
     "Bash(git diff *)",
     "mcp__ada__*"
   ],
-  "compiledAt": 1774671057908,
-  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"f2c5e8fc\",\"version\":1,\"raw\":\"ML.SYN.f2c5e8fc/v1\"}"
+  "compiledAt": 1774671965556,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"b46bb070\",\"version\":1,\"raw\":\"ML.SYN.b46bb070/v1\"}"
 }

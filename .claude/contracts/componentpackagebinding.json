@@ -1,0 +1,68 @@
+{
+  "context": "ComponentPackageBinding",
+  "componentName": "C3GapCollapseResolver",
+  "scope": {
+    "boundedContext": "ComponentPackageBinding",
+    "allowedPathGlobs": [
+      "src/componentpackagebinding/**",
+      "packages/componentpackagebinding/**",
+      "apps/componentpackagebinding/**",
+      "lib/componentpackagebinding/**"
+    ],
+    "forbiddenPathGlobs": [
+      "!src/pipelineexecution/**",
+      "!packages/pipelineexecution/**",
+      "!apps/pipelineexecution/**",
+      "!lib/pipelineexecution/**",
+      "!src/blueprintregistry/**",
+      "!packages/blueprintregistry/**",
+      "!apps/blueprintregistry/**",
+      "!lib/blueprintregistry/**",
+      "!src/entityextraction/**",
+      "!packages/entityextraction/**",
+      "!apps/entityextraction/**",
+      "!lib/entityextraction/**",
+      "!src/provenanceaudit/**",
+      "!packages/provenanceaudit/**",
+      "!apps/provenanceaudit/**",
+      "!lib/provenanceaudit/**",
+      "!src/entgate/**",
+      "!packages/entgate/**",
+      "!apps/entgate/**",
+      "!lib/entgate/**",
+      "!src/workspacepackages/**",
+      "!packages/workspacepackages/**",
+      "!apps/workspacepackages/**",
+      "!lib/workspacepackages/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "stopConditions": [
+    "Any invariant violation detected",
+    "Two consecutive tool failures on the same operation",
+    "Implementation diverges from compiled blueprint intent"
+  ],
+  "requiredEvidence": [
+    "Component builds without TypeScript errors",
+    "No pre-existing tests broken"
+  ],
+  "reportingCadence": "on-completion",
+  "maxRecursionDepth": 1,
+  "inheritedPermissions": [
+    "Bash(pnpm *)",
+    "Bash(tsc *)",
+    "Bash(node *)",
+    "Bash(git status)",
+    "Bash(git diff *)",
+    "mcp__ada__*"
+  ],
+  "compiledAt": 1774671965556,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"b46bb070\",\"version\":1,\"raw\":\"ML.SYN.b46bb070/v1\"}"
+}

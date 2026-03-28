@@ -73,6 +73,19 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/blueprintregistry:
+    dependencies:
+      '@ada/ent':
+        specifier: workspace:*
+        version: link:../ent
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/compiler:
     dependencies:
       '@ada/provenance':
@@ -94,6 +107,25 @@ importers:
       zod-to-json-schema:
         specifier: ^3.25.1
         version: 3.25.1(zod@3.25.76)
+
+  packages/componentpackagebinding:
+    dependencies:
+      '@ada/blueprintregistry':
+        specifier: workspace:*
+        version: link:../blueprintregistry
+      '@ada/ent':
+        specifier: workspace:*
+        version: link:../ent
+      '@ada/workspacepackages':
+        specifier: workspace:*
+        version: link:../workspacepackages
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
 
   packages/config-writer:
     dependencies:
@@ -131,6 +163,44 @@ importers:
         version: 5.9.3
 
   packages/ent:
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/entgate:
+    dependencies:
+      '@ada/ent':
+        specifier: workspace:*
+        version: link:../ent
+      '@ada/entityextraction':
+        specifier: workspace:*
+        version: link:../entityextraction
+      '@ada/provenanceaudit':
+        specifier: workspace:*
+        version: link:../provenanceaudit
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/entityextraction:
+    dependencies:
+      '@ada/blueprintregistry':
+        specifier: workspace:*
+        version: link:../blueprintregistry
+      '@ada/ent':
+        specifier: workspace:*
+        version: link:../ent
+      '@ada/provenanceaudit':
+        specifier: workspace:*
+        version: link:../provenanceaudit
     devDependencies:
       '@types/node':
         specifier: ^25.5.0
@@ -205,6 +275,37 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/pipelineexecution:
+    dependencies:
+      '@ada/blueprintregistry':
+        specifier: workspace:*
+        version: link:../blueprintregistry
+      '@ada/componentpackagebinding':
+        specifier: workspace:*
+        version: link:../componentpackagebinding
+      '@ada/ent':
+        specifier: workspace:*
+        version: link:../ent
+      '@ada/entgate':
+        specifier: workspace:*
+        version: link:../entgate
+      '@ada/entityextraction':
+        specifier: workspace:*
+        version: link:../entityextraction
+      '@ada/provenanceaudit':
+        specifier: workspace:*
+        version: link:../provenanceaudit
+      '@ada/workspacepackages':
+        specifier: workspace:*
+        version: link:../workspacepackages
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/provenance:
     dependencies:
       better-sqlite3:
@@ -218,6 +319,19 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/provenanceaudit:
+    dependencies:
+      '@ada/ent':
+        specifier: workspace:*
+        version: link:../ent
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/storage:
     dependencies:
       better-sqlite3:
@@ -227,6 +341,19 @@ importers:
       '@types/better-sqlite3':
         specifier: ^7.6.8
         version: 7.6.13
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/workspacepackages:
+    dependencies:
+      '@ada/ent':
+        specifier: workspace:*
+        version: link:../ent
+    devDependencies:
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0

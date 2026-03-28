@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: pipelineState.gates !== null
 # Entity: PipelineState
-# Description: Gates record must be initialized — a pipeline with no gate map cannot enforce provenance checkpoints
+# Description: gate registry must exist even if empty; a null gates map makes provenance lookups undefined
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

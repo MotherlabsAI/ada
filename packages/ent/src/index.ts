@@ -31,7 +31,10 @@ import { ENTGateEvaluator } from "./ENTGateEvaluator.js";
 export * from "./types.js";
 export { BlueprintRegistryService } from "./BlueprintRegistryService.js";
 export { C3GapResolver } from "./C3GapResolver.js";
-export { ComponentPackageMappingService } from "./ComponentPackageMappingService.js";
+export {
+  ComponentPackageMappingService,
+  WORKSPACE_PACKAGE_NODES,
+} from "./ComponentPackageMappingService.js";
 export { PipelineRunManager } from "./PipelineRunManager.js";
 export { ProvenanceRecordWriter } from "./ProvenanceRecordWriter.js";
 export { EntityRegistrationService } from "./EntityRegistrationService.js";

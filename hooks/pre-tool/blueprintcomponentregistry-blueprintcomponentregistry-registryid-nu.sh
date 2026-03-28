@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: blueprintComponentRegistry.registryId !== null && blueprintComponentRegistry.registryId.length > 0
 # Entity: BlueprintComponentRegistry
-# Description: the registry must be uniquely identified so assignments can reference it without ambiguity
+# Description: without a registryId no assignment or provenance record can reference this registry
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.
