@@ -1,114 +1,116 @@
 ---
 name: EntityExtraction-agent
-description: Use when EntityExtraction tasks arise. Owns EntityExtractor. Does not modify files outside EntityExtraction.
+description: Use when EntityExtraction tasks arise. Owns CanonicalEntityExtractor. Does not modify files outside EntityExtraction.
 model: claude-sonnet-4-6
 tools: [Bash, Read, Write, Edit, Glob, Grep]
 maxTurns: 30
 ---
-# EntityExtractor Agent
+# CanonicalEntityExtractor Agent
 
-Extracts CanonicalEntity instances from blueprint components in the registry and populates an ENTEntityMap. For each NamedBlueprintComponent, creates an ENTEntityRegistration linking the component to a CanonicalEntity with provenance. Ensures the resulting EntityMap has entityCount >= 1, all entity IDs are unique, and all entities share the same pipelineRunId.
+Extracts CanonicalEntity instances from blueprint components and registers them into an EntityMap via ENTEntityRegistration events. Transitions ENTEntityMap from 'empty' → 'accumulating' → 'populated'. WHY: Workflow step 'extract-and-register-canonical-entities' populates the EntityMap (G4). Entity ENTEntityRegistration defines the registration event shape. Entity CanonicalEntity defines the extracted entity shape. ENTEntityMap invariant entityCount >= 1 for populated state.
 
 ## Bounded Context
 **Context:** EntityExtraction
 **Entities:** ENTEntityMap, ENTEntityRegistration, CanonicalEntity
-**Interfaces:** extractFromComponent(component: NamedBlueprintComponent): CanonicalEntity, registerEntity(entity: CanonicalEntity, componentId: string): ENTEntityRegistration, buildEntityMap(registrations: ENTEntityRegistration[], pipelineRunId: string): EntityMap, getEntityMap(): EntityMap
-**Dependencies:** BlueprintRegistryLoader, ComponentPackageMapper
+**Interfaces:** extractEntities(registry: BlueprintComponentRegistry): CanonicalEntity[], registerEntity(entity: CanonicalEntity, pipelineRunId: string): ENTEntityRegistration, populateEntityMap(registrations: ENTEntityRegistration[]): EntityMap, getEntityMapState(pipelineRunId: string): ENTEntityMap
+**Dependencies:** BlueprintRegistryLoader
 
 ## Domain Vocabulary
 Use these exact terms when naming variables, types, and functions.
 
-- **BlueprintComponentRegistry** — Typed, ordered registry of exactly 10 BlueprintComponent definitions — the source artifact for Ada compilation
-- **ComponentPackageMapping** — Explicit mapping resolving 10 blueprint components to exactly 8 WorkspacePackageNode targets, with collapse logic for the two excess components
-- **C3AssignmentGap** — Named typed artifact for a missing component-to-package assignment; the specific instance at ordinal-3 must be explicitly resolved in this work
-- **CanonicalEntity** — A normalized, validated entity extracted from a BlueprintComponent, keyed into the EntityMap
-- **EntityMap** — The keyed output map of CanonicalEntity instances produced by the ENT stage
-- **ProvenanceChainRecord** — A typed record containing exactly three ProvenanceChainHop entries — the three-hop invariant is non-negotiable
-- **ProvenanceChainHop** — A single provenance step; exactly three must exist per ProvenanceChainRecord
-- **ENTGateRecord** — The typed evaluation record for the ENT gate
-- **ENTGateState** — The enumerated pass/fail state of the ENT gate — must reach passing terminal for a valid ENTStageResult
-- **ENTStageResult** — The complete, gate-validated output of the ENT stage consumed by downstream pipeline stages
-- **PipelineRun** — A versioned execution instance of the Ada semantic compilation pipeline
-- **WorkspacePackageNode** — A typed node for a pnpm workspace package; exactly 8 are valid targets in this monorepo's ComponentPackageMapping
-- **ordinal-3** — The specific positional index in the BlueprintComponentRegistry where the C3AssignmentGap occurs
-- **collapse** — The deliberate mapping of two blueprint components to a single WorkspacePackageNode, reducing 10 components to 8 package targets
-- **ENT stage** — The named intermediate stage of the Ada semantic compilation pipeline responsible for entity extraction, package mapping, and provenance validation
+- **Ada** — ISO/IEC 8652 programming language, designed for safety-critical and high-integrity systems
+- **.ads** — Ada specification file — declares the public interface of a package or subprogram unit
+- **.adb** — Ada body file — implements the subprogram or package body
+- **GNAT** — GNU NYU Ada Translator — the dominant open-source Ada compiler, front-end to GCC
+- **gprbuild** — Ada-specific build tool consuming .gpr project files, replacing gnatmake
+- **gnatbind** — Ada binder that validates consistency of compiled units and determines elaboration order
+- **gnatlink** — Ada linker driver that links object files and the binder-generated elaboration file
+- **ALI file** — Ada Library Information file encoding unit fingerprints, dependencies, and compiler flags used
+- **elaboration** — runtime initialization phase where package-level code executes before the main procedure
+- **elaboration order** — the sequence in which packages are elaborated at startup; incorrect order causes Program_Error
+- **compilation unit** — the atomic unit of Ada compilation — one spec or one body file
+- **library unit** — a top-level compilation unit that can be withed by other units
+- **child unit** — a hierarchically named package extending a parent (e.g., Ada.Text_IO is a child of Ada)
+- **project file** — .gpr file defining source locations, compiler switches, target, and runtime for gprbuild
+- **runtime profile** — selected Ada runtime library variant (full RTS, Ravenscar, Jorvik, zero-footprint)
+- **with clause** — Ada's dependency declaration — makes another unit's spec visible and creates a compile dependency
+- **pragma** — Ada compiler directive, e.g., pragma Elaborate_All, pragma Pure, pragma Preelaborate
+- **Alire** — modern Ada/SPARK package manager using manifest files (alire.toml) and crate registry
+- **SPARK** — formally verifiable subset of Ada with additional annotations for proof
 
 ## Stakeholders
-- **Pipeline Infrastructure Engineer**
-  - Knows: Multi-stage compiler pipeline architecture with named gates and records, BlueprintComponentRegistry as the canonical source-of-truth for component definitions, Ordinal-indexed component slots and what C3AssignmentGap means at a specific ordinal, ComponentPackageMapping cardinality rules (10 components → 8 packages implies collapse), ProvenanceChainRecord three-hop invariant and what constitutes a valid hop, ENTGateRecord / ENTGateState evaluation semantics, pnpm workspace package boundary rules, TypeScript strict-mode compilation requirements across the monorepo
-  - Blind spots: Which two components share a package in the 10→8 collapse — may assume it's obvious from naming, Whether the C3AssignmentGap resolver is already partially implemented or entirely absent, Whether provenance hop construction is manual or derived from registry traversal, That ENTGateState may have multiple failure modes beyond the gap
-  - Fears: C3AssignmentGap at ordinal-3 is silently ignored and the gate passes with corrupt mapping, ProvenanceChainRecord has two or four hops instead of three, causing downstream validation to reject silently, The 10→8 collapse uses the wrong pair of components, breaking CanonicalEntity identity, TypeScript type errors introduced by new types that shadow or conflict with existing vocabulary types, Existing tests regress because a shared registry fixture was mutated, The PipelineRun remains stalled because ENTGateState never reaches the passing terminal, Package boundary violations cause pnpm workspace resolution to fail at build time
-  - Vocabulary: "Ada" = The named semantic entity being compiled through the pipeline — not a programming language; "compile" = Execute the full ENT-stage transformation: load registry → map packages → extract entities → validate provenance → evaluate gate; "ENT stage" = The named intermediate compilation stage responsible for entity extraction and validation before downstream emission; "BlueprintComponentRegistry" = Typed registry holding exactly 10 ordered BlueprintComponent definitions — the source representation; "ComponentPackageMapping" = The typed mapping from 10 blueprint components to 8 WorkspacePackageNode entries, with explicit collapse/exclusion logic; "C3AssignmentGap" = A named, typed artifact representing a missing or unresolvable component-to-package assignment at a specific ordinal position; "ordinal-3" = The zero- or one-indexed slot in the component registry where the assignment gap occurs — must be resolved explicitly; "CanonicalEntity" = The normalized, validated entity instance extracted from a BlueprintComponent and placed into the EntityMap; "EntityMap" = The keyed output structure of the ENT stage, mapping entity identifiers to CanonicalEntity instances; "ProvenanceChainRecord" = A typed record capturing exactly three ProvenanceChainHop entries tracing the entity's transformation lineage; "ProvenanceChainHop" = A single step in the provenance chain — source, transformation, and destination — must number exactly three; "ENTGateRecord" = The typed record evaluated at the end of the ENT stage to determine pass/fail; "ENTGateState" = The enumerated state of the gate — expected terminal value is passing; "ENTStageResult" = The typed output of the entire ENT stage, consumed by downstream pipeline stages; "PipelineRun" = A versioned execution instance of the Ada compilation pipeline, identified by ML.ENT.e80e3c97/v1; "WorkspacePackageNode" = A typed node representing a pnpm workspace package — exactly 8 are valid targets in this monorepo; "10-package monorepo" = The monorepo contains 10 workspace packages total, but only 8 are valid mapping targets for this blueprint
-- **Downstream Stage Consumer (post-ENT pipeline stages)**
-  - Knows: ENTStageResult schema and expected shape of EntityMap, That provenance chains entering their stage have exactly three hops, Package assignment correctness — they depend on WorkspacePackageNode identity
-  - Blind spots: Internal ENT implementation details, How C3AssignmentGap was resolved, Which components were collapsed in the 10→8 mapping
-  - Fears: Receiving a partially populated EntityMap with missing ordinal-3 entity, Provenance chain length invariant violated, breaking their own chain extension logic, ENTGateState not in passing terminal, causing their stage to fail on input validation
-  - Vocabulary: "ENTStageResult" = Their input — must be fully populated and gate-passing; "EntityMap" = The primary data structure they consume from ENT output; "provenance" = Audit trail they may re-validate or extend with additional hops
-- **PipelineRun ML.ENT.e80e3c97/v1 (the stalled execution instance)**
-  - Knows: Its own versioned identity and stage position, That it is blocked at ENT and cannot emit a result
-  - Blind spots: Why it is stalled — it cannot self-diagnose the C3AssignmentGap
-  - Fears: Permanent stall with no resolution path, Being restarted with incorrect registry state, compounding the gap
-  - Vocabulary: "stalled" = ENTGateState has not reached passing terminal — execution is suspended awaiting valid ENTStageResult
+- **Embedded/Safety-Critical Systems Programmer**
+  - Knows: Ada spec/body separation (.ads/.adb file model), GNAT toolchain: gnatmake, gprbuild, gnatbind, gnatlink, Ada language standards: Ada 83, 95, 2005, 2012, 2022, Package elaboration order and its runtime implications, ALI file dependency tracking, .gpr project file syntax and semantics, Cross-compilation targets: ARM, SPARC, x86 bare-metal, Ravenscar and Jorvik tasking profiles for embedded, Strong typing, contracts, preconditions, postconditions, Separate compilation model and library units
+  - Blind spots: Assumes elaboration order warnings are non-critical until they cause runtime failure, Assumes GNAT FSF and GNAT Pro are interchangeable for all features, Assumes .gpr project files are optional for small projects, Assumes all Ada runtimes include tasking support, Assumes compiler flags from one GNAT version transfer cleanly to another
+  - Fears: Elaboration order errors that manifest only at runtime, not compile time, Circular dependency in package specs causing compilation failure, Missing body for a package spec causing linker errors, Wrong Ada language version flag producing silent incompatibilities, Toolchain version mismatch between gnatcompile, gnatbind, and gnatlink, Bare-metal target missing required runtime library units, ALI file staleness causing incorrect incremental builds
+  - Vocabulary: "package" = Ada modular unit with a spec (.ads) and optional body (.adb) — NOT a package manager concept; "compilation unit" = a single Ada source file (.ads or .adb) submitted to the compiler as an independent unit; "elaboration" = runtime execution of package-level declarative code during program startup; "binding" = the gnatbind phase that computes a valid elaboration order and generates a C binder file; "ALI file" = Ada Library Information file — compiler-generated metadata encoding unit dependencies and version stamps; "project file" = .gpr file consumed by gprbuild describing source directories, switches, target, and runtime; "with clause" = Ada's import declaration, creating a compile-time dependency on another unit's spec; "use clause" = makes a package's public declarations directly visible without qualification; "body" = the .adb implementation file containing subprogram bodies and package body; "spec" = the .ads specification file declaring the public interface of a package or subprogram; "child unit" = a package declared as a hierarchical extension of a parent package (Parent.Child); "runtime profile" = a configured subset of the Ada runtime library (full, embedded, ravenscar, zero-footprint); "elaboration pragma" = pragma Elaborate, Elaborate_All, or Elaborate_Body — directives controlling elaboration order
+- **Ada Toolchain Integrator / Build Engineer**
+  - Knows: gprbuild project file inheritance and aggregation, GNAT compilation switches: -gnat95, -gnat2012, -gnatp, -gnata, -O2, etc., Cross-compilation toolchain prefixes and target triples, Alire package manager for Ada/SPARK dependency management, Makefile and CI integration patterns for Ada builds, SPARK formal verification toolchain (gnatprove), Object directory and source directory separation in .gpr files
+  - Blind spots: Assumes Alire crates are always available for all target platforms, Assumes gnatprove verification and compilation use identical flags, Assumes CI environments have GNAT in PATH without explicit setup
+  - Fears: Toolchain not found or wrong version on CI runner, Project file misconfiguration silently compiling wrong source directories, Cross-compiler producing code for wrong target without error, SPARK proof regressions when switching compiler versions
+  - Vocabulary: "crate" = Alire's term for an Ada/SPARK dependency package (analogous to npm package or Rust crate); "gprbuild" = the primary build tool for Ada projects using .gpr project files; "gnatmake" = older single-file-centric Ada build driver, largely superseded by gprbuild; "aggregate project" = a .gpr project type that composes multiple sub-projects into one build; "scenario variable" = a .gpr variable switchable at build time to select between configurations; "target triple" = architecture-vendor-os string identifying the cross-compilation target; "gnatprove" = SPARK formal verification tool that also performs flow analysis and proof
 
 ## Invariants
 These MUST hold at all times. Hooks enforce them at tool boundaries.
 
-- `map.entityCount >= 1` — the entity extraction context must produce at least one canonical entity — an empty map means extraction failed
-- `map.entities.every(e => e.provenanceRecordPostcode !== null)` — every entity registration in the extraction context must carry a provenance postcode
-- `entity.entityId !== null && entity.entityId.length > 0` (CanonicalEntity) — an entity without an ID cannot be keyed into the EntityMap
-- `entity.label !== null && entity.label.length > 0` (CanonicalEntity) — a nameless entity cannot be referenced by downstream stages
-- `entity.sourceComponentId !== null` (CanonicalEntity) — every CanonicalEntity must trace to a source BlueprintComponent — orphaned entities break provenance
-- `entity.provenancePostcode !== null && entity.provenancePostcode.length > 0` (CanonicalEntity) — a canonical entity without a provenance postcode cannot be verified in the three-hop chain
-- `entity.invariants.length >= 1` (CanonicalEntity) — a canonical entity with no invariants is not validated and cannot pass the ENT gate quality check
-- `registration.registrationId !== null && registration.registrationId.length > 0` (ENTEntityRegistration) — each registration must be uniquely identifiable for auditing
-- `registration.sourceComponentId !== null` (ENTEntityRegistration) — every registration must name its source component or provenance is broken
-- `registration.provenanceRecordPostcode !== null && registration.provenanceRecordPostcode.length > 0` (ENTEntityRegistration) — registration without a provenance postcode severs the three-hop chain at hop-2
-- `registration.entityMapPostcode !== null && registration.entityMapPostcode.length > 0` (ENTEntityRegistration) — registration must reference the EntityMap postcode it targets or downstream stages cannot locate it
-- `map.entityCount === map.entities.length` (ENTEntityMap) — declared count must match actual entries — a mismatch means the map is corrupt
-- `map.entityCount >= 1` (ENTEntityMap) — an empty EntityMap means no entities were extracted and the ENT stage produced no output — gate cannot pass
-- `map.postcode !== null && map.postcode.length > 0` (ENTEntityMap) — the EntityMap must have a postcode so downstream stages can reference it in provenance
-- `new Set(map.entities.map(e => e.canonicalEntityId)).size === map.entityCount` (ENTEntityMap) — all entity IDs in the map must be distinct — duplicate keys corrupt the keyed map structure
-- `map.entities.every(e => e.pipelineRunId === map.pipelineRunId)` (ENTEntityMap) — every registration in the map must belong to the same pipeline run — cross-run contamination is prohibited
+- `entEntityMap.entities.every(r => r.targetRegistryType === 'EntityMap')` — every registration in the EntityMap context must target the EntityMap; misrouted registrations would corrupt the populated entity count
+- `entEntityMap.entityCount >= 1` — G4 requires a populated EntityMap; zero registrations in this context means G4 is not met
+- `entEntityRegistration.registrationId !== null && entEntityRegistration.registrationId.length > 0` (ENTEntityRegistration) — each registration must be uniquely addressable so duplicate entity extraction can be detected
+- `entEntityRegistration.sourceComponentId !== null && entEntityRegistration.sourceComponentId.length > 0` (ENTEntityRegistration) — every entity in the EntityMap must trace to a source component; orphaned registrations break G5 provenance chains
+- `entEntityRegistration.provenanceRecordPostcode !== null && entEntityRegistration.provenanceRecordPostcode.length > 0` (ENTEntityRegistration) — G5 requires three-hop provenance; the registration itself is a hop node and must carry its own postcode
+- `entEntityRegistration.targetRegistryType === 'EntityMap'` (ENTEntityRegistration) — G4 specifically targets the EntityMap; registrations pointing elsewhere do not satisfy G4
+- `entEntityRegistration.extractedEntityName !== null && entEntityRegistration.extractedEntityName.length > 0` (ENTEntityRegistration) — a registration with no entity name cannot populate the EntityMap with a meaningful CanonicalEntity entry
+- `entEntityMap.entityCount === entEntityMap.entities.length` (ENTEntityMap) — declared count must match actual array length; a mismatch would allow a falsely populated count to pass the gate
+- `entEntityMap.entityCount >= 1` (ENTEntityMap) — G4 requires the EntityMap to be populated; zero entities means extraction failed and G4 is not satisfied
+- `entEntityMap.postcode !== null && entEntityMap.postcode.length > 0` (ENTEntityMap) — the EntityMap needs a postcode so ENTGateRecord can reference it during provenance verification
+- `entEntityMap.entities.every(e => e.pipelineRunId === entEntityMap.pipelineRunId)` (ENTEntityMap) — all registrations must belong to the same pipeline run; cross-run entity registrations corrupt the ENT stage boundary
+- `canonicalEntity.entityId !== null && canonicalEntity.entityId.length > 0` (CanonicalEntity) — canonical entities must have stable IDs so ENTEntityRegistration can reference them without ambiguity across pipeline runs
+- `canonicalEntity.label !== null && canonicalEntity.label.length > 0` (CanonicalEntity) — a canonical entity with no label cannot be matched to a component name or registered in the EntityMap meaningfully
 
-## Workflow Steps
-### validate-provenance-chain-records (ENT-Stage-Pipeline-Execution)
-- **Pre:** ENTEntityMap.entityCount=10 AND one ProvenanceChainRecord exists per component (10 total) each with hopCount=3 AND each ProvenanceChainRecord has 3 ProvenanceChainHop entries
-- **Action:** for each ProvenanceChainRecord: iterate hops in hopIndex order, verify each hop has isTraced=true and non-null provenanceRecordPostcode, verify fromLabel→toLabel transitions form a valid three-hop chain (source component → canonical entity → entity map), set provenanceIntact=true if all 3 hops pass, write chain postcode
-- **Post:** all 10 ProvenanceChainRecord entries have provenanceIntact=true AND every ProvenanceChainHop has isTraced=true AND no hop has a null provenanceRecordPostcode
-- **Failure modes:**
-  - precondition: ProvenanceChainRecord count is less than 10 — some components never had a chain initialized, likely because the collapsed component at ordinal-3 did not get its own chain → identify which componentIds have no ProvenanceChainRecord, synthesize missing records with hopCount=3 and all hops set to isTraced=false, then run tracing pass on them
-  - action: a ProvenanceChainHop has isTraced=false because the toLabel entity does not exist in ENTEntityMap — extraction was skipped for this component → set ProvenanceChainRecord.provenanceIntact=false, emit PROVENANCE_HOP_BREAK with hopId and chainId, attempt to re-extract the missing CanonicalEntity and re-trace the hop; if re-extraction fails mark chain as permanently broken
-  - postcondition: one or more ProvenanceChainRecord entries have provenanceIntact=false — gate evaluation will fail if this is not corrected → collect all broken chainIds, emit PROVENANCE_INTEGRITY_FAILURE list, block gate evaluation step, surface broken chains to operator with repair instructions before allowing gate evaluation to proceed
+## State Machines
+### ENTEntityMap
+**States:** empty → accumulating → populated → postcode-confirmed
+**Transitions:**
+- empty → accumulating (trigger: first ENTEntityRegistration event fires for this pipelineRunId; guard: BlueprintComponentRegistry is fully loaded AND ENTEntityMap record exists with entityCount = 0)
+- accumulating → populated (trigger: entityCount equals expected entity count derived from BlueprintComponentRegistry.totalComponentCount; guard: no ENTEntityRegistration events are pending for this pipelineRunId)
+- populated → postcode-confirmed (trigger: ENTEntityMap.postcode is written and verified non-null; guard: all CanonicalEntity records referenced in entities array have non-null entityId and label)
+- accumulating → empty (trigger: rollback triggered due to registration failure — all ENTEntityRegistration events for this run are voided; guard: unrecoverable error in provenance write-path affects all registrations)
 
 ## Resolved Decisions
 These conflicts were resolved during compilation. Do not revisit them.
 
-- **ComponentPackageMapping entity invariants require isTotal === true and all assignments resolved (final state only) vs ENT-Stage-Pipeline-Execution workflow defines multi-step lifecycle: build → detect gap → resolve → finalize, with ComponentPackageMapping state machine traversing draft → assigning → gap-detected → finalizing → total:** Entity invariants describe the terminal valid state of ComponentPackageMapping (postcondition). Process owns the transitions that achieve that state. ComponentPackageMapper component implements the Process lifecycle while EntityExtractor and downstream components may only consume a finalized mapping that satisfies Entity invariants. Validation occurs at finalize() — if invariants are not met, finalization fails and mapping remains in 'finalizing' state. _(authoritative: process)_
-- **EntityMap appears in both @ada/compiler (compile-stage DDD entity map) and @ada/ent (ENT stage entity map) as separate exports vs extract-canonical-entities-into-entity-map workflow step produces an EntityMap that must be the ENT-specific one consumed by the gate evaluator:** The @ada/ent EntityMap is the ENTEntityMap from the entity model — it is the stage-specific output. The @ada/compiler EntityMap is a different type serving the compilation domain. EntityExtractor component produces @ada/ent's EntityMap (imported as ENTEntityMap or via package-scoped import). Fully qualified imports prevent confusion. No parallel type is invented — both exist upstream in declared package boundaries. _(authoritative: entity)_
+- **EntityMap is defined as ENTEntityMap (substance) in Entity analysis with ENT-specific invariants (entityCount >= 1, pipelineRunId-scoped entities) vs Workflow step extract-and-register-canonical-entities targets 'EntityMap' type which is exported from both @ada/compiler and @ada/ent:** @ada/ent's EntityMap is the ENT-stage-specific projection that satisfies ENTEntityMap invariants. @ada/compiler's EntityMap is the general-purpose base type. @ada/ent either re-exports @ada/compiler's EntityMap with additional runtime validation or defines a compatible subtype. The CanonicalEntityExtractor component uses @ada/ent's EntityMap export. Entity analysis is authoritative for the type shape; process is authoritative for which export to consume. _(authoritative: entity)_
+- **CanonicalEntity is placed in EntityExtraction bounded context (root: ENTEntityMap) by entity analysis vs CanonicalEntity is exported from @ada/int-rerun package, not @ada/ent where all other EntityExtraction context types reside. Workflow extract-and-register-canonical-entities needs CanonicalEntity in the same operational scope as ENTEntityRegistration and EntityMap:** CanonicalEntity remains defined in @ada/int-rerun as the source-of-truth type. @ada/ent must add @ada/int-rerun as a pnpm dependency and import CanonicalEntity for use in the CanonicalEntityExtractor component. The bounded context boundary is logical, not physical — a bounded context can span packages when there is a clear dependency direction (int-rerun is upstream infrastructure, ent is downstream domain). Process is authoritative because the workflow dictates the integration point. _(authoritative: process)_
 
 ## Acceptance Criteria
-- [ ] all 10 ProvenanceChainRecord entries have provenanceIntact=true AND every ProvenanceChainHop has isTraced=true AND no hop has a null provenanceRecordPostcode
+- [ ] Component builds without errors
 
 ## Out of Scope
 These were explicitly excluded during compilation:
-- Ada (ISO/IEC 8652) programming language — Ada here refers to the semantic entity being compiled, not the language
-- ML model training, inference, weights, or neural architecture — this is pipeline infrastructure, not ML research
-- Stages other than ENT — upstream ingestion stages and downstream emission stages
-- Runtime execution or deployment of the compiled Ada entity — scope ends at a passing ENTStageResult
-- UI, frontend, dashboard, or visualization of pipeline state — purely backend infrastructure
-- External API integrations or network I/O — all operations are within monorepo workspace boundaries
-- Database schema design or persistence layer implementation — registry is an in-memory or typed in-process structure
-- CI/CD pipeline configuration — this is about the semantic compiler pipeline, not the deployment pipeline
-- Adding new vocabulary types or parallel type structures — must use existing typed vocabulary (C4)
-- Components 4-10 mapping details beyond resolving ordinal-3 — only the C3AssignmentGap at ordinal-3 is the named gap
-- Changing the monorepo package count — the 10-package structure is fixed; only the 8-target mapping is in scope
-- Provenance chains with any hop count other than exactly three — two-hop and four-hop variants are out of scope (C7)
+- Ada programming language compilation and toolchain usage
+- TypeScript, JavaScript, or any ECMAScript-family language compilation
+- pnpm, npm, yarn, or any Node.js package manager
+- Monorepo workspace topology or package graph resolution
+- Machine learning pipelines, entity extraction, or EntityMap population
+- Provenance chain validation or ENTStageResult evaluation
+- BlueprintComponentRegistry or any blueprint component mapping
+- Python, Rust, Go, C#, Java, or any non-Ada language compilation
+- REST APIs, GraphQL, or network service development
+- Database schema design or ORM configuration
+- Frontend UI frameworks or browser-based tooling
+- Docker, Kubernetes, or container orchestration
+- Cloud provider SDKs or serverless deployment
+- Test framework selection (Ada uses AUnit, but it is not the compilation concern)
+- Linting or formatting tools unrelated to Ada compiler invocation
+- WebAssembly targets (not a standard GNAT target profile)
 
 ## Non-Functional Requirements
-- **[maintainability]** All components must use existing vocabulary types from @ada/ent, @ada/compiler, and @ada/provenance — no parallel type structures invented — _verify: Code review confirming all type imports trace to declared package exports listed in package boundaries_
-- **[performance]** ENT stage execution should complete within the same order of magnitude as other pipeline stages — no blocking I/O or external calls — _verify: All operations are in-memory typed transformations; no network or filesystem I/O beyond source file reads_
-- **[scalability]** Component and entity structures must not hardcode counts — the 10-component and 8-package constraints are validated at runtime, not baked into array indices — _verify: Code review confirming registry.totalComponentCount and mapping.assignmentCount are checked dynamically_
+- **[maintainability]** TypeScript strict mode compilation with zero errors across all 8 target workspace packages (`tsc --noEmit --composite exits with code 0 for all packages`) — _verify: Run `pnpm -r exec tsc --noEmit` and confirm exit code 0 with zero diagnostic output_
+- **[reliability]** Node.js runtime version >= 18 enforced via engines field (`process.versions.node >= '18.0.0'`) — _verify: Check engines field in root package.json and each workspace package.json; run `node -v` in CI_
+- **[reliability]** Zero test regressions — all previously passing tests must continue to pass after integration changes (`testSuite.previouslyPassingTestIds.every(id => currentResults[id].passed === true)`) — _verify: Run full test suite via `pnpm test` and diff against baseline snapshot; regression count must be 0_
+- **[maintainability]** All ENT integration types must use existing codebase vocabulary — no parallel type definitions — _verify: Code review and grep for duplicate type names; ensure all imports trace to @ada/ent, @ada/compiler, @ada/int-rerun, or @ada/provenance_
+- **[maintainability]** pnpm workspace structure must be preserved — no new package managers or build systems introduced — _verify: Confirm pnpm-workspace.yaml unchanged; no yarn.lock, package-lock.json, or alternative lockfiles present_
+- **[scalability]** EntityMap population must handle at minimum the 23 entities defined upstream without structural changes — _verify: Load test with 23+ CanonicalEntity instances; confirm EntityMap accepts and indexes all_
 
 ## Prohibited Actions
 - Do NOT modify files outside this bounded context

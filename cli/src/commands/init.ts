@@ -1,5 +1,4 @@
 import * as fs from "fs";
-import * as os from "os";
 import * as path from "path";
 import * as readline from "readline";
 import { spawn as cpSpawn } from "child_process";
@@ -1083,101 +1082,20 @@ export async function initCommand(
     return;
   }
 
-  console.log(`\n  ${glyphs.chevron} spawning claude in new terminal...\n`);
-
   const initialPrompt =
     "Read CLAUDE.md fully. Read all agent files in .claude/agents/. Call ada.advance_execution(agentId) to get your first task brief. Follow the build order. Begin building now.";
 
-  const scriptContent = [
-    "#!/bin/bash",
-    `cd '${targetDir.replace(/'/g, "'\\''")}'`,
-    // Set ADA_PROJECT_DIR so the MCP server resolves world model artifacts
-    // from the correct project directory regardless of where it spawns.
-    `export ADA_PROJECT_DIR='${targetDir.replace(/'/g, "'\\''")}'`,
-    `exec claude --permission-mode auto '${initialPrompt}'`,
-    "",
-  ].join("\n");
-  const scriptPath = path.join(os.tmpdir(), `ada-spawn-${Date.now()}.sh`);
-  fs.writeFileSync(scriptPath, scriptContent, { mode: 0o755 });
+  // Set ADA_PROJECT_DIR so the MCP server resolves artifacts from the
+  // correct project directory regardless of how claude resolves its env.
+  process.env["ADA_PROJECT_DIR"] = targetDir;
 
-  spawnInTerminal(scriptPath, targetDir);
-}
+  console.log(`\n  ${glyphs.chevron} handing off to claude...\n`);
 
-function spawnInTerminal(scriptPath: string, targetDir: string): void {
-  if (process.platform === "darwin") {
-    cpSpawn(
-      "osascript",
-      [
-        "-e",
-        `tell application "Terminal" to do script "bash '${scriptPath}'"`,
-        "-e",
-        `tell application "Terminal" to activate`,
-      ],
-      { detached: true, stdio: "ignore" },
-    ).unref();
-    return;
-  }
-
-  if (process.platform === "win32") {
-    // Write a .bat file for Windows — reuse the same base name.
-    // Read back the sh script to extract the exec line rather than duplicating
-    // the full argument string here.
-    const batPath = scriptPath.replace(/\.sh$/, ".bat");
-    const shLines = fs.readFileSync(scriptPath, "utf8").split("\n");
-    const execLine = shLines.find((l) => l.startsWith("exec claude")) ?? "";
-    const winExecLine = execLine.replace(/^exec /, "");
-    const winBat = [
-      `@echo off`,
-      `cd /d "${targetDir}"`,
-      `set ADA_PROJECT_DIR=${targetDir}`,
-      winExecLine,
-    ].join("\r\n");
-    fs.writeFileSync(batPath, winBat, { mode: 0o755 });
-    cpSpawn("cmd", ["/c", "start", "cmd", "/k", batPath], {
-      detached: true,
-      stdio: "ignore",
-    }).unref();
-    return;
-  }
-
-  // Linux — try common terminal emulators in preference order
-  const emulators = [
-    "gnome-terminal",
-    "xterm",
-    "konsole",
-    "x-terminal-emulator",
-  ];
-
-  for (const emulator of emulators) {
-    try {
-      let child;
-      if (emulator === "gnome-terminal") {
-        child = cpSpawn(emulator, ["--", "bash", scriptPath], {
-          detached: true,
-          stdio: "ignore",
-        });
-      } else if (emulator === "konsole") {
-        child = cpSpawn(emulator, ["-e", "bash", scriptPath], {
-          detached: true,
-          stdio: "ignore",
-        });
-      } else {
-        // xterm and x-terminal-emulator both accept -e
-        child = cpSpawn(emulator, ["-e", `bash '${scriptPath}'`], {
-          detached: true,
-          stdio: "ignore",
-        });
-      }
-      child.unref();
-      // If spawn didn't throw synchronously, assume it succeeded
-      return;
-    } catch {
-      // emulator not found — try the next one
-    }
-  }
-
-  // No terminal emulator found (headless / CI) — instruct the user
-  console.log(
-    `\n  No terminal emulator found. Run manually:\n\n    bash '${scriptPath}'\n`,
-  );
+  // exec replaces this process — no new window, no PATH ambiguity.
+  const claudeBin = process.platform === "win32" ? "claude.cmd" : "claude";
+  cpSpawn(claudeBin, ["--permission-mode", "auto", initialPrompt], {
+    cwd: targetDir,
+    stdio: "inherit",
+    env: process.env,
+  }).on("exit", (code) => process.exit(code ?? 0));
 }

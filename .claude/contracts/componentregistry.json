@@ -1,0 +1,82 @@
+{
+  "context": "ComponentRegistry",
+  "componentName": "BlueprintRegistryLoader",
+  "scope": {
+    "boundedContext": "ComponentRegistry",
+    "allowedPathGlobs": [
+      "src/componentregistry/**",
+      "packages/componentregistry/**",
+      "apps/componentregistry/**",
+      "lib/componentregistry/**"
+    ],
+    "forbiddenPathGlobs": [
+      "!src/gapresolution/**",
+      "!packages/gapresolution/**",
+      "!apps/gapresolution/**",
+      "!lib/gapresolution/**",
+      "!src/gapresolution/**",
+      "!packages/gapresolution/**",
+      "!apps/gapresolution/**",
+      "!lib/gapresolution/**",
+      "!src/packageassignment/**",
+      "!packages/packageassignment/**",
+      "!apps/packageassignment/**",
+      "!lib/packageassignment/**",
+      "!src/entityextraction/**",
+      "!packages/entityextraction/**",
+      "!apps/entityextraction/**",
+      "!lib/entityextraction/**",
+      "!src/provenanceverification/**",
+      "!packages/provenanceverification/**",
+      "!apps/provenanceverification/**",
+      "!lib/provenanceverification/**",
+      "!src/entgate/**",
+      "!packages/entgate/**",
+      "!apps/entgate/**",
+      "!lib/entgate/**",
+      "!src/pipelineexecution/**",
+      "!packages/pipelineexecution/**",
+      "!apps/pipelineexecution/**",
+      "!lib/pipelineexecution/**",
+      "!src/workspacestructure/**",
+      "!packages/workspacestructure/**",
+      "!apps/workspacestructure/**",
+      "!lib/workspacestructure/**",
+      "!src/workspacestructure/**",
+      "!packages/workspacestructure/**",
+      "!apps/workspacestructure/**",
+      "!lib/workspacestructure/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "stopConditions": [
+    "Any invariant violation detected",
+    "Two consecutive tool failures on the same operation",
+    "Implementation diverges from compiled blueprint intent",
+    "Failure mode reached: No C3AssignmentGap record exists for this pipelineRunId — ordinal-3 was silently skipped during mapping initialization; candidatePackages list is empty — no workspace packages claim affinity with ordinal-3 component responsibility; gapId binding is stale — another process has already resolved this gap concurrently, causing state mismatch",
+    "Failure mode reached: BlueprintComponentRegistry.totalComponentCount = 10 but only 9 NamedBlueprintComponent records are retrievable — one record was orphaned; One NamedBlueprintComponent has assignedPackage = null — gap resolution did not propagate assignedPackage back into the component record; Registry postcode mismatch — registry was mutated after postcode was written, indicating a concurrent modification"
+  ],
+  "requiredEvidence": [
+    "C3AssignmentGap record is located, gapId is bound, candidatePackages list is materialized and non-empty, state remains 'open'",
+    "Registry is loaded in memory with exactly 10 components; each component record is complete and structurally valid; registry postcode matches expected value"
+  ],
+  "reportingCadence": "on-completion",
+  "maxRecursionDepth": 1,
+  "inheritedPermissions": [
+    "Bash(pnpm *)",
+    "Bash(tsc *)",
+    "Bash(node *)",
+    "Bash(git status)",
+    "Bash(git diff *)",
+    "mcp__ada__*"
+  ],
+  "compiledAt": 1774671057908,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"f2c5e8fc\",\"version\":1,\"raw\":\"ML.SYN.f2c5e8fc/v1\"}"
+}

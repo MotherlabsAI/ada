@@ -8,53 +8,58 @@
 ## Acceptance Criteria
 The build is complete when all of the following hold:
 
-- **BlueprintRegistry:** Done when pipelineRun state=proceeding AND no active ENTBlocker records remain for this pipelineRunId AND downstream stage has received continuation signal
-- **PackageMapping:** Done when pipelineRun state=proceeding AND no active ENTBlocker records remain for this pipelineRunId AND downstream stage has received continuation signal
-- **EntityExtraction:** Done when pipelineRun state=proceeding AND no active ENTBlocker records remain for this pipelineRunId AND downstream stage has received continuation signal
-- **ProvenanceChain:** Done when pipelineRun state=proceeding AND no active ENTBlocker records remain for this pipelineRunId AND downstream stage has received continuation signal
-- **GateEvaluation:** Done when pipelineRun state=proceeding AND no active ENTBlocker records remain for this pipelineRunId AND downstream stage has received continuation signal
-- **PipelineExecution:** Done when pipelineRun state=proceeding AND no active ENTBlocker records remain for this pipelineRunId AND downstream stage has received continuation signal
-- **MonorepoStructure:** Done when pipelineRun state=proceeding AND no active ENTBlocker records remain for this pipelineRunId AND downstream stage has received continuation signal
+- **PipelineExecution:** Done when eNTBlocker.isCleared = true; StalledPipelineRun.blockerCount is decremented; if blockerCount = 0 then StalledPipelineRun.resumable = true and pipeline transitions to running state
+- **ComponentRegistry:** Done when componentPackageMapping.isTotal = true AND ComponentPackageMapping.assignmentCount = 10 AND C3AssignmentGap.isResolved = true AND C3AssignmentGap.state = 'resolved'
+- **PackageAssignment:** Done when componentPackageMapping.isTotal = true AND ComponentPackageMapping.assignmentCount = 10 AND C3AssignmentGap.isResolved = true AND C3AssignmentGap.state = 'resolved'
+- **GapResolution:** Done when componentPackageMapping.isTotal = true AND ComponentPackageMapping.assignmentCount = 10 AND C3AssignmentGap.isResolved = true AND C3AssignmentGap.state = 'resolved'
+- **EntityExtraction:** Done when eNTBlocker.isCleared = true; StalledPipelineRun.blockerCount is decremented; if blockerCount = 0 then StalledPipelineRun.resumable = true and pipeline transitions to running state
+- **ProvenanceVerification:** Done when eNTBlocker.isCleared = true; StalledPipelineRun.blockerCount is decremented; if blockerCount = 0 then StalledPipelineRun.resumable = true and pipeline transitions to running state
+- **ENTGate:** Done when eNTBlocker.isCleared = true; StalledPipelineRun.blockerCount is decremented; if blockerCount = 0 then StalledPipelineRun.resumable = true and pipeline transitions to running state
+- **WorkspaceStructure:** Done when componentPackageMapping.isTotal = true AND ComponentPackageMapping.assignmentCount = 10 AND C3AssignmentGap.isResolved = true AND C3AssignmentGap.state = 'resolved'
 
 ## File Tree
 Create exactly these files. Do not create files outside this tree without explicit instruction.
 
 ```
-  blueprintregistry/  # BlueprintRegistry bounded context
+  componentregistry/  # ComponentRegistry bounded context
+  entgate/  # ENTGate bounded context
   entityextraction/  # EntityExtraction bounded context
-  gateevaluation/  # GateEvaluation bounded context
-  monorepostructure/  # MonorepoStructure bounded context
-  packagemapping/  # PackageMapping bounded context
+  gapresolution/  # GapResolution bounded context
+  packageassignment/  # PackageAssignment bounded context
   pipelineexecution/  # PipelineExecution bounded context
-  provenancechain/  # ProvenanceChain bounded context
+  provenanceverification/  # ProvenanceVerification bounded context
+  workspacestructure/  # WorkspaceStructure bounded context
         route.ts  # Application entry point
     layout.tsx  # Application entry point
     page.tsx  # Application entry point
     blueprint-registry-loader.test.ts  # Tests for BlueprintRegistryLoader ← BlueprintRegistryLoader
-    blueprint-registry-loader.ts  # Constructs and validates a BlueprintComponentRegistry containing exactly 10 NamedBlueprintComponent  ← BlueprintRegistryLoader
-    index.ts  # Public API for BlueprintRegistry bounded context
-    entity-extractor.test.ts  # Tests for EntityExtractor ← EntityExtractor
-    entity-extractor.ts  # Extracts CanonicalEntity instances from blueprint components in the registry and populates an ENTEnt ← EntityExtractor
-    index.ts  # Public API for EntityExtraction bounded context
+    blueprint-registry-loader.ts  # Loads exactly 10 NamedBlueprintComponents into a BlueprintComponentRegistry, validating unique ordin ← BlueprintRegistryLoader
+    index.ts  # Public API for ComponentRegistry bounded context
     entgate-evaluator.test.ts  # Tests for ENTGateEvaluator ← ENTGateEvaluator
-    entgate-evaluator.ts  # Evaluates the ENT gate by checking four conditions: entityCount >= 1 (from EntityMap), provenanceInt ← ENTGateEvaluator
-    index.ts  # Public API for GateEvaluation bounded context
-    compilation-validator.test.ts  # Tests for CompilationValidator ← CompilationValidator
-    compilation-validator.ts  # Compiles all workspace packages in dependency order and runs the test suite to verify zero TypeScrip ← CompilationValidator
-    index.ts  # Public API for MonorepoStructure bounded context
-    source-file-resolver.test.ts  # Tests for SourceFileResolver ← SourceFileResolver
-    source-file-resolver.ts  # Identifies which MonorepoSourceFile entries must be authored (new) or modified (existing) to impleme ← SourceFileResolver
-    c3gap-resolver.test.ts  # Tests for C3GapResolver ← C3GapResolver
-    c3gap-resolver.ts  # Resolves the C3AssignmentGap at ordinal-3 by classifying the ordinal-3 component, determining its co ← C3GapResolver
-    component-package-mapper.test.ts  # Tests for ComponentPackageMapper ← ComponentPackageMapper
-    component-package-mapper.ts  # Builds the ComponentPackageMapping that assigns all 10 blueprint components to exactly 8 unique Work ← ComponentPackageMapper
-    index.ts  # Public API for PackageMapping bounded context
+    entgate-evaluator.ts  # Evaluates the ENT gate by checking three conditions: entityCount >= 1, provenanceIntact === true, al ← ENTGateEvaluator
+    index.ts  # Public API for ENTGate bounded context
+    canonical-entity-extractor.test.ts  # Tests for CanonicalEntityExtractor ← CanonicalEntityExtractor
+    canonical-entity-extractor.ts  # Extracts CanonicalEntity instances from blueprint components and registers them into an EntityMap vi ← CanonicalEntityExtractor
+    index.ts  # Public API for EntityExtraction bounded context
+    c3gap-detector.test.ts  # Tests for C3GapDetector ← C3GapDetector
+    c3gap-detector.ts  # Detects the C3 ordinal-3 assignment gap by inspecting ComponentPackageMapping for unresolved assignm ← C3GapDetector
+    collapse-strategy-resolver.test.ts  # Tests for CollapseStrategyResolver ← CollapseStrategyResolver
+    collapse-strategy-resolver.ts  # Selects and applies the collapse resolution strategy for the C3 ordinal-3 gap ← CollapseStrategyResolver
+    index.ts  # Public API for GapResolution bounded context
+    index.ts  # Public API for PackageAssignment bounded context
+    package-mapping-finalizer.test.ts  # Tests for PackageMappingFinalizer ← PackageMappingFinalizer
+    package-mapping-finalizer.ts  # Finalizes all ComponentPackageAssignments after collapse resolution, marks the ComponentPackageMappi ← PackageMappingFinalizer
     index.ts  # Public API for PipelineExecution bounded context
-    pipeline-run-controller.test.ts  # Tests for PipelineRunController ← PipelineRunController
-    pipeline-run-controller.ts  # Manages the StalledPipelineRun ML ← PipelineRunController
-    index.ts  # Public API for ProvenanceChain bounded context
-    provenance-chain-validator.test.ts  # Tests for ProvenanceChainValidator ← ProvenanceChainValidator
-    provenance-chain-validator.ts  # Constructs and validates three-hop ProvenanceChainRecord entries ← ProvenanceChainValidator
+    pipeline-unblocker.test.ts  # Tests for PipelineUnblocker ← PipelineUnblocker
+    pipeline-unblocker.ts  # Clears ENTBlockers for pipeline run ML ← PipelineUnblocker
+    index.ts  # Public API for ProvenanceVerification bounded context
+    three-hop-provenance-validator.test.ts  # Tests for ThreeHopProvenanceValidator ← ThreeHopProvenanceValidator
+    three-hop-provenance-validator.ts  # Constructs and validates three-hop provenance chains for ENT stage artifacts ← ThreeHopProvenanceValidator
+    index.ts  # Public API for WorkspaceStructure bounded context
+    test-regression-guard.test.ts  # Tests for TestRegressionGuard ← TestRegressionGuard
+    test-regression-guard.ts  # Verifies zero test regressions by comparing current test results against baseline snapshots ← TestRegressionGuard
+    workspace-type-guard.test.ts  # Tests for WorkspaceTypeGuard ← WorkspaceTypeGuard
+    workspace-type-guard.ts  # Validates that all 8 target workspace packages have correct TypeScript project references, composite ← WorkspaceTypeGuard
   migrations/  # Database migration history
   schema.prisma  # Database schema — entities map to models here
 tsconfig.json  # TypeScript configuration
@@ -67,8 +72,8 @@ Install exactly these packages. Do not add unlisted packages.
 
 **dependencies:**
 - `@prisma/client`
-- `multer`
 - `next`
+- `pino`
 - `react`
 - `react-dom`
 - `zod`
@@ -85,4 +90,4 @@ Install exactly these packages. Do not add unlisted packages.
 ## Provenance
 Stack: `nextjs-prisma-postgres`  
 Gate: PASS  
-Postcode: `ML.BLD.b30e24b2/v1`
+Postcode: `ML.BLD.3b46494c/v1`

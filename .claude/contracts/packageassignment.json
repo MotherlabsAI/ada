@@ -1,0 +1,80 @@
+{
+  "context": "PackageAssignment",
+  "componentName": "PackageMappingFinalizer",
+  "scope": {
+    "boundedContext": "PackageAssignment",
+    "allowedPathGlobs": [
+      "src/packageassignment/**",
+      "packages/packageassignment/**",
+      "apps/packageassignment/**",
+      "lib/packageassignment/**"
+    ],
+    "forbiddenPathGlobs": [
+      "!src/gapresolution/**",
+      "!packages/gapresolution/**",
+      "!apps/gapresolution/**",
+      "!lib/gapresolution/**",
+      "!src/gapresolution/**",
+      "!packages/gapresolution/**",
+      "!apps/gapresolution/**",
+      "!lib/gapresolution/**",
+      "!src/componentregistry/**",
+      "!packages/componentregistry/**",
+      "!apps/componentregistry/**",
+      "!lib/componentregistry/**",
+      "!src/entityextraction/**",
+      "!packages/entityextraction/**",
+      "!apps/entityextraction/**",
+      "!lib/entityextraction/**",
+      "!src/provenanceverification/**",
+      "!packages/provenanceverification/**",
+      "!apps/provenanceverification/**",
+      "!lib/provenanceverification/**",
+      "!src/entgate/**",
+      "!packages/entgate/**",
+      "!apps/entgate/**",
+      "!lib/entgate/**",
+      "!src/pipelineexecution/**",
+      "!packages/pipelineexecution/**",
+      "!apps/pipelineexecution/**",
+      "!lib/pipelineexecution/**",
+      "!src/workspacestructure/**",
+      "!packages/workspacestructure/**",
+      "!apps/workspacestructure/**",
+      "!lib/workspacestructure/**",
+      "!src/workspacestructure/**",
+      "!packages/workspacestructure/**",
+      "!apps/workspacestructure/**",
+      "!lib/workspacestructure/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "stopConditions": [
+    "Any invariant violation detected",
+    "Two consecutive tool failures on the same operation",
+    "Implementation diverges from compiled blueprint intent",
+    "Failure mode reached: CollapseResolutionStrategy.isApplied = true on entry — strategy was applied by a concurrent actor; Write to ComponentPackageAssignment fails due to mappingId foreign-key violation — ComponentPackageMapping record was not yet created; resolutionProvenancePostcode is null — provenance write was skipped, leaving an unverifiable audit trail"
+  ],
+  "requiredEvidence": [
+    "C3AssignmentGap.state = 'resolving'; CollapseResolutionStrategy.isApplied = true; ComponentPackageAssignment for ordinal-3 has isResolved = true; resolutionProvenancePostcode is non-null"
+  ],
+  "reportingCadence": "on-completion",
+  "maxRecursionDepth": 1,
+  "inheritedPermissions": [
+    "Bash(pnpm *)",
+    "Bash(tsc *)",
+    "Bash(node *)",
+    "Bash(git status)",
+    "Bash(git diff *)",
+    "mcp__ada__*"
+  ],
+  "compiledAt": 1774671057908,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"f2c5e8fc\",\"version\":1,\"raw\":\"ML.SYN.f2c5e8fc/v1\"}"
+}

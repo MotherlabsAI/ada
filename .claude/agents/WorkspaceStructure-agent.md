@@ -1,129 +1,107 @@
 ---
 name: WorkspaceStructure-agent
-description: Use when discovers and resolves all workspace packages from the pnpm workspace configuration, enumerating each package's name, source directory, dist directory, workspace:* protocol dependencies, and bin entries. hydrates the pnpmworkspace and workspacepackage entities and transitions workspacepackage from 'unresolved' to 'resolved'. tasks arise in the WorkspaceStructure domain.
+description: Use when WorkspaceStructure tasks arise. Owns TestRegressionGuard. Does not modify files outside WorkspaceStructure.
 model: claude-sonnet-4-6
 tools: [Bash, Read, Write, Edit, Glob, Grep]
-status: GHOST
+maxTurns: 30
 ---
-# WorkspaceResolver Agent
+# TestRegressionGuard Agent
 
-Discovers and resolves all workspace packages from the pnpm workspace configuration, enumerating each package's name, source directory, dist directory, workspace:* protocol dependencies, and bin entries. Hydrates the PnpmWorkspace and WorkspacePackage entities and transitions WorkspacePackage from 'unresolved' to 'resolved'.
+Verifies zero test regressions by comparing current test results against baseline snapshots. Ensures all previously passing tests continue to pass across all affected packages. WHY: G8 and C7 require zero test regressions. Entity TestSuite invariant previouslyPassingTestIds.length >= 1 and baselineSnapshotTimestamp > 0. This is a cross-cutting verification component.
 
 ## Bounded Context
 **Context:** WorkspaceStructure
-**Entities:** PnpmWorkspace, WorkspacePackage, WorkspaceProtocolDependency, BinEntry
-**Interfaces:** resolveWorkspace(rootDir: string): PnpmWorkspace, listPackages(workspace: PnpmWorkspace): WorkspacePackage[], resolveWorkspaceProtocolDeps(pkg: WorkspacePackage): WorkspaceProtocolDependency[], resolveBinEntries(pkg: WorkspacePackage): BinEntry[]
+**Entities:** WorkspacePackageNode, MonorepoTypeScriptConfiguration, TypeScriptProjectReference, TestSuite
+**Interfaces:** loadBaseline(packageName: string): TestSuite, runAndCompare(suite: TestSuite): { regressions: string[]; passed: boolean }, reportRegressionStatus(): { totalSuites: number; allPassed: boolean }
+
+## Domain Vocabulary
+Use these exact terms when naming variables, types, and functions.
+
+- **Ada** — ISO/IEC 8652 programming language, designed for safety-critical and high-integrity systems
+- **.ads** — Ada specification file — declares the public interface of a package or subprogram unit
+- **.adb** — Ada body file — implements the subprogram or package body
+- **GNAT** — GNU NYU Ada Translator — the dominant open-source Ada compiler, front-end to GCC
+- **gprbuild** — Ada-specific build tool consuming .gpr project files, replacing gnatmake
+- **gnatbind** — Ada binder that validates consistency of compiled units and determines elaboration order
+- **gnatlink** — Ada linker driver that links object files and the binder-generated elaboration file
+- **ALI file** — Ada Library Information file encoding unit fingerprints, dependencies, and compiler flags used
+- **elaboration** — runtime initialization phase where package-level code executes before the main procedure
+- **elaboration order** — the sequence in which packages are elaborated at startup; incorrect order causes Program_Error
+- **compilation unit** — the atomic unit of Ada compilation — one spec or one body file
+- **library unit** — a top-level compilation unit that can be withed by other units
+- **child unit** — a hierarchically named package extending a parent (e.g., Ada.Text_IO is a child of Ada)
+- **project file** — .gpr file defining source locations, compiler switches, target, and runtime for gprbuild
+- **runtime profile** — selected Ada runtime library variant (full RTS, Ravenscar, Jorvik, zero-footprint)
+- **with clause** — Ada's dependency declaration — makes another unit's spec visible and creates a compile dependency
+- **pragma** — Ada compiler directive, e.g., pragma Elaborate_All, pragma Pure, pragma Preelaborate
+- **Alire** — modern Ada/SPARK package manager using manifest files (alire.toml) and crate registry
+- **SPARK** — formally verifiable subset of Ada with additional annotations for proof
+
+## Stakeholders
+- **Embedded/Safety-Critical Systems Programmer**
+  - Knows: Ada spec/body separation (.ads/.adb file model), GNAT toolchain: gnatmake, gprbuild, gnatbind, gnatlink, Ada language standards: Ada 83, 95, 2005, 2012, 2022, Package elaboration order and its runtime implications, ALI file dependency tracking, .gpr project file syntax and semantics, Cross-compilation targets: ARM, SPARC, x86 bare-metal, Ravenscar and Jorvik tasking profiles for embedded, Strong typing, contracts, preconditions, postconditions, Separate compilation model and library units
+  - Blind spots: Assumes elaboration order warnings are non-critical until they cause runtime failure, Assumes GNAT FSF and GNAT Pro are interchangeable for all features, Assumes .gpr project files are optional for small projects, Assumes all Ada runtimes include tasking support, Assumes compiler flags from one GNAT version transfer cleanly to another
+  - Fears: Elaboration order errors that manifest only at runtime, not compile time, Circular dependency in package specs causing compilation failure, Missing body for a package spec causing linker errors, Wrong Ada language version flag producing silent incompatibilities, Toolchain version mismatch between gnatcompile, gnatbind, and gnatlink, Bare-metal target missing required runtime library units, ALI file staleness causing incorrect incremental builds
+  - Vocabulary: "package" = Ada modular unit with a spec (.ads) and optional body (.adb) — NOT a package manager concept; "compilation unit" = a single Ada source file (.ads or .adb) submitted to the compiler as an independent unit; "elaboration" = runtime execution of package-level declarative code during program startup; "binding" = the gnatbind phase that computes a valid elaboration order and generates a C binder file; "ALI file" = Ada Library Information file — compiler-generated metadata encoding unit dependencies and version stamps; "project file" = .gpr file consumed by gprbuild describing source directories, switches, target, and runtime; "with clause" = Ada's import declaration, creating a compile-time dependency on another unit's spec; "use clause" = makes a package's public declarations directly visible without qualification; "body" = the .adb implementation file containing subprogram bodies and package body; "spec" = the .ads specification file declaring the public interface of a package or subprogram; "child unit" = a package declared as a hierarchical extension of a parent package (Parent.Child); "runtime profile" = a configured subset of the Ada runtime library (full, embedded, ravenscar, zero-footprint); "elaboration pragma" = pragma Elaborate, Elaborate_All, or Elaborate_Body — directives controlling elaboration order
+- **Ada Toolchain Integrator / Build Engineer**
+  - Knows: gprbuild project file inheritance and aggregation, GNAT compilation switches: -gnat95, -gnat2012, -gnatp, -gnata, -O2, etc., Cross-compilation toolchain prefixes and target triples, Alire package manager for Ada/SPARK dependency management, Makefile and CI integration patterns for Ada builds, SPARK formal verification toolchain (gnatprove), Object directory and source directory separation in .gpr files
+  - Blind spots: Assumes Alire crates are always available for all target platforms, Assumes gnatprove verification and compilation use identical flags, Assumes CI environments have GNAT in PATH without explicit setup
+  - Fears: Toolchain not found or wrong version on CI runner, Project file misconfiguration silently compiling wrong source directories, Cross-compiler producing code for wrong target without error, SPARK proof regressions when switching compiler versions
+  - Vocabulary: "crate" = Alire's term for an Ada/SPARK dependency package (analogous to npm package or Rust crate); "gprbuild" = the primary build tool for Ada projects using .gpr project files; "gnatmake" = older single-file-centric Ada build driver, largely superseded by gprbuild; "aggregate project" = a .gpr project type that composes multiple sub-projects into one build; "scenario variable" = a .gpr variable switchable at build time to select between configurations; "target triple" = architecture-vendor-os string identifying the cross-compilation target; "gnatprove" = SPARK formal verification tool that also performs flow analysis and proof
 
 ## Invariants
 These MUST hold at all times. Hooks enforce them at tool boundaries.
 
-- `pnpmWorkspace.packages.every(p => p.name !== null)` — every package in the workspace must be named
-- `pnpmWorkspace.packages.map(p => p.name).length === new Set(pnpmWorkspace.packages.map(p => p.name)).size` — package names within the workspace must be unique
-- `workspacePackage.name !== null && workspacePackage.name.length > 0` (WorkspacePackage) — package must have a non-empty name
-- `workspacePackage.distDir !== null && workspacePackage.distDir.length > 0` (WorkspacePackage) — package must declare a dist output directory
-- `workspacePackage.srcDir !== null` (WorkspacePackage) — package must declare a source directory
-- `workspacePackage.workspaceProtocolDependencies !== null` (WorkspacePackage) — workspace dependencies array must be defined (may be empty)
-- `pnpmWorkspace.packages.length > 0` (PnpmWorkspace) — workspace must contain at least one package
-- `pnpmWorkspace.rootDir !== null && pnpmWorkspace.rootDir.length > 0` (PnpmWorkspace) — workspace must have a root directory
-- `pnpmWorkspace.workspaceYamlPath !== null` (PnpmWorkspace) — workspace must have a pnpm-workspace.yaml path
-- `workspaceProtocolDependency.specifier.startsWith('workspace:')` (WorkspaceProtocolDependency) — specifier must use the pnpm workspace protocol prefix
-- `workspaceProtocolDependency.consumerPackage !== workspaceProtocolDependency.providerPackage` (WorkspaceProtocolDependency) — a package cannot declare itself as a workspace dependency
-- `binEntry.commandName !== null && binEntry.commandName.length > 0` (BinEntry) — bin entry must declare a non-empty command name
-- `binEntry.resolvedEntryPoint !== null && binEntry.resolvedEntryPoint.length > 0` (BinEntry) — bin entry must point to a compiled entrypoint
-- `binEntry.ownerPackage !== null` (BinEntry) — bin entry must be owned by a package
+- `monoRepoTypeScriptConfiguration.packageTsConfigPaths.length === 8` — there must be exactly 8 package tsconfig entries matching the 8 workspace packages established in G3
+- `testSuite.packageName !== null && workspacePackageNode.packageName !== null` — every test suite in this context must be anchored to a named workspace package node so regressions can be localized
+- `workspacePackageNode.packageName !== null` (WorkspacePackageNode) — every workspace package must have a unique name; null names make package-to-component routing impossible
+- `workspacePackageNode.assignedComponentIds.length >= 1` (WorkspacePackageNode) — G3 maps 10 components to 8 packages, meaning some packages receive multiple components; a package with zero assigned components is unused and should not exist in the mapping
+- `workspacePackageNode.pipelineStage !== null && workspacePackageNode.pipelineStage.length > 0` (WorkspacePackageNode) — each package must declare the pipeline stage it serves; G9 asks which package owns ENT integration and this field answers that question
+- `monoRepoTypeScriptConfiguration.rootTsConfigPath !== null && monoRepoTypeScriptConfiguration.rootTsConfigPath.length > 0` (MonorepoTypeScriptConfiguration) — a monorepo must have a root tsconfig; without it, cross-package type checking is undefined and G7 cannot be evaluated
+- `monoRepoTypeScriptConfiguration.packageTsConfigPaths.length === 8` (MonorepoTypeScriptConfiguration) — G3 establishes 8 workspace packages; each must have its own tsconfig entry for the project reference graph to be complete
+- `monoRepoTypeScriptConfiguration.compositeEnabled === true` (MonorepoTypeScriptConfiguration) — project references require composite mode; without it, TypeScript cannot build packages in dependency order and cross-package type errors may be silently skipped
+- `monoRepoTypeScriptConfiguration.projectReferences.every(ref => ref.path !== null && ref.path.length > 0)` (MonorepoTypeScriptConfiguration) — every project reference must point to a real path; null or empty paths cause TypeScript to silently skip the referenced package during compilation
+- `typeScriptProjectReference.fromPackage !== typeScriptProjectReference.toPackage` (TypeScriptProjectReference) — a package cannot reference itself; self-references create circular dependency cycles in the TypeScript build graph
+- `typeScriptProjectReference.path !== null && typeScriptProjectReference.path.length > 0` (TypeScriptProjectReference) — the reference must point to a real tsconfig path; an empty path causes TypeScript to silently drop the reference
+- `typeScriptProjectReference.referenceId !== null && typeScriptProjectReference.referenceId.length > 0` (TypeScriptProjectReference) — references must be uniquely identified so duplicate edges in the project reference graph can be detected and removed
+- `testSuite.previouslyPassingTestIds.length >= 1` (TestSuite) — G8 protects existing passing tests; a suite with zero previously passing tests has no regression baseline to protect
+- `testSuite.testFilePaths.length >= 1` (TestSuite) — a suite must have at least one test file; an empty file list means there is nothing to check for regressions
+- `testSuite.baselineSnapshotTimestamp > 0` (TestSuite) — the baseline must be timestamped; without a timestamp, 'previously passing' has no temporal anchor and any state could be claimed as the baseline
+- `testSuite.packageName !== null && testSuite.packageName.length > 0` (TestSuite) — each suite must be scoped to a package so regressions can be localized to the package that changed
 
-## Workflow Steps
-### resolve-workspace-packages (full-monorepo-build)
-- **Pre:** pnpm-workspace.yaml exists at rootDir and all package.json files are parseable
-- **Action:** parse pnpm-workspace.yaml glob patterns, enumerate matching package directories, read each package.json to extract name/version/workspaceProtocolDependencies
-- **Post:** PnpmWorkspace.packages is populated with all WorkspacePackage instances having resolved name, srcDir, distDir, and workspaceProtocolDependencies
-- **Failure modes:**
-  - precondition: pnpm-workspace.yaml is missing or malformed YAML → abort build with parse error, report offending line
-  - action: a package directory matched by glob has no package.json → skip package with warning, continue enumeration
-  - postcondition: zero packages resolved despite valid workspace file → abort build, report glob patterns matched nothing
+## Resolved Decisions
+These conflicts were resolved during compilation. Do not revisit them.
 
-### compute-topological-build-order (full-monorepo-build)
-- **Pre:** PnpmWorkspace.packages is fully populated; all workspaceProtocolDependencies reference packages present in the workspace
-- **Action:** build directed acyclic graph from WorkspaceProtocolDependency edges, run Kahn's algorithm to produce TopologicalBuildOrder.orderedPackages, detect cycles
-- **Post:** TopologicalBuildOrder.orderedPackages is a valid total ordering where every provider package precedes all consumer packages; TopologicalBuildOrder.cycleDetected is false
-- **Failure modes:**
-  - precondition: a workspaceProtocolDependency references a package name not present in PnpmWorkspace.packages → abort with unresolved dependency error listing the missing package name
-  - action: cycle detected among workspace packages (e.g. orchestrator -> compiler -> orchestrator) → set TopologicalBuildOrder.cycleDetected true, abort build, emit cycle path
-  - postcondition: ordered list omits one or more packages that should have been included → abort build, log discrepancy between workspace package count and ordered list length
-
-### validate-tsconfig-project-references (full-monorepo-build)
-- **Pre:** each WorkspacePackage has a tsconfig.json with composite:true; TopologicalBuildOrder is available
-- **Action:** for each TsConfig, parse projectReferences array and verify each referencedTsConfigPath resolves to a TsConfig whose ownerPackage appears before the current package in TopologicalBuildOrder.orderedPackages
-- **Post:** every ProjectReference edge is consistent with TopologicalBuildOrder; all referenced tsconfig.json files have composite:true and declarationEmit:true
-- **Failure modes:**
-  - precondition: a package tsconfig.json is missing composite:true → emit configuration error for that package, abort build
-  - action: a projectReference path does not resolve to an existing tsconfig.json on disk → abort build with missing reference path error
-  - postcondition: a ProjectReference edge contradicts TopologicalBuildOrder (referenced package appears later in order) → abort build, report the offending package pair and suggest tsconfig fix
-
-### execute-incremental-tsc-build (full-monorepo-build)
-- **Pre:** TopologicalBuildOrder is valid; all TsConfig files have composite:true; prior BuildArtifacts may or may not exist (incremental case); CleanBuildState is not active
-- **Action:** invoke 'tsc --build' at workspace root, which compiles packages in dependency order using project references, writes .js and .d.ts files to each distDir, updates each .tsbuildinfo file
-- **Post:** for every WorkspacePackage: distDir contains emitted .js files and .d.ts files; TsBuildInfo.lastModified is updated; BuildArtifact.emittedAt is set to current timestamp
-- **Failure modes:**
-  - precondition: CleanBuildState is active (clean is still in progress) when tsc is invoked → wait for clean to complete or abort with concurrency error
-  - action: TypeScript compiler reports type errors in one or more packages → abort build, surface tsc diagnostics with file/line/column, do not emit partial artifacts for erroring packages
-  - action: tsc process exits non-zero due to out-of-memory or OS signal → capture exit code and stderr, abort build, suggest increasing Node.js heap
-  - postcondition: distDir for a package is empty or missing expected .js entry point after tsc exits zero → abort with artifact validation error, suspect tsconfig outDir misconfiguration
-
-### validate-bin-entries (full-monorepo-build)
-- **Pre:** BuildArtifact exists for the cli package with non-empty jsFiles; package.json bin field is declared
-- **Action:** for each BinEntry in the cli WorkspacePackage, resolve the declared entry point path relative to distDir, check file existence and executable permission bit
-- **Post:** every BinEntry.resolvedEntryPoint exists on disk as an emitted .js file; file has executable permission or shebang is present
-- **Failure modes:**
-  - precondition: cli package BuildArtifact was not produced (compile step failed silently for cli) → abort with missing artifact error, do not validate stale prior build
-  - action: resolvedEntryPoint path does not exist in distDir → emit error listing expected path, suggest checking tsconfig outDir and bin field alignment
-  - postcondition: entry point file exists but lacks executable permission on POSIX systems → chmod +x the file and emit a warning that build script should set this
-
-### initiate-clean-build-state (clean-and-rebuild)
-- **Pre:** no tsc process is currently running against the workspace; PnpmWorkspace.packages is populated
-- **Action:** set CleanBuildState.initiatedAt to current timestamp; CleanBuildState.distDirsRemoved and tsBuildInfoFilesRemoved set to false
-- **Post:** CleanBuildState is active and timestamped; subsequent steps treat workspace as dirty
-- **Failure modes:**
-  - precondition: a tsc --watch or tsc --build process is detected as running against the workspace → abort clean, emit error asking user to stop watch processes first
-  - action: CleanBuildState cannot be persisted due to filesystem error → abort clean with IO error
-
-### remove-dist-directories (clean-and-rebuild)
-- **Pre:** CleanBuildState is active; each WorkspacePackage.distDir path is known
-- **Action:** for each WorkspacePackage in any order, delete distDir recursively if it exists; record removal in CleanBuildState.distDirsRemoved
-- **Post:** no distDir exists on disk for any WorkspacePackage; CleanBuildState.distDirsRemoved is true
-- **Failure modes:**
-  - precondition: CleanBuildState is not active (clean was not initiated) → abort step, require initiate-clean-build-state to run first
-  - action: distDir deletion fails due to permission denied or locked file (Windows) → emit warning for that package, continue removing other distDirs, mark that package as partially cleaned
-  - postcondition: one or more distDirs still exist after deletion attempts → abort rebuild, report which packages failed to clean, suggest manual removal
-
-### remove-tsbuildinfo-files (clean-and-rebuild)
-- **Pre:** CleanBuildState.distDirsRemoved is true; TsBuildInfo.filePath is known for each package
-- **Action:** for each TsBuildInfo, delete the .tsbuildinfo file if it exists; set CleanBuildState.tsBuildInfoFilesRemoved to true
-- **Post:** no .tsbuildinfo file exists for any WorkspacePackage; tsc will treat next build as cold start
-- **Failure modes:**
-  - precondition: distDirs were not removed before tsbuildinfo removal (ordering violated) → abort, enforce that dist removal precedes tsbuildinfo removal to avoid stale incremental cache
-  - action: .tsbuildinfo file is locked by another process → emit warning, retry once after 500ms, then skip and warn that incremental cache may be stale
-  - postcondition: a .tsbuildinfo file was not found at expected path (package may not have been built before) → treat as success, file absence is acceptable on first build
-
-### invoke-full-monorepo-build (clean-and-rebuild)
-- **Pre:** CleanBuildState.distDirsRemoved is true; CleanBuildState.tsBuildInfoFilesRemoved is true; workspace packages and topological order are still valid from prior resolution
-- **Action:** execute the full-monorepo-build workflow starting from compute-topological-build-order (workspace resolution reused); tsc performs a cold compilation across all packages
-- **Post:** all BuildArtifacts are freshly emitted with emittedAt after CleanBuildState.initiatedAt; CleanBuildState is cleared
-- **Failure modes:**
-  - precondition: workspace package list is stale (package was added after resolve-workspace-packages ran) → re-run resolve-workspace-packages before invoking build
-  - action: tsc cold build fails with type errors exposed only when incremental cache is absent → surface all diagnostics, abort build, do not restore deleted artifacts
-  - postcondition: BuildArtifact.emittedAt is before CleanBuildState.initiatedAt indicating stale artifacts were not overwritten → abort with artifact freshness error, suspect filesystem clock skew or tsc short-circuit bug
+- **WorkspacePackageNode appears in both PackageAssignment and WorkspaceStructure bounded contexts with different invariants vs Workflow resolve-c3-assignment-gap uses WorkspacePackageNode for component-to-package mapping; TypeScript compilation concern (G7) uses it for workspace structure validation:** PackageAssignment is the authoritative owner of WorkspacePackageNode because the entity's primary invariant (assignedComponentIds.length >= 1) directly serves the component mapping workflow. WorkspaceStructure has a read-only dependency on WorkspacePackageNode for build validation. The WorkspaceTypeGuard component in WorkspaceStructure context imports WorkspacePackageNode from @ada/ent (PackageAssignment's package) without modifying it. _(authoritative: process)_
 
 ## Acceptance Criteria
-- [ ] PnpmWorkspace.packages is populated with all WorkspacePackage instances having resolved name, srcDir, distDir, and workspaceProtocolDependencies
-- [ ] TopologicalBuildOrder.orderedPackages is a valid total ordering where every provider package precedes all consumer packages; TopologicalBuildOrder.cycleDetected is false
-- [ ] every ProjectReference edge is consistent with TopologicalBuildOrder; all referenced tsconfig.json files have composite:true and declarationEmit:true
-- [ ] for every WorkspacePackage: distDir contains emitted .js files and .d.ts files; TsBuildInfo.lastModified is updated; BuildArtifact.emittedAt is set to current timestamp
-- [ ] every BinEntry.resolvedEntryPoint exists on disk as an emitted .js file; file has executable permission or shebang is present
-- [ ] CleanBuildState is active and timestamped; subsequent steps treat workspace as dirty
-- [ ] no distDir exists on disk for any WorkspacePackage; CleanBuildState.distDirsRemoved is true
-- [ ] no .tsbuildinfo file exists for any WorkspacePackage; tsc will treat next build as cold start
-- [ ] all BuildArtifacts are freshly emitted with emittedAt after CleanBuildState.initiatedAt; CleanBuildState is cleared
+- [ ] Component builds without errors
+
+## Out of Scope
+These were explicitly excluded during compilation:
+- Ada programming language compilation and toolchain usage
+- TypeScript, JavaScript, or any ECMAScript-family language compilation
+- pnpm, npm, yarn, or any Node.js package manager
+- Monorepo workspace topology or package graph resolution
+- Machine learning pipelines, entity extraction, or EntityMap population
+- Provenance chain validation or ENTStageResult evaluation
+- BlueprintComponentRegistry or any blueprint component mapping
+- Python, Rust, Go, C#, Java, or any non-Ada language compilation
+- REST APIs, GraphQL, or network service development
+- Database schema design or ORM configuration
+- Frontend UI frameworks or browser-based tooling
+- Docker, Kubernetes, or container orchestration
+- Cloud provider SDKs or serverless deployment
+- Test framework selection (Ada uses AUnit, but it is not the compilation concern)
+- Linting or formatting tools unrelated to Ada compiler invocation
+- WebAssembly targets (not a standard GNAT target profile)
+
+## Non-Functional Requirements
+- **[maintainability]** TypeScript strict mode compilation with zero errors across all 8 target workspace packages (`tsc --noEmit --composite exits with code 0 for all packages`) — _verify: Run `pnpm -r exec tsc --noEmit` and confirm exit code 0 with zero diagnostic output_
+- **[reliability]** Node.js runtime version >= 18 enforced via engines field (`process.versions.node >= '18.0.0'`) — _verify: Check engines field in root package.json and each workspace package.json; run `node -v` in CI_
+- **[reliability]** Zero test regressions — all previously passing tests must continue to pass after integration changes (`testSuite.previouslyPassingTestIds.every(id => currentResults[id].passed === true)`) — _verify: Run full test suite via `pnpm test` and diff against baseline snapshot; regression count must be 0_
+- **[maintainability]** All ENT integration types must use existing codebase vocabulary — no parallel type definitions — _verify: Code review and grep for duplicate type names; ensure all imports trace to @ada/ent, @ada/compiler, @ada/int-rerun, or @ada/provenance_
+- **[maintainability]** pnpm workspace structure must be preserved — no new package managers or build systems introduced — _verify: Confirm pnpm-workspace.yaml unchanged; no yarn.lock, package-lock.json, or alternative lockfiles present_
 
 ## Prohibited Actions
 - Do NOT modify files outside this bounded context
