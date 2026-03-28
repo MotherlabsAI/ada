@@ -1085,17 +1085,90 @@ export async function initCommand(
   const initialPrompt =
     "Read CLAUDE.md fully. Read all agent files in .claude/agents/. Call ada.advance_execution(agentId) to get your first task brief. Follow the build order. Begin building now.";
 
-  // Set ADA_PROJECT_DIR so the MCP server resolves artifacts from the
-  // correct project directory regardless of how claude resolves its env.
-  process.env["ADA_PROJECT_DIR"] = targetDir;
+  // Resolve the full path to claude at spawn time so the new terminal
+  // window finds it regardless of its default PATH.
+  let claudePath = "claude";
+  try {
+    const { execSync } = await import("child_process");
+    claudePath = execSync(
+      process.platform === "win32" ? "where claude" : "which claude",
+      {
+        encoding: "utf8",
+      },
+    ).trim();
+  } catch {
+    // not found on PATH — fallback, will error in the new terminal
+  }
 
-  console.log(`\n  ${glyphs.chevron} handing off to claude...\n`);
+  // Write a launch script. Explicitly unset ANTHROPIC_API_KEY so Claude Code
+  // uses its own OAuth credentials, not Ada's API key from this shell.
+  const { default: os } = await import("os");
+  const scriptLines = [
+    "#!/bin/bash",
+    `cd '${targetDir.replace(/'/g, "'\\''")}'`,
+    `export ADA_PROJECT_DIR='${targetDir.replace(/'/g, "'\\''")}'`,
+    `unset ANTHROPIC_API_KEY`,
+    `exec '${claudePath.replace(/'/g, "'\\''")}' --permission-mode auto '${initialPrompt.replace(/'/g, "'\\''")}'`,
+    "",
+  ];
+  const scriptPath = path.join(os.tmpdir(), `ada-spawn-${Date.now()}.sh`);
+  fs.writeFileSync(scriptPath, scriptLines.join("\n"), { mode: 0o755 });
 
-  // exec replaces this process — no new window, no PATH ambiguity.
-  const claudeBin = process.platform === "win32" ? "claude.cmd" : "claude";
-  cpSpawn(claudeBin, ["--permission-mode", "auto", initialPrompt], {
+  console.log(`\n  ${glyphs.chevron} spawning claude in new terminal...\n`);
+
+  if (process.platform === "darwin") {
+    cpSpawn(
+      "osascript",
+      [
+        "-e",
+        `tell application "Terminal" to do script "bash '${scriptPath}'"`,
+        "-e",
+        `tell application "Terminal" to activate`,
+      ],
+      { detached: true, stdio: "ignore" },
+    ).unref();
+    return;
+  }
+
+  if (process.platform === "win32") {
+    const batPath = scriptPath.replace(/\.sh$/, ".bat");
+    fs.writeFileSync(
+      batPath,
+      [
+        `@echo off`,
+        `cd /d "${targetDir}"`,
+        `set ADA_PROJECT_DIR=${targetDir}`,
+        `set ANTHROPIC_API_KEY=`,
+        `"${claudePath}" --permission-mode auto "${initialPrompt}"`,
+      ].join("\r\n"),
+    );
+    cpSpawn("cmd", ["/c", "start", "cmd", "/k", batPath], {
+      detached: true,
+      stdio: "ignore",
+    }).unref();
+    return;
+  }
+
+  // Linux — try common terminal emulators
+  for (const [bin, args] of [
+    ["gnome-terminal", ["--", "bash", scriptPath]],
+    ["konsole", ["-e", "bash", scriptPath]],
+    ["xterm", ["-e", `bash '${scriptPath}'`]],
+    ["x-terminal-emulator", ["-e", `bash '${scriptPath}'`]],
+  ] as [string, string[]][]) {
+    try {
+      cpSpawn(bin, args, { detached: true, stdio: "ignore" }).unref();
+      return;
+    } catch {
+      // try next
+    }
+  }
+
+  // No terminal emulator — fall back to same-window handoff
+  const { ANTHROPIC_API_KEY: _, ...envWithoutKey } = process.env;
+  cpSpawn(claudePath, ["--permission-mode", "auto", initialPrompt], {
     cwd: targetDir,
     stdio: "inherit",
-    env: process.env,
+    env: { ...envWithoutKey, ADA_PROJECT_DIR: targetDir },
   }).on("exit", (code) => process.exit(code ?? 0));
 }
