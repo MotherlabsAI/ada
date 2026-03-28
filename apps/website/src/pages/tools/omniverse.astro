@@ -1,0 +1,30 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import OmniverseApp from '../../components/omniverse/OmniverseApp.tsx';
+---
+
+<Layout
+  title="Omniverse — Semantic World-Model Compiler"
+  description="Explore semantic space through D×C×S expansion. Bring your own API key, choose your model, watch concepts branch in 3D."
+>
+  <Nav />
+  <div id="omniverse-mount" data-theme="dark" style="width:100%;height:calc(100vh - 3.5rem);position:relative;overflow:hidden;">
+    <OmniverseApp client:only="react" />
+  </div>
+</Layout>
+
+<style>
+  #omniverse-mount {
+    --color-bg: #100f0d;
+    --color-surface: #181612;
+    --color-surface-raised: #211e19;
+    --color-border: #2e2921;
+    --color-text: #f0e9df;
+    --color-text-muted: #a89278;
+    --color-text-dim: #6b5643;
+    --color-accent: #c8762c;
+    --color-accent-hover: #da8e3e;
+  }
+</style>

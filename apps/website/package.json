@@ -12,9 +12,21 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/react": "^5.0.2",
     "@astrojs/sitemap": "^3.7.1",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
+    "@react-three/postprocessing": "^3.0.4",
     "@tailwindcss/vite": "^4.2.2",
     "astro": "^6.0.8",
-    "tailwindcss": "^4.2.2"
+    "jszip": "^3.10.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.2.2",
+    "three": "^0.183.2",
+    "umap-js": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.183.1"
   }
 }
