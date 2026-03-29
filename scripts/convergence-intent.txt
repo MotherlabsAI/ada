@@ -1,0 +1,124 @@
+This system is the semantic compiler and governed execution platform — internally named "ada-claude" (NOT the Ada programming language; no GNAT, no .adb files, no ISO Ada). It is a TypeScript pnpm monorepo. It transforms natural language intent into governed Claude Code configuration artifacts through a sequential 9-stage pipeline, then governs the resulting execution at runtime through a world-state machine, hierarchical agent orchestration, and a verification stack.
+
+COMPILATION PIPELINE (9 stages, sequential, all gates must pass):
+CTX: Static TypeScript codebase analysis — extracts exported interfaces, type aliases, constants, package boundaries, dependency graphs. No LLM. Pure function. Feeds vocabulary into INT, type registry into ENT, package graph into SYN.
+INT: Intent extraction via Claude Sonnet — goals (stated/derived/implied/unstated), constraints, unknowns (blocking/scoping/implementation), challenges. Grounded in CTX vocabulary. Glass-box streaming so reasoning is visible to the user.
+PER: Domain modeling — names the domain, defines stakeholders with vocabulary, knowledgeBase, blindSpots, fearSet, builds ubiquitousLanguage map, lists excludedConcerns.
+ENT: Entity extraction — entities by category (substance/quality/relation/event/state), properties with types, invariants as predicate expressions, grouped into bounded contexts with root entities. Grounded in CTX type registry.
+PRO: Process modeling — workflows with named steps each annotated with Hoare triples (precondition/action/postcondition), failure modes, state machines for stateful entities, temporal relations between workflows.
+SYN: Synthesis — produces the final Blueprint: architecture pattern, components with responsibilities and dependency graph, resolved conflicts, non-functional requirements, open questions. Grounded in CTX package boundaries.
+VER: Semantic drift verification — checks blueprint coherence, entity coverage, invariant completeness, intent trace completeness. Generates VerificationFindings.
+GOV: Governor gate — evaluates full pipeline state with confidence score, coverage score, coherence score, gate pass rate. Emits ACCEPT/REJECT/ITERATE. If REJECT: iteration loop with augmented intent. Max 3 iterations.
+BLD: Build contract derivation — deterministic, no LLM. Stack preset selection, file tree, dependency manifest, acceptance criteria from blueprint. Runs only on GOV ACCEPT.
+
+COMPILATION OUTPUT (written to target project on ACCEPT):
+- CLAUDE.md: project context file for Claude Code — build order, MCP directives, out-of-scope constraints, compilation health
+- .claude/agents/*.md: one agent file per bounded context with frontmatter (name, model, tools, maxTurns), bounded context scope, MCP call directives, prohibited actions
+- .claude/agents/macro-planner.md: orchestrates long-horizon execution, reads get_macro_plan, delegates to domain agents
+- .claude/agents/execution-orchestrator.md: coordinates macro/micro cycle, manages checkpoints, routes to verifier
+- .claude/agents/independent-verifier.md: verifies micro-executor output against blueprint, never implements
+- .claude/hooks/: pre-tool-use and post-tool-use bash scripts enforcing entity invariants
+- .mcp.json: MCP server registration pointing to `ada mcp` subprocess
+- .claude/settings.json: hook registrations, permission overrides
+- .ada/state.json: full blueprint + pipelineState + governorDecision artifact
+- .ada/manifest.json: per-stage postcodes and SHAs for provenance tracing
+- BUILD.md: stack preset, file tree, dependency manifest, acceptance criteria
+
+PROVENANCE SYSTEM:
+Every stage output is content-addressed with a PostcodeAddress (format: ML.{STAGE}.{8-char-hash}/v{n}). Stages reference the postcode of their upstream input — forming a verifiable chain from intent to every output artifact. SQLite storage at ~/.ada/storage.db (runs) and ~/.ada/provenance.db (records). Git-backed: .ada/ref stores the current blueprint postcode.
+
+WORLD-STATE RUNTIME (MCP server, 22 tools):
+The MCP server runs as a subprocess (`ada mcp`) and exposes Ada's spec authority to executing Claude Code sessions. Tool groups:
+- Spec authority: get_blueprint, get_invariants, get_workflow, query_constraints, get_contract, get_world_model
+- Execution state: get_runtime_state, checkpoint, rollback_to, record_fact, advance_execution, get_macro_plan
+- Delegation: get_contract, enter_delegation, exit_delegation, set_task_status, report_execution_failure, resolve_repair
+- Drift and verification: check_drift, log_drift, verify (5-layer stack)
+- Self-improvement: propose_amendment, extract_skills, propose_skill
+- Agent coordination: propose_agent
+
+HIERARCHICAL EXECUTION (world-state + macro/micro):
+After ACCEPT, Ada governs execution through a world-state machine. The macro planner decomposes the blueprint into bounded execution units, sequences by dependency, delegates to domain agents via delegation contracts. Micro executors operate within typed contracts: inheritedPermissions, scope (bounded context + file boundaries), stopConditions, reportingCadence, requiredEvidence, maxRecursionDepth. Local repair handles micro failures with a 1-retry budget before escalating to macro planner. An independent verifier evaluates outcomes without having implemented them.
+
+VERIFICATION STACK (5 layers, independent):
+1. Structural: blueprint component dependency graph vs actual code structure
+2. Execution: session log tool calls vs workflow step preconditions/postconditions
+3. Policy: action vs ENT invariants and delegation contract scope
+4. Outcome: implemented behavior vs Hoare triple acceptance criteria (LLM-assisted)
+5. Provenance: every written file traces back to a postcode parent
+
+FEEDBACK LOOP:
+PostToolUse hook appends every Claude Code tool call to .ada/session-log.jsonl. PreCompact hook checkpoints Ada's context before compaction. SessionEnd hook writes structured session summary to .ada/sessions/{id}.json. Claude Code can call propose_amendment to signal blueprint drift. `ada review-amendments` CLI lets the human approve/reject amendments and trigger `ada compile --amend`.
+
+SELF-IMPROVEMENT LOOP:
+extract_skills analyzes session logs for reusable patterns. propose_skill submits a skill candidate. `ada review-skills` presents candidates for human approval with an experiment branch option. Approved skills written to .claude/skills/. Governance core (compiled intent, invariants, delegation policy) is immutable — agents improve workflows and skills only.
+
+CLI COMMANDS:
+ada compile "<intent>" — full elicitation + 9-stage pipeline
+ada compile --amend — recompile incorporating queued amendments
+ada run — launch Claude Code with governor watching for drift
+ada verify — run 5-layer verification stack against current state
+ada review-amendments — queue of proposed blueprint changes from Claude Code sessions
+ada review-skills — queue of extracted skill candidates
+ada mcp — start MCP server (called as subprocess, not directly)
+ada scan — codebase analysis without full compilation
+ada resume — resume a prior session from a checkpoint
+
+MONOREPO PACKAGES (18 packages under packages/):
+compiler: 9-stage pipeline, all agent classes, Zod schemas, PostcodeAddress generation, SQLite provenance store
+config-writer: translates Governor-ACCEPTed Blueprint into CLAUDE.md, agent files, hooks, settings.json, .mcp.json, delegation contracts
+mcp-server: stdio MCP server, 22 tools, reads from .ada/state.json
+orchestrator: Claude Code subprocess spawning, stream-json event parsing, session management
+governor: continuous runtime watch during Claude Code sessions — drift detection, confidence scoring
+elicitation: multi-turn intent refinement, proposals-first model, gap detection, handoff to compiler
+storage: SQLite adapter for run history and provenance records
+provenance: PostcodeAddress generation, provenance chain validation
+ent, entgate, entityextraction, blueprintregistry, componentpackagebinding, ordinalassignment, workspacepackages, pipelineexecution, provenanceaudit, int-rerun: ENT-stage integration packages (compiled, tested on synthetic fixtures, isolated from main compiler pipeline which uses LLM-backed agents directly)
+
+DOMAIN MODEL — ADA'S OWN ENTITIES:
+These are Ada's core domain entities. They must appear in the compiled blueprint's entity model.
+
+BOUNDED CONTEXT: compilation-pipeline
+- CompilationRun (event): a single end-to-end pipeline execution. Properties: runId (string, ML-prefixed), intent (string), decision (ACCEPT|REJECT|ITERATE), confidence (0–1), coverageScore (0–1), coherenceScore (0–1), gatePassRate (0–1), durationMs (number), blueprintPostcode (string). Invariants: runId is unique and non-empty; decision must be set before BLD stage runs; confidence must be ≥ 0 and ≤ 1; all 9 stages must complete before decision is emitted.
+- PipelineStage (substance): one of the 9 sequential stages (CTX, INT, PER, ENT, PRO, SYN, VER, GOV, BLD). Properties: stageCode (string), usesLLM (boolean), output (object), postcode (PostcodeAddress). Invariants: stages execute in fixed order; no stage may reference output of a later stage; LLM stages produce non-deterministic output; CTX and BLD are deterministic.
+- IntentGraph (substance): structured representation of what the user wants. Properties: goals (Goal[]), constraints (Constraint[]), unknowns (Unknown[]), challenges (Challenge[]). Invariants: must have ≥ 1 stated goal; blocking unknowns must be resolved before pipeline advances past INT.
+- Blueprint (substance): the compiled governing artifact. Properties: summary (string), architecture (Architecture), dataModel (DataModel), processModel (ProcessModel), scope (Scope), audit (AuditRecord), postcode (PostcodeAddress). Invariants: only produced on GOV ACCEPT; must have ≥ 1 architecture component; postcode must trace to CompilationRun.
+
+BOUNDED CONTEXT: provenance
+- PostcodeAddress (substance): content-addressed identifier for any pipeline artifact. Properties: prefix (ML), stage (CTX|INT|PER|ENT|PRO|SYN|VER|GOV|BLD), hash (8-char hex), version (integer). Format: ML.{STAGE}.{hash}/v{n}. Invariants: hash is derived from content (not random); version increments on recompile of same intent; postcode is immutable once assigned.
+- ProvenanceChain (relation): links a downstream artifact to its upstream source. Properties: fromPostcode, toPostcode, stageCode, timestamp. Invariants: chain must be unbroken from Blueprint back to IntentGraph; no artifact may exist without a traceable chain; chain has exactly 3 hops for ENT-stage artifacts.
+- ProvenanceRecord (event): written once at each stage gate passage. Invariants: immutable after write; stageCode and postcode are non-null; timestamp is positive.
+
+BOUNDED CONTEXT: runtime-governance
+- WorldState (substance): Ada's model of what is currently true in the executing project. Properties: facts (StateFact[]), checkpoints (Checkpoint[]), uncertaintyScore (0–1), lastUpdatedAt (timestamp). Invariants: every fact has a confidence score; facts from verified tool outputs have confidence ≥ 0.8; inferred facts have confidence < 0.8.
+- DelegationContract (substance): typed scope given to a spawned agent. Properties: inheritedPermissions (string[]), scope (BoundedContext), fileScope (string[]), stopConditions (string[]), requiredEvidence (string[]), maxRecursionDepth (integer). Invariants: agent may not write files outside fileScope; maxRecursionDepth ≥ 1; depth must be decremented on each sub-delegation.
+- MacroPlan (substance): dependency-ordered task graph for executing a blueprint. Properties: tasks (Task[]), currentTask (Task|null), completedTasks (Task[]). Invariants: task order respects component dependency graph; a task may not start until all its upstream dependencies are complete.
+- Session (event): a single Claude Code execution session governed by Ada. Properties: sessionId, startedAt, endedAt, toolCallCount, driftEvents (DriftEvent[]), finalConfidence (0–1), decision (ACCEPT|DRIFT|HALT). Invariants: session ends with a decision; HALT triggers process.exit(1); driftEvents are immutable after write.
+
+BOUNDED CONTEXT: self-improvement
+- Amendment (event): a proposed change to the compiled blueprint, submitted by Claude Code via propose_amendment. Properties: id, proposedBy (agentId), description, targetSection (string), status (pending|approved|rejected). Invariants: amendments are immutable after status is set; only the human may approve or reject; approved amendments trigger recompilation.
+- Skill (substance): a reusable pattern extracted from session logs. Properties: id, name, description, sourceSessionIds (string[]), status (candidate|approved|rejected), skillFilePath (string|null). Invariants: skill must be sourced from ≥ 2 distinct sessions before promotion; governance core (invariants, contracts, pipeline stages) is not a valid skill extraction target.
+
+BOUNDED CONTEXT: elicitation
+- ElicitationSession (event): a multi-turn conversation between user and Ada to refine intent before compilation. Properties: sessionId, rawIntent (string), draftIntentGraph (IntentGraph), turns (ElicitationTurn[]), status (open|clarifying|complete|abandoned). Invariants: session is complete only when all blocking unknowns are resolved; Ada proposes structure first, then asks for confirmation — it does not ask open-ended questions.
+
+STABLE BOUNDED CONTEXTS (use these exact names — do not invent alternatives):
+1. compilation-pipeline — owns CompilationRun, PipelineStage, IntentGraph, Blueprint
+2. provenance — owns PostcodeAddress, ProvenanceChain, ProvenanceRecord
+3. runtime-governance — owns WorldState, DelegationContract, MacroPlan, Session
+4. self-improvement — owns Amendment, Skill
+5. elicitation — owns ElicitationSession
+6. artifact-output — owns CLAUDE.md generation, agent file generation, hook generation, .mcp.json, BUILD.md
+7. mcp-interface — owns all 22 MCP tool definitions and the stdio server process
+8. storage — owns SQLite adapters for run history, provenance records, world state
+
+OUT OF SCOPE:
+- Ada (the ISO programming language) — no GNAT, no .adb/.ads files
+- Browser execution environments — Node.js server-side only
+- Database or persistence layer within the pipeline — all state is in-memory during compilation
+- npm or yarn — pnpm only
+- Machine learning model training or inference
+- React or browser UI components — agents are semantic pipeline units
+- External API calls within pipeline stages — compilation is self-contained
+
+IDENTITY:
+Ada is not a chatbot, assistant, or code generator. Ada is a semantic operating system. The user operates at the level of intent, validation, and direction. Everything below that — architecture, implementation decisions, agent coordination, verification, governed execution — is Ada's domain. The user never manages individual Claude Code sessions when working through Ada.

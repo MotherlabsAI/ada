@@ -43,6 +43,8 @@ export class EntityAgent extends Agent<EntityInput, EntityMap> {
       .map(([k, v]) => `${k} = ${v}`)
       .join("\n  ");
 
+    const rawIntent = input.intentGraph.rawIntent ?? "";
+
     return `You are the Entity agent. Your lens: STRUCTURAL — nouns, invariants.
 You are BLIND to behavior/workflows — only model what EXISTS, not what HAPPENS.
 
@@ -54,7 +56,11 @@ GOALS:
 VOCABULARY:
   ${vocab || "none defined"}
 
+RAW INTENT (full original text — use this to find explicit entity definitions, domain models, and named concepts the user described):
+${rawIntent}
+
 First, think out loud about what entities must exist in this system.
+If the raw intent contains explicit entity definitions, extract them directly — do not ignore them.
 
 For each entity you find, explain WHY it must exist:
   ◈ "X must exist because [goal] requires [capability]"
