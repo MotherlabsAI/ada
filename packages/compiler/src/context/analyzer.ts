@@ -120,6 +120,22 @@ function extractFields(body: string): TypeField[] {
   return fields;
 }
 
+function extractClasses(source: string): string[] {
+  const names: string[] = [];
+  // export class X / export abstract class X
+  const classRe = /export\s+(?:abstract\s+)?class\s+(\w+)/g;
+  let match: RegExpExecArray | null;
+  while ((match = classRe.exec(source)) !== null) {
+    names.push(match[1]!);
+  }
+  // export function X / export async function X
+  const funcRe = /export\s+(?:async\s+)?function\s+(\w+)/g;
+  while ((match = funcRe.exec(source)) !== null) {
+    names.push(match[1]!);
+  }
+  return names;
+}
+
 function extractConstants(
   source: string,
   sourcePath: string,
@@ -148,7 +164,12 @@ function scanPackage(
   pkgName: string,
   projectRoot: string,
   excludeNames: Set<string> = DEFAULT_EXCLUDE_NAMES,
-): { types: TypeRegistryEntry[]; constants: ConstantEntry[]; deps: string[] } {
+): {
+  types: TypeRegistryEntry[];
+  constants: ConstantEntry[];
+  deps: string[];
+  classNames: string[];
+} {
   // Try src/ first, then the package root itself
   const srcDir = path.join(pkgRoot, "src");
   const tsFiles = fs.existsSync(srcDir)
@@ -157,6 +178,7 @@ function scanPackage(
 
   const types: TypeRegistryEntry[] = [];
   const constants: ConstantEntry[] = [];
+  const classNames: string[] = [];
   let deps: string[] = [];
 
   // Read deps from package.json if present
@@ -185,9 +207,13 @@ function scanPackage(
     const relPath = path.relative(projectRoot, filePath);
     types.push(...extractTypes(source, relPath, pkgName));
     constants.push(...extractConstants(source, relPath, pkgName));
+    classNames.push(...extractClasses(source));
   }
 
-  return { types, constants, deps };
+  // Deduplicate class names
+  const uniqueClasses = [...new Set(classNames)];
+
+  return { types, constants, deps, classNames: uniqueClasses };
 }
 
 function resolveProjectName(projectRoot: string): string {
@@ -276,7 +302,7 @@ export function analyzeCodebase(
         /* skip */
       }
 
-      const { types, constants, deps } = scanPackage(
+      const { types, constants, deps, classNames } = scanPackage(
         pkgRoot,
         pkgName,
         resolvedRoot,
@@ -287,6 +313,7 @@ export function analyzeCodebase(
       boundaries.push({
         name: pkgName,
         types: types.map((t) => t.name),
+        classNames,
         dependencies: deps.filter((d) =>
           monorepoPackages.some((p) => d.includes(p)),
         ),
@@ -331,7 +358,7 @@ export function analyzeCodebase(
     }
 
     if (allTypes.length > 0 || allConstants.length > 0) {
-      const { deps } = scanPackage(
+      const { deps, classNames } = scanPackage(
         resolvedRoot,
         projectName,
         resolvedRoot,
@@ -340,6 +367,7 @@ export function analyzeCodebase(
       boundaries.push({
         name: projectName,
         types: allTypes.map((t) => t.name),
+        classNames,
         dependencies: deps,
       });
     }

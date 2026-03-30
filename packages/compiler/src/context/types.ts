@@ -23,6 +23,7 @@ export interface ConstantEntry {
 export interface PackageBoundary {
   readonly name: string;
   readonly types: readonly string[];
+  readonly classNames: readonly string[];
   readonly dependencies: readonly string[];
 }
 

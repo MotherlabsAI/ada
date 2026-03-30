@@ -61,18 +61,43 @@ function formatTypeRegistry(ctx: CodebaseContext): string {
 function formatPackageBoundaries(ctx: CodebaseContext): string {
   if (ctx.packageBoundaries.length === 0) return "";
 
+  // Collect all class/function names across all packages for the naming rule
+  const allComponentNames = ctx.packageBoundaries
+    .flatMap((pkg) => pkg.classNames)
+    .filter((n) => n.length > 0);
+  const uniqueNames = [...new Set(allComponentNames)];
+
   let section =
-    "\n\n--- PACKAGE BOUNDARIES (these packages exist with these exports and dependencies) ---\n";
+    "\n\n--- COMPONENT VOCABULARY (CRITICAL — these classes and functions already exist in the codebase) ---\n";
+  section +=
+    "NAMING RULE: When a component you derive maps to one of these names, you MUST use that exact name.\n";
+  section +=
+    "Do NOT invent synonyms. PipelineOrchestrator exists → use PipelineOrchestrator, not CompilationOrchestrator.\n\n";
+
+  if (uniqueNames.length > 0) {
+    section += `Existing components: ${uniqueNames.join(", ")}\n`;
+  } else {
+    section +=
+      "(no exported classes found — name components from first principles)\n";
+  }
+
+  section += "\n--- PACKAGE STRUCTURE ---\n";
   for (const pkg of ctx.packageBoundaries) {
+    const classes =
+      pkg.classNames.length > 0
+        ? `  components: ${pkg.classNames.join(", ")}\n`
+        : "";
     const types =
-      pkg.types.length > 0 ? pkg.types.join(", ") : "(no exported types)";
+      pkg.types.length > 0
+        ? `  types: ${pkg.types.slice(0, 12).join(", ")}${pkg.types.length > 12 ? ` … +${pkg.types.length - 12} more` : ""}\n`
+        : "";
     const deps =
       pkg.dependencies.length > 0
-        ? ` → depends on: ${pkg.dependencies.join(", ")}`
+        ? `  depends on: ${pkg.dependencies.join(", ")}\n`
         : "";
-    section += `${pkg.name}: ${types}${deps}\n`;
+    section += `\n${pkg.name}:\n${classes}${types}${deps}`;
   }
-  section += "--- END PACKAGE BOUNDARIES ---";
+  section += "\n--- END COMPONENT VOCABULARY ---";
   return section;
 }
 

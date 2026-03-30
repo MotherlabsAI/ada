@@ -159,6 +159,11 @@ STATE MACHINES: ${input.processFlow.stateMachines.map((sm) => `${sm.entity} [${s
 Derive one component per bounded context minimum.
 Each component needs: name, responsibility, interfaces (method names), dependencies, boundedContext.
 
+COMPONENT NAMING RULE (enforced):
+When the codebase vocabulary section above lists existing component names, you MUST use those exact names.
+A component that maps to an existing class gets that class's exact name — no synonyms, no renames.
+Only invent a new name when no existing class covers that responsibility.
+
 CRITICAL RULES:
 - "components" must be POPULATED with actual component objects — not empty, not type definitions
 - "openQuestions" must be an array of STRINGS like ["What handles session resume?"] — NOT objects
