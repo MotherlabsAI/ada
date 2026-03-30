@@ -1,5 +1,30 @@
 #!/usr/bin/env node
 
+// ─── Load persisted API key before any imports read process.env ──────────────
+// ada config set-key saves to ~/.ada/config.json. Load it here so the
+// compiler's lazy apiKey reads pick it up at call time.
+import * as fs_boot from "fs";
+import * as path_boot from "path";
+import * as os_boot from "os";
+{
+  if (!process.env["ANTHROPIC_API_KEY"]) {
+    const cfgPath = path_boot.join(os_boot.homedir(), ".ada", "config.json");
+    if (fs_boot.existsSync(cfgPath)) {
+      try {
+        const cfg = JSON.parse(fs_boot.readFileSync(cfgPath, "utf8")) as {
+          providers?: Record<string, { keyValue: string }>;
+        };
+        const anthropicKey = cfg.providers?.["anthropic"]?.keyValue;
+        if (anthropicKey) {
+          process.env["ANTHROPIC_API_KEY"] = anthropicKey;
+        }
+      } catch {
+        // corrupt config — ignore, let compile fail with clear error
+      }
+    }
+  }
+}
+
 import React from "react";
 import { render } from "ink";
 import { WelcomeScreen } from "./ui/welcome.js";
@@ -45,7 +70,25 @@ async function promptForIntent(): Promise<string> {
   return intentPromise;
 }
 
+function checkApiKey(): void {
+  if (!process.env["ANTHROPIC_API_KEY"]) {
+    console.error(`
+  ◈ ada needs an Anthropic API key to compile.
+
+  Option 1 — set it in your shell:
+    export ANTHROPIC_API_KEY=sk-ant-...
+
+  Option 2 — save it once with ada:
+    ada config set-key
+
+  Get a key at https://console.anthropic.com
+`);
+    process.exit(1);
+  }
+}
+
 async function runCompile(intentFromArgs: string): Promise<void> {
+  checkApiKey();
   let intent = intentFromArgs;
   if (!intent) {
     intent = await promptForIntent();
@@ -134,23 +177,21 @@ async function main(): Promise<void> {
     ada compile "<intent>"   Compile with intent inline
                              --no-execute   Write config only, skip Claude spawn
                              --amend        Extend existing blueprint (reads .ada/state.json)
-                             --self         Self-compilation mode — scan Ada's own packages
-                             --out <dir>    Write output to <dir> instead of cwd (prevents
-                                            stomping project CLAUDE.md on self-compile)
 
-  Other commands:
+  Commands:
     ada scan                 Show what Ada sees in this codebase before compiling
+    ada run                  Launch Claude Code with governor watching for drift
     ada verify               Verify codebase against compiled blueprint
     ada hook install         Install pre-push hook — ada verify runs before every push
     ada hook uninstall       Remove the hook
-    ada config set-key       Persist API key
-    ada resume <id>          Resume from checkpoint
+    ada config set-key       Persist Anthropic API key
+    ada resume <id>          Resume from a checkpoint
     ada review-amendments    Review and apply blueprint amendment queue
     ada review-skills        Review and approve extracted skill candidates
-    ada rollback-skill <name>  Remove a promoted skill (git-safe rollback)
-    ada compile-headless "<intent>" [dir]
-                             Headless compile — no UI, JSON to stdout
-    ada mcp                  Start MCP spec authority server (stdio)
+    ada rollback-skill <n>   Remove a promoted skill
+
+  Setup:
+    ada config set-key           (prompts for your Anthropic key)
 `);
       break;
     // Bare `ada` — interactive compile mode

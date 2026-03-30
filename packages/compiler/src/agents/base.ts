@@ -115,8 +115,12 @@ function fixAdditionalProperties(
   return result;
 }
 
-const apiKey = process.env["ANTHROPIC_API_KEY"];
-const useAPI = !!apiKey;
+function getApiKey(): string | undefined {
+  return process.env["ANTHROPIC_API_KEY"];
+}
+function isApiMode(): boolean {
+  return !!process.env["ANTHROPIC_API_KEY"];
+}
 
 export abstract class Agent<TInput, TOutput> {
   abstract readonly name: string;
@@ -149,7 +153,7 @@ export abstract class Agent<TInput, TOutput> {
     prompt: string,
     callbacks?: AgentCallbacks,
   ): Promise<{ parsed: TOutput | null; reasoning: string; error?: string }> {
-    const client = new Anthropic({ apiKey: apiKey! });
+    const client = new Anthropic({ apiKey: getApiKey()! });
     let reasoning = "";
 
     // Phase 1: stream with visible reasoning (glass box)
@@ -400,7 +404,7 @@ export abstract class Agent<TInput, TOutput> {
     }
     debugLog(
       this.stageCode,
-      `CALLING ${useAPI ? "API" : "CLI"} — model: ${this.model}`,
+      `CALLING ${isApiMode() ? "API" : "CLI"} — model: ${this.model}`,
     );
 
     const startTime = Date.now();
@@ -409,7 +413,7 @@ export abstract class Agent<TInput, TOutput> {
     let parseFailure = false;
     let error: string | undefined;
 
-    if (useAPI) {
+    if (isApiMode()) {
       // ─── API: stream reasoning (glass box) → extract JSON → structured fallback ───
       const result = await this.callAPI(prompt, callbacks);
       parsed = result.parsed;

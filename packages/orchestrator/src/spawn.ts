@@ -13,9 +13,13 @@ export async function* spawn(config: SpawnConfig): AsyncGenerator<ClaudeEvent> {
     args.push("--resume", config.sessionId);
   }
 
+  // Unset ANTHROPIC_API_KEY so Claude Code uses its own OAuth credentials,
+  // not Ada's compilation key — these are two different auth contexts.
+  const { ANTHROPIC_API_KEY: _adaKey, ...claudeEnv } = process.env;
   const proc = cpSpawn("claude", args, {
     cwd: config.workingDir,
     stdio: ["pipe", "pipe", "pipe"],
+    env: { ...claudeEnv, ADA_PROJECT_DIR: config.workingDir },
   });
 
   let buffer = "";

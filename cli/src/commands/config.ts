@@ -74,15 +74,33 @@ async function verifyKeyLiveness(
   return false;
 }
 
+async function promptForKey(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    rl.question("  Anthropic API key (sk-ant-...): ", (answer) => {
+      rl.close();
+      const key = answer.trim();
+      if (!key) {
+        reject(new Error("no key entered"));
+      } else {
+        resolve(key);
+      }
+    });
+  });
+}
+
 export async function configCommand(argv: string[]): Promise<void> {
   const sub = argv[0];
   if (sub !== "set-key") {
     process.stderr.write(`Unknown config subcommand: ${sub ?? "(none)"}\n`);
     process.stderr.write(
-      "Usage: ada config set-key --provider <name> --key <value>\n",
+      "Usage: ada config set-key              (interactive)\n",
     );
     process.stderr.write(
-      "       ada config set-key --provider <name> --env <VAR>\n",
+      "       ada config set-key --key sk-ant-...  (inline)\n",
     );
     process.exit(1);
     return;
@@ -95,14 +113,68 @@ export async function configCommand(argv: string[]): Promise<void> {
   };
   const has = (flag: string): boolean => rest.includes(flag);
 
-  const provider = get("--provider");
-  const keyFlag = get("--key");
-  const envFlag = get("--env");
   const noVerify = has("--no-verify");
   const configPath = get("--config-path");
 
+  // ── Interactive shortcut: ada config set-key (no flags) ──────────────────
+  // Assumes Anthropic. Prompts for the key value. Simple first-run flow.
+  if (rest.length === 0 || (rest.length === 1 && rest[0] === "--no-verify")) {
+    let keyValue: string;
+    try {
+      console.log("\n  ◈ ada — save your Anthropic API key\n");
+      keyValue = await promptForKey();
+      console.log("");
+    } catch {
+      process.stderr.write("  no key entered — cancelled.\n");
+      process.exit(1);
+      return;
+    }
+
+    const filePath = resolveConfigPath(configPath);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    let existing: ConfigFile = { providers: {} };
+    if (fs.existsSync(filePath)) {
+      try {
+        existing = JSON.parse(fs.readFileSync(filePath, "utf8")) as ConfigFile;
+      } catch {
+        existing = { providers: {} };
+      }
+    }
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify(
+        {
+          providers: {
+            ...existing.providers,
+            anthropic: { keyValue, source: "CLI_FLAG" },
+          },
+        },
+        null,
+        2,
+      ),
+      { encoding: "utf8", mode: 0o600 },
+    );
+    try {
+      fs.chmodSync(filePath, 0o600);
+    } catch {
+      /* ignore */
+    }
+
+    if (!noVerify) {
+      process.stdout.write("  verifying key...\n");
+      await verifyKeyLiveness("anthropic", keyValue);
+    }
+    console.log(`  ◈ key saved. Ada will use it automatically.\n`);
+    return;
+  }
+
+  // ── Flag-based path (existing behavior) ──────────────────────────────────
+  const provider = get("--provider");
+  const keyFlag = get("--key");
+  const envFlag = get("--env");
+
   if (!provider) {
-    process.stderr.write("Error: NO_KEY_SOURCE — --provider is required\n");
+    process.stderr.write("Error: --provider is required\n");
     process.exit(1);
     return;
   }
