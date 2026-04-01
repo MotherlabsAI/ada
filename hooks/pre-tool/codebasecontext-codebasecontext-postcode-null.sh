@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: codebaseContext.postcode !== null
 # Entity: CodebaseContext
-# Description: PostcodeAddress must be present — CodebaseContext is a provenance-bearing artifact
+# Description: the codebase context must be content-addressed — it is the CTX stage output and root of the compilation chain
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

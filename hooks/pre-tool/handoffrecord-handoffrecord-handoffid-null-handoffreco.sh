@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: handoffRecord.handoffId !== null && handoffRecord.handoffId.length > 0
 # Entity: HandoffRecord
-# Description: Handoff must have identity — anonymous handoffs cannot be referenced by the orchestrator
+# Description: handoffId must be non-null to identify the boundary event between elicitation and compilation
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

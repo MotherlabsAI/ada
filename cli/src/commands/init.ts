@@ -11,7 +11,7 @@ import type {
   ClarificationAnswer,
   PriorBlueprintContext,
 } from "@ada/compiler";
-import { writeConfigGraph } from "@ada/config-writer";
+import { writeConfigGraph, ManifoldProjector } from "@ada/config-writer";
 import { writeWorldModel } from "../world-model.js";
 import { AdaStorage } from "@ada/storage";
 import { createCompileRenderer, STAGE_ORDER } from "../ui/terminal.js";
@@ -995,6 +995,10 @@ export async function initCommand(
     finalResult.pipelineState.persona
       ? { domainContext: finalResult.pipelineState.persona }
       : {};
+
+  const projector = new ManifoldProjector();
+  projector.project(finalResult.manifoldState, targetDir, acceptOptions);
+
   const configGraph = writeConfigGraph(
     finalResult.blueprint,
     decision,

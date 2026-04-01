@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: verificationReport.postcode !== null
 # Entity: VerificationReport
-# Description: Report must carry its own postcode — it is a typed artifact in the provenance chain
+# Description: the report itself must be content-addressed — it participates in the provenance chain as a VER stage output
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

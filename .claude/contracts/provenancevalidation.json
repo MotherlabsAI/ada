@@ -1,0 +1,68 @@
+{
+  "context": "ProvenanceValidation",
+  "componentName": "PostcodeAddressFactory",
+  "scope": {
+    "boundedContext": "ProvenanceValidation",
+    "allowedPathGlobs": [
+      "src/provenancevalidation/**",
+      "packages/provenancevalidation/**",
+      "apps/provenancevalidation/**",
+      "lib/provenancevalidation/**"
+    ],
+    "forbiddenPathGlobs": [
+      "!src/componentregistry/**",
+      "!packages/componentregistry/**",
+      "!apps/componentregistry/**",
+      "!lib/componentregistry/**",
+      "!src/componentregistry/**",
+      "!packages/componentregistry/**",
+      "!apps/componentregistry/**",
+      "!lib/componentregistry/**",
+      "!src/ordinalassignment/**",
+      "!packages/ordinalassignment/**",
+      "!apps/ordinalassignment/**",
+      "!lib/ordinalassignment/**",
+      "!src/entityextraction/**",
+      "!packages/entityextraction/**",
+      "!apps/entityextraction/**",
+      "!lib/entityextraction/**",
+      "!src/gateevaluation/**",
+      "!packages/gateevaluation/**",
+      "!apps/gateevaluation/**",
+      "!lib/gateevaluation/**",
+      "!src/pipelineexecution/**",
+      "!packages/pipelineexecution/**",
+      "!apps/pipelineexecution/**",
+      "!lib/pipelineexecution/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "stopConditions": [
+    "Any invariant violation detected",
+    "Two consecutive tool failures on the same operation",
+    "Implementation diverges from compiled blueprint intent"
+  ],
+  "requiredEvidence": [
+    "Component builds without TypeScript errors",
+    "No pre-existing tests broken"
+  ],
+  "reportingCadence": "on-completion",
+  "maxRecursionDepth": 0,
+  "inheritedPermissions": [
+    "Bash(pnpm *)",
+    "Bash(tsc *)",
+    "Bash(node *)",
+    "Bash(git status)",
+    "Bash(git diff *)",
+    "mcp__ada__*"
+  ],
+  "compiledAt": 1774682092902,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"8d194544\",\"version\":1,\"raw\":\"ML.SYN.8d194544/v1\"}"
+}

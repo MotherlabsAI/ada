@@ -6,139 +6,571 @@
         "hooks": [
           {
             "type": "command",
-            "command": "hooks/pre-tool/compileresult-compileresult-status-null.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/compileresult-compileresult-blueprint-null.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/compileresult-compileresult-governordecision-null.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/compileresult-compileresult-iterationcount-1.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/pipelinestate-pipelinestate-gates-null.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/pipelinestate-pipelinestate-cumulativeentropy-0.sh"
-          },
-          {
-            "type": "command",
             "command": "hooks/pre-tool/compilationrun-compilationrun-runid-null-compilationrun.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/compilationrun-compilationrun-completedat-compilationru.sh"
+            "command": "hooks/pre-tool/compilationrun-compilationrun-confidence-0-compilationr.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/compilationrun-compilationrun-totaldurationms-0.sh"
+            "command": "hooks/pre-tool/compilationrun-compilationrun-stages-length-9.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/blueprintcomponentregistry-blueprintcomponentregistry-totalcomponen.sh"
+            "command": "hooks/pre-tool/compilationrun-compilationrun-decision-null.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/blueprintcomponentregistry-blueprintcomponentregistry-components-le.sh"
+            "command": "hooks/pre-tool/compilationrun-compilationrun-iterationcount-3.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/blueprintcomponentregistry-blueprintcomponentregistry-registryid-nu.sh"
+            "command": "hooks/pre-tool/compilationrun-compilationrun-blueprintpostcode-null-co.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/blueprintcomponentregistry-blueprintcomponentregistry-pipelinerunid.sh"
+            "command": "hooks/pre-tool/pipelinestage-pipelinestage-ordinal-1-pipelinestage-or.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/namedblueprintcomponent-namedblueprintcomponent-ordinal-1-namedb.sh"
+            "command": "hooks/pre-tool/pipelinestage-pipelinestage-stagecode-null-pipelinesta.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/namedblueprintcomponent-namedblueprintcomponent-componentid-null.sh"
+            "command": "hooks/pre-tool/pipelinestage-pipelinestage-postcode-null.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/namedblueprintcomponent-namedblueprintcomponent-name-null-namedb.sh"
+            "command": "hooks/pre-tool/pipelinestage-pipelinestage-usesllm-false-int-per-ent-.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/canonicalentity-canonicalentity-entityid-null-canonicale.sh"
+            "command": "hooks/pre-tool/pipelinestage-pipelinestage-output-null.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/canonicalentity-canonicalentity-label-null-canonicalenti.sh"
+            "command": "hooks/pre-tool/intentgraph-intentgraph-goals-length-1.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/entitymap-entitymap-entitycount-entitymap-entities.sh"
+            "command": "hooks/pre-tool/intentgraph-intentgraph-goals-some-g-g-type-stated.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/entitymap-entitymap-entitycount-0.sh"
+            "command": "hooks/pre-tool/intentgraph-intentgraph-unknowns-filter-u-u-impact-b.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/entitymap-entitymap-postcode-null-entitymap-postco.sh"
+            "command": "hooks/pre-tool/intentgraph-intentgraph-rawintent-null-intentgraph-r.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/ententityregistration-ententityregistration-sourcecomponentid-.sh"
+            "command": "hooks/pre-tool/intentgraph-intentgraph-postcode-null.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/ententityregistration-ententityregistration-provenancerecordpo.sh"
+            "command": "hooks/pre-tool/blueprint-blueprint-architecture-components-length.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/ententityregistration-ententityregistration-targetregistrytype.sh"
+            "command": "hooks/pre-tool/blueprint-blueprint-postcode-null.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/c3assignmentgap-c3assignmentgap-componentordinal-3.sh"
+            "command": "hooks/pre-tool/blueprint-blueprint-audit-governordecision-accept.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/c3assignmentgap-c3assignmentgap-isresolved-true-c3assign.sh"
+            "command": "hooks/pre-tool/blueprint-blueprint-datamodel-entities-length-1.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/c3assignmentgap-c3assignmentgap-isresolved-true-c3assign.sh"
+            "command": "hooks/pre-tool/blueprint-blueprint-scope-outofscope-length-14.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/c3assignmentgap-c3assignmentgap-gapid-null-c3assignmentg.sh"
+            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-prefix-ml.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/componentpackageassignment-componentpackageassignment-componentordi.sh"
+            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-hash-length-8.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/componentpackageassignment-componentpackageassignment-assignmentid-.sh"
+            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-version-1.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/componentpackageassignment-componentpackageassignment-isresolved-tr.sh"
+            "command": "hooks/pre-tool/postcodeaddress-hash-is-derived-from-content-not-random-.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/componentpackagemapping-componentpackagemapping-assignmentcount-.sh"
+            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-raw-null-postcodeaddress.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/componentpackagemapping-componentpackagemapping-istotal-true-com.sh"
+            "command": "hooks/pre-tool/provenancechain-provenancechain-frompostcode-null-proven.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/componentpackagemapping-componentpackagemapping-mappingid-null-c.sh"
+            "command": "hooks/pre-tool/provenancechain-provenancechain-hopcount-3-non-ent-artif.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechain-provenancechain-timestamp-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancechain-provenancechain-frompostcode-provenancec.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancerecord-provenancerecord-postcode-null-provenanc.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancerecord-provenancerecord-stage-null-provenancere.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancerecord-provenancerecord-timestamp-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/worldstate-worldstate-uncertaintyscore-0-worldstate.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/worldstate-worldstate-environmentfacts-every-f-f-co.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/worldstate-worldstate-environmentfacts-filter-f-f-s.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/worldstate-worldstate-environmentfacts-filter-f-f-s.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/worldstate-worldstate-version-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/statefact-statefact-confidence-0-statefact-confide.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/statefact-statefact-source-tool-output-statefact-c.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/statefact-statefact-fact-null-statefact-fact-lengt.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/statefact-statefact-observedat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/delegationcontract-delegationcontract-maxrecursiondepth-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/delegationcontract-delegationcontract-scope-allowedpathglob.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/delegationcontract-delegationcontract-blueprintpostcode-nul.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/delegationcontract-delegationcontract-stopconditions-length.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/delegationcontract-delegationcontract-compiledat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/macroplan-macroplan-tasks-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/macroplan-macroplan-completedtasks-macroplan-total.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/macroplan-task-order-respects-component-dependency.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/macroplan-macroplan-capturedat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/session-session-decision-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/session-session-decision-halt-triggers-process-e.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/session-session-finalconfidence-0-session-finalc.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/session-driftevents-are-immutable-after-write-se.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/session-session-sessionid-null-session-sessionid.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/driftevent-driftevent-id-null-driftevent-id-length-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/driftevent-driftevent-recordedat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/driftevent-driftevent-original-driftevent-actual.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/driftevent-immutable-after-write-true.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/amendment-amendment-id-null-amendment-id-length-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/amendment-amendment-proposedby-null-amendment-prop.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/amendment-status-is-immutable-after-set-to-approve.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/amendment-amendment-targetsection-null-amendment-t.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/skill-skill-sourcesessionids-length-2.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/skill-skill-id-null-skill-id-length-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/skill-skill-status-approved-skill-skillfilepat.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/skill-governance-core-is-not-a-valid-extractio.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/elicitationsession-elicitationsession-sessionid-null-elicit.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/elicitationsession-elicitationsession-status-complete-elici.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/elicitationsession-session-is-complete-only-when-all-blocki.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/elicitationsession-elicitationsession-rawintent-null-elicit.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/elicitationturn-elicitationturn-turnid-null-elicitationt.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/elicitationturn-elicitationturn-turnindex-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/elicitationturn-elicitationturn-sessionid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/handoffrecord-handoffrecord-finalintentgraph-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/handoffrecord-handoffrecord-postcode-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/handoffrecord-handoffrecord-targetpipelinestage-int-go.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/handoffrecord-handoffrecord-emittedat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilationreadinessassessment-compilationreadinessassessment-compilati.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilationreadinessassessment-compilationreadinessassessment-terminati.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/compilationreadinessassessment-compilationreadinessassessment-assesseda.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/governordecision-governordecision-confidence-0-governorde.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/governordecision-governordecision-decision-reject-governo.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/governordecision-governordecision-postcode-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/governordecision-governordecision-provenanceintact-true-g.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/auditreport-auditreport-coveragescore-0-auditreport-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/auditreport-auditreport-coherencescore-0-auditreport.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/auditreport-auditreport-postcode-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/auditreport-auditreport-passed-auditreport-drifts-fi.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/buildcontract-buildcontract-gatepass-true.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/buildcontract-buildcontract-filetree-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/buildcontract-buildcontract-acceptancecriteria-length-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/buildcontract-buildcontract-postcode-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/configgraph-configgraph-claudemd-null-configgraph-cl.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/configgraph-configgraph-agents-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/configgraph-configgraph-mcpjson-null-configgraph-mcp.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/configgraph-configgraph-postcode-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/hookscript-hookscript-name-null-hookscript-name-len.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/hookscript-hookscript-type-pre-tool-hookscript-type.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/hookscript-hookscript-script-null-hookscript-script.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/hookscript-hookscript-path-null-hookscript-path-len.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/agentfile-agentfile-name-null-agentfile-name-lengt.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/agentfile-agentfile-body-null-agentfile-body-lengt.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/agentfile-agentfile-model-null-agentfile-model-len.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/agentfile-agentfile-path-null-agentfile-path-start.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/runtimecheckpoint-runtimecheckpoint-id-null-runtimecheckpo.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/runtimecheckpoint-runtimecheckpoint-createdat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/runtimecheckpoint-runtimecheckpoint-worldstateversion-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/skillcandidate-skillcandidate-sessionids-length-2.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/skillcandidate-skillcandidate-frequency-2.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/skillcandidate-skillcandidate-suggestedskillbody-null-s.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/skillcandidate-skillcandidate-id-null-skillcandidate-id.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/verificationreport-verificationreport-entitycoverage-0-veri.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/verificationreport-verificationreport-invariantcoverage-0-v.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/verificationreport-verificationreport-blueprintpostcode-nul.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/verificationreport-verificationreport-postcode-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/iterationrecord-iterationrecord-iterationnumber-1-iterat.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/iterationrecord-iterationrecord-governordecision-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/iterationrecord-iterationrecord-blueprint-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/fallbackblueprintresult-fallbackblueprintresult-iterationhistory.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/fallbackblueprintresult-fallbackblueprintresult-bestiterationind.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/fallbackblueprintresult-fallbackblueprintresult-uncertaintymarke.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/manifest-manifest-runid-null-manifest-runid-lengt.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/manifest-manifest-blueprintpostcode-null-manifest.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/manifest-manifest-compiledat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/manifest-manifest-governorpostcode-null-manifest-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/codebasecontext-codebasecontext-typeregistry-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/codebasecontext-codebasecontext-vocabulary-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/codebasecontext-codebasecontext-packageboundaries-length.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/codebasecontext-codebasecontext-postcode-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/domaincontext-domaincontext-domain-null-domaincontext-.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/domaincontext-domaincontext-stakeholders-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/domaincontext-domaincontext-excludedconcerns-length-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/domaincontext-domaincontext-postcode-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/gap-gap-gapid-null-gap-gapid-length-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/gap-gap-draftid-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/gap-gap-detectedat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/gap-gap-severity-null.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entgaterecord-entgaterecord-passed-entgaterecord-prove.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entgaterecord-entgaterecord-entitycount-1.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/entgaterecord-entgaterecord-gateid-null-entgaterecord-.sh"
           },
           {
             "type": "command",
@@ -150,107 +582,7 @@
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancechainrecord-provenancechainrecord-chainid-null-prove.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/provenancechainrecord-provenancechainrecord-componentid-null-p.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/provenancechainhop-provenancechainhop-hopindex-0-provenance.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/provenancechainhop-provenancechainhop-chainid-null-provenan.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/provenancechainhop-provenancechainhop-fromlabel-null-proven.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/provenancechainhop-provenancechainhop-tolabel-null-provenan.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entgaterecord-entgaterecord-passed-true-entgaterecord-.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entgaterecord-entgaterecord-passed-true-entgaterecord-.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entgaterecord-entgaterecord-passed-true-entgaterecord-.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entgaterecord-entgaterecord-gateid-null-entgaterecord-.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entstageresult-entstageresult-pipelinerunid-null-entsta.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entstageresult-entstageresult-gateid-null-entstageresul.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entblocker-entblocker-linkedgapid-null-entblocker-l.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entblocker-entblocker-iscleared-true-entblocker-cle.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entblocker-entblocker-iscleared-true-entblocker-cle.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/stalledpipelinerun-stalledpipelinerun-runid-ml-ent-e80e3c97.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/stalledpipelinerun-stalledpipelinerun-blockercount-stalledp.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/stalledpipelinerun-stalledpipelinerun-resumable-true-stalle.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/workspacepackagenode-workspacepackagenode-packagename-null.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/workspacepackagenode-workspacepackagenode-assignedcomponentid.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entprovenancerecord-entprovenancerecord-postcode-null-entpro.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entprovenancerecord-entprovenancerecord-stage-ent.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/entprovenancerecord-entprovenancerecord-subjectid-null-entpr.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/governordecision-governordecision-confidence-0-governorde.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/governordecision-governordecision-coveragescore-0-governo.sh"
-          },
-          {
-            "type": "command",
-            "command": "hooks/pre-tool/governordecision-governordecision-decision-null.sh"
+            "command": "hooks/pre-tool/provenancechainrecord-provenancechainrecord-hops-every-h-h-ist.sh"
           },
           {
             "type": "command",
@@ -262,27 +594,44 @@
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancegate-provenancegate-frompostcode-null-provena.sh"
+            "command": "hooks/pre-tool/stageexecutionrecord-stageexecutionrecord-metadata-null.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancegate-provenancegate-topostcode-null-provenanc.sh"
+            "command": "hooks/pre-tool/projectrecord-projectrecord-projectpath-null-projectre.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancegate-provenancegate-entropyestimate-0.sh"
+            "command": "hooks/pre-tool/projectrecord-projectrecord-runcount-1.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-prefix-ml.sh"
+            "command": "hooks/pre-tool/projectrecord-projectrecord-lastblueprintpostcode-null.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-hash-null-postcodeaddres.sh"
+            "command": "hooks/pre-tool/runrecord-runrecord-runid-null-runrecord-runid-len.sh"
           },
           {
             "type": "command",
-            "command": "hooks/pre-tool/postcodeaddress-postcodeaddress-raw-null-postcodeaddress.sh"
+            "command": "hooks/pre-tool/runrecord-runrecord-compiledat-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/runrecord-runrecord-durationms-0.sh"
+          },
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/runrecord-runrecord-blueprintpostcode-null-runreco.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/pre-tool/provenancerecord-immutable-after-write-no-mutation-operat.sh"
           }
         ]
       }

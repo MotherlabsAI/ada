@@ -22,7 +22,7 @@ import type {
 import * as fs from "fs";
 import * as path from "path";
 import type { PostcodeAddress } from "@ada/provenance";
-import { ProvenanceStore } from "@ada/provenance";
+import { ProvenanceStore, ManifoldStore, type ManifoldState, type SemanticNode, type SemanticEdge } from "@ada/provenance";
 import { analyzeCodebase } from "./context/analyzer.js";
 import { groundIntent } from "./web-grounding.js";
 import type {
@@ -332,6 +332,18 @@ export class MotherCompiler {
     const adaDir = path.join(cwd, ".ada");
     fs.mkdirSync(adaDir, { recursive: true });
     const store = new ProvenanceStore(path.join(adaDir, "provenance.db"));
+    const manifoldStore = new ManifoldStore(cwd);
+
+    // Initialize or load existing manifold state
+    const currentRef = manifoldStore.loadRef();
+    let manifoldState: ManifoldState = currentRef
+      ? manifoldStore.loadManifold(currentRef)
+      : {
+          ref: "",
+          nodes: {},
+          edges: [],
+          metrics: { totalEntropy: 1.0, nodeCount: 0, invariantPassRate: 0 },
+        };
 
     const emitAndGate = (
       stage: CompilerStageCode,
@@ -344,6 +356,30 @@ export class MotherCompiler {
     ): void => {
       const upstreams = previousPostcode ? [previousPostcode.raw] : [];
       store.record(postcode, upstreams, content);
+
+      // ─── Update Manifold State ───
+      const newNode: SemanticNode = {
+        id: postcode.raw,
+        coordinate: postcode.coordinate,
+        content: JSON.parse(content),
+        provenance: upstreams,
+        entropy: cumulativeEntropy, // snapshot before reduction
+      };
+
+      const newEdges: SemanticEdge[] = upstreams.map((up) => ({
+        from: up,
+        to: postcode.raw,
+        relation: "derives",
+      }));
+
+      manifoldState = {
+        ...manifoldState,
+        nodes: {
+          ...manifoldState.nodes,
+          [postcode.raw]: newNode,
+        },
+        edges: [...manifoldState.edges, ...newEdges],
+      };
 
       if (previousPostcode) {
         const gate = buildGate({
@@ -371,6 +407,18 @@ export class MotherCompiler {
         gates[postcode.raw] = gate;
         cumulativeEntropy = gate.entropyEstimate;
       }
+
+      // Update metrics and persist
+      manifoldState = {
+        ...manifoldState,
+        metrics: {
+          totalEntropy: cumulativeEntropy,
+          nodeCount: Object.keys(manifoldState.nodes).length,
+          invariantPassRate: 1.0, // Placeholder
+        },
+      };
+      manifoldStore.saveManifold(manifoldState);
+
       onStageComplete?.({
         stage,
         postcode,
@@ -773,6 +821,7 @@ export class MotherCompiler {
       ...pipelineState,
       synthesis: blueprintFinal,
       governor: governorDecision,
+      manifoldState,
     };
     const status =
       governorDecision.decision === "ACCEPT"
@@ -795,6 +844,7 @@ export class MotherCompiler {
       blueprint: blueprintFinal,
       governorDecision,
       pipelineState: finalState,
+      manifoldState,
       status,
       iterationCount: 1,
       compilationRun,

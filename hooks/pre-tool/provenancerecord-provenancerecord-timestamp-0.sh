@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: provenanceRecord.timestamp > 0
 # Entity: ProvenanceRecord
-# Description: Timestamp must be positive — temporal ordering of provenance records is required for audit integrity
+# Description: records must have a positive timestamp — unrecorded or zero timestamps indicate write failures
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

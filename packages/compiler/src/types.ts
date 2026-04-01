@@ -1,4 +1,4 @@
-import type { PostcodeAddress } from "@ada/provenance";
+import type { PostcodeAddress, ManifoldState } from "@ada/provenance";
 
 // ─── Stage Codes ───
 
@@ -356,6 +356,7 @@ export interface PipelineState {
   readonly governor: GovernorDecision | null;
   readonly gates: Record<string, ProvenanceGate>;
   readonly cumulativeEntropy: number;
+  readonly manifoldState?: ManifoldState;
 }
 
 // ─── Clarification ───
@@ -404,6 +405,7 @@ export interface CompileResult {
   readonly blueprint: Blueprint;
   readonly governorDecision: GovernorDecision;
   readonly pipelineState: PipelineState;
+  readonly manifoldState: ManifoldState;
   readonly status: CompileStatus;
   readonly iterationCount: number;
   readonly compilationRun: CompilationRun;

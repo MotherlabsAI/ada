@@ -1,0 +1,90 @@
+{
+  "context": "ent-stage",
+  "componentName": "BlueprintRegistryLoader",
+  "scope": {
+    "boundedContext": "ent-stage",
+    "allowedPathGlobs": [
+      "src/ent-stage/**",
+      "packages/ent-stage/**",
+      "apps/ent-stage/**",
+      "lib/ent-stage/**"
+    ],
+    "forbiddenPathGlobs": [
+      "!src/compilation-pipeline/**",
+      "!packages/compilation-pipeline/**",
+      "!apps/compilation-pipeline/**",
+      "!lib/compilation-pipeline/**",
+      "!src/provenance/**",
+      "!packages/provenance/**",
+      "!apps/provenance/**",
+      "!lib/provenance/**",
+      "!src/provenance/**",
+      "!packages/provenance/**",
+      "!apps/provenance/**",
+      "!lib/provenance/**",
+      "!src/compilation-pipeline/**",
+      "!packages/compilation-pipeline/**",
+      "!apps/compilation-pipeline/**",
+      "!lib/compilation-pipeline/**",
+      "!src/compilation-pipeline/**",
+      "!packages/compilation-pipeline/**",
+      "!apps/compilation-pipeline/**",
+      "!lib/compilation-pipeline/**",
+      "!src/elicitation/**",
+      "!packages/elicitation/**",
+      "!apps/elicitation/**",
+      "!lib/elicitation/**",
+      "!src/runtime-governance/**",
+      "!packages/runtime-governance/**",
+      "!apps/runtime-governance/**",
+      "!lib/runtime-governance/**",
+      "!src/self-improvement/**",
+      "!packages/self-improvement/**",
+      "!apps/self-improvement/**",
+      "!lib/self-improvement/**",
+      "!src/compilation-pipeline/**",
+      "!packages/compilation-pipeline/**",
+      "!apps/compilation-pipeline/**",
+      "!lib/compilation-pipeline/**",
+      "!src/runtime-governance/**",
+      "!packages/runtime-governance/**",
+      "!apps/runtime-governance/**",
+      "!lib/runtime-governance/**",
+      "!src/compilation-pipeline/**",
+      "!packages/compilation-pipeline/**",
+      "!apps/compilation-pipeline/**",
+      "!lib/compilation-pipeline/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "stopConditions": [
+    "Any invariant violation detected",
+    "Two consecutive tool failures on the same operation",
+    "Implementation diverges from compiled blueprint intent",
+    "Failure mode reached: IntentGraph postcode is not registered in provenance store — chain has no valid anchor point; Traversal reaches a hop where fromPostcode resolves to an unknown artifact — chain is broken mid-traversal; Hop count is 2 or 4 — chain exists but does not satisfy exactly-3-hop requirement",
+    "Failure mode reached: CompileResult blueprintPostcode does not resolve to a Blueprint artifact — self-governance cannot be verified; Blueprint architecture section contains fewer than 5 bounded contexts — Ada's governance domain is incomplete; DelegationContract blueprintPostcode does not match the verified Blueprint postcode — Ada would execute under a stale governance contract"
+  ],
+  "requiredEvidence": [
+    "ProvenanceChainRecord exists for each ENT artifact with hopCount exactly 3; each hop's fromPostcode and toPostcode are resolvable; timestamp ordering is strictly ascending from IntentGraph to ENT artifact; chain is marked verified in provenance store",
+    "Blueprint contains exactly 5 bounded contexts; all domain entities are enumerated in Blueprint dataModel; Blueprint processModel includes ENT gate evaluation workflow; DelegationContract for Ada references this Blueprint postcode; Blueprint is self-consistent for governing Ada's own execution"
+  ],
+  "reportingCadence": "on-completion",
+  "maxRecursionDepth": 1,
+  "inheritedPermissions": [
+    "Bash(pnpm *)",
+    "Bash(tsc *)",
+    "Bash(node *)",
+    "Bash(git status)",
+    "Bash(git diff *)",
+    "mcp__ada__*"
+  ],
+  "compiledAt": 1774843114933,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"f51d7897\",\"version\":1,\"raw\":\"ML.SYN.f51d7897/v1\"}"
+}

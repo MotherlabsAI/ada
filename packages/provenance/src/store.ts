@@ -1,5 +1,9 @@
 import Database from "better-sqlite3";
+import * as fs from "fs";
+import * as path from "path";
 import { PostcodeAddress } from "./postcode.js";
+import { GitObjectStore } from "./git-store.js";
+import { ManifoldState, SemanticNode } from "./manifold.js";
 
 export interface ProvenanceRecord {
   readonly postcode: string;
@@ -9,6 +13,92 @@ export interface ProvenanceRecord {
   readonly timestamp: number;
 }
 
+/**
+ * ManifoldStore: Manages the world model persistence using Git's object store
+ * and a local pointer file (.ada/ref).
+ */
+export class ManifoldStore {
+  private readonly gitStore: GitObjectStore;
+  private readonly refPath: string;
+
+  constructor(projectDir: string) {
+    this.gitStore = new GitObjectStore(projectDir);
+    this.refPath = path.join(projectDir, ".ada", "ref");
+    if (!fs.existsSync(path.dirname(this.refPath))) {
+      fs.mkdirSync(path.dirname(this.refPath), { recursive: true });
+    }
+  }
+
+  /** Read the current pointer from .ada/ref */
+  loadRef(): string | null {
+    if (!fs.existsSync(this.refPath)) return null;
+    const content = fs.readFileSync(this.refPath, "utf8").trim();
+    // Format: "ada/v1 <tree-sha>"
+    const match = content.match(/^ada\/v1 ([a-f0-9]{40,})$/);
+    return match ? match[1]! : null;
+  }
+
+  /** Write the current pointer to .ada/ref */
+  saveRef(treeSha: string): void {
+    fs.writeFileSync(this.refPath, `ada/v1 ${treeSha}\n`, "utf8");
+  }
+
+  /** Save a full ManifoldState to the Git object store */
+  saveManifold(state: ManifoldState): string {
+    const entries: Record<string, string> = {};
+
+    // Write all nodes as blobs
+    for (const [id, node] of Object.entries(state.nodes)) {
+      // Use the coordinate as the tree entry name (sanitized)
+      const entryName = id.replace(/ML\./g, "").replace(/\//g, "_");
+      const blobSha = this.gitStore.writeBlob(JSON.stringify(node, null, 2));
+      entries[entryName] = blobSha;
+    }
+
+    // Write the state manifest (including edges and metrics) as a special entry
+    const manifestBlobSha = this.gitStore.writeBlob(
+      JSON.stringify(
+        {
+          edges: state.edges,
+          metrics: state.metrics,
+        },
+        null,
+        2,
+      ),
+    );
+    entries["MANIFEST"] = manifestBlobSha;
+
+    const treeSha = this.gitStore.writeTree(entries);
+    this.saveRef(treeSha);
+    return treeSha;
+  }
+
+  /** Load a ManifoldState from the Git object store */
+  loadManifold(treeSha: string): ManifoldState {
+    const entries = this.gitStore.readTree(treeSha);
+    const nodes: Record<string, SemanticNode> = {};
+
+    const manifestSha = entries["MANIFEST"];
+    if (!manifestSha) throw new Error("Manifest missing in tree");
+
+    const manifestJson = JSON.parse(this.gitStore.readBlob(manifestSha));
+
+    for (const [name, sha] of Object.entries(entries)) {
+      if (name === "MANIFEST") continue;
+      const nodeJson = JSON.parse(this.gitStore.readBlob(sha)) as SemanticNode;
+      nodes[nodeJson.id] = nodeJson;
+    }
+
+    return {
+      ref: treeSha,
+      nodes,
+      edges: manifestJson.edges,
+      metrics: manifestJson.metrics,
+    };
+  }
+}
+
+/** Legacy ProvenanceStore (kept for SQLite backward compatibility) */
 export class ProvenanceStore {
   private readonly db: Database.Database;
 
@@ -34,22 +124,38 @@ export class ProvenanceStore {
     `);
   }
 
-  record(address: PostcodeAddress, upstreamPostcodes: readonly string[], content: string): void {
-    this.db.prepare(`
+  record(
+    address: PostcodeAddress,
+    upstreamPostcodes: readonly string[],
+    content: string,
+  ): void {
+    this.db
+      .prepare(
+        `
       INSERT OR REPLACE INTO provenance (postcode, stage, upstream_postcodes, content, timestamp)
       VALUES (?, ?, ?, ?, ?)
-    `).run(
-      address.raw,
-      address.stage,
-      JSON.stringify(upstreamPostcodes),
-      content,
-      Date.now()
-    );
+    `,
+      )
+      .run(
+        address.raw,
+        "LEGACY", // Simplified for new PostcodeAddress structure
+        JSON.stringify(upstreamPostcodes),
+        content,
+        Date.now(),
+      );
   }
 
   get(postcode: string): ProvenanceRecord | undefined {
-    const row = this.db.prepare("SELECT * FROM provenance WHERE postcode = ?").get(postcode) as
-      | { postcode: string; stage: string; upstream_postcodes: string; content: string; timestamp: number }
+    const row = this.db
+      .prepare("SELECT * FROM provenance WHERE postcode = ?")
+      .get(postcode) as
+      | {
+          postcode: string;
+          stage: string;
+          upstream_postcodes: string;
+          content: string;
+          timestamp: number;
+        }
       | undefined;
     if (!row) return undefined;
     return {
@@ -95,12 +201,16 @@ export class ProvenanceStore {
     location: string,
     original: string,
     actual: string,
-    severity: "critical" | "major" | "minor"
+    severity: "critical" | "major" | "minor",
   ): void {
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO drift_log (location, original, actual, severity, timestamp)
       VALUES (?, ?, ?, ?, ?)
-    `).run(location, original, actual, severity, Date.now());
+    `,
+      )
+      .run(location, original, actual, severity, Date.now());
   }
 
   close(): void {

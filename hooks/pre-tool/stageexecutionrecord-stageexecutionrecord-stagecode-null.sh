@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: stageExecutionRecord.stageCode !== null
 # Entity: StageExecutionRecord
-# Description: without a stageCode the record cannot be ordered within the CompilationRun or referenced by provenance chains
+# Description: every execution record must identify its stage — anonymous records cannot participate in the provenance chain
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

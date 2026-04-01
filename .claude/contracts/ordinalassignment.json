@@ -1,0 +1,72 @@
+{
+  "context": "OrdinalAssignment",
+  "componentName": "OrdinalAssignmentResolver",
+  "scope": {
+    "boundedContext": "OrdinalAssignment",
+    "allowedPathGlobs": [
+      "src/ordinalassignment/**",
+      "packages/ordinalassignment/**",
+      "apps/ordinalassignment/**",
+      "lib/ordinalassignment/**"
+    ],
+    "forbiddenPathGlobs": [
+      "!src/provenancevalidation/**",
+      "!packages/provenancevalidation/**",
+      "!apps/provenancevalidation/**",
+      "!lib/provenancevalidation/**",
+      "!src/componentregistry/**",
+      "!packages/componentregistry/**",
+      "!apps/componentregistry/**",
+      "!lib/componentregistry/**",
+      "!src/componentregistry/**",
+      "!packages/componentregistry/**",
+      "!apps/componentregistry/**",
+      "!lib/componentregistry/**",
+      "!src/entityextraction/**",
+      "!packages/entityextraction/**",
+      "!apps/entityextraction/**",
+      "!lib/entityextraction/**",
+      "!src/provenancevalidation/**",
+      "!packages/provenancevalidation/**",
+      "!apps/provenancevalidation/**",
+      "!lib/provenancevalidation/**",
+      "!src/gateevaluation/**",
+      "!packages/gateevaluation/**",
+      "!apps/gateevaluation/**",
+      "!lib/gateevaluation/**",
+      "!src/pipelineexecution/**",
+      "!packages/pipelineexecution/**",
+      "!apps/pipelineexecution/**",
+      "!lib/pipelineexecution/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "stopConditions": [
+    "Any invariant violation detected",
+    "Two consecutive tool failures on the same operation",
+    "Implementation diverges from compiled blueprint intent",
+    "Failure mode reached: ENTProvenanceRecord write infrastructure is unavailable, e.g. postcode service is down; ENTProvenanceRecord is written but the returned postcode is malformed or does not round-trip correctly; resolutionProvenancePostcode is written on gap but ENTProvenanceRecord is not retrievable by that postcode, creating a dangling reference"
+  ],
+  "requiredEvidence": [
+    "C3AssignmentGap.resolutionProvenancePostcode is non-null, ENTProvenanceRecord exists and is retrievable by postcode"
+  ],
+  "reportingCadence": "on-completion",
+  "maxRecursionDepth": 2,
+  "inheritedPermissions": [
+    "Bash(pnpm *)",
+    "Bash(tsc *)",
+    "Bash(node *)",
+    "Bash(git status)",
+    "Bash(git diff *)",
+    "mcp__ada__*"
+  ],
+  "compiledAt": 1774682092902,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"stage\":\"SYN\",\"hash\":\"8d194544\",\"version\":1,\"raw\":\"ML.SYN.8d194544/v1\"}"
+}

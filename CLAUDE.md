@@ -1,30 +1,72 @@
-# A gated sequential semantic compilation pipeline that loads a 10-component blueprint registry, collapses a C3 ordinal assignment gap, extracts canonical entities into an entity map, validates three-hop provenance chains, and evaluates the ENT gate to produce a passing CompileResult that unblocks pipeline run ML
+# Ada is a semantic operating system that compiles human intent into governed Claude Code execution artifacts
 
-A gated sequential semantic compilation pipeline that loads a 10-component blueprint registry, collapses a C3 ordinal assignment gap, extracts canonical entities into an entity map, validates three-hop provenance chains, and evaluates the ENT gate to produce a passing CompileResult that unblocks pipeline run ML.ENT.e80e3c97/v1 — all within a pnpm monorepo of TypeScript packages with zero compilation errors and zero test regressions.
+Ada is a semantic operating system that compiles human intent into governed Claude Code execution artifacts. It operates a 9-stage sequential pipeline (CTX→INT→PER→ENT→PRO→SYN→VER→GOV→BLD) that transforms raw intent through elicitation, domain modeling, entity extraction, process modeling, synthesis, verification, and governance into output configuration artifacts (CLAUDE.md, agent files, hooks, .mcp.json, BUILD.md, .ada/state.json). Every intermediate artifact is content-addressed via PostcodeAddress provenance, and a governor issues ACCEPT/REJECT/ITERATE decisions bounded to 3 iterations. Runtime execution enforces hierarchical delegation with macro-planners, micro-executors bounded by fileScope, and independent verifiers that never implement. Self-improvement is confined to workflows and skills — the governance core is immutable.
 
 ## Out of Scope
 Ada explicitly excluded these. Do not build them:
-- Ada programming language (ISO/IEC 8652): this system has no relation to the Ada language used in aerospace/defense/embedded systems
-- Native or machine code compilation: no LLVM, GCC, assembly, or bytecode emission occurs anywhere in this pipeline
-- Runtime execution environment: the compiler produces a CompileResult data structure, not executable artifacts that are subsequently run
-- npm/yarn registry publishing: no package is published to a registry as part of this compilation workflow
-- Database schema migrations or persistence layer modifications: entity maps are in-memory pipeline constructs, not database records
-- Frontend UI rendering or browser-targeted output: the ada compiler is a server-side/Node.js pipeline tool
-- Container orchestration, Kubernetes, or deployment infrastructure: compilation is a local/CI monorepo operation
-- Gap resolution strategies other than collapse: reassignment, deletion, reordering, and partial-fill are explicitly excluded by C5
-- Provenance chains of any hop count other than three: two-hop, four-hop, or variable-length chains are invalid by definition in this domain
-- Component counts other than exactly 10 in the BlueprintComponentRegistry: over- or under-population is a hard invariant violation
-- Cross-language interop or FFI: the entire pipeline is TypeScript/Node.js with no foreign function interface
-- Manual ordinal reassignment as an alternative to collapse: the C3 gap must be resolved exclusively via the collapse strategy
+- ISO Ada programming language (Ada 83/95/2005/2012/2022) — no GNAT toolchain, no .adb/.ads files, no Ada runtime, no AdaCore references
+- Browser execution environments — no DOM APIs, no window/document globals, no browser-targeted bundlers
+- npm and yarn package managers — pnpm workspace protocol exclusively
+- In-pipeline database or filesystem writes — all stage state in-memory; SQLite writes post-stage only
+- Machine learning model training, fine-tuning, or local inference — Ada consumes Claude API only
+- Application source code generation — Ada produces governance configuration artifacts only
+- REST API, GraphQL, or gRPC service layers — only stdio MCP server and CLI permitted
+- Multi-user or multi-tenant operation — single operator, single project context
+- Automated amendment approval — human operator is sole approver
+- Standalone MCP daemon or persistent service — subprocess only via ada mcp
+- React or browser UI components — no frontend, CLI is the only human-facing interface
+- Chatbot or question-answering behavior — elicitation is proposals-first, not open-ended dialogue
+- Skill extraction targeting governance core — only workflows and execution patterns on improvable surface
+- External API calls within pipeline stages — compilation is self-contained, LLM calls mediated through compiler Claude client only
+- Parallel or out-of-order pipeline stage execution — strictly sequential CTX→BLD
+- Infinite GOV iteration — bounded at max 3 iterations, 4th REJECT is terminal FATAL
 
 ## Build Order
-1. **BlueprintRegistryLoader** `BlueprintRegistry`
-2. **WorkspacePackageScanner** `WorkspacePackages`
-3. **C3GapCollapseResolver** `ComponentPackageBinding`
-4. **ProvenanceChainValidator** `ProvenanceAudit`
-5. **EntityExtractor** `EntityExtraction`
-6. **ENTGateEvaluator** `ENTGate`
-7. **PipelineOrchestrator** `PipelineExecution`
+1. **IntentAgent** `compilation-pipeline`
+2. **PersonaAgent** `compilation-pipeline`
+3. **PostcodeAddressFactory** `provenance`
+4. **ProvenanceStore** `provenance`
+5. **ProvenanceChainValidator** `provenance`
+6. **ENTGateEvaluator** `provenance`
+7. **EntityExtractor** `compilation-pipeline`
+8. **EntityAgent** `compilation-pipeline`
+9. **ProcessAgent** `compilation-pipeline`
+10. **SYNGateEvaluator** `compilation-pipeline`
+11. **SynthesisAgent** `compilation-pipeline`
+12. **VerifyAgent** `compilation-pipeline`
+13. **ConfidenceTracker** `compilation-pipeline`
+14. **GovernorAgent** `compilation-pipeline`
+15. **MotherCompiler** `compilation-pipeline`
+16. **AdaStorage** `storage`
+17. **PipelineOrchestrator** `compilation-pipeline`
+18. **INTStageController** `compilation-pipeline`
+19. **ProvenanceRecordWriter** `provenance`
+20. **buildWorldState** `runtime-governance`
+21. **writeCheckpoint** `runtime-governance`
+22. **runCompileLoop** `runtime-governance`
+23. **MacroPlan** `runtime-governance`
+24. **DelegationContract** `runtime-governance`
+25. **VerificationReport** `runtime-governance`
+26. **Skill** `self-improvement`
+27. **Amendment** `self-improvement`
+28. **SkillCandidate** `self-improvement`
+29. **DialogueEngine** `elicitation`
+30. **DraftIntentGraphManager** `elicitation`
+31. **GapAnalyzer** `elicitation`
+32. **ReadinessAssessor** `elicitation`
+33. **ElicitationStore** `storage`
+34. **ElicitationSessionManager** `elicitation`
+35. **HandoffEmitter** `elicitation`
+36. **blueprintToCLAUDEMD** `artifact-output`
+37. **componentsToAgents** `artifact-output`
+38. **invariantsToHooks** `artifact-output`
+39. **writeConfigGraph** `artifact-output`
+40. **deriveBuildContract** `artifact-output`
+41. **startServer** `runtime-governance`
+42. **WorkspacePackageScanner** `compilation-pipeline`
+43. **analyzeCodebase** `compilation-pipeline`
+44. **diffBlueprintAgainstCode** `compilation-pipeline`
+45. **FallbackBlueprintResult** `compilation-pipeline`
 
 ## Ada MCP
 The MCP server is the spec authority. Pull context on demand — never assume from memory.
@@ -42,7 +84,7 @@ The MCP server is the spec authority. Pull context on demand — never assume fr
 - `ada.set_task_status(component, 'complete', [evidence])` — mark complete
 
 ## Compilation Health
-**Decision:** ACCEPT  **Confidence:** 88%  **Gates:** 100%
+**Decision:** ACCEPT  **Confidence:** 95%  **Gates:** 100%
 
 ## This Session
 You are the lead agent. Call `ada.advance_execution(agentId)` to get your first task. Follow the execution brief. Verify postconditions before marking complete.

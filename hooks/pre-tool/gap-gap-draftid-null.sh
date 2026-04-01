@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: gap.draftId !== null
 # Entity: Gap
-# Description: Gap must be bound to a specific DraftIntentGraph — without this, resolution cannot be applied to the correct draft
+# Description: every gap must reference its parent draft — orphaned gaps cannot be resolved against any elicitation session
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Invariant: provenanceRecord.content !== null
 # Entity: ProvenanceRecord
-# Description: Content must be present — a provenance record with no content has nothing to audit
+# Description: content must not be null — it is the basis for hash derivation and immutability verification
 INPUT=$(cat)
 CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // .tool_input.command // ""')
 # Structural enforcement not possible for this predicate.
