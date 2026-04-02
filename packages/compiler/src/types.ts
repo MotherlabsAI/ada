@@ -184,7 +184,8 @@ export interface SubGoalSpec {
   readonly derivedIntent: string; // synthesized intent for this context only
   readonly entities: readonly string[]; // entity names belonging to this context
   readonly workflows: readonly string[]; // workflow names belonging to this context
-  readonly invariants: readonly EntityInvariant[];
+  readonly invariants: readonly string[]; // predicate strings only, e.g. "payment.amount > 0"
+  readonly dependsOn: readonly string[]; // names of subGoals that must complete before this one
   readonly compilable: true; // discriminant — always true
 }
 

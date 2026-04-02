@@ -206,6 +206,7 @@ const subGoalSchema = z.object({
   entities: z.array(z.string()),
   workflows: z.array(z.string()),
   invariants: z.array(z.string()),
+  dependsOn: z.array(z.string()).default([]),
   compilable: z.literal(true),
 });
 

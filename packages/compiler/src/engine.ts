@@ -30,6 +30,7 @@ import {
   type SemanticEdge,
 } from "@ada/provenance";
 import { RunStore } from "./run-store.js";
+import { scheduleSubGoals } from "./subgoal-scheduler.js";
 import { analyzeCodebase } from "./context/analyzer.js";
 import { discoverContext, groundIntent } from "./web-grounding.js";
 import type {
@@ -797,6 +798,9 @@ export class MotherCompiler {
     for (const sg of synthesisOutput.subGoals ?? []) {
       runStore.writeSubGoal(runId, sg.name, sg);
     }
+    // Write the execution schedule (topological waves) for parallel orchestration
+    const schedule = scheduleSubGoals(synthesisOutput.subGoals ?? []);
+    runStore.writeSchedule(runId, schedule);
     const blueprint: Blueprint = {
       summary: synthesisOutput.summary,
       scope: synthesisOutput.scope,

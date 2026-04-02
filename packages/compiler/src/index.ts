@@ -66,6 +66,7 @@ export type {
   DependencySpec,
   AcceptanceCriterion,
   BuildContract,
+  SubGoalSpec,
 } from "./types.js";
 
 export { IntentAgent } from "./agents/intent.js";
@@ -90,6 +91,11 @@ export type {
   ConstantEntry,
   PackageBoundary,
 } from "./context/index.js";
+
+export {
+  scheduleSubGoals,
+  validateDependencyGraph,
+} from "./subgoal-scheduler.js";
 
 export {
   verify,

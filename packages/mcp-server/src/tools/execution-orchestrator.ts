@@ -24,6 +24,75 @@ export interface OrchestrationResult {
   readonly instructions: string; // human-readable execution instructions
 }
 
+// ─── SubGoal state ────────────────────────────────────────────────────────────
+
+interface SubGoalEntry {
+  name: string;
+  status: string;
+  completedAt?: number;
+  evidence?: string[];
+}
+
+interface SubGoalState {
+  subGoals: SubGoalEntry[];
+}
+
+function subGoalStatePath(projectDir: string): string {
+  return path.join(projectDir, ".ada", "subgoal-state.json");
+}
+
+export function completeSubGoal(
+  subGoalName: string,
+  evidence: string[],
+): { content: string; isError: boolean } {
+  const projectDir = process.env["ADA_PROJECT_DIR"] ?? process.cwd();
+  const statePath = subGoalStatePath(projectDir);
+
+  try {
+    let state: SubGoalState = { subGoals: [] };
+
+    try {
+      const raw = fs.readFileSync(statePath, "utf8");
+      state = JSON.parse(raw) as SubGoalState;
+    } catch {
+      // File doesn't exist or is unparseable — start fresh
+    }
+
+    const existing = state.subGoals.find((sg) => sg.name === subGoalName);
+    if (existing) {
+      existing.status = "complete";
+      existing.completedAt = Date.now();
+      existing.evidence = evidence;
+    } else {
+      state.subGoals.push({
+        name: subGoalName,
+        status: "complete",
+        completedAt: Date.now(),
+        evidence,
+      });
+    }
+
+    fs.mkdirSync(path.join(projectDir, ".ada"), { recursive: true });
+    fs.writeFileSync(statePath, JSON.stringify(state, null, 2), "utf8");
+
+    const content = [
+      `✓ SubGoal "${subGoalName}" marked complete.`,
+      `Evidence recorded: ${evidence.length} items`,
+      ``,
+      `The Ada orchestrator will now unlock dependent subGoals.`,
+      `Your session is complete — you may exit.`,
+    ].join("\n");
+
+    return { content, isError: false };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      content: `Failed to record subGoal completion: ${message}`,
+      isError: true,
+    };
+  }
+}
+
 // ─── Path helper ──────────────────────────────────────────────────────────────
 
 function getProjectDir(): string {

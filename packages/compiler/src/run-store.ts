@@ -100,6 +100,24 @@ export class RunStore {
     }
   }
 
+  /**
+   * Write the subGoal execution schedule (waves) produced by scheduleSubGoals.
+   * Stored as schedule.json in the run directory.
+   */
+  writeSchedule(runId: string, schedule: unknown[][]): void {
+    try {
+      const runDir = this.getRunDir(runId);
+      fs.mkdirSync(runDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(runDir, "schedule.json"),
+        JSON.stringify(schedule, null, 2),
+        "utf8",
+      );
+    } catch {
+      /* never crash pipeline for persistence errors */
+    }
+  }
+
   /** Read a prior run manifest, returns null if not found. */
   loadManifest(runId: string): RunManifest | null {
     try {

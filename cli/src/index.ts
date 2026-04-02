@@ -42,6 +42,7 @@ import {
 } from "./commands/review-skills.js";
 import { reviewAmendmentsCommand } from "./commands/review-amendments.js";
 import { headlessCommand } from "./commands/headless.js";
+import { orchestrateCommand } from "./commands/orchestrate.js";
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -166,6 +167,20 @@ async function main(): Promise<void> {
     case "mcp":
       await mcpCommand();
       break;
+    case "orchestrate": {
+      const maxParallelArg = args.find((a) => a.startsWith("--max-parallel="));
+      const subGoalArg = args.find((a) => a.startsWith("--sub-goal="));
+      await orchestrateCommand(process.cwd(), {
+        dryRun: flags.has("--dry-run"),
+        ...(maxParallelArg !== undefined && {
+          maxParallel: parseInt(maxParallelArg.split("=")[1] ?? "1", 10),
+        }),
+        ...(subGoalArg !== undefined && {
+          subGoal: subGoalArg.split("=").slice(1).join("="),
+        }),
+      });
+      break;
+    }
     case "--help":
     case "-h":
       console.log(`
@@ -189,6 +204,10 @@ async function main(): Promise<void> {
     ada review-amendments    Review and apply blueprint amendment queue
     ada review-skills        Review and approve extracted skill candidates
     ada rollback-skill <n>   Remove a promoted skill
+    ada orchestrate          Execute blueprint subGoals in dependency order
+                             --dry-run          Print execution plan only
+                             --max-parallel=N   Run N subGoals concurrently (default 1)
+                             --sub-goal=<name>  Run only the named subGoal
 
   Setup:
     ada config set-key           (prompts for your Anthropic key)

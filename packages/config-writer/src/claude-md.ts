@@ -60,7 +60,41 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 4. Ada MCP — pull context on demand, never push
+  // 4. Orchestration map (only when subGoals present)
+  if (blueprint.subGoals && blueprint.subGoals.length > 0) {
+    lines.push("## Orchestration Map");
+    lines.push(
+      "Ada builds this project by bounded context. Each context is one Claude Code session:",
+    );
+    lines.push("");
+    for (const sg of blueprint.subGoals) {
+      const deps =
+        sg.dependsOn && sg.dependsOn.length > 0
+          ? ` <- after: ${sg.dependsOn.join(", ")}`
+          : "";
+      lines.push(`**${sg.name}**${deps}`);
+      lines.push(sg.derivedIntent);
+      lines.push("");
+    }
+    lines.push("## Orchestration Protocol");
+    lines.push(
+      "When ADA_SUBGOAL env is set, you are in an orchestrated session:",
+    );
+    lines.push(
+      '1. Call `ada.advance_execution("<sessionId>")` to get your component-level task brief',
+    );
+    lines.push("2. Implement all components in your bounded context");
+    lines.push(
+      '3. Call `ada.set_task_status("<component>", "complete", [<evidence>])` per component',
+    );
+    lines.push(
+      '4. Call `ada.complete_subgoal("<subGoalName>", [<evidence>])` when ALL components are done',
+    );
+    lines.push("5. Exit — the Ada orchestrator will spawn the next session");
+    lines.push("");
+  }
+
+  // 5. Ada MCP — pull context on demand, never push
   lines.push("## Ada MCP");
   lines.push(
     "The MCP server is the spec authority. Pull context on demand — never assume from memory.",
@@ -93,7 +127,7 @@ export function blueprintToCLAUDEMD(
   );
   lines.push("");
 
-  // 5. Compilation health (small, valuable)
+  // 6. Compilation health (small, valuable)
   if (blueprint.audit) {
     const a = blueprint.audit;
     const pct = (n: number) => `${(n * 100).toFixed(0)}%`;
@@ -109,7 +143,7 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 6. Session protocol
+  // 7. Session protocol
   lines.push("## This Session");
   lines.push(
     "You are the lead agent. Call `ada.advance_execution(agentId)` to get your first task. Follow the execution brief. Verify postconditions before marking complete.",

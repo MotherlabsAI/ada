@@ -187,8 +187,16 @@ Each subGoal must have:
 - derivedIntent: a single sentence that, if given to a fresh Ada compilation, would produce ONLY this context's components. Start with an imperative verb. Example: "Build the governance subsystem that evaluates pipeline state and issues ACCEPT/REJECT/ITERATE decisions with policy violation detection."
 - entities: array of entity names from ENTITIES above that belong to this context
 - workflows: array of workflow names from WORKFLOWS above that belong to this context
-- invariants: array of invariant predicates from the entities in this context (just the predicate strings)
+- invariants: array of invariant PREDICATE STRINGS from the entities in this context — plain strings only, e.g. ["payment.amount > 0", "order.items.length > 0"]. Do NOT use objects. Do NOT include description fields.
+- dependsOn: array of subGoal NAMES that this subGoal depends on. Derive this by checking: if this subGoal B uses entities or workflows that are DEFINED in another subGoal A's bounded context, then B dependsOn A. If this subGoal has no upstream dependencies, use [] (empty array).
 - compilable: true (always)
+
+DEPENDENCY DERIVATION RULE:
+  For each pair of subGoals (A, B):
+    If B's entities or workflows reference any entity/workflow that is the root entity or a primary workflow of A → B.dependsOn includes A.name
+    "Reference" means: B needs A's output to function correctly (e.g., an order subGoal depends on user/identity subGoal if Order has a userId field)
+  Start with subGoals that have no dependencies (dependsOn: []).
+  Chain dependencies level by level.
 
 Add "subGoals" as a top-level array in the JSON output.
 
@@ -232,11 +240,21 @@ Return the structured result in a \`\`\`json code fence:
   "challenges": [{"id": "CH1", "description": "Provenance chain integrity across iterations", "severity": "major", "resolved": false}],
   "subGoals": [
     {
+      "name": "identity",
+      "derivedIntent": "Build the identity subsystem that manages user authentication, credentials, and session lifecycle.",
+      "entities": ["User", "Session", "Credential"],
+      "workflows": ["register-user", "authenticate-user"],
+      "invariants": ["user.email.includes('@')", "session.expiresAt > session.createdAt"],
+      "dependsOn": [],
+      "compilable": true
+    },
+    {
       "name": "compilation-pipeline",
       "derivedIntent": "Build the semantic compilation pipeline that transforms raw intent through 9 sequential stages into a governed blueprint artifact.",
       "entities": ["IntentGraph", "Blueprint", "CompilationRun"],
       "workflows": ["compile-intent", "iterate-on-rejection"],
       "invariants": ["intentGraph.goals.length > 0", "blueprint.audit.gatePassRate >= 0"],
+      "dependsOn": ["identity"],
       "compilable": true
     }
   ]

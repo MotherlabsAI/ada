@@ -18,7 +18,6 @@ import {
   getRuntimeState,
   createCheckpoint,
   rollbackTo,
-  setTaskStatus,
   recordFact,
 } from "./tools/runtime-state.js";
 import { getMacroPlan } from "./tools/macro-plan.js";
@@ -34,7 +33,9 @@ import {
 } from "./tools/get-contract.js";
 import { reportImplementationDecision, reportGap } from "./tools/feedback.js";
 import { reportExecutionFailure, resolveRepair } from "./tools/local-repair.js";
-import { advanceExecution } from "./tools/execution-orchestrator.js";
+import { advanceExecution } from "./tools/advance.js";
+import { completeSubGoal } from "./tools/execution-orchestrator.js";
+import { setTaskStatus as setTaskStatusSubGoal } from "./tools/task-status.js";
 import { compileIntent } from "./tools/compile.js";
 import { researchTopic } from "./tools/research.js";
 
@@ -324,7 +325,7 @@ export async function startServer(): Promise<void> {
       {
         name: "ada.advance_execution",
         description:
-          "Advances the execution cycle: reads the macro plan, selects the next unblocked pending task, enters delegation for its bounded context, and returns a detailed execution brief. Call at the start of each implementation task in a multi-component session. When the task is done, call ada.set_task_status(complete) + ada.exit_delegation, then ada.advance_execution again for the next task.",
+          "Get your task brief, bounded context contract, and execution instructions. Call this first at the start of every session. Reads subGoals from the active Blueprint, finds the first unblocked subGoal assigned to this agentId (or the first incomplete one), and returns a structured task brief with mission, entities, workflows, invariants, and governance instructions.",
         inputSchema: {
           type: "object" as const,
           properties: {
@@ -333,6 +334,11 @@ export async function startServer(): Promise<void> {
               description:
                 "Unique identifier for this agent/session (e.g. the session UUID or agent name)",
             },
+            projectDir: {
+              type: "string" as const,
+              description:
+                "Absolute path to the project directory. Defaults to cwd.",
+            },
           },
           required: ["agentId"],
         },
@@ -340,19 +346,19 @@ export async function startServer(): Promise<void> {
       {
         name: "ada.set_task_status",
         description:
-          "Explicitly marks a blueprint component as in_progress or complete. Used by micro executors to track their own work. Updates are merged with file-inference so the macro plan reflects actual execution state. Call when starting a component (in_progress) and when finishing (complete).",
+          "Report task completion or status. Call when your bounded context is complete. Writes to .ada/execution-state.json and reports which dependent subGoals are now unblocked. Call when starting a task (in_progress) and when finishing (complete).",
         inputSchema: {
           type: "object" as const,
           properties: {
-            componentName: {
+            component: {
               type: "string" as const,
               description:
-                "Exact component name from the blueprint architecture",
+                "SubGoal or component name to update (matches subGoal.name from the blueprint)",
             },
             status: {
               type: "string" as const,
-              enum: ["in_progress", "complete"],
-              description: "New status for the component",
+              enum: ["in_progress", "complete", "blocked"],
+              description: "New status for this component",
             },
             evidence: {
               type: "array" as const,
@@ -360,8 +366,35 @@ export async function startServer(): Promise<void> {
               description:
                 "File paths or descriptions that constitute evidence of completion",
             },
+            projectDir: {
+              type: "string" as const,
+              description:
+                "Absolute path to the project directory. Defaults to cwd.",
+            },
           },
-          required: ["componentName", "status", "evidence"],
+          required: ["component", "status"],
+        },
+      },
+      {
+        name: "ada.complete_subgoal",
+        description:
+          "Marks the current bounded context as complete and signals the Ada orchestrator to unlock dependent subGoals. Call this at the end of every orchestrated session after all components in your bounded context are implemented and verified.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            subGoalName: {
+              type: "string" as const,
+              description:
+                "The subGoal name from your execution brief (matches subGoal.name in blueprint)",
+            },
+            evidence: {
+              type: "array" as const,
+              items: { type: "string" as const },
+              description:
+                "File paths or postcondition strings proving the bounded context is complete",
+            },
+          },
+          required: ["subGoalName", "evidence"],
         },
       },
       {
@@ -721,16 +754,30 @@ export async function startServer(): Promise<void> {
         };
       }
       case "ada.advance_execution": {
-        const r = advanceExecution(args["agentId"] as string);
+        const r = advanceExecution(
+          args["agentId"] as string,
+          args["projectDir"] as string | undefined,
+        );
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
       case "ada.set_task_status": {
-        const r = setTaskStatus(
-          args["componentName"] as string,
-          args["status"] as "in_progress" | "complete",
+        const r = setTaskStatusSubGoal(
+          args["component"] as string,
+          args["status"] as "in_progress" | "complete" | "blocked",
+          (args["evidence"] as string[]) ?? [],
+          args["projectDir"] as string | undefined,
+        );
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.complete_subgoal": {
+        const r = completeSubGoal(
+          args["subGoalName"] as string,
           (args["evidence"] as string[]) ?? [],
         );
         return {
