@@ -35,6 +35,8 @@ import {
 import { reportImplementationDecision, reportGap } from "./tools/feedback.js";
 import { reportExecutionFailure, resolveRepair } from "./tools/local-repair.js";
 import { advanceExecution } from "./tools/execution-orchestrator.js";
+import { compileIntent } from "./tools/compile.js";
+import { researchTopic } from "./tools/research.js";
 
 export async function startServer(): Promise<void> {
   const server = new Server(
@@ -46,7 +48,10 @@ export async function startServer(): Promise<void> {
         "Before modifying any entity or data model: call ada.query_constraints with the entity name. " +
         "Before any significant implementation decision: call ada.check_drift with a description of the change. " +
         "When your implementation deviates from the blueprint: call ada.log_drift. " +
-        "The blueprint in ada.get_blueprint is the authority — code must trace to it.",
+        "The blueprint in ada.get_blueprint is the authority — code must trace to it. " +
+        "Start a new project by calling ada.compile(intent) — this runs the full 9-stage compilation and sets up governance. " +
+        "After compile completes, call ada.get_macro_plan() to get your execution order. " +
+        "Call ada.research(query) when you need current information about a library, API, or pattern.",
     },
   );
 
@@ -509,6 +514,62 @@ export async function startServer(): Promise<void> {
           required: ["description"],
         },
       },
+      {
+        name: "ada.compile",
+        description:
+          "Compiles human intent through Ada's 9-stage pipeline (CTX→INT→PER→ENT→PRO→SYN→VER→GOV→BLD). " +
+          "Call this FIRST when given a new intent with no existing blueprint. " +
+          "Writes CLAUDE.md, agent files, delegation contracts, and world model to the project. " +
+          "After this returns, call ada.get_macro_plan() to begin execution.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            intent: {
+              type: "string" as const,
+              description:
+                "The full intent to compile — describe what to build",
+            },
+            projectDir: {
+              type: "string" as const,
+              description:
+                "Absolute path to project directory. Defaults to cwd.",
+            },
+            amend: {
+              type: "boolean" as const,
+              description:
+                "If true, extends existing blueprint rather than replacing it",
+            },
+            noWebResearch: {
+              type: "boolean" as const,
+              description:
+                "If true, skips web discovery phase (faster, uses only training data)",
+            },
+          },
+          required: ["intent"],
+        },
+      },
+      {
+        name: "ada.research",
+        description:
+          "Runs targeted web search for current best practices, API details, security patterns, or library versions. " +
+          "Call when you are uncertain about a current pattern or API mid-execution. " +
+          "Returns direct answer with concrete examples.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            query: {
+              type: "string" as const,
+              description: "What to research — be specific",
+            },
+            focus: {
+              type: "string" as const,
+              description:
+                "Optional: specific aspect to focus on (e.g. 'security implications', 'current version')",
+            },
+          },
+          required: ["query"],
+        },
+      },
     ],
   }));
 
@@ -748,6 +809,30 @@ export async function startServer(): Promise<void> {
       }
       case "ada.report_gap": {
         const r = reportGap(args["description"] as string);
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.compile": {
+        const { intent, projectDir, amend, noWebResearch } = args as {
+          intent: string;
+          projectDir?: string;
+          amend?: boolean;
+          noWebResearch?: boolean;
+        };
+        const r = compileIntent(intent, projectDir ?? process.cwd(), {
+          amend,
+          noWebResearch,
+        });
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.research": {
+        const { query, focus } = args as { query: string; focus?: string };
+        const r = await researchTopic(query, focus);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
