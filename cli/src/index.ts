@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 
-// ─── Load persisted API key before any imports read process.env ──────────────
-// ada config set-key saves to ~/.ada/config.json. Load it here so the
-// compiler's lazy apiKey reads pick it up at call time.
+// ─── Load API key before any imports read process.env ────────────────────────
+// Priority: ANTHROPIC_API_KEY env → ~/.ada/config.json → Claude Code keychain
 import * as fs_boot from "fs";
 import * as path_boot from "path";
 import * as os_boot from "os";
+import { execFileSync as execFileSync_boot } from "child_process";
 {
   if (!process.env["ANTHROPIC_API_KEY"]) {
+    // 1. ~/.ada/config.json (explicit override)
     const cfgPath = path_boot.join(os_boot.homedir(), ".ada", "config.json");
     if (fs_boot.existsSync(cfgPath)) {
       try {
@@ -19,8 +20,28 @@ import * as os_boot from "os";
           process.env["ANTHROPIC_API_KEY"] = anthropicKey;
         }
       } catch {
-        // corrupt config — ignore, let compile fail with clear error
+        // corrupt config — ignore
       }
+    }
+  }
+
+  if (!process.env["ANTHROPIC_API_KEY"]) {
+    // 2. Claude Code keychain (macOS) — use existing session, no setup needed
+    try {
+      const raw = execFileSync_boot(
+        "security",
+        ["find-generic-password", "-s", "Claude Code-credentials", "-g", "-w"],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+      ).trim();
+      const creds = JSON.parse(raw) as {
+        claudeAiOauth?: { accessToken: string; expiresAt: number };
+      };
+      const oauth = creds?.claudeAiOauth;
+      if (oauth?.accessToken && Date.now() < oauth.expiresAt) {
+        process.env["ANTHROPIC_API_KEY"] = oauth.accessToken;
+      }
+    } catch {
+      // not macOS, no Claude Code install, or keychain denied — skip
     }
   }
 }
@@ -76,25 +97,26 @@ function checkApiKey(): void {
     console.error(`
   ◈ ada needs an Anthropic API key to compile.
 
-  Option 1 — set it in your shell:
+  Option 1 — use your existing Claude Code session (macOS):
+    Just install Claude Code and log in once. Ada reads your session automatically.
+
+  Option 2 — set it in your shell:
     export ANTHROPIC_API_KEY=sk-ant-...
 
-  Option 2 — save it once with ada:
+  Option 3 — save it once with ada:
     ada config set-key
-
-  Get a key at https://console.anthropic.com
 `);
     process.exit(1);
   }
 }
 
 async function runCompile(intentFromArgs: string): Promise<void> {
-  checkApiKey();
   let intent = intentFromArgs;
   if (!intent) {
     intent = await promptForIntent();
     process.stdout.write("\n");
   }
+  checkApiKey();
   if (!intent) {
     console.error("  no intent provided — exiting.");
     process.exit(1);

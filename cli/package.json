@@ -1,12 +1,11 @@
 {
   "name": "@motherlabs/ada",
-  "version": "0.1.0",
+  "version": "0.1.9",
   "description": "Ada — semantic compiler. Turn intent into governed Claude Code sessions.",
   "type": "module",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "bin": {
-    "ada": "./dist/index.js"
+    "ada": "dist/index.js"
   },
   "files": [
     "dist/",
@@ -16,27 +15,24 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
+    "build:types": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "echo 'no tests yet'",
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@ada/compiler": "workspace:*",
-    "@ada/config-writer": "workspace:*",
-    "@ada/elicitation": "workspace:*",
-    "@ada/storage": "workspace:*",
-    "@ada/governor": "workspace:*",
-    "@ada/mcp-server": "workspace:*",
-    "@ada/orchestrator": "workspace:*",
-    "@ada/provenance": "workspace:*",
     "@anthropic-ai/sdk": "^0.80.0",
     "ink": "^5.2.0",
     "react": "^18.3.1"
   },
+  "optionalDependencies": {
+    "better-sqlite3": "^9.0.0"
+  },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "@types/react": "^18.3.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.7.0"
   }
 }
