@@ -1,6 +1,6 @@
 {
   "name": "@motherlabs/ada",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Ada — semantic compiler. Turn intent into governed Claude Code sessions.",
   "type": "module",
   "main": "dist/index.js",

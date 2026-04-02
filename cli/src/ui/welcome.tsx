@@ -13,7 +13,7 @@ import { palette, glyphs } from "./design-system.js";
 //   Diamond center ◆ sits beside ENT "crystallize" — intentional poetry.
 // Narrow: stacked, questions omitted.
 
-const VERSION = "0.1.9";
+const VERSION = "0.1.10";
 const PLACEHOLDER = "describe what you\u2019re building";
 const VERB_WIDTH = 12; // "choreograph" = 11, pad to 12
 

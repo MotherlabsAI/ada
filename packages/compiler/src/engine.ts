@@ -336,10 +336,17 @@ export class MotherCompiler {
     let previousPostcode: PostcodeAddress | null = null;
 
     // ─── Provenance store — wired into every stage ───
+    // better-sqlite3 is optional (requires native bindings). Fall back to
+    // a no-op store when it's not available (Linux without build tools, etc.)
     const cwd = process.cwd();
     const adaDir = path.join(cwd, ".ada");
     fs.mkdirSync(adaDir, { recursive: true });
-    const store = new ProvenanceStore(path.join(adaDir, "provenance.db"));
+    let store: Pick<ProvenanceStore, "record">;
+    try {
+      store = new ProvenanceStore(path.join(adaDir, "provenance.db"));
+    } catch {
+      store = { record: () => {} };
+    }
     const manifoldStore = new ManifoldStore(cwd);
 
     // Initialize or load existing manifold state
