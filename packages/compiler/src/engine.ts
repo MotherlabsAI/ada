@@ -347,7 +347,23 @@ export class MotherCompiler {
     } catch {
       store = { record: () => {} };
     }
-    const manifoldStore = new ManifoldStore(cwd);
+    // ManifoldStore requires a git repo. Fall back to a no-op when not in one
+    // (user running `ada` from home dir, temp dirs, etc.)
+    let manifoldStore: Pick<
+      ManifoldStore,
+      "loadRef" | "loadManifold" | "saveManifold"
+    >;
+    try {
+      manifoldStore = new ManifoldStore(cwd);
+    } catch {
+      manifoldStore = {
+        loadRef: () => null,
+        loadManifold: () => {
+          throw new Error("no-op manifold store");
+        },
+        saveManifold: () => "",
+      };
+    }
 
     // Initialize or load existing manifold state
     const currentRef = manifoldStore.loadRef();
