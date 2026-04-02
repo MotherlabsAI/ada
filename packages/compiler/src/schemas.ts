@@ -200,6 +200,15 @@ export const processFlowSchema = z.object({
 
 // ─── Synthesis (Blueprint) ───
 
+const subGoalSchema = z.object({
+  name: z.string(),
+  derivedIntent: z.string(),
+  entities: z.array(z.string()),
+  workflows: z.array(z.string()),
+  invariants: z.array(z.string()),
+  compilable: z.literal(true),
+});
+
 const blueprintComponentSchema = z.object({
   name: z.string(),
   responsibility: z.string(),
@@ -304,6 +313,7 @@ export const blueprintSchema = z.object({
   openQuestions: z.array(openQuestionItem).default([]),
   resolvedConflicts: z.array(resolvedConflictSchema).default([]),
   challenges: z.array(challengeSchema).default([]),
+  subGoals: z.array(subGoalSchema).default([]),
 });
 
 // ─── Verify ───

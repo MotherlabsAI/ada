@@ -10,6 +10,7 @@ import type {
   CompilerStageCode,
   Challenge,
   DeterminismMetadata,
+  TokenUsage,
 } from "../types.js";
 import type { PostcodeAddress } from "@ada/provenance";
 import { generatePostcode, type StageCode } from "@ada/provenance";
@@ -152,7 +153,17 @@ export abstract class Agent<TInput, TOutput> {
   private async callAPI(
     prompt: string,
     callbacks?: AgentCallbacks,
-  ): Promise<{ parsed: TOutput | null; reasoning: string; error?: string }> {
+  ): Promise<{
+    parsed: TOutput | null;
+    reasoning: string;
+    error?: string;
+    usage?: {
+      input_tokens: number;
+      output_tokens: number;
+      cache_read_input_tokens?: number | null;
+      cache_creation_input_tokens?: number | null;
+    };
+  }> {
     const client = new Anthropic({ apiKey: getApiKey()! });
     let reasoning = "";
 
@@ -168,14 +179,14 @@ export abstract class Agent<TInput, TOutput> {
       callbacks?.onToken?.(text);
     });
 
-    await stream.finalMessage();
+    const finalMsg = await stream.finalMessage();
     callbacks?.onComplete?.(reasoning);
 
     // Phase 2: try to extract JSON from the reasoning text
     const textResult = this.tryParseText(reasoning);
     if (textResult.success) {
       debugLog(this.stageCode, "TEXT EXTRACTION SUCCESS");
-      return { parsed: textResult.parsed, reasoning };
+      return { parsed: textResult.parsed, reasoning, usage: finalMsg.usage };
     }
 
     // Phase 3: fallback — structured output call (no streaming, guaranteed JSON)
@@ -212,18 +223,19 @@ export abstract class Agent<TInput, TOutput> {
         const normalized = normalizeKeys(raw) as Record<string, unknown>;
         const result = this.getSchema().parse(normalized) as TOutput;
         debugLog(this.stageCode, "STRUCTURED FALLBACK SUCCESS");
-        return { parsed: result, reasoning };
+        return { parsed: result, reasoning, usage: finalMsg.usage };
       }
     } catch (e) {
       const errMsg = e instanceof Error ? e.message : String(e);
       debugLog(this.stageCode, `STRUCTURED FALLBACK FAILED: ${errMsg}`);
-      return { parsed: null, reasoning, error: errMsg };
+      return { parsed: null, reasoning, error: errMsg, usage: finalMsg.usage };
     }
 
     return {
       parsed: null,
       reasoning,
       error: "structured fallback produced no content",
+      usage: finalMsg.usage,
     };
   }
 
@@ -412,12 +424,21 @@ export abstract class Agent<TInput, TOutput> {
     let parsed: TOutput | null = null;
     let parseFailure = false;
     let error: string | undefined;
+    let apiUsage: TokenUsage | undefined;
 
     if (isApiMode()) {
       // ─── API: stream reasoning (glass box) → extract JSON → structured fallback ───
       const result = await this.callAPI(prompt, callbacks);
       parsed = result.parsed;
       error = result.error;
+      if (result.usage) {
+        apiUsage = {
+          inputTokens: result.usage.input_tokens,
+          outputTokens: result.usage.output_tokens,
+          cacheReadTokens: result.usage.cache_read_input_tokens ?? 0,
+          cacheCreationTokens: result.usage.cache_creation_input_tokens ?? 0,
+        };
+      }
       if (parsed === null) retryCount++;
       parseFailure = parsed === null;
     } else {
@@ -458,6 +479,7 @@ export abstract class Agent<TInput, TOutput> {
       maxTokens: 16384,
       retryCount,
       callDurationMs,
+      ...(apiUsage !== undefined ? { tokensUsed: apiUsage } : {}),
     };
 
     const challenges: Challenge[] = [];

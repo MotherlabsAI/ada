@@ -22,6 +22,15 @@ export interface Challenge {
   readonly resolved: boolean;
 }
 
+// ─── Token Usage ───
+
+export interface TokenUsage {
+  readonly inputTokens: number;
+  readonly outputTokens: number;
+  readonly cacheReadTokens: number;
+  readonly cacheCreationTokens: number;
+}
+
 // ─── Intent Agent Output ───
 
 export interface IntentGoal {
@@ -168,6 +177,17 @@ export interface BlueprintComponent {
   readonly boundedContext: string;
 }
 
+// A bounded context promoted to a compilable sub-goal unit.
+// Each SubGoalSpec can be passed as intent to a fresh MotherCompiler run.
+export interface SubGoalSpec {
+  readonly name: string; // bounded context name, e.g. "compilation-pipeline"
+  readonly derivedIntent: string; // synthesized intent for this context only
+  readonly entities: readonly string[]; // entity names belonging to this context
+  readonly workflows: readonly string[]; // workflow names belonging to this context
+  readonly invariants: readonly EntityInvariant[];
+  readonly compilable: true; // discriminant — always true
+}
+
 export interface BlueprintArchitecture {
   readonly pattern: string;
   readonly rationale: string;
@@ -228,6 +248,7 @@ export interface Blueprint {
   readonly openQuestions: readonly string[];
   readonly resolvedConflicts: readonly ResolvedConflict[];
   readonly challenges: readonly Challenge[];
+  readonly subGoals?: readonly SubGoalSpec[]; // set by SYN stage, absent if no bounded contexts
   readonly audit?: CompilationAudit; // set post-GOV, absent during pipeline
   readonly build?: BuildContract; // set post-BLD, absent during pipeline
   readonly postcode: PostcodeAddress;
@@ -318,6 +339,7 @@ export interface DeterminismMetadata {
   readonly maxTokens: number;
   readonly retryCount: number;
   readonly callDurationMs: number;
+  readonly tokensUsed?: TokenUsage;
 }
 
 export interface StageExecutionRecord {
@@ -333,6 +355,8 @@ export interface CompilationRun {
   readonly startedAt: number;
   readonly completedAt: number;
   readonly totalDurationMs: number;
+  readonly totalInputTokens: number;
+  readonly totalOutputTokens: number;
 }
 
 // ─── Pipeline State ───

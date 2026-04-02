@@ -22,7 +22,14 @@ import type {
 import * as fs from "fs";
 import * as path from "path";
 import type { PostcodeAddress } from "@ada/provenance";
-import { ProvenanceStore, ManifoldStore, type ManifoldState, type SemanticNode, type SemanticEdge } from "@ada/provenance";
+import {
+  ProvenanceStore,
+  ManifoldStore,
+  type ManifoldState,
+  type SemanticNode,
+  type SemanticEdge,
+} from "@ada/provenance";
+import { RunStore } from "./run-store.js";
 import { analyzeCodebase } from "./context/analyzer.js";
 import { groundIntent } from "./web-grounding.js";
 import type {
@@ -345,6 +352,31 @@ export class MotherCompiler {
           metrics: { totalEntropy: 1.0, nodeCount: 0, invariantPassRate: 0 },
         };
 
+    const runId = `run-${compileStartedAt}`;
+    const runStore = new RunStore(adaDir);
+
+    // Initialize manifest as "running"
+    runStore.writeManifest(runId, {
+      runId,
+      intent,
+      status: "running",
+      startedAt: compileStartedAt,
+      totalInputTokens: 0,
+      totalOutputTokens: 0,
+      stages: [],
+    });
+
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    const stageManifestRecords: Array<{
+      stage: import("./types.js").CompilerStageCode;
+      completedAt: number;
+      durationMs: number;
+      inputTokens: number;
+      outputTokens: number;
+      postcode: string;
+    }> = [];
+
     const emitAndGate = (
       stage: CompilerStageCode,
       postcode: PostcodeAddress,
@@ -477,6 +509,15 @@ export class MotherCompiler {
       },
       postcode: codebaseContext.postcode,
     });
+    runStore.writeStageArtifact(runId, "CTX", codebaseContext);
+    stageManifestRecords.push({
+      stage: "CTX",
+      completedAt: Date.now(),
+      durationMs: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      postcode: codebaseContext.postcode.raw,
+    });
 
     // ─── Enrich intent with project context + web grounding ───
     const projectContext = gatherProjectContext(cwd);
@@ -498,6 +539,21 @@ export class MotherCompiler {
       stageCode: "INT",
       metadata: intentResult.metadata,
       postcode: intentResult.postcode,
+    });
+    // Persist INT stage artifact
+    const intTokens = intentResult.metadata.tokensUsed;
+    const intIn = intTokens?.inputTokens ?? 0;
+    const intOut = intTokens?.outputTokens ?? 0;
+    totalInputTokens += intIn;
+    totalOutputTokens += intOut;
+    runStore.writeStageArtifact(runId, "INT", intentGraph);
+    stageManifestRecords.push({
+      stage: "INT",
+      completedAt: Date.now(),
+      durationMs: intentResult.metadata.callDurationMs,
+      inputTokens: intIn,
+      outputTokens: intOut,
+      postcode: intentResult.postcode.raw,
     });
     // Content score: goals + constraints + unknowns found
     const intContent =
@@ -577,6 +633,21 @@ export class MotherCompiler {
       metadata: personaResult.metadata,
       postcode: personaResult.postcode,
     });
+    // Persist PER stage artifact
+    const perTokens = personaResult.metadata.tokensUsed;
+    const perIn = perTokens?.inputTokens ?? 0;
+    const perOut = perTokens?.outputTokens ?? 0;
+    totalInputTokens += perIn;
+    totalOutputTokens += perOut;
+    runStore.writeStageArtifact(runId, "PER", domainContext);
+    stageManifestRecords.push({
+      stage: "PER",
+      completedAt: Date.now(),
+      durationMs: personaResult.metadata.callDurationMs,
+      inputTokens: perIn,
+      outputTokens: perOut,
+      postcode: personaResult.postcode.raw,
+    });
     // Content score: vocabulary terms + stakeholders + exclusions
     const perContent =
       Object.keys(domainContext.ubiquitousLanguage).length +
@@ -606,6 +677,21 @@ export class MotherCompiler {
       stageCode: "ENT",
       metadata: entityResult.metadata,
       postcode: entityResult.postcode,
+    });
+    // Persist ENT stage artifact
+    const entTokens = entityResult.metadata.tokensUsed;
+    const entIn = entTokens?.inputTokens ?? 0;
+    const entOut = entTokens?.outputTokens ?? 0;
+    totalInputTokens += entIn;
+    totalOutputTokens += entOut;
+    runStore.writeStageArtifact(runId, "ENT", entityMap);
+    stageManifestRecords.push({
+      stage: "ENT",
+      completedAt: Date.now(),
+      durationMs: entityResult.metadata.callDurationMs,
+      inputTokens: entIn,
+      outputTokens: entOut,
+      postcode: entityResult.postcode.raw,
     });
     const totalInvariants = entityMap.entities.reduce(
       (sum, e) => sum + e.invariants.length,
@@ -640,6 +726,21 @@ export class MotherCompiler {
       stageCode: "PRO",
       metadata: processResult.metadata,
       postcode: processResult.postcode,
+    });
+    // Persist PRO stage artifact
+    const proTokens = processResult.metadata.tokensUsed;
+    const proIn = proTokens?.inputTokens ?? 0;
+    const proOut = proTokens?.outputTokens ?? 0;
+    totalInputTokens += proIn;
+    totalOutputTokens += proOut;
+    runStore.writeStageArtifact(runId, "PRO", processFlow);
+    stageManifestRecords.push({
+      stage: "PRO",
+      completedAt: Date.now(),
+      durationMs: processResult.metadata.callDurationMs,
+      inputTokens: proIn,
+      outputTokens: proOut,
+      postcode: processResult.postcode.raw,
     });
     // Content score: workflow steps + state machine states + failure modes
     const proSteps = processFlow.workflows.reduce(
@@ -676,6 +777,25 @@ export class MotherCompiler {
       postcode: synthesisResult.postcode,
     });
     const synthesisOutput = synthesisResult.output;
+    // Persist SYN stage artifact
+    const synTokens = synthesisResult.metadata.tokensUsed;
+    const synIn = synTokens?.inputTokens ?? 0;
+    const synOut = synTokens?.outputTokens ?? 0;
+    totalInputTokens += synIn;
+    totalOutputTokens += synOut;
+    runStore.writeStageArtifact(runId, "SYN", synthesisOutput);
+    stageManifestRecords.push({
+      stage: "SYN",
+      completedAt: Date.now(),
+      durationMs: synthesisResult.metadata.callDurationMs,
+      inputTokens: synIn,
+      outputTokens: synOut,
+      postcode: synthesisResult.postcode.raw,
+    });
+    // Write sub-goals to run store
+    for (const sg of synthesisOutput.subGoals ?? []) {
+      runStore.writeSubGoal(runId, sg.name, sg);
+    }
     const blueprint: Blueprint = {
       summary: synthesisOutput.summary,
       scope: synthesisOutput.scope,
@@ -686,6 +806,7 @@ export class MotherCompiler {
       openQuestions: synthesisOutput.openQuestions,
       resolvedConflicts: synthesisOutput.resolvedConflicts,
       challenges: synthesisOutput.challenges,
+      subGoals: synthesisOutput.subGoals,
       postcode: synthesisResult.postcode,
     };
     // Content score: components + resolved conflicts + non-functional requirements
@@ -717,6 +838,21 @@ export class MotherCompiler {
       stageCode: "VER",
       metadata: verifyResult.metadata,
       postcode: verifyResult.postcode,
+    });
+    // Persist VER stage artifact
+    const verTokens = verifyResult.metadata.tokensUsed;
+    const verIn = verTokens?.inputTokens ?? 0;
+    const verOut = verTokens?.outputTokens ?? 0;
+    totalInputTokens += verIn;
+    totalOutputTokens += verOut;
+    runStore.writeStageArtifact(runId, "VER", auditReport);
+    stageManifestRecords.push({
+      stage: "VER",
+      completedAt: Date.now(),
+      durationMs: verifyResult.metadata.callDurationMs,
+      inputTokens: verIn,
+      outputTokens: verOut,
+      postcode: verifyResult.postcode.raw,
     });
     // Content score: checks performed (coverage + coherence are non-zero = 2 checks passed)
     const verContent =
@@ -758,6 +894,21 @@ export class MotherCompiler {
       stageCode: "GOV",
       metadata: governorResult.metadata,
       postcode: governorResult.postcode,
+    });
+    // Persist GOV stage artifact
+    const govTokens = governorResult.metadata.tokensUsed;
+    const govIn = govTokens?.inputTokens ?? 0;
+    const govOut = govTokens?.outputTokens ?? 0;
+    totalInputTokens += govIn;
+    totalOutputTokens += govOut;
+    runStore.writeStageArtifact(runId, "GOV", governorDecision);
+    stageManifestRecords.push({
+      stage: "GOV",
+      completedAt: Date.now(),
+      durationMs: governorResult.metadata.callDurationMs,
+      inputTokens: govIn,
+      outputTokens: govOut,
+      postcode: governorResult.postcode.raw,
     });
     // Content score: decision made = content
     const govContent = governorDecision.decision ? 10 : 0;
@@ -815,6 +966,14 @@ export class MotherCompiler {
         !buildContract.gatePass,
         JSON.stringify(buildContract),
       );
+      stageManifestRecords.push({
+        stage: "BLD",
+        completedAt: Date.now(),
+        durationMs: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        postcode: buildContract.postcode.raw,
+      });
     }
 
     const finalState: PipelineState = {
@@ -832,13 +991,38 @@ export class MotherCompiler {
 
     const compileCompletedAt = Date.now();
     const compilationRun = {
-      runId: `run-${compileStartedAt}`,
+      runId,
       sourceIntent: intent,
       stages: stageRecords,
       startedAt: compileStartedAt,
       completedAt: compileCompletedAt,
       totalDurationMs: compileCompletedAt - compileStartedAt,
+      totalInputTokens,
+      totalOutputTokens,
     };
+
+    // Write final blueprint to run store
+    runStore.writeStageArtifact(runId, "BLD", blueprintFinal);
+
+    // Write final manifest
+    const finalStatus =
+      governorDecision.decision === "ACCEPT"
+        ? "accepted"
+        : governorDecision.decision === "REJECT"
+          ? "rejected"
+          : "iterating";
+
+    runStore.writeManifest(runId, {
+      runId,
+      intent,
+      status: finalStatus,
+      startedAt: compileStartedAt,
+      completedAt: compileCompletedAt,
+      totalDurationMs: compileCompletedAt - compileStartedAt,
+      totalInputTokens,
+      totalOutputTokens,
+      stages: stageManifestRecords,
+    });
 
     return {
       blueprint: blueprintFinal,

@@ -12,6 +12,7 @@ import type {
   EntityMap,
   ProcessFlow,
   CompilerStageCode,
+  SubGoalSpec,
 } from "../types.js";
 import { blueprintSchema } from "../schemas.js";
 
@@ -23,6 +24,7 @@ export interface SynthesisOutput {
   readonly openQuestions: readonly string[];
   readonly resolvedConflicts: readonly ResolvedConflict[];
   readonly challenges: readonly Challenge[];
+  readonly subGoals: readonly SubGoalSpec[];
 }
 
 export interface SynthesisInput {
@@ -85,6 +87,7 @@ export class SynthesisAgent extends Agent<SynthesisInput, SynthesisOutput> {
       openQuestions: [],
       resolvedConflicts: [],
       challenges: [],
+      subGoals: [],
     };
   }
 
@@ -175,6 +178,20 @@ CRITICAL RULES:
 - "nonFunctional" must be an array of OBJECTS with: category (one of: performance, security, scalability, reliability, maintainability, compliance, observability), requirement (what must hold), predicate (optional formal predicate — omit if not formalizable), scope (bounded context name or "global"), verification (how to confirm)
 - DO NOT leave any array empty if upstream data exists to populate it
 
+SUB-GOAL DERIVATION:
+For each bounded context above, derive one SubGoalSpec.
+A SubGoalSpec is the minimal compilable intent for that context alone.
+
+Each subGoal must have:
+- name: the bounded context name (exact match)
+- derivedIntent: a single sentence that, if given to a fresh Ada compilation, would produce ONLY this context's components. Start with an imperative verb. Example: "Build the governance subsystem that evaluates pipeline state and issues ACCEPT/REJECT/ITERATE decisions with policy violation detection."
+- entities: array of entity names from ENTITIES above that belong to this context
+- workflows: array of workflow names from WORKFLOWS above that belong to this context
+- invariants: array of invariant predicates from the entities in this context (just the predicate strings)
+- compilable: true (always)
+
+Add "subGoals" as a top-level array in the JSON output.
+
 The reasoning above is for the user to read. The JSON below is for the system.
 Return the structured result in a \`\`\`json code fence:
 \`\`\`json
@@ -212,7 +229,17 @@ Return the structured result in a \`\`\`json code fence:
   ],
   "openQuestions": ["How does session resume work after a crash?", "What is the retry policy for failed stages?"],
   "resolvedConflicts": [{"entity": "Pipeline has status field", "process": "Workflow defines status transitions", "resolution": "Process owns transitions, Entity owns valid states", "authoritative": "process"}],
-  "challenges": [{"id": "CH1", "description": "Provenance chain integrity across iterations", "severity": "major", "resolved": false}]
+  "challenges": [{"id": "CH1", "description": "Provenance chain integrity across iterations", "severity": "major", "resolved": false}],
+  "subGoals": [
+    {
+      "name": "compilation-pipeline",
+      "derivedIntent": "Build the semantic compilation pipeline that transforms raw intent through 9 sequential stages into a governed blueprint artifact.",
+      "entities": ["IntentGraph", "Blueprint", "CompilationRun"],
+      "workflows": ["compile-intent", "iterate-on-rejection"],
+      "invariants": ["intentGraph.goals.length > 0", "blueprint.audit.gatePassRate >= 0"],
+      "compilable": true
+    }
+  ]
 }
 \`\`\`
 

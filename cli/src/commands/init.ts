@@ -964,6 +964,7 @@ export async function initCommand(
       compilationRun: finalResult.compilationRun,
       fallback,
       runId,
+      latestRunId: finalResult.compilationRun.runId,
       timestamp: Date.now(),
     };
     fs.writeFileSync(
@@ -1064,6 +1065,7 @@ export async function initCommand(
     pipelineState: finalResult.pipelineState,
     compilationRun: finalResult.compilationRun,
     runId,
+    latestRunId: finalResult.compilationRun.runId,
     timestamp: Date.now(),
   };
   fs.writeFileSync(
