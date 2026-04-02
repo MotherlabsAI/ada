@@ -115,13 +115,13 @@ export function invariantsToHooks(entityMap: EntityMap): HookScript[] {
 
       const classified = classifyPredicate(invariant.predicate);
 
+      // Skip comment-only predicates — they generate no-op scripts that
+      // would fire on every tool call without enforcing anything.
+      if (classified.strategy === "comment-only") continue;
+
       // Determine which tools this hook should watch
       const matcher =
-        classified.strategy === "grep-block"
-          ? "Bash|Write|Edit"
-          : classified.strategy === "grep-require"
-            ? "Write|Edit"
-            : "Bash";
+        classified.strategy === "grep-block" ? "Bash|Write|Edit" : "Write|Edit";
 
       const script = generateScript(
         entity.name,

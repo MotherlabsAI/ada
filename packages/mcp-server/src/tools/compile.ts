@@ -132,10 +132,7 @@ function findAdaBin(): string | null {
 
   // 3. Try to find it relative to the mcp-server (dev mode)
   try {
-    const devBin = path.resolve(
-      path.dirname(new URL(import.meta.url).pathname),
-      "../../../../cli/dist/index.js",
-    );
+    const devBin = path.resolve(__dirname, "../../../../cli/dist/index.js");
     if (fs.existsSync(devBin)) return `node ${devBin}`;
   } catch {
     /* skip */

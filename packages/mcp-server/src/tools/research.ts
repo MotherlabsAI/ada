@@ -57,9 +57,9 @@ Be concise and specific. This is injected directly into an active coding session
       ],
     });
 
-    const textBlocks = response.content.filter((b) => b.type === "text");
-    const text = textBlocks
-      .map((b) => (b as { type: "text"; text: string }).text)
+    const text = response.content
+      .filter((b) => b.type === "text")
+      .map((b) => ("text" in b ? String(b.text) : ""))
       .join("\n")
       .trim();
 

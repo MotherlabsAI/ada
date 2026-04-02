@@ -822,8 +822,8 @@ export async function startServer(): Promise<void> {
           noWebResearch?: boolean;
         };
         const r = compileIntent(intent, projectDir ?? process.cwd(), {
-          amend,
-          noWebResearch,
+          ...(amend !== undefined && { amend }),
+          ...(noWebResearch !== undefined && { noWebResearch }),
         });
         return {
           content: [{ type: "text" as const, text: r.content }],
