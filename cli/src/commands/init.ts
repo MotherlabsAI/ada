@@ -409,6 +409,12 @@ async function runElicitationPrePhase(rawIntent: string): Promise<string> {
     return rawIntent; // nothing to ask
   }
 
+  // After Ink exits it calls stdin.unref() — stdin no longer keeps the event
+  // loop alive. Re-ref before handing off to readline or the process exits
+  // immediately when rl.question fires.
+  process.stdin.resume();
+  process.stdin.ref();
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -737,6 +743,8 @@ export async function initCommand(
         .map((r) => ({ unknownId: r.unknownId, answer: r.suggestedDefault! }));
     }
     renderer.unmount();
+    process.stdin.resume();
+    process.stdin.ref();
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
