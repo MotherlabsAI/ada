@@ -179,23 +179,29 @@ Ada tracks execution state and can roll back to any checkpoint.
 
 ---
 
+### Execution orchestrator `[LIVE]`
+
+`ada orchestrate` — reads compiled blueprint, extracts subGoals with dependencies, and executes them in topological order via bounded Claude Code subprocess sessions.
+
+- `--dry-run` prints execution plan without spawning
+- `--max-parallel=N` runs N subGoals concurrently (default 1)
+- `--sub-goal=<name>` runs a single named subGoal
+
+### Contract compiler `[LIVE]`
+
+`blueprintToContracts()` in `@ada/config-writer` — automatically derives one delegation contract per bounded context from the accepted blueprint on every `ada compile`. Contracts written to `.claude/contracts/{context}.json`.
+
+### Uncertainty tracking `[LIVE]`
+
+`ada.get_runtime_state` returns `uncertaintyScore` (0–1). Computed from per-fact confidence: facts from verified tool outputs carry high confidence; LLM-inferred facts carry lower confidence. Aggregate uncertainty feeds macro planner decisions.
+
+---
+
 ## In Development `[BUILDING]`
-
-### Execution orchestrator
-
-Coordinates macro/micro execution cycle. Reads compiled blueprint, spawns bounded micro executors with delegation contracts, routes outputs to the independent verifier, updates world-state. Not yet started.
 
 ### Micro executor + local repair
 
 Bounded task execution per component under a delegation contract. Handles failures locally with a defined retry budget before escalating to the macro planner. Not yet started.
-
-### Contract compiler
-
-Compiles blueprint components into delegation contracts automatically (one per bounded context). Currently contracts must be written by hand. Not yet started.
-
-### Uncertainty tracking
-
-Per-fact confidence scores in world-state. Sourced facts (from verified tool outputs) carry higher confidence than inferred facts (LLM-derived). Feeds into macro planner decisions. Not yet started.
 
 ### Ongoing drift authority (`ada watch`)
 
