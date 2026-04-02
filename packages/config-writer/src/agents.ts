@@ -1,5 +1,5 @@
 import type { Blueprint, DomainContext } from "@ada/compiler";
-import type { AgentFile } from "./types.js";
+import { renderFrontmatter, type AgentFile } from "./types.js";
 
 // ─── Orchestration agents ─────────────────────────────────────────────────────
 
@@ -161,6 +161,9 @@ function buildOrchestrationAgents(blueprint: Blueprint): AgentFile[] {
     "",
   ].join("\n");
 
+  const compiledAt = Date.now();
+  const bpPostcode = blueprint.postcode.raw;
+
   return [
     {
       name: "macro-planner",
@@ -169,7 +172,18 @@ function buildOrchestrationAgents(blueprint: Blueprint): AgentFile[] {
       model: "claude-sonnet-4-6",
       tools: ["Agent", "mcp__ada__*"],
       status: "",
-      body: macroPlannerFrontmatter + macroPlannerBody,
+      body:
+        renderFrontmatter({
+          postcode: `ML.AGT.macro-planner/v1`,
+          type: "agent",
+          name: "macro-planner",
+          boundedContext: "orchestration",
+          parentPostcode: bpPostcode,
+          edges: {},
+          compiledAt,
+        }) +
+        macroPlannerFrontmatter +
+        macroPlannerBody,
       path: ".claude/agents/macro-planner.md",
     },
     {
@@ -179,7 +193,18 @@ function buildOrchestrationAgents(blueprint: Blueprint): AgentFile[] {
       model: "claude-sonnet-4-6",
       tools: ["Agent", "mcp__ada__*"],
       status: "",
-      body: orchestratorFrontmatter + orchestratorBody,
+      body:
+        renderFrontmatter({
+          postcode: `ML.AGT.execution-orchestrator/v1`,
+          type: "agent",
+          name: "execution-orchestrator",
+          boundedContext: "orchestration",
+          parentPostcode: bpPostcode,
+          edges: {},
+          compiledAt,
+        }) +
+        orchestratorFrontmatter +
+        orchestratorBody,
       path: ".claude/agents/execution-orchestrator.md",
     },
     {
@@ -189,7 +214,18 @@ function buildOrchestrationAgents(blueprint: Blueprint): AgentFile[] {
       model: "claude-sonnet-4-6",
       tools: ["Read", "Grep", "Bash", "mcp__ada__*"],
       status: "",
-      body: verifierFrontmatter + verifierBody,
+      body:
+        renderFrontmatter({
+          postcode: `ML.AGT.independent-verifier/v1`,
+          type: "agent",
+          name: "independent-verifier",
+          boundedContext: "orchestration",
+          parentPostcode: bpPostcode,
+          edges: {},
+          compiledAt,
+        }) +
+        verifierFrontmatter +
+        verifierBody,
       path: ".claude/agents/independent-verifier.md",
     },
   ];
@@ -310,13 +346,28 @@ export function componentsToAgents(
       "",
     ].join("\n");
 
+    const adaFrontmatter = renderFrontmatter({
+      postcode: `ML.AGT.${comp.name.toLowerCase().replace(/\s/g, "-")}/v1`,
+      type: "agent",
+      name: comp.name,
+      boundedContext: comp.boundedContext,
+      parentPostcode: blueprint.postcode.raw,
+      edges: {
+        ...(comp.interfaces.length > 0 ? { implements: comp.interfaces } : {}),
+        ...(comp.dependencies.length > 0
+          ? { dependsOn: comp.dependencies }
+          : {}),
+      },
+      compiledAt: Date.now(),
+    });
+
     agents.push({
       name,
       description,
       model: "claude-sonnet-4-6",
       tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "mcp__ada__*"],
       status: "",
-      body: frontmatter + bodyLines.join("\n"),
+      body: adaFrontmatter + frontmatter + bodyLines.join("\n"),
       path: `.claude/agents/${fileName}`,
     });
   }

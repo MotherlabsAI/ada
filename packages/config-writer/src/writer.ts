@@ -9,6 +9,7 @@ import { invariantsToHooks } from "./hooks.js";
 import { buildSettings } from "./settings.js";
 import { blueprintToContracts } from "./contracts.js";
 import { buildContractToBuildMD } from "./build-md.js";
+import { buildWorldModel, renderWorldModelMd } from "./world-model.js";
 import type { ConfigGraph } from "./types.js";
 
 export interface WriteConfigOptions {
@@ -199,7 +200,8 @@ export function writeConfigGraph(
 
   const postcode = generatePostcode("CFG", JSON.stringify(blueprint.postcode));
 
-  return {
+  // 7. World model graph — built after all other artifacts are written
+  const partialConfigGraph: ConfigGraph = {
     claudeMd: claudeMdPath,
     buildMd: buildMdPath,
     agents: writtenAgents,
@@ -209,5 +211,23 @@ export function writeConfigGraph(
     mcpJson: mcpJsonPath,
     contracts: writtenContracts,
     postcode,
+    worldModelJson: "", // placeholder — filled below
+    worldModelMd: "",
+  };
+
+  const worldModel = buildWorldModel(blueprint, partialConfigGraph);
+  const worldModelJson = JSON.stringify(worldModel, null, 2);
+  const worldModelMdContent = renderWorldModelMd(worldModel);
+
+  const worldModelJsonPath = path.join(targetDir, ".ada", "world-model.json");
+  const worldModelMdPath = path.join(targetDir, "WORLD-MODEL.md");
+  fs.mkdirSync(path.dirname(worldModelJsonPath), { recursive: true });
+  fs.writeFileSync(worldModelJsonPath, worldModelJson, "utf8");
+  fs.writeFileSync(worldModelMdPath, worldModelMdContent, "utf8");
+
+  return {
+    ...partialConfigGraph,
+    worldModelJson: worldModelJsonPath,
+    worldModelMd: worldModelMdPath,
   };
 }

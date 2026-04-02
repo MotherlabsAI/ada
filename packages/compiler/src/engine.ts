@@ -31,7 +31,7 @@ import {
 } from "@ada/provenance";
 import { RunStore } from "./run-store.js";
 import { analyzeCodebase } from "./context/analyzer.js";
-import { groundIntent } from "./web-grounding.js";
+import { discoverContext, groundIntent } from "./web-grounding.js";
 import type {
   CodebaseContext,
   PriorBlueprintContext,
@@ -519,10 +519,11 @@ export class MotherCompiler {
       postcode: codebaseContext.postcode.raw,
     });
 
-    // ─── Enrich intent with project context + web grounding ───
+    // ─── Enrich intent with project context + web discovery ───
     const projectContext = gatherProjectContext(cwd);
-    const webContext = await groundIntent(intent);
-    const enrichedIntent = intent + (projectContext ?? "") + (webContext ?? "");
+    const discovery = await discoverContext(intent);
+    const enrichedIntent =
+      intent + (projectContext ?? "") + (discovery.summary ?? "");
 
     // ─── Stage 1: Intent (excavate) ───
     onStageStart?.("INT");

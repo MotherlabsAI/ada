@@ -1,5 +1,5 @@
 import type { ProcessFlow } from "@ada/compiler";
-import type { SkillFile } from "./types.js";
+import { renderFrontmatter, type SkillFile } from "./types.js";
 
 export function workflowsToSkills(processFlow: ProcessFlow): SkillFile[] {
   const skills: SkillFile[] = [];
@@ -15,7 +15,15 @@ export function workflowsToSkills(processFlow: ProcessFlow): SkillFile[] {
    - Post: \`${step.hoareTriple.postcondition}\``;
     });
 
-    const body = `---
+    const adaFrontmatter = renderFrontmatter({
+      postcode: `ML.SKL.${name}/v1`,
+      type: "skill",
+      name,
+      edges: {},
+      compiledAt: Date.now(),
+    });
+
+    const body = `${adaFrontmatter}---
 name: ${name}
 description: "Use when ${workflow.trigger} pattern detected."
 ---

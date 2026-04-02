@@ -1,11 +1,32 @@
 import { generatePostcode, isValidPostcode } from "./postcode.js";
-import type { PostcodeAddress, PostcodeCoordinate } from "./postcode.js";
+import type {
+  PostcodeAddress,
+  PostcodeCoordinate,
+  StageCode,
+} from "./postcode.js";
 import type { ProvenanceRecord } from "./store.js";
+
+const VALID_STAGE_CODES: readonly StageCode[] = [
+  "CTX",
+  "INT",
+  "PER",
+  "ENT",
+  "PRO",
+  "SYN",
+  "VER",
+  "GOV",
+  "CFG",
+  "ORC",
+  "CLI",
+  "ELI",
+  "BLD",
+];
 
 /**
  * PostcodeAddressFactory
  *
- * Creates and validates PostcodeAddress instances with the required ML prefix.
+ * Creates and validates PostcodeAddress instances with the required ML prefix,
+ * constructs ProvenanceRecord entries, and resolves StageCode values.
  *
  * Invariants:
  *   - prefix is always "ML"
@@ -48,10 +69,20 @@ export class PostcodeAddressFactory {
     const address = generatePostcode(coordinate, content);
     return {
       postcode: address.raw,
-      stage: coordinate.layer, // Use layer as the legacy "stage" string
+      stage: coordinate.layer,
       upstreamPostcodes: upstreamPostcodes.map((p) => p.raw),
       content,
       timestamp: Date.now(),
     };
+  }
+
+  resolveStageCode(stage: string): StageCode {
+    const upper = stage.toUpperCase() as StageCode;
+    if (!VALID_STAGE_CODES.includes(upper)) {
+      throw new Error(
+        `Unknown stage code: "${stage}". Valid codes: ${VALID_STAGE_CODES.join(", ")}`,
+      );
+    }
+    return upper;
   }
 }

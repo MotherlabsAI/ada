@@ -1,10 +1,21 @@
 import type { Blueprint, DomainContext } from "@ada/compiler";
+import { renderFrontmatter } from "./types.js";
 
 export function blueprintToCLAUDEMD(
   blueprint: Blueprint,
   warnings?: string[],
   domainContext?: DomainContext,
 ): string {
+  const frontmatter = renderFrontmatter({
+    postcode: blueprint.postcode.raw,
+    type: "blueprint",
+    name: blueprint.summary.split(".")[0]?.slice(0, 60) ?? "blueprint",
+    edges: {
+      implements: blueprint.architecture.components.map((c) => c.name),
+    },
+    compiledAt: Date.now(),
+  });
+
   const lines: string[] = [];
 
   // 0. Warning banner (fallback/partial compilation)
@@ -105,7 +116,7 @@ export function blueprintToCLAUDEMD(
   );
   lines.push("");
 
-  return lines.join("\n");
+  return frontmatter + lines.join("\n");
 }
 
 function topologicalSort(
