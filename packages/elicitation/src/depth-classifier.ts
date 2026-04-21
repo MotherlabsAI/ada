@@ -64,6 +64,24 @@ const KNOWN_TRIVIAL_DOMAINS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bhabit tracker\b/i, "habit-tracker"],
   [/\blink (saver|collector)\b/i, "bookmarks"],
   [/\bpassword manager\b/i, "password-manager"],
+  // Business management apps — scope and actor are well-understood
+  [/\bcrm\b/i, "crm"],
+  [
+    /\b(tattoo|barbershop|salon|spa|studio)\s+(crm|management|booking|app|software)\b/i,
+    "studio-management",
+  ],
+  [/\b(inventory|warehouse)\s+(management|tracker|system|app)\b/i, "inventory"],
+  [
+    /\b(restaurant|cafe|coffee shop)\s+(management|pos|ordering|app)\b/i,
+    "restaurant",
+  ],
+  [/\b(project management|task management)\b/i, "project-management"],
+  [/\bpos\b/i, "pos"],
+  [/\b(e[- ]?commerce|online store|online shop)\b/i, "ecommerce"],
+  [/\bdashboard\b/i, "dashboard"],
+  [/\banalytics\b/i, "analytics"],
+  [/\bchat( app)?\b/i, "chat"],
+  [/\bauth(entication)?\b/i, "auth"],
 ];
 
 // Multi-actor vocabulary — signals Q2 (primary actor) is needed.
@@ -92,22 +110,21 @@ const MULTI_ACTOR_KEYWORDS: readonly string[] = [
   "candidate",
 ];
 
-// Scope-ambiguous vocabulary — broad terms that admit many interpretations.
-// Presence signals Q1 (scope boundary) is needed.
+// Scope-ambiguous vocabulary — terms that genuinely admit multiple incompatible
+// architectures (e.g. marketplace = two-sided vs one-sided, platform = SaaS vs
+// API vs mobile, app = web/mobile/CLI/API). Generic nouns like "app", "tool",
+// "service" are included because they commit to no form factor or delivery
+// mechanism — Ada cannot safely derive architecture from them alone.
 const SCOPE_AMBIGUOUS_KEYWORDS: readonly string[] = [
   "platform",
   "marketplace",
+  "ecosystem",
   "app",
   "system",
   "tool",
-  "service",
-  "suite",
-  "hub",
-  "portal",
-  "dashboard",
-  "solution",
   "product",
-  "ecosystem",
+  "software",
+  "service",
 ];
 
 // Scope-limiting patterns — if the intent already limits scope, Q1 is not needed.
@@ -343,6 +360,20 @@ export function classifyDepth(rawIntent: string): ElicitationPlan {
         "Regulated domain — domain-specific failure conditions and invariants must be explicit before compilation",
       priority: "mandatory",
       targetField: "constraints",
+    });
+  }
+
+  // ── Q4a: Trivial domain with extended scope ───────────────────────────────
+  // A well-known domain (todo, blog, etc.) with a long intent (>15 words)
+  // signals the user has bolted on features that interact in non-obvious ways.
+  // The domain skeleton is known but the feature interactions are not — ask.
+  if (isTrivialDomain && wordCount > 15) {
+    questions.push({
+      type: "workflow_disambiguation",
+      rationale:
+        "Trivial domain with extended scope — specific feature interactions need to be explicit",
+      priority: "conditional",
+      targetField: "unknowns",
     });
   }
 

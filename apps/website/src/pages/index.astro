@@ -3,228 +3,301 @@ import Layout from '../layouts/Layout.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 
-const softwareSchema = {
+const orgSchema = {
   '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'Ada',
-  applicationCategory: 'DeveloperApplication',
-  operatingSystem: 'macOS, Linux, Windows',
-  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  description: 'Ada compiles human intent into governed world-state machines for Claude Code and bounded agents. Semantic compilation + world-state runtime — build complex systems that feel as simple as a calculator.',
+  '@type': 'ResearchOrganization',
+  name: 'Motherlabs',
   url: 'https://motherlabs.ai',
-  publisher: { '@type': 'Organization', name: 'Motherlabs', url: 'https://motherlabs.ai' },
-};
-
-const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: [
-    {
-      '@type': 'Question',
-      name: 'What is Ada?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Ada is a semantic operating system. You describe what you want to build in plain language. Ada compiles your intent through an 8-stage pipeline into CLAUDE.md, agent files, delegation contracts, and hooks. Then it stays in the room — tracking world-state as Claude Code builds, running a 5-layer verification stack, enforcing bounded contracts on every agent, and learning from session patterns to improve over time.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'How is Ada different from MEMORY.md or Claude Code auto-memory?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: "Claude Code's auto-memory records what it observed as it worked — it is retrospective. Ada records what you intend before it starts — it is prospective. One captures drift after it happens. The other prevents it before building begins. They are not the same thing.",
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'What does Ada produce?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Ada produces three artifacts: CLAUDE.md (the intent file Claude Code reads on every message turn), agents/ (specialized agent files scoped to bounded contexts), and hooks/ (pre-tool guards that enforce constraints at every tool call boundary). These are plain files you can read and verify before any build starts.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'What is the intent gap?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'The intent gap is the structural distance between informal natural language requirements and the precise program behavior that gets built. Named in Microsoft Research (2026) as a grand challenge for reliable AI-assisted development. Ada closes it by formalizing intent into CLAUDE.md, agent files, and hook files before Claude Code starts.',
-      },
-    },
-  ],
+  description: 'Research lab building Motherlabs MCP — the substrate layer for the agent economy.',
+  founder: { '@type': 'Person', name: 'Alex Roze' },
+  location: { '@type': 'Place', name: 'Vancouver, BC' },
 };
 ---
 
 <Layout
-  title="Ada — Semantic operating system for Claude Code | Motherlabs"
-  description="Ada compiles intent into governed world-state machines. 8-stage semantic pipeline, world-state runtime, bounded delegation contracts, 5-layer verification. Build complex agent systems that feel as simple as a calculator."
-  schemas={[softwareSchema, faqSchema]}
+  title="Motherlabs — the substrate layer for the agent economy"
+  description="A research lab building Motherlabs MCP: a typed, governed, content-addressed world model every agent inhabits. Not a memory MCP. Not a tool wrapper. The substrate."
+  schemas={[orgSchema]}
 >
   <Nav />
 
   <main>
 
-    <!-- ─── HERO ─────────────────────────────────────────────────────────── -->
+    <!-- ─── HERO ────────────────────────────────────────────────────── -->
     <section class="hero">
-      <div class="hero-image-wrap" aria-hidden="true">
-        <img src="/intent-notes.jpg" alt="" class="hero-image" loading="eager" decoding="async" />
-      </div>
-      <div class="container hero-content">
+      <div class="wrap hero-wrap">
+        <div class="hero-meta">
+          <span class="label label-accent">◆ Motherlabs Research</span>
+          <span class="label">Est. 2025 · Vancouver</span>
+        </div>
 
-        <div class="hero-left">
-          <p class="hero-label">Semantic operating system</p>
-          <h1 class="hero-headline">
-            Intent in.<br />Governed<br />execution out.
-          </h1>
-          <p class="hero-sub">
-            Eight compilation stages. World-state runtime.
-            Bounded execution contracts. Ada stays in the room.
+        <h1 class="hero-headline">
+          The substrate<br />
+          <span class="hero-accent">every agent</span><br />
+          will inhabit.
+        </h1>
+
+        <p class="hero-sub">
+          Memory MCPs record what was said. Tool MCPs deliver actions.
+          Neither models the world an agent acts upon. That layer is missing —
+          and it is what we build.
+        </p>
+
+        <div class="hero-tags">
+          <span>Typed primitives</span>
+          <span class="sep">/</span>
+          <span>Content-addressed</span>
+          <span class="sep">/</span>
+          <span>Governed at action-time</span>
+          <span class="sep">/</span>
+          <span>Local-first</span>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ─── THESIS ──────────────────────────────────────────────────── -->
+    <section id="thesis" class="section">
+      <div class="wrap grid-2">
+        <div class="col-label">
+          <span class="label">§ 01 — Thesis</span>
+        </div>
+        <div class="col-body">
+          <h2 class="h-xl">Context is infrastructure.</h2>
+          <p class="body-lg">
+            Agents do not fail because models are weak. They fail because
+            the world they reason over is a transcript — flat, untyped,
+            ungoverned, ephemeral. Every new session rebuilds it from scratch.
           </p>
-          <div class="hero-actions">
-            <a href="/start" class="btn-primary">Get started</a>
-            <a href="/ada" class="btn-ghost">How it works &rarr;</a>
-          </div>
-        </div>
-
-        <div class="hero-right">
-          <div class="compile-block" aria-label="Ada compile output">
-            <div class="compile-prompt">
-              <span class="prompt-char">$</span>
-              <span class="prompt-cmd">ada compile</span>
-            </div>
-            <div class="compile-stages">
-              <div class="stage-row">
-                <span class="stage-glyph stage-glyph--done">◆</span>
-                <span class="stage-label">CTX</span>
-                <span class="stage-desc">codebase context</span>
-              </div>
-              <div class="stage-row">
-                <span class="stage-glyph stage-glyph--done">◆</span>
-                <span class="stage-label">INT</span>
-                <span class="stage-desc">intent graph</span>
-              </div>
-              <div class="stage-row">
-                <span class="stage-glyph stage-glyph--done">◆</span>
-                <span class="stage-label">PER</span>
-                <span class="stage-desc">persona mapping</span>
-              </div>
-              <div class="stage-row">
-                <span class="stage-glyph stage-glyph--done">◆</span>
-                <span class="stage-label">ENT</span>
-                <span class="stage-desc">entity extraction</span>
-              </div>
-              <div class="stage-row">
-                <span class="stage-glyph stage-glyph--done">◆</span>
-                <span class="stage-label">PRO</span>
-                <span class="stage-desc">process synthesis</span>
-              </div>
-              <div class="stage-row">
-                <span class="stage-glyph stage-glyph--done">◆</span>
-                <span class="stage-label">SYN</span>
-                <span class="stage-desc">synthesis</span>
-              </div>
-              <div class="stage-row stage-row--gov">
-                <span class="stage-glyph stage-glyph--gov">◈</span>
-                <span class="stage-label">GOV</span>
-                <span class="stage-desc stage-approved">approved &nbsp; 0.94</span>
-              </div>
-            </div>
-            <div class="compile-output">
-              <div class="output-row">
-                <span class="output-file">CLAUDE.md</span>
-                <span class="output-action">written</span>
-              </div>
-              <div class="output-row">
-                <span class="output-file">agents/</span>
-                <span class="output-action">8 files written</span>
-              </div>
-              <div class="output-row">
-                <span class="output-file">contracts/</span>
-                <span class="output-action">delegation bounds written</span>
-              </div>
-              <div class="output-row">
-                <span class="output-file">hooks/</span>
-                <span class="output-action">pre-tool guards written</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ─── OUTPUT ──────────────────────────────────────────────────────── -->
-    <hr class="divider" />
-    <section class="output-section animate-in">
-      <div class="container">
-        <div class="callouts">
+          <p class="body-lg">
+            A substrate changes that. One typed world model. Six primitives.
+            Nine layers. One protocol surface. Any agent, any vendor, any
+            session reads, writes under governance, and transacts through it.
+          </p>
           <div class="callout">
-            <div class="callout-dot"></div>
-            <div class="callout-body">
-              <span class="callout-label">GOV — 0.94</span>
-              <p class="callout-text">Semantic gate. The Governor scores coherence between your intent and the compiled blueprint before anything is written.</p>
-            </div>
-          </div>
-          <div class="callout">
-            <div class="callout-dot"></div>
-            <div class="callout-body">
-              <span class="callout-label">CLAUDE.md</span>
-              <p class="callout-text">Compiled intent. Injected into every Claude Code context window — every session, every turn.</p>
-            </div>
-          </div>
-          <div class="callout">
-            <div class="callout-dot"></div>
-            <div class="callout-body">
-              <span class="callout-label">hooks/</span>
-              <p class="callout-text">Pre-tool guards. Your constraints enforced at the execution boundary — before Claude Code acts, not after.</p>
-            </div>
-          </div>
-          <div class="callout">
-            <div class="callout-dot"></div>
-            <div class="callout-body">
-              <span class="callout-label">World-state runtime</span>
-              <p class="callout-text">Ada tracks what has actually been built — world-state, session log, component progress — and runs a 5-layer verification stack as execution proceeds.</p>
-            </div>
+            <span class="label label-accent">The bet</span>
+            <p>
+              The MCP standard has won as the protocol surface. Every serious
+              agent speaks it. But every existing MCP serves one layer —
+              tool calls. The substrate slot underneath is unoccupied.
+            </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ─── ESSENTIAL INFO ───────────────────────────────────────────────── -->
-    <hr class="divider" />
-    <section class="essential-section">
-      <div class="container container--narrow">
+    <hr class="rule" />
 
-        <div class="output-list">
-          <div class="output-item">
-            <code class="out-file">CLAUDE.md</code>
-            <span class="out-desc">The intent file. Claude Code reads this on every message turn — what the system is, what it is not, what constraints apply.</span>
-          </div>
-          <div class="output-item">
-            <code class="out-file">agents/</code>
-            <span class="out-desc">Macro planner, micro executors, independent verifier — plus specialist agents scoped to each bounded context.</span>
-          </div>
-          <div class="output-item">
-            <code class="out-file">contracts/</code>
-            <span class="out-desc">Delegation contracts. Each agent gets typed scope, stop conditions, required evidence, and a max recursion depth — no unconstrained spawning.</span>
-          </div>
-          <div class="output-item">
-            <code class="out-file">hooks/</code>
-            <span class="out-desc">Pre-tool guards. Your intent, enforced at the boundary where decisions are made.</span>
-          </div>
+    <!-- ─── SYSTEMS ─────────────────────────────────────────────────── -->
+    <section id="systems" class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="label">§ 02 — Systems</span>
+          <h2 class="h-xl">What is being built.</h2>
         </div>
 
-        <div class="essential-cta">
-          <div class="install-block">
-            <span class="install-prompt">$</span>
-            <code class="install-cmd">ada compile</code>
+        <div class="systems">
+
+          <article class="system system--flagship">
+            <header class="system-head">
+              <span class="label label-accent">Flagship · in development</span>
+              <h3 class="h-lg">Motherlabs MCP</h3>
+            </header>
+            <p class="body-md">
+              A typed, governed, content-addressed world model exposed through
+              an MCP server. Six primitives — Entity, Relation, Process,
+              Constraint, Commitment, Address — under git-like content hashing.
+              Every write goes through a governor that can <em>ALLOW</em>,
+              <em>BLOCK</em>, or <em>AMEND_FIRST</em> before the tool call.
+            </p>
+
+            <div class="layers">
+              <span>Identity</span>
+              <span>World</span>
+              <span>Invariants</span>
+              <span>Processes</span>
+              <span>Authority</span>
+              <span>Gate</span>
+              <span>Evidence</span>
+              <span>Commitment</span>
+              <span>Coherence</span>
+            </div>
+
+            <div class="system-meta">
+              <div><span class="label">Surface</span><p>25 typed tools</p></div>
+              <div><span class="label">Storage</span><p>.ml/ · git-object · SQLite</p></div>
+              <div><span class="label">Stance</span><p>Local-first · vendor-neutral</p></div>
+            </div>
+
+            <pre class="code"><code>{`$ mcp add motherlabs
+  → substrate initialized at .ml/
+  → 6 primitives · 9 layers · 25 tools
+
+agent.call("ml.gate", { action: "write", target: "ENT.07" })
+  → AMEND_FIRST
+  → violated: [INV.03 — name must be unique in scope]
+  → suggested: { name: "Customer_v2" }`}</code></pre>
+          </article>
+
+          <article class="system">
+            <header class="system-head">
+              <span class="label">Compiler · live</span>
+              <h3 class="h-md">Ada</h3>
+            </header>
+            <p class="body-md">
+              The compile step that births a substrate from natural-language
+              intent. A nine-stage gated pipeline — INT → PER → ENT → PRO →
+              SYN → AUD → GOV — each stage reducing ambiguity, each artifact
+              carrying a postcode that traces back to the original intent.
+            </p>
+            <p class="body-sm muted">
+              Ada is how substrates enter the world. Motherlabs MCP is how
+              agents operate through them.
+            </p>
+          </article>
+
+          <article class="system">
+            <header class="system-head">
+              <span class="label">Runtime · building</span>
+              <h3 class="h-md">Agentic City</h3>
+            </header>
+            <p class="body-md">
+              Multi-agent operating system at scale. Typed delegation
+              contracts, commitment ledger, authority graph. The layer where
+              substrates become civic infrastructure for fleets of agents
+              that must coordinate, transact, and remain coherent across
+              sessions and vendors.
+            </p>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ─── CATEGORICAL ─────────────────────────────────────────────── -->
+    <section class="section">
+      <div class="wrap grid-2">
+        <div class="col-label">
+          <span class="label">§ 03 — Category</span>
+        </div>
+        <div class="col-body">
+          <h2 class="h-xl">Not memory. Not a tool wrapper.</h2>
+
+          <div class="compare">
+            <div class="compare-row compare-row--head">
+              <span></span>
+              <span>Memory MCP</span>
+              <span>Tool MCP</span>
+              <span class="mark">Motherlabs MCP</span>
+            </div>
+            <div class="compare-row">
+              <span class="k">Typed world model</span>
+              <span>—</span><span>—</span><span class="v">✓</span>
+            </div>
+            <div class="compare-row">
+              <span class="k">Action-time gate</span>
+              <span>—</span><span>—</span><span class="v">✓</span>
+            </div>
+            <div class="compare-row">
+              <span class="k">Executable invariants</span>
+              <span>—</span><span>—</span><span class="v">✓</span>
+            </div>
+            <div class="compare-row">
+              <span class="k">Provenance DAG</span>
+              <span>—</span><span>—</span><span class="v">✓</span>
+            </div>
+            <div class="compare-row">
+              <span class="k">Inter-agent commitments</span>
+              <span>—</span><span>—</span><span class="v">✓</span>
+            </div>
+            <div class="compare-row">
+              <span class="k">Drift signal</span>
+              <span>—</span><span>—</span><span class="v">✓</span>
+            </div>
           </div>
-          <div class="essential-links">
-            <a href="/start" class="btn-primary">Get started</a>
-            <a href="/ada" class="btn-ghost">Read about Ada &rarr;</a>
-          </div>
+
+          <p class="body-md muted">
+            A memory MCP without a substrate is a transcript. A substrate
+            without a memory MCP still works — the substrate <em>is</em>
+            the durable world. The substrate is upstream.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ─── TIMELINE ────────────────────────────────────────────────── -->
+    <section id="timeline" class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="label">§ 04 — Timeline</span>
+          <h2 class="h-xl">Fourteen months. Eight architectures. One seed.</h2>
         </div>
 
+        <ol class="timeline">
+          <li>
+            <span class="t-date">2025 · Q1</span>
+            <span class="t-title">Tattoo OS</span>
+            <span class="t-note">First attempt at a governed system. Taught us the compile step.</span>
+          </li>
+          <li>
+            <span class="t-date">2025 · Q2</span>
+            <span class="t-title">SEED protocol · GENOME spec</span>
+            <span class="t-note">200 properties. The shape of what a substrate has to carry.</span>
+          </li>
+          <li>
+            <span class="t-date">2025 · Q3</span>
+            <span class="t-title">The two-forces model</span>
+            <span class="t-note">Entropy collapse + autopoiesis as the ground for agent architecture.</span>
+          </li>
+          <li>
+            <span class="t-date">2025 · Q4</span>
+            <span class="t-title">Ada compiler</span>
+            <span class="t-note">Nine-stage pipeline. Postcode provenance. First production output.</span>
+          </li>
+          <li>
+            <span class="t-date">2026 · Q1</span>
+            <span class="t-title">The collapse</span>
+            <span class="t-note">Eight architectures converge. Markdown was the wrong shape. MCP is the right one.</span>
+          </li>
+          <li class="t-current">
+            <span class="t-date">2026 · Q2</span>
+            <span class="t-title">Motherlabs MCP</span>
+            <span class="t-note">Substrate layer. 25 tools. 3-week engineering lead. No novel research required.</span>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ─── BIO ─────────────────────────────────────────────────────── -->
+    <section id="bio" class="section">
+      <div class="wrap grid-2">
+        <div class="col-label">
+          <span class="label">§ 05 — Bio</span>
+        </div>
+        <div class="col-body">
+          <h2 class="h-xl">Alex Roze.</h2>
+          <p class="body-lg">
+            Solo founder. Self-taught. Tattoo artist turned semantic
+            compiler author. Vancouver, with a second studio in Kelowna.
+            Motherlabs is the lab; the work is the substrate underneath
+            every agent that will exist.
+          </p>
+          <p class="body-md muted">
+            This is a research page — not a pitch, not a product tour.
+            The system ships when the system is right.
+          </p>
+          <div class="contact">
+            <a href="mailto:alex@motherlabs.ai">alex@motherlabs.ai</a>
+            <a href="https://github.com/motherlabs" target="_blank" rel="noopener noreferrer">github.com/motherlabs</a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -234,410 +307,342 @@ const faqSchema = {
 </Layout>
 
 <style>
-  /* ── Layout ──────────────────────────────────────────────────────────── */
-  .container {
-    max-width: 72rem;
-    margin: 0 auto;
-    padding: 0 clamp(1.5rem, 5vw, 4rem);
-  }
+  main { display: block; }
 
-  .container--narrow {
-    max-width: 44rem;
-  }
-
-  .divider {
-    border: none;
-    border-top: 1px solid var(--color-border);
-    margin: 0;
-  }
-
-  /* ── Hero ────────────────────────────────────────────────────────────── */
+  /* ─── Hero ─── */
   .hero {
-    position: relative;
-    min-height: 88vh;
+    padding: 7rem 0 6rem;
+  }
+
+  .hero-wrap {
     display: flex;
-    align-items: center;
-    overflow: hidden;
+    flex-direction: column;
+    gap: 2.5rem;
   }
 
-  .hero-image-wrap {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-  }
-
-  .hero-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center 25%;
-    opacity: 0.42;
-    display: block;
-  }
-
-  /* Light mode: less opacity since image is bright */
-  @media (prefers-color-scheme: light) {
-    .hero-image { opacity: 0.34; }
-  }
-  [data-theme="light"] .hero-image { opacity: 0.34; }
-  [data-theme="dark"] .hero-image { opacity: 0.42; }
-
-  .hero-content {
-    position: relative;
-    z-index: 1;
-    padding-top: 6rem;
-    padding-bottom: 6rem;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 6rem;
-    align-items: center;
-  }
-
-  .hero-left {
-    max-width: 28rem;
-  }
-
-  .hero-label {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-    margin: 0 0 1.25rem;
+  .hero-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
 
   .hero-headline {
-    font-family: var(--font-serif);
-    font-size: clamp(2.5rem, 5vw, 3.75rem);
-    font-weight: 400;
-    line-height: 1.08;
-    letter-spacing: -0.015em;
-    color: var(--color-text);
-    margin: 0 0 1.5rem;
+    font-size: clamp(3.25rem, 9vw, 7rem);
+    line-height: 0.95;
+    max-width: 18ch;
+  }
+
+  .hero-accent {
+    color: var(--color-accent);
   }
 
   .hero-sub {
     font-family: var(--font-mono);
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
+    line-height: 1.7;
     color: var(--color-text-muted);
-    line-height: 1.75;
-    margin: 0 0 2.5rem;
+    max-width: 58ch;
   }
 
-  .hero-actions {
+  .hero-tags {
     display: flex;
-    align-items: center;
-    gap: 1.5rem;
+    gap: 0.75rem;
     flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-dim);
+    padding-top: 1rem;
   }
 
-  .hero-right {
-    flex-shrink: 0;
+  .hero-tags .sep { color: var(--color-border); }
+
+  /* ─── Section primitives ─── */
+  .section {
+    padding: 6rem 0;
   }
 
-  /* Buttons */
-  .btn-primary {
+  .section-head {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 3.5rem;
+    max-width: 58ch;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: 4rem;
+  }
+
+  .col-label { padding-top: 0.4rem; }
+
+  .col-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    max-width: 62ch;
+  }
+
+  .h-xl {
+    font-size: clamp(2.25rem, 4vw, 3.25rem);
+  }
+
+  .h-lg {
+    font-size: clamp(1.75rem, 3vw, 2.375rem);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    line-height: 1.1;
+  }
+
+  .h-md {
+    font-size: 1.5rem;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .body-lg {
+    font-family: var(--font-mono);
     font-size: 0.9375rem;
-    font-weight: 500;
-    color: var(--color-bg);
-    background-color: var(--color-accent);
-    padding: 0.7rem 1.5rem;
-    border-radius: 8px;
-    transition: background-color 0.12s ease;
-    display: inline-block;
-  }
-
-  .btn-primary:hover {
-    background-color: var(--color-accent-hover);
-    color: var(--color-bg);
-  }
-
-  .btn-ghost {
-    font-size: 0.9375rem;
-    color: var(--color-text-muted);
-    transition: color 0.12s ease;
-  }
-
-  .btn-ghost:hover {
+    line-height: 1.75;
     color: var(--color-text);
   }
 
-  /* ── Output/callout section ──────────────────────────────────────────── */
-  .output-section {
-    padding: 4rem 0;
-  }
-
-  /* Compile block — in hero */
-  .compile-block {
+  .body-md {
     font-family: var(--font-mono);
     font-size: 0.875rem;
-    line-height: 1.6;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    padding: 1.5rem 1.75rem;
-    display: inline-flex;
-    flex-direction: column;
-    gap: 0;
-    min-width: 22rem;
+    line-height: 1.7;
+    color: var(--color-text);
   }
 
-  .compile-prompt {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1.25rem;
-    opacity: 0;
-    animation: fade-in-up 180ms ease forwards;
-    animation-delay: 80ms;
+  .body-sm {
+    font-size: 0.8125rem;
+    line-height: 1.65;
   }
 
-  .prompt-char { color: var(--color-text-dim); }
-  .prompt-cmd  { color: var(--color-text-muted); }
-
-  .compile-stages {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .stage-row {
-    display: grid;
-    grid-template-columns: 1rem 2.5rem 1fr;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.1rem 0;
-    opacity: 0;
-    animation: fade-in-up 180ms ease forwards;
-  }
-
-  .stage-row--gov {
-    margin-top: 0.125rem;
-  }
-
-  .stage-row:nth-child(1) { animation-delay: 200ms; }
-  .stage-row:nth-child(2) { animation-delay: 310ms; }
-  .stage-row:nth-child(3) { animation-delay: 420ms; }
-  .stage-row:nth-child(4) { animation-delay: 530ms; }
-  .stage-row:nth-child(5) { animation-delay: 640ms; }
-  .stage-row:nth-child(6) { animation-delay: 750ms; }
-  .stage-row:nth-child(7) { animation-delay: 860ms; }
-
-  .stage-glyph      { font-size: 0.65rem; line-height: 1; }
-  .stage-glyph--done { color: var(--color-text-dim); }
-  .stage-glyph--gov  { color: var(--color-accent); }
-  .stage-label       { color: var(--color-text-dim); letter-spacing: 0.04em; font-size: 0.8rem; }
-  .stage-desc        { color: var(--color-text-muted); font-size: 0.8125rem; }
-  .stage-approved    { color: var(--color-accent); font-weight: 500; }
-
-  .compile-output {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--color-border);
-  }
-
-  .output-row {
-    display: grid;
-    grid-template-columns: 9rem 1fr;
-    gap: 1rem;
-    opacity: 0;
-    animation: fade-in-up 180ms ease forwards;
-  }
-
-  .output-row:nth-child(1) { animation-delay: 1020ms; }
-  .output-row:nth-child(2) { animation-delay: 1100ms; }
-  .output-row:nth-child(3) { animation-delay: 1180ms; }
-
-  .output-file   { color: var(--color-text); font-weight: 500; }
-  .output-action { color: var(--color-text-dim); }
-
-  /* Callouts — horizontal row */
-  .callouts {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 3rem;
-  }
+  .muted { color: var(--color-text-muted); }
 
   .callout {
+    border-left: 1px solid var(--color-accent);
+    padding: 0.25rem 0 0.25rem 1.25rem;
     display: flex;
-    align-items: flex-start;
-    gap: 0.875rem;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
-  .callout-dot {
-    flex-shrink: 0;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: var(--color-accent);
-    margin-top: 0.45em;
+  .callout p {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: var(--color-text-muted);
   }
 
-  .callout-body {
+  /* ─── Systems ─── */
+  .systems {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .system {
+    padding: 3rem 0;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .system:last-child { border-bottom: 1px solid var(--color-border); }
+
+  .system--flagship {
+    padding: 3.5rem 0;
+  }
+
+  .system-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .layers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .layers span {
+    padding: 0.4rem 0.9rem 0.4rem 0;
+    border-right: 1px solid var(--color-border);
+    margin-right: 0.9rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .layers span:last-child { border-right: 0; }
+
+  .system-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px dashed var(--color-border);
+    border-bottom: 1px dashed var(--color-border);
+  }
+
+  .system-meta > div {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
   }
 
-  .callout-label {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--color-text);
-    letter-spacing: 0.02em;
-  }
-
-  .callout-text {
+  .system-meta p {
     font-family: var(--font-mono);
     font-size: 0.8125rem;
-    color: var(--color-text-muted);
-    line-height: 1.65;
+    color: var(--color-text);
+  }
+
+  .code {
     margin: 0;
+    background-color: var(--color-surface);
   }
 
-  /* ── Essential info ──────────────────────────────────────────────────── */
-  .essential-section {
-    padding: 5rem 0 6rem;
-  }
-
-  .output-list {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 3.5rem;
-  }
-
-  .output-item {
-    display: grid;
-    grid-template-columns: 8rem 1fr;
-    gap: 1.5rem;
-    padding: 1.125rem 0;
+  /* ─── Compare table ─── */
+  .compare {
     border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    margin: 0.5rem 0;
+  }
+
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    align-items: center;
+  }
+
+  .compare-row:last-child { border-bottom: 0; }
+
+  .compare-row--head {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .compare-row--head .mark { color: var(--color-accent); }
+
+  .compare-row .k { color: var(--color-text-muted); }
+  .compare-row .v { color: var(--color-accent); }
+
+  /* ─── Timeline ─── */
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .timeline li {
+    display: grid;
+    grid-template-columns: 9rem 14rem 1fr;
+    gap: 2rem;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--color-border);
     align-items: baseline;
   }
 
-  .output-item:last-child {
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .out-file {
+  .t-date {
     font-family: var(--font-mono);
-    font-size: 0.875rem;
-    color: var(--color-text);
-    font-weight: 500;
-    background: none;
-    padding: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-dim);
   }
 
-  .out-desc {
+  .t-title {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.125rem;
+    color: var(--color-text);
+  }
+
+  .t-note {
     font-family: var(--font-mono);
     font-size: 0.8125rem;
     color: var(--color-text-muted);
-    line-height: 1.65;
+    line-height: 1.6;
   }
 
-  .essential-cta {
-    padding-top: 2.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
+  .t-current .t-title { color: var(--color-accent); }
+  .t-current .t-date { color: var(--color-accent); }
 
-  .install-block {
+  /* ─── Bio ─── */
+  .contact {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    gap: 2rem;
+    padding-top: 0.5rem;
     font-family: var(--font-mono);
-  }
-
-  .install-prompt {
-    color: var(--color-text-dim);
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-
-  .install-cmd {
-    font-family: var(--font-mono);
-    font-size: clamp(1rem, 2.5vw, 1.25rem);
-    color: var(--color-accent);
-    background: none;
-    padding: 0;
-    letter-spacing: -0.01em;
-  }
-
-  .essential-links {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
+    font-size: 0.875rem;
     flex-wrap: wrap;
   }
 
-  /* ── Mobile ──────────────────────────────────────────────────────────── */
-  @media (max-width: 900px) {
-    .hero-content {
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .hero { padding: 4rem 0 3.5rem; }
+    .section { padding: 4rem 0; }
+
+    .grid-2 {
       grid-template-columns: 1fr;
-      gap: 3rem;
+      gap: 1.5rem;
     }
 
-    .hero-right {
-      order: -1;
-    }
-
-    .compile-block {
-      min-width: 0;
-      width: 100%;
-    }
-
-    .callouts {
+    .system-meta {
       grid-template-columns: 1fr;
-      gap: 2rem;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .hero {
-      min-height: auto;
+      gap: 1rem;
     }
 
-    .hero-content {
-      padding-top: 4rem;
-      padding-bottom: 4rem;
+    .compare-row {
+      grid-template-columns: 1.2fr 0.6fr 0.6fr 0.7fr;
+      font-size: 0.72rem;
+      gap: 0.5rem;
     }
 
-    .hero-headline {
-      font-size: 2.25rem;
-    }
-
-    .output-item {
+    .timeline li {
       grid-template-columns: 1fr;
-      gap: 0.375rem;
+      gap: 0.35rem;
+      padding: 1rem 0;
     }
-  }
 
-  /* Reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    .compile-prompt,
-    .stage-row,
-    .output-row { animation: none; opacity: 1; }
+    .hero-headline { max-width: 100%; }
   }
 </style>
 
 <script>
-  // Scroll-triggered entrance for below-fold sections
-  const observer = new IntersectionObserver(
+  const io = new IntersectionObserver(
     (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible');
-          observer.unobserve(entry.target);
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-visible');
+          io.unobserve(e.target);
         }
       });
     },
-    { threshold: 0.08 }
+    { threshold: 0.12 }
   );
 
-  document.querySelectorAll('.animate-in').forEach((el) => observer.observe(el));
+  document.querySelectorAll('.animate-in').forEach((el) => io.observe(el));
 </script>

@@ -197,7 +197,7 @@ export function advanceExecution(
           "",
           "GOVERNANCE:",
           "- Call ada.check_drift() before any major architectural decision",
-          "- Call ada.verify() when you believe implementation is complete",
+          "- Call ada.verify_stack() when you believe implementation is complete",
         ].join("\n"),
         isError: false,
       };
@@ -223,7 +223,7 @@ export function advanceExecution(
             "",
             `All ${subGoals.length} subGoals are complete. Blueprint execution finished.`,
             "",
-            "Call ada.verify() to run the final verification stack.",
+            "Call ada.verify_stack() to run the final verification stack.",
           ].join("\n"),
           isError: false,
         };
@@ -299,7 +299,7 @@ export function advanceExecution(
       "GOVERNANCE:",
       "- Call ada.check_drift() before any major architectural decision",
       `- Call ada.get_contract("${subGoal.name}") for your full delegation contract`,
-      "- Call ada.verify() when you believe your context is complete",
+      "- Call ada.verify_stack() when you believe your context is complete",
     ].join("\n");
 
     return { content: brief, isError: false };

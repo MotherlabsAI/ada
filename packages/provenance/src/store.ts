@@ -1,5 +1,14 @@
-import Database from "better-sqlite3";
 import * as fs from "fs";
+
+// better-sqlite3 is optional — only needed for legacy ProvenanceStore.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Database: any;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Database = require("better-sqlite3");
+} catch {
+  Database = null;
+}
 import * as path from "path";
 import { PostcodeAddress } from "./postcode.js";
 import { GitObjectStore } from "./git-store.js";
@@ -100,9 +109,15 @@ export class ManifoldStore {
 
 /** Legacy ProvenanceStore (kept for SQLite backward compatibility) */
 export class ProvenanceStore {
-  private readonly db: Database.Database;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly db: any;
 
   constructor(dbPath: string) {
+    if (!Database) {
+      throw new Error(
+        "better-sqlite3 is not installed — provenance store unavailable.",
+      );
+    }
     this.db = new Database(dbPath);
     this.db.pragma("journal_mode = WAL");
     this.db.exec(`

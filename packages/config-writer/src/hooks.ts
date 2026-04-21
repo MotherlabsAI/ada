@@ -99,6 +99,39 @@ exit 0
 `;
 }
 
+// ─── Semantic gate hook ───────────────────────────────────────────────────────
+
+const GATE_HOOK_SCRIPT = `#!/bin/bash
+# Ada semantic gate — PreToolUse enforcement.
+# Invokes the ada-gate-hook binary with the Claude Code tool_input payload.
+# Exits 2 on BLOCK (Claude Code shows stderr to the model). Fail-open on
+# LLM unavailability unless ADA_GATE_STRICT=1. Disable with ADA_GATE_MODE=off.
+if command -v ada-gate-hook >/dev/null 2>&1; then
+  exec ada-gate-hook
+fi
+# ada-gate-hook not installed on PATH — fail-open so the session is not bricked.
+exit 0
+`;
+
+/**
+ * buildGateHook — returns the HookScript for the semantic action-time gate.
+ *
+ * This hook is always emitted, regardless of whether the blueprint has any
+ * entity invariants. The gate reasons about bounded contexts, workflow
+ * preconditions, and invariants together; there is no "no invariants, no
+ * gate" case. Treat it like the post-tool-audit hook: hard-coded into the
+ * emitted settings.json.
+ */
+export function buildGateHook(): HookScript {
+  return {
+    name: "ada-gate",
+    type: "pre-tool",
+    matcher: "Write|Edit|MultiEdit|Bash",
+    script: GATE_HOOK_SCRIPT,
+    path: "hooks/pre-tool/ada-gate.sh",
+  };
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 export function invariantsToHooks(entityMap: EntityMap): HookScript[] {

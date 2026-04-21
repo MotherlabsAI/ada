@@ -79,10 +79,12 @@ export async function headlessCommand(args: string[]): Promise<void> {
     `\n[ada] GOV: ${governorDecision.decision}  confidence: ${(governorDecision.confidence * 100).toFixed(0)}%\n`,
   );
 
-  // Write config files regardless of decision (callers may want partial output)
-  const configOptions = pipelineState.persona
-    ? { domainContext: pipelineState.persona }
-    : {};
+  // Write config files regardless of decision — always partial-safe so ITERATE
+  // doesn't crash before state.json and stdout JSON are written
+  const configOptions = {
+    partial: true,
+    ...(pipelineState.persona ? { domainContext: pipelineState.persona } : {}),
+  };
   const configGraph = writeConfigGraph(
     blueprint,
     governorDecision,

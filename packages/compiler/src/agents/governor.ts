@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import type { ZodSchema } from "zod";
 import { Agent } from "./base.js";
 import { DEV_OPUS } from "../models.js";
@@ -40,7 +42,44 @@ export class GovernorAgent extends Agent<PipelineState, GovernorDecision> {
     };
   }
 
+  private loadDecisionHistory(): string {
+    try {
+      const historyPath = path.join(
+        process.cwd(),
+        ".ada",
+        "confidence-history.jsonl",
+      );
+      if (!fs.existsSync(historyPath)) return "";
+      const lines = fs
+        .readFileSync(historyPath, "utf8")
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .slice(-5);
+      if (lines.length === 0) return "";
+      const records = lines.map(
+        (l) =>
+          JSON.parse(l) as {
+            decision?: string;
+            confidence?: number;
+            coverage?: number;
+            coherence?: number;
+          },
+      );
+      const summary = records
+        .map(
+          (r) =>
+            `  ${r.decision ?? "?"} conf:${(r.confidence ?? 0).toFixed(2)} cov:${(r.coverage ?? 0).toFixed(2)} coh:${(r.coherence ?? 0).toFixed(2)}`,
+        )
+        .join("\n");
+      return `\nPRIOR DECISIONS (your history — calibrate thresholds accordingly):\n${summary}\n`;
+    } catch {
+      return "";
+    }
+  }
+
   protected buildPrompt(input: PipelineState): string {
+    const historySection = this.loadDecisionHistory();
     const gatePassRate = computeGatePassRate(input.gates);
     const gateDetails = Object.entries(input.gates)
       .map(
@@ -97,7 +136,7 @@ Mark key insights with ◈
 Mark things you derived that weren't stated with ∴
 Mark risks or gaps with ✗
 Mark things you're confident about with ✓
-
+${historySection}
 RULES:
   ACCEPT: coverage ≥ 0.80 AND coherence ≥ 0.85 AND gates ≥ 0.80 AND provenance intact AND no blocking challenges
   ACCEPT also when: coverage ≥ 0.70 AND coherence ≥ 0.80 AND gates ≥ 0.80 AND provenance intact — scores within tolerance, iteration risks degradation

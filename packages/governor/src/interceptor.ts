@@ -1,9 +1,9 @@
 import { Governor } from "./governor.js";
 
 /**
- * createGovernedCanUseTool: Wraps Gemini's tool-call permission handler with
- * the synchronous Semantic Governor. This ensures that any tool call that
- * violates the manifold symmetry is blocked before it reaches the execution engine.
+ * createGovernedCanUseTool: Wraps Claude Code's tool-call permission handler
+ * with the Ada Governor. Tool calls that violate the manifold symmetry OR
+ * the semantic gate (when enabled) are denied before execution.
  */
 export function createGovernedCanUseTool(
   governor: Governor,
@@ -17,26 +17,42 @@ export function createGovernedCanUseTool(
     toolUseID: string,
     forceDecision?: any,
   ) => {
-    // 1. Synchronous Manifold Validation
+    // 1. Layered validation: manifold + (optionally) semantic gate
     const validation = await governor.validate(tool.name, input);
 
     if (!validation.result) {
-      // 2. Reject transition if illegal
+      const semantic = validation.semantic;
+      const hookName =
+        semantic && semantic.source === "semantic"
+          ? "AdaSemanticGate"
+          : "ManifoldGovernor";
+
+      const defaultMessage =
+        "Blocked by Ada Governor: Manifold Invariant Violation";
+      const message = validation.message ?? defaultMessage;
+
+      const reason =
+        validation.violatedInvariants &&
+        validation.violatedInvariants.length > 0
+          ? validation.violatedInvariants.join("; ")
+          : semantic?.reasoning;
+
       return {
         behavior: "deny",
-        message:
-          validation.message ||
-          "Blocked by Semantic Governor: Manifold Invariant Violation",
+        message,
         decisionReason: {
           type: "hook",
-          hookName: "ManifoldGovernor",
-          reason: validation.violatedInvariants?.join("; "),
+          hookName,
+          ...(reason !== undefined ? { reason } : {}),
+          ...(semantic?.suggested !== undefined
+            ? { suggested: semantic.suggested }
+            : {}),
         },
         toolUseID,
       };
     }
 
-    // 3. Delegate to original permission logic (User / Settings / Classifier)
+    // 2. Delegate to original permission logic
     return originalCanUseTool(
       tool,
       input,

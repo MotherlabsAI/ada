@@ -5,7 +5,7 @@ import { generatePostcode } from "@ada/provenance";
 import { blueprintToCLAUDEMD } from "./claude-md.js";
 import { componentsToAgents } from "./agents.js";
 import { workflowsToSkills } from "./skills.js";
-import { invariantsToHooks } from "./hooks.js";
+import { invariantsToHooks, buildGateHook } from "./hooks.js";
 import { buildSettings } from "./settings.js";
 import { blueprintToContracts } from "./contracts.js";
 import { buildContractToBuildMD } from "./build-md.js";
@@ -69,8 +69,10 @@ export function writeConfigGraph(
     writtenSkills.push(skillPath);
   }
 
-  // 4. Hook scripts
-  const hooks = invariantsToHooks(blueprint.dataModel);
+  // 4. Hook scripts — invariant-specific grep-based hooks + the always-on
+  //    semantic gate hook (ada-gate). Gate is first so it runs before any
+  //    per-invariant hook on each matched tool call.
+  const hooks = [buildGateHook(), ...invariantsToHooks(blueprint.dataModel)];
   for (const hook of hooks) {
     const hookPath = path.join(targetDir, hook.path);
     fs.mkdirSync(path.dirname(hookPath), { recursive: true });

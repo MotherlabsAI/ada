@@ -576,7 +576,7 @@ export function verifyProvenance(): LayerResult {
   return { layer: "provenance", passed, score, findings, checkedAt: now };
 }
 
-// ─── Umbrella: ada.verify ─────────────────────────────────────────────────────
+// ─── Umbrella: ada.verify_stack ───────────────────────────────────────────────
 
 export function runVerificationStack(
   layer?: VerifierLayer,

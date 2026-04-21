@@ -1,4 +1,10 @@
 ---
+ada_postcode: "ML.SKL.semantic-intent-compilation-pipeline/v1"
+ada_type: skill
+ada_name: semantic-intent-compilation-pipeline
+ada_compiled_at: 1776596371488
+---
+---
 name: semantic-intent-compilation-pipeline
 description: "Use when ElicitationSession transitions to HANDED_OFF with draftIntentGraph postcode recorded in HandoffRecord pattern detected."
 ---

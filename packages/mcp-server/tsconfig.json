@@ -6,5 +6,11 @@
     "composite": true,
     "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    { "path": "../compiler" },
+    { "path": "../config-writer" },
+    { "path": "../governor" },
+    { "path": "../provenance" }
+  ]
 }

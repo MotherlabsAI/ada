@@ -4,6 +4,15 @@ import { writeCheckpoint } from "@ada/orchestrator";
 import type { GovernorSignal } from "./signals.js";
 import { ConfidenceTracker } from "./confidence.js";
 import { evaluateInvariants } from "./drift.js";
+import { evaluateSemanticDrift } from "./semantic-drift.js";
+import { getApiKey } from "./llm-client.js";
+
+function readInt(envKey: string, fallback: number): number {
+  const raw = process.env[envKey];
+  if (!raw) return fallback;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
 
 export async function* watch(
   blueprint: Blueprint,
@@ -15,11 +24,45 @@ export async function* watch(
   let hasEmittedConfidence = false;
   let hasEmittedLowConfidence = false;
 
+  // Semantic-drift buffer: recent events kept for periodic LLM evaluation.
+  const semanticInterval = readInt("ADA_SEMANTIC_DRIFT_INTERVAL", 10);
+  const semanticEnabled = getApiKey() !== null;
+  const eventBuffer: ClaudeEvent[] = [];
+  let eventCountSinceSemantic = 0;
+
+  // Fire-and-forget semantic drift checks — never block the event stream.
+  // Results arrive as signals yielded from the pending queue.
+  const pendingSignals: GovernorSignal[] = [];
+  const inflightSemantic: Promise<void>[] = [];
+
+  const runSemanticPass = (windowEvents: readonly ClaudeEvent[]): void => {
+    if (!semanticEnabled || windowEvents.length === 0) return;
+    const snapshot = [...windowEvents];
+    const task = (async () => {
+      const results = await evaluateSemanticDrift(blueprint, snapshot);
+      if (!results) return;
+      for (const r of results) {
+        confidence.onDrift();
+        pendingSignals.push({
+          type: "DRIFT",
+          severity: r.severity,
+          location: `[semantic] ${r.location}`,
+          detail: r.detail,
+        });
+      }
+    })().catch(() => {
+      // swallow — semantic drift is fail-open
+    });
+    inflightSemantic.push(task);
+  };
+
   try {
     for await (const event of events) {
       sessionId = event.session_id;
+      eventBuffer.push(event);
+      if (eventBuffer.length > 40) eventBuffer.shift();
 
-      // On PostToolUse — check invariants
+      // On PostToolUse — check invariants (heuristic, fast path)
       if (event.event.type === "content_block_stop") {
         const toolOutput = JSON.stringify(event.event);
         const drifts = evaluateInvariants(blueprint, toolOutput);
@@ -29,13 +72,19 @@ export async function* watch(
           yield {
             type: "DRIFT",
             severity: drift.severity,
-            location: drift.location,
+            location: `[heuristic] ${drift.location}`,
             detail: drift.detail,
           };
         }
+
+        eventCountSinceSemantic += 1;
+        if (eventCountSinceSemantic >= semanticInterval) {
+          eventCountSinceSemantic = 0;
+          runSemanticPass(eventBuffer.slice(-20));
+        }
       }
 
-      // On SubagentStop — checkpoint + postcondition check
+      // On SubagentStop — checkpoint + postcondition check + semantic pass
       if (
         event.event.type === "message_stop" &&
         event.parent_tool_use_id !== null
@@ -55,9 +104,19 @@ export async function* watch(
         });
 
         yield { type: "CHECKPOINT", sessionId, timestamp: Date.now() };
+
+        // Run a semantic pass at subagent boundaries — natural reasoning unit.
+        eventCountSinceSemantic = 0;
+        runSemanticPass(eventBuffer.slice(-20));
       }
 
-      // Low confidence warning — emit once when threshold is crossed, not on every event
+      // Drain any pending semantic-drift signals accumulated so far.
+      while (pendingSignals.length > 0) {
+        const sig = pendingSignals.shift();
+        if (sig) yield sig;
+      }
+
+      // Low confidence warning — emit once when threshold is crossed
       if (confidence.isLow && !hasEmittedLowConfidence) {
         hasEmittedLowConfidence = true;
         yield {
@@ -76,6 +135,15 @@ export async function* watch(
       location: "governor.watch",
       detail: "Event stream error",
     };
+  }
+
+  // Drain any in-flight semantic passes before declaring session complete.
+  if (inflightSemantic.length > 0) {
+    await Promise.allSettled(inflightSemantic);
+  }
+  while (pendingSignals.length > 0) {
+    const sig = pendingSignals.shift();
+    if (sig) yield sig;
   }
 
   // Session complete

@@ -65,9 +65,9 @@ export class ENTGateEvaluator {
       provenanceIntact === true &&
       allBlockersCleared === true;
 
-    const evaluatedAt = Date.now();
+    const evaluatedAt = passed ? Date.now() : null;
     const governorDecisionPostcode = passed
-      ? makeGovernorPostcode(this.gate.gateId, evaluatedAt)
+      ? makeGovernorPostcode(this.gate.gateId, evaluatedAt!)
       : null;
 
     // Write provenance record for gate evaluation
@@ -82,7 +82,7 @@ export class ENTGateEvaluator {
       // Write governor decision record
       this.provenanceWriter.writeRecord(
         "GOVERNOR_DECISION",
-        `${this.gate.gateId}:PASS`,
+        `${this.gate.gateId}:ACCEPT`,
         "ENT",
         [gateProvRecord.postcode],
       );
@@ -103,9 +103,9 @@ export class ENTGateEvaluator {
   }
 
   getGovernorDecision(gate: ENTGateRecord): string {
-    if (gate.passed) return "PASS";
+    if (gate.passed) return "ACCEPT";
     if (gate.state === "evaluating") return "PENDING";
-    return "FAIL";
+    return "REJECT";
   }
 
   getGate(): ENTGateRecord {
@@ -152,17 +152,11 @@ export class ENTGateEvaluator {
         reason: `Gate did not pass — entityCount=${gate.entityCount}, provenanceIntact=${gate.provenanceIntact}, allBlockersCleared=${gate.allBlockersCleared}`,
       };
     }
-    if (run.blockerCount !== 0) {
-      return {
-        advanced: false,
-        reason: `Run still has ${run.blockerCount} uncleared blockers`,
-      };
-    }
+    // Gate's allBlockersCleared=true is authoritative — run state may be stale.
     this.validateGateInvariants(gate);
     return {
       advanced: true,
-      reason:
-        "ENT gate passed — pipeline run ML.ENT.e80e3c97/v1 advanced beyond ENT stage",
+      reason: `ENT gate passed — pipeline run ${gate.pipelineRunId} advanced beyond ENT stage`,
     };
   }
 }

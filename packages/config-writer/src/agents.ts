@@ -233,7 +233,7 @@ function buildOrchestrationAgents(blueprint: Blueprint): AgentFile[] {
 
 export function componentsToAgents(
   blueprint: Blueprint,
-  _domainContext?: DomainContext,
+  domainContext?: DomainContext,
 ): AgentFile[] {
   const agents: AgentFile[] = [...buildOrchestrationAgents(blueprint)];
 
@@ -326,6 +326,41 @@ export function componentsToAgents(
       "- `ada.exit_delegation(agentId)` — release delegation and signal macro planner",
     );
     bodyLines.push("");
+
+    // Domain vocabulary — only when domainContext provided
+    if (
+      domainContext &&
+      Object.keys(domainContext.ubiquitousLanguage ?? {}).length > 0
+    ) {
+      bodyLines.push("## Domain Vocabulary");
+      bodyLines.push(
+        "Use these exact terms when naming variables, types, and functions:",
+      );
+      for (const [term, definition] of Object.entries(
+        domainContext.ubiquitousLanguage,
+      )) {
+        bodyLines.push(`- **${term}**: ${definition}`);
+      }
+      bodyLines.push("");
+    }
+
+    // Stakeholders — only when domainContext provided
+    if (domainContext && domainContext.stakeholders.length > 0) {
+      bodyLines.push("## Stakeholders");
+      for (const stakeholder of domainContext.stakeholders) {
+        const vocabTerms = Object.keys(stakeholder.vocabulary ?? {})
+          .map((t) => `"${t}"`)
+          .join(", ");
+        if (vocabTerms) {
+          bodyLines.push(
+            `- **${stakeholder.role}**: vocabulary: ${vocabTerms}`,
+          );
+        } else {
+          bodyLines.push(`- **${stakeholder.role}**`);
+        }
+      }
+      bodyLines.push("");
+    }
 
     bodyLines.push("## Prohibited Actions");
     bodyLines.push(`- Do NOT modify files outside ${comp.boundedContext}`);

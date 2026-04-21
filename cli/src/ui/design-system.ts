@@ -19,10 +19,10 @@ export const palette = {
   },
   text: {
     primary: "#e8e6df",
-    secondary: "#9c9a92",
-    tertiary: "#5e5d58",
-    dim: "#3d3d3a",
-    ghost: "#2a2a2e",
+    secondary: "#a8a69e",
+    tertiary: "#787672",
+    dim: "#5a5856",
+    ghost: "#484644",
   },
   semantic: {
     verified: "#7ab87a",

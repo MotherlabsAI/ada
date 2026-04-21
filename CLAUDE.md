@@ -1,3 +1,56 @@
+---
+ada_postcode: "ML.SYN.71346834/v1"
+ada_type: blueprint
+ada_name: Ada is a semantic operating system that compiles human inten
+ada_edges:
+  implements:
+    - "PipelineOrchestrator"
+    - "MotherCompiler"
+    - "IntentAgent"
+    - "PersonaAgent"
+    - "EntityAgent"
+    - "ProcessAgent"
+    - "SynthesisAgent"
+    - "VerifyAgent"
+    - "GovernorAgent"
+    - "INTStageController"
+    - "ConfidenceTracker"
+    - "PostcodeAddressFactory"
+    - "ProvenanceStore"
+    - "ProvenanceChainValidator"
+    - "ProvenanceRecordWriter"
+    - "ENTGateEvaluator"
+    - "buildWorldState"
+    - "runCompileLoop"
+    - "MacroPlan"
+    - "DelegationContract"
+    - "writeCheckpoint"
+    - "VerificationReport"
+    - "Skill"
+    - "Amendment"
+    - "SkillCandidate"
+    - "ElicitationSessionManager"
+    - "DialogueEngine"
+    - "GapAnalyzer"
+    - "DraftIntentGraphManager"
+    - "ReadinessAssessor"
+    - "HandoffEmitter"
+    - "writeConfigGraph"
+    - "blueprintToCLAUDEMD"
+    - "componentsToAgents"
+    - "invariantsToHooks"
+    - "deriveBuildContract"
+    - "AdaStorage"
+    - "ElicitationStore"
+    - "startServer"
+    - "analyzeCodebase"
+    - "WorkspacePackageScanner"
+    - "diffBlueprintAgainstCode"
+    - "SYNGateEvaluator"
+    - "EntityExtractor"
+    - "FallbackBlueprintResult"
+ada_compiled_at: 1776596371453
+---
 # Ada is a semantic operating system that compiles human intent into governed Claude Code execution artifacts
 
 Ada is a semantic operating system that compiles human intent into governed Claude Code execution artifacts. It operates a 9-stage sequential pipeline (CTX→INT→PER→ENT→PRO→SYN→VER→GOV→BLD) that transforms raw intent through elicitation, domain modeling, entity extraction, process modeling, synthesis, verification, and governance into output configuration artifacts (CLAUDE.md, agent files, hooks, .mcp.json, BUILD.md, .ada/state.json). Every intermediate artifact is content-addressed via PostcodeAddress provenance, and a governor issues ACCEPT/REJECT/ITERATE decisions bounded to 3 iterations. Runtime execution enforces hierarchical delegation with macro-planners, micro-executors bounded by fileScope, and independent verifiers that never implement. Self-improvement is confined to workflows and skills — the governance core is immutable.

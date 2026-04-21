@@ -1,4 +1,16 @@
 ---
+ada_postcode: "ML.AGT.skillcandidate/v1"
+ada_type: agent
+ada_name: SkillCandidate
+ada_bounded_context: self-improvement
+ada_parent: "ML.SYN.71346834/v1"
+ada_edges:
+  implements:
+    - "recordCandidate(sessionId, pattern)"
+    - "evaluatePromotionReadiness(candidateId)"
+ada_compiled_at: 1776596371483
+---
+---
 name: self-improvement-agent
 description: Use when self-improvement tasks arise. Owns SkillCandidate. Does not modify files outside self-improvement.
 model: claude-sonnet-4-6

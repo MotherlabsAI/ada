@@ -367,14 +367,24 @@ export class MotherCompiler {
 
     // Initialize or load existing manifold state
     const currentRef = manifoldStore.loadRef();
-    let manifoldState: ManifoldState = currentRef
-      ? manifoldStore.loadManifold(currentRef)
-      : {
-          ref: "",
-          nodes: {},
-          edges: [],
-          metrics: { totalEntropy: 1.0, nodeCount: 0, invariantPassRate: 0 },
-        };
+    let manifoldState: ManifoldState;
+    try {
+      manifoldState = currentRef
+        ? manifoldStore.loadManifold(currentRef)
+        : {
+            ref: "",
+            nodes: {},
+            edges: [],
+            metrics: { totalEntropy: 1.0, nodeCount: 0, invariantPassRate: 0 },
+          };
+    } catch {
+      manifoldState = {
+        ref: "",
+        nodes: {},
+        edges: [],
+        metrics: { totalEntropy: 1.0, nodeCount: 0, invariantPassRate: 0 },
+      };
+    }
 
     const runId = `run-${compileStartedAt}`;
     const runStore = new RunStore(adaDir);
@@ -1051,6 +1061,28 @@ export class MotherCompiler {
       totalOutputTokens,
       stages: stageManifestRecords,
     });
+
+    // Append one-line confidence record for trend analysis and governor calibration
+    try {
+      fs.appendFileSync(
+        path.join(adaDir, "confidence-history.jsonl"),
+        JSON.stringify({
+          ts: compileCompletedAt,
+          runId,
+          decision: governorDecision.decision,
+          confidence: governorDecision.confidence,
+          coverage: governorDecision.coverageScore,
+          coherence: governorDecision.coherenceScore,
+          gatePassRate: governorDecision.gatePassRate,
+          totalInputTokens,
+          totalOutputTokens,
+          durationMs: compileCompletedAt - compileStartedAt,
+        }) + "\n",
+        "utf8",
+      );
+    } catch {
+      /* never crash the pipeline for history writes */
+    }
 
     return {
       blueprint: blueprintFinal,

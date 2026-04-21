@@ -1,5 +1,12 @@
 export { MotherCompiler, type CompileOptions } from "./engine.js";
-export { SONNET, OPUS, type ModelId } from "./models.js";
+export {
+  SONNET,
+  OPUS,
+  OPUS_4_7,
+  DEV_OPUS,
+  GOVERNANCE_MODEL,
+  type ModelId,
+} from "./models.js";
 export { buildGate, computeGatePassRate, type GateInput } from "./gate.js";
 
 export {

@@ -30,7 +30,7 @@ export class GitObjectStore {
 
   /** Write a blob to the git object store and return its SHA */
   writeBlob(content: string): string {
-    return execSync("git hash-object -w --stdin", {
+    return execSync(`git --git-dir=${this.gitDir} hash-object -w --stdin`, {
       input: content,
       encoding: "utf8",
     }).trim();
@@ -38,7 +38,9 @@ export class GitObjectStore {
 
   /** Read a blob's content by its SHA */
   readBlob(sha: string): string {
-    return execSync(`git cat-file blob ${sha}`, { encoding: "utf8" });
+    return execSync(`git --git-dir=${this.gitDir} cat-file blob ${sha}`, {
+      encoding: "utf8",
+    });
   }
 
   /**
@@ -50,7 +52,7 @@ export class GitObjectStore {
       .map(([name, sha]) => `100644 blob ${sha}\t${name}`)
       .join("\n");
 
-    return execSync("git mktree", {
+    return execSync(`git --git-dir=${this.gitDir} mktree`, {
       input: input + "\n",
       encoding: "utf8",
     }).trim();
@@ -58,7 +60,9 @@ export class GitObjectStore {
 
   /** Read a tree object and return a name -> SHA mapping */
   readTree(treeSha: string): Record<string, string> {
-    const output = execSync(`git ls-tree ${treeSha}`, { encoding: "utf8" });
+    const output = execSync(`git --git-dir=${this.gitDir} ls-tree ${treeSha}`, {
+      encoding: "utf8",
+    });
     const result: Record<string, string> = {};
 
     output

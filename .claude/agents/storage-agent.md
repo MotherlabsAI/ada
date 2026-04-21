@@ -1,4 +1,20 @@
 ---
+ada_postcode: "ML.AGT.elicitationstore/v1"
+ada_type: agent
+ada_name: ElicitationStore
+ada_bounded_context: storage
+ada_parent: "ML.SYN.71346834/v1"
+ada_edges:
+  implements:
+    - "saveSession(session)"
+    - "getSession(sessionId)"
+    - "saveTurn(turn)"
+    - "getTurns(sessionId)"
+  depends_on:
+    - "AdaStorage"
+ada_compiled_at: 1776596371483
+---
+---
 name: storage-agent
 description: Use when storage tasks arise. Owns ElicitationStore. Does not modify files outside storage.
 model: claude-sonnet-4-6

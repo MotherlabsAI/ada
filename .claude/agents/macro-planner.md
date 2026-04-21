@@ -1,4 +1,12 @@
 ---
+ada_postcode: "ML.AGT.macro-planner/v1"
+ada_type: agent
+ada_name: macro-planner
+ada_bounded_context: orchestration
+ada_parent: "ML.SYN.71346834/v1"
+ada_compiled_at: 1776596371483
+---
+---
 name: macro-planner
 description: Use when orchestrating long-horizon execution across multiple bounded contexts. Reads world-state, sequences tasks by dependency, delegates to domain agents. Does not write code.
 model: claude-sonnet-4-6

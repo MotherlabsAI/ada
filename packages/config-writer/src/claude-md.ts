@@ -6,12 +6,16 @@ export function blueprintToCLAUDEMD(
   warnings?: string[],
   domainContext?: DomainContext,
 ): string {
+  // Compute topological order first — used in both frontmatter and body
+  const components = blueprint.architecture.components;
+  const ordered = topologicalSort(components);
+
   const frontmatter = renderFrontmatter({
     postcode: blueprint.postcode.raw,
     type: "blueprint",
     name: blueprint.summary.split(".")[0]?.slice(0, 60) ?? "blueprint",
     edges: {
-      implements: blueprint.architecture.components.map((c) => c.name),
+      implements: ordered.map((c) => c.name),
     },
     compiledAt: Date.now(),
   });
@@ -29,13 +33,20 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 1. Title + summary
+  // 1. Title + Summary section
   lines.push(`# ${blueprint.summary.split(".")[0]}`);
   lines.push("");
+  lines.push("## Summary");
   lines.push(blueprint.summary);
   lines.push("");
 
-  // 2. Out of scope — safety constraint, always inline
+  // 2. Architecture section
+  lines.push("## Architecture");
+  lines.push(`Pattern: ${blueprint.architecture.pattern}`);
+  lines.push(blueprint.architecture.rationale);
+  lines.push("");
+
+  // 3. Out of scope — safety constraint, always inline
   const outOfScope = blueprint.scope?.outOfScope?.length
     ? blueprint.scope.outOfScope
     : (domainContext?.excludedConcerns ?? []);
@@ -48,11 +59,9 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 3. Build order — component names only, no inline detail
-  const components = blueprint.architecture.components;
+  // 4. Components — topological order, component names only
   if (components.length > 0) {
-    const ordered = topologicalSort(components);
-    lines.push("## Build Order");
+    lines.push("## Components");
     for (let i = 0; i < ordered.length; i++) {
       const c = ordered[i]!;
       lines.push(`${i + 1}. **${c.name}** \`${c.boundedContext}\``);
@@ -60,7 +69,36 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 4. Orchestration map (only when subGoals present)
+  // 5. Working Principles
+  lines.push("## Working Principles");
+  lines.push(
+    "Implement exactly what the compiled blueprint specifies. Follow invariants from agent files. Call `ada.query_constraints` before modifying any entity. Do not add scope beyond what is specified.",
+  );
+  lines.push("");
+
+  // 6. Done — non-functional requirements
+  if (blueprint.nonFunctional && blueprint.nonFunctional.length > 0) {
+    lines.push("## Done");
+    for (const nfr of blueprint.nonFunctional) {
+      if (nfr.predicate) {
+        lines.push(`- ${nfr.predicate}: ${nfr.requirement}`);
+      } else {
+        lines.push(`- ${nfr.requirement}`);
+      }
+    }
+    lines.push("");
+  }
+
+  // 7. Open Questions — conditional
+  if (blueprint.openQuestions && blueprint.openQuestions.length > 0) {
+    lines.push("## Open Questions");
+    for (const q of blueprint.openQuestions) {
+      lines.push(`- ${q}`);
+    }
+    lines.push("");
+  }
+
+  // 8. Orchestration map (only when subGoals present)
   if (blueprint.subGoals && blueprint.subGoals.length > 0) {
     lines.push("## Orchestration Map");
     lines.push(
@@ -94,7 +132,7 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 5. Ada MCP — pull context on demand, never push
+  // 9. Ada MCP — pull context on demand, never push
   lines.push("## Ada MCP");
   lines.push(
     "The MCP server is the spec authority. Pull context on demand — never assume from memory.",
@@ -127,7 +165,7 @@ export function blueprintToCLAUDEMD(
   );
   lines.push("");
 
-  // 6. Compilation health (small, valuable)
+  // 10. Compilation health (small, valuable)
   if (blueprint.audit) {
     const a = blueprint.audit;
     const pct = (n: number) => `${(n * 100).toFixed(0)}%`;
@@ -143,7 +181,7 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 7. Session protocol
+  // 11. Session protocol
   lines.push("## This Session");
   lines.push(
     "You are the lead agent. Call `ada.advance_execution(agentId)` to get your first task. Follow the execution brief. Verify postconditions before marking complete.",

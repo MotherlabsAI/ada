@@ -1,7 +1,16 @@
-import Database from "better-sqlite3";
 import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
+
+// better-sqlite3 is optional — gracefully degrade if not installed.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Database: any;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Database = require("better-sqlite3");
+} catch {
+  Database = null;
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -35,9 +44,18 @@ export interface RunRecord {
  * Indexed by project directory path.
  */
 export class AdaStorage {
-  private readonly db: Database.Database;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly db: any;
 
   constructor(dbPath?: string) {
+    if (!Database) {
+      throw new Error(
+        "better-sqlite3 is not installed. Run: npm install -g better-sqlite3\n" +
+          "Or install with your system's package manager (requires build tools for Node " +
+          process.version +
+          ").",
+      );
+    }
     const resolvedPath =
       dbPath ?? path.join(os.homedir(), ".ada", "storage.db");
     fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });

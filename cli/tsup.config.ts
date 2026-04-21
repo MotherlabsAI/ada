@@ -6,7 +6,7 @@ import { resolve } from "path";
 const root = resolve(__dirname, "..");
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/bin/ada-gate-hook.ts"],
   format: ["esm"],
   outDir: "dist",
   bundle: true,

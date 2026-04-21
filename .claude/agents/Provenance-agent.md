@@ -1,4 +1,18 @@
 ---
+ada_postcode: "ML.AGT.entgateevaluator/v1"
+ada_type: agent
+ada_name: ENTGateEvaluator
+ada_bounded_context: provenance
+ada_parent: "ML.SYN.71346834/v1"
+ada_edges:
+  implements:
+    - "evaluateGate(entStageResult)"
+    - "checkBlockers(entStageResult)"
+  depends_on:
+    - "ProvenanceChainValidator"
+ada_compiled_at: 1776596371483
+---
+---
 name: provenance-agent
 description: Use when provenance tasks arise. Owns ENTGateEvaluator. Does not modify files outside provenance.
 model: claude-sonnet-4-6

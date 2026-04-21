@@ -12,7 +12,8 @@
   "dependencies": {
     "@ada/compiler": "workspace:*",
     "@ada/orchestrator": "workspace:*",
-    "@ada/provenance": "workspace:*"
+    "@ada/provenance": "workspace:*",
+    "@anthropic-ai/sdk": "^0.80.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",

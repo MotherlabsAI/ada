@@ -1,4 +1,12 @@
 ---
+ada_postcode: "ML.AGT.execution-orchestrator/v1"
+ada_type: agent
+ada_name: execution-orchestrator
+ada_bounded_context: orchestration
+ada_parent: "ML.SYN.71346834/v1"
+ada_compiled_at: 1776596371483
+---
+---
 name: execution-orchestrator
 description: Use when coordinating a bounded task through the full macro/micro cycle. Manages checkpoints, spawns domain agent, collects evidence, routes to verifier. The session conductor.
 model: claude-sonnet-4-6

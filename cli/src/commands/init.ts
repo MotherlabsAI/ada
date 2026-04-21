@@ -595,6 +595,102 @@ function loadPriorBlueprint(cwd: string): PriorBlueprintContext | undefined {
   }
 }
 
+function captureIterationLessons(
+  history: IterationRecord[],
+  projectDir: string,
+): void {
+  const adaDir = path.join(projectDir, ".ada");
+  const candidatesPath = path.join(adaDir, "skill-candidates.json");
+
+  let existing: Array<{ trigger: string; [key: string]: unknown }> = [];
+  try {
+    existing = JSON.parse(
+      fs.readFileSync(candidatesPath, "utf8"),
+    ) as typeof existing;
+  } catch {
+    /* start fresh */
+  }
+
+  const existingTriggers = new Set(existing.map((c) => c.trigger));
+  const newCandidates: Array<Record<string, unknown>> = [];
+
+  for (let i = 0; i < history.length - 1; i++) {
+    const current = history[i]!;
+    const next = history[i + 1]!;
+    if (current.governorDecision.decision !== "ITERATE") continue;
+    // Only capture when scores improved — the nextAction actually worked
+    if (
+      next.coverageScore <= current.coverageScore &&
+      next.coherenceScore <= current.coherenceScore
+    )
+      continue;
+
+    const nextAction = current.governorDecision.nextAction;
+    const violations = current.governorDecision.violations ?? [];
+    if (!nextAction || violations.length === 0) continue;
+
+    for (const v of violations) {
+      const trigger = `${v.stageCode} violation: ${v.ruleViolated}`;
+      if (existingTriggers.has(trigger)) continue;
+
+      const slug = `fix-${v.stageCode.toLowerCase()}-${v.ruleViolated
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .slice(0, 40)}`;
+      const id = `sk-iter-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+      const skillBody = [
+        "---",
+        `name: ${slug}`,
+        `description: "Use when ${v.stageCode} fails with '${v.ruleViolated}' (ITERATE→ACCEPT transition)."`,
+        "---",
+        "",
+        `# ${slug}`,
+        "",
+        `Trigger: ${trigger}`,
+        "",
+        "## Governor correction",
+        `Applied at iteration ${i + 1}→${i + 2}. Coverage improved from ${current.coverageScore.toFixed(2)} to ${next.coverageScore.toFixed(2)}.`,
+        "",
+        `Violation: [${v.severity}] ${v.description}`,
+        "",
+        `Fix applied: ${nextAction.slice(0, 500)}`,
+        "",
+        "## Human review notes",
+        "<!-- Add notes here before approving -->",
+      ].join("\n");
+
+      newCandidates.push({
+        id,
+        name: slug,
+        description: `ITERATE→ACCEPT: ${v.ruleViolated} at ${v.stageCode}`,
+        trigger,
+        frequency: 1,
+        sessionIds: [],
+        observedPaths: [],
+        suggestedSkillBody: skillBody,
+        proposedBy: "governor-iteration",
+        status: "pending",
+        proposedAt: Date.now(),
+        reviewedAt: null,
+      });
+      existingTriggers.add(trigger);
+    }
+  }
+
+  if (newCandidates.length === 0) return;
+  try {
+    fs.mkdirSync(adaDir, { recursive: true });
+    fs.writeFileSync(
+      candidatesPath,
+      JSON.stringify([...existing, ...newCandidates], null, 2),
+      "utf8",
+    );
+  } catch {
+    /* best-effort */
+  }
+}
+
 export async function initCommand(
   intent: string,
   options: InitOptions = {},
@@ -624,42 +720,59 @@ export async function initCommand(
   if (options.amend) {
     const amendDir = path.join(process.cwd(), ".ada", "amendments");
     try {
-      const approvedAmendments = fs
+      type AmendmentRecord = {
+        stage: string;
+        field: string;
+        proposed: string;
+        rationale: string;
+        status: string;
+        appliedAt?: number;
+      };
+      const amendmentEntries: Array<{ file: string; data: AmendmentRecord }> =
+        [];
+      for (const f of fs
         .readdirSync(amendDir)
         .filter((f) => f.endsWith(".json"))
-        .sort()
-        .map((f) => {
-          try {
-            return JSON.parse(
-              fs.readFileSync(path.join(amendDir, f), "utf8"),
-            ) as {
-              stage: string;
-              field: string;
-              proposed: string;
-              rationale: string;
-              status: string;
-            };
-          } catch {
-            return null;
+        .sort()) {
+        try {
+          const data = JSON.parse(
+            fs.readFileSync(path.join(amendDir, f), "utf8"),
+          ) as AmendmentRecord;
+          if (data.status === "approved" && !data.appliedAt) {
+            amendmentEntries.push({ file: f, data });
           }
-        })
-        .filter(
-          (a): a is NonNullable<typeof a> =>
-            a !== null && a.status === "approved",
-        );
+        } catch {
+          /* skip corrupt files */
+        }
+      }
 
-      if (approvedAmendments.length > 0) {
-        const amendmentText = approvedAmendments
+      if (amendmentEntries.length > 0) {
+        const amendmentText = amendmentEntries
           .map(
-            (a) =>
-              `[${a.stage}.${a.field}] ${a.proposed}\nRationale: ${a.rationale}`,
+            (e) =>
+              `[${e.data.stage}.${e.data.field}] ${e.data.proposed}\nRationale: ${e.data.rationale}`,
           )
           .join("\n\n");
         enrichableIntent =
           `${intent}\n\nApproved amendments to incorporate:\n\n${amendmentText}`.trim();
         console.error(
-          `  incorporating ${approvedAmendments.length} approved amendment(s)\n`,
+          `  incorporating ${amendmentEntries.length} approved amendment(s)\n`,
         );
+        for (const e of amendmentEntries) {
+          try {
+            fs.writeFileSync(
+              path.join(amendDir, e.file),
+              JSON.stringify(
+                { ...e.data, status: "applied", appliedAt: Date.now() },
+                null,
+                2,
+              ),
+              "utf8",
+            );
+          } catch {
+            /* best-effort */
+          }
+        }
       }
     } catch {
       // no amendments dir — fine
@@ -668,24 +781,30 @@ export async function initCommand(
     // ─── Amend mode: inject feedback records (.ada/feedback/) ──────────────
     const feedbackDir = path.join(process.cwd(), ".ada", "feedback");
     try {
-      const feedbackRecords = fs
+      const feedbackEntries: Array<{
+        file: string;
+        data: Record<string, unknown>;
+      }> = [];
+      for (const f of fs
         .readdirSync(feedbackDir)
         .filter((f) => f.endsWith(".json"))
-        .sort()
-        .map((f) => {
-          try {
-            return JSON.parse(
-              fs.readFileSync(path.join(feedbackDir, f), "utf8"),
-            ) as Record<string, unknown>;
-          } catch {
-            return null;
+        .sort()) {
+        try {
+          const data = JSON.parse(
+            fs.readFileSync(path.join(feedbackDir, f), "utf8"),
+          ) as Record<string, unknown>;
+          if (!data["appliedAt"]) {
+            feedbackEntries.push({ file: f, data });
           }
-        })
-        .filter(Boolean) as Record<string, unknown>[];
+        } catch {
+          /* skip corrupt files */
+        }
+      }
 
-      if (feedbackRecords.length > 0) {
-        const feedbackText = feedbackRecords
-          .map((r) => {
+      if (feedbackEntries.length > 0) {
+        const feedbackText = feedbackEntries
+          .map((e) => {
+            const r = e.data;
             if (r["type"] === "implementation_decision") {
               return `[decision:${r["componentName"]}] ${r["decision"]}\nRationale: ${r["rationale"]}`;
             }
@@ -701,8 +820,19 @@ export async function initCommand(
           enrichableIntent =
             `${enrichableIntent}\n\nImplementation feedback to incorporate:\n\n${feedbackText}`.trim();
           console.error(
-            `  incorporating ${feedbackRecords.length} feedback record(s)\n`,
+            `  incorporating ${feedbackEntries.length} feedback record(s)\n`,
           );
+          for (const e of feedbackEntries) {
+            try {
+              fs.writeFileSync(
+                path.join(feedbackDir, e.file),
+                JSON.stringify({ ...e.data, appliedAt: Date.now() }, null, 2),
+                "utf8",
+              );
+            } catch {
+              /* best-effort */
+            }
+          }
         }
       }
     } catch {
@@ -873,6 +1003,11 @@ export async function initCommand(
   }
 
   const decision = finalResult.governorDecision;
+
+  // Capture ITERATE→ACCEPT lessons as skill candidates for future runs
+  if (decision.decision === "ACCEPT" && iterationHistory.length > 1) {
+    captureIterationLessons(iterationHistory, process.cwd());
+  }
 
   // ─── Fallback path: max iterations exceeded without ACCEPT ───
   if (decision.decision !== "ACCEPT" && iterationHistory.length > 0) {

@@ -1,4 +1,20 @@
 ---
+ada_postcode: "ML.AGT.startserver/v1"
+ada_type: agent
+ada_name: startServer
+ada_bounded_context: runtime-governance
+ada_parent: "ML.SYN.71346834/v1"
+ada_edges:
+  implements:
+    - "startServer()"
+  depends_on:
+    - "PipelineOrchestrator"
+    - "buildWorldState"
+    - "writeCheckpoint"
+    - "AdaStorage"
+ada_compiled_at: 1776596371483
+---
+---
 name: runtime-governance-agent
 description: Use when runtime-governance tasks arise. Owns startServer. Does not modify files outside runtime-governance.
 model: claude-sonnet-4-6

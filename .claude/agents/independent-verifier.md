@@ -1,4 +1,12 @@
 ---
+ada_postcode: "ML.AGT.independent-verifier/v1"
+ada_type: agent
+ada_name: independent-verifier
+ada_bounded_context: orchestration
+ada_parent: "ML.SYN.71346834/v1"
+ada_compiled_at: 1776596371483
+---
+---
 name: independent-verifier
 description: Use when verifying a completed micro-executor task against compiled blueprint. Checks structural correctness, drift alignment, postconditions, and invariants. NEVER reimplements — only evaluates.
 model: claude-sonnet-4-6

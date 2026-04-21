@@ -38,6 +38,9 @@ import { completeSubGoal } from "./tools/execution-orchestrator.js";
 import { setTaskStatus as setTaskStatusSubGoal } from "./tools/task-status.js";
 import { compileIntent } from "./tools/compile.js";
 import { researchTopic } from "./tools/research.js";
+import { adaGate } from "./tools/gate.js";
+import { emitConfig } from "./tools/emit-config.js";
+import { projectBlueprint } from "./tools/project.js";
 
 export async function startServer(): Promise<void> {
   const server = new Server(
@@ -73,9 +76,9 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.verify",
+        name: "ada.verify_code",
         description:
-          "Checks code against entity invariants from active Blueprint",
+          "Checks a code fragment against entity invariants from active Blueprint",
         inputSchema: {
           type: "object" as const,
           properties: {
@@ -236,7 +239,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.verify",
+        name: "ada.verify_stack",
         description:
           "Runs the Ada verification stack against the current world-state. " +
           "Without a layer, runs all five: structural (dependency graph), execution (tool coverage), " +
@@ -263,6 +266,92 @@ export async function startServer(): Promise<void> {
                 "Optional: bounded context scope filter for policy layer",
             },
           },
+        },
+      },
+      {
+        name: "ada.emit_config",
+        description:
+          "Alias for ada.project kind=claude-code. Regenerate Claude Code governance artifacts " +
+          "(CLAUDE.md, agents, hooks, settings, .mcp.json, contracts, world-model) from the current " +
+          "substrate in .ada/state.json — without re-running the compilation pipeline. " +
+          "Prefer ada.project for new usage.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            kind: {
+              type: "string" as const,
+              enum: ["claude-code"],
+              description: "Projection kind. Only 'claude-code' is supported.",
+            },
+          },
+          required: ["kind"],
+        },
+      },
+      {
+        name: "ada.project",
+        description:
+          "Regenerate governance or documentation artifacts from the compiled blueprint in " +
+          ".ada/state.json — without re-running the compilation pipeline. " +
+          "claude-code: CLAUDE.md + agents + hooks + settings + .mcp.json + contracts + world-model. " +
+          "cursor: .cursorrules file for Cursor AI. " +
+          "mermaid: .ada/architecture.mmd entity-relationship diagram. " +
+          "docs: ARCHITECTURE.md human-readable documentation.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            kind: {
+              type: "string" as const,
+              enum: ["claude-code", "cursor", "mermaid", "docs"],
+              description: "Projection kind.",
+            },
+            outDir: {
+              type: "string" as const,
+              description:
+                "Optional: override output directory (defaults to project root).",
+            },
+          },
+          required: ["kind"],
+        },
+      },
+      {
+        name: "ada.gate",
+        description:
+          "Semantic action-time gate. Evaluates a proposed tool call against " +
+          "the compiled Blueprint invariants and workflow preconditions. Returns " +
+          "{ verdict: ALLOW | BLOCK | AMEND_FIRST, violated: [...], reasoning, suggested? }. " +
+          "Use before any non-trivial write to check that the action preserves compiled intent. " +
+          "Also invoked by the PreToolUse hook for enforcement. Fail-open: returns ALLOW if " +
+          "no blueprint is compiled or LLM is unavailable, unless ADA_GATE_STRICT=1.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            tool: {
+              type: "string" as const,
+              description:
+                "Name of the tool being gated (e.g., Write, Edit, MultiEdit, Bash).",
+            },
+            filePath: {
+              type: "string" as const,
+              description:
+                "Target file path for Write/Edit tools (omit for Bash).",
+            },
+            content: {
+              type: "string" as const,
+              description:
+                "Proposed content for Write, or new_string for Edit. Truncated to ~1200 chars for evaluation.",
+            },
+            command: {
+              type: "string" as const,
+              description:
+                "Shell command for Bash tool. Truncated to ~400 chars.",
+            },
+            rationale: {
+              type: "string" as const,
+              description:
+                "Optional: agent's stated reason for this action. Helps the gate calibrate.",
+            },
+          },
+          required: ["tool"],
         },
       },
       {
@@ -624,7 +713,7 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.verify": {
+      case "ada.verify_code": {
         const r = verifyCode(
           args["code"] as string,
           args["entityName"] as string,
@@ -712,11 +801,47 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.verify": {
+      case "ada.verify_stack": {
         const r = runVerificationStack(
           args["layer"] as VerifierLayer | undefined,
           args["scope"] as string | undefined,
         );
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.emit_config": {
+        const r = emitConfig({ kind: args["kind"] as string });
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.project": {
+        const r = projectBlueprint({
+          kind: args["kind"] as string,
+          ...(typeof args["outDir"] === "string"
+            ? { outDir: args["outDir"] }
+            : {}),
+        });
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada.gate": {
+        const filePath = args["filePath"];
+        const contentArg = args["content"];
+        const command = args["command"];
+        const rationale = args["rationale"];
+        const r = await adaGate({
+          tool: args["tool"] as string,
+          ...(typeof filePath === "string" ? { filePath } : {}),
+          ...(typeof contentArg === "string" ? { content: contentArg } : {}),
+          ...(typeof command === "string" ? { command } : {}),
+          ...(typeof rationale === "string" ? { rationale } : {}),
+        });
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,

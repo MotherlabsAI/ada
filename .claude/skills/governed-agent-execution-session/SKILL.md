@@ -1,4 +1,10 @@
 ---
+ada_postcode: "ML.SKL.governed-agent-execution-session/v1"
+ada_type: skill
+ada_name: governed-agent-execution-session
+ada_compiled_at: 1776596371488
+---
+---
 name: governed-agent-execution-session
 description: "Use when WorldState is initialized, MacroPlan is active with pending tasks, and at least one DelegationContract is in COMPILED state pattern detected."
 ---

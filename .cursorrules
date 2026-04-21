@@ -1,0 +1,270 @@
+# Ada is a governed semantic compilation system that transforms natural language intent through a deterministic 9-stage pipeline into formal governance artifacts (CLAUDE
+
+## Architecture
+Ada is a governed semantic compilation system that transforms natural language intent through a deterministic 9-stage pipeline into formal governance artifacts (CLAUDE.md, agent definitions, pre-tool hooks, MCP server, world model), then enforces compiled semantic invariants at runtime via a real-time semantic gate on tool calls, a continuous governor that monitors world-model drift, and a projection engine that regenerates artifacts when drift exceeds thresholds — all under an immutable governance core that cannot be modified by the system's own self-improvement processes.
+
+## In Scope
+- Composite drift quantification using weighted embedding-distance, structural-diff, and predicate-satisfaction-ratio components with [0,1] normalization and configurable thresholds (G1)
+- Severity-gated post-block behavior: HARD violations trigger HALT or ESCALATE; SOFT violations permit RETRY or REPLAN (G2)
+- Cold-start bootstrap protocol that loads a designer-signed SeedInvariantSet, produces a minimal CompiledInvariantSet, arms a bootstrap-mode gate, and transitions to full compilation on first intent receipt (G3)
+- Uniform InterStageIR envelope with stage-specific payloads, envelope versioning, payload schema versioning, validation hashes, and provenance tracking at every stage boundary (G4)
+- Operator override mechanism constrained to recompilation-path actions (suppress constraint, force recompilation, adjust threshold) with cryptographic authorization and append-only hash-chained audit logging (G5)
+- Session-based tenancy with sessionId-partitioned world model isolation and single-compilation-at-a-time per session (G6)
+- Event-sourced RuntimeWorldModel with WorldModelEvent append log, distinct from CompiledWorldModel artifact, with snapshot capability for governor comparison (G7)
+- Adaptive governor polling with operator-configurable base interval ceiling and drift-velocity-driven downward adjustment forming a feedback control loop (G8)
+- Projection engine trigger taxonomy distinguishing drift-threshold-breach triggers (partial projection) from user-restatement triggers (full recompilation) with defined decision boundaries (G9)
+- ArtifactCoherenceVerifier rejection handling with RECOVERABLE class triggering retry-with-localization and UNRECOVERABLE class triggering rollback or suspend-pending-review (G10)
+- Canonical compiled invariant representation as hardPredicate plus semanticAnchor plus proximityThreshold plus severity plus provenance — the evaluable format for the semantic gate (G11)
+- Architecturally distinct RuntimeWorldModel (event-sourced runtime state) and CompiledWorldModel (expected-state artifact) with drift computed as divergence between them (G12)
+- Per-stage failure modes with retry capability, failure classification, and upstream notification without violating pipeline ordering constraint (G13)
+- Immutable governance core enforcement: gate logic, governor logic, and enforcement mechanisms are not modifiable by self-improvement processes (G14)
+- Operational observability via ObservabilitySnapshot exposing drift scores, artifact versions, gate decisions, governor state, and audit trail without bypassing governance (G15)
+
+## Key Entities
+### CompiledInvariant (substance)
+Invariants — do not violate:
+- compiledInvariant.hardPredicate !== null && compiledInvariant.hardPredicate.length > 0
+- compiledInvariant.semanticAnchor !== null
+- compiledInvariant.proximityThreshold >= 0 && compiledInvariant.proximityThreshold <= 1
+- compiledInvariant.severity !== null
+- compiledInvariant.provenance !== null
+
+### CompiledInvariantSet (substance)
+Invariants — do not violate:
+- compiledInvariantSet.invariants.length > 0
+- compiledInvariantSet.contentHash !== null
+- compiledInvariantSet.sessionId !== null
+- compiledInvariantSet.bootstrapFlag === true ? compiledInvariantSet.authoredBy === 'SEED_DEFAULTS' : true
+
+### SeedInvariantSet (substance)
+Invariants — do not violate:
+- seedInvariantSet.invariants.length > 0
+- seedInvariantSet.designerSignature !== null
+- seedInvariantSet.invariants.every(i => i.provenance === 'SEED')
+
+### DriftScore (quality)
+Invariants — do not violate:
+- driftScore.value >= 0 && driftScore.value <= 1
+- driftScore.compositeComponents.length >= 3
+- driftScore.computedAt !== null
+
+### DriftScoreComponent (quality)
+Invariants — do not violate:
+- driftScoreComponent.weight > 0 && driftScoreComponent.weight <= 1
+- driftScoreComponent.normalizedValue >= 0 && driftScoreComponent.normalizedValue <= 1
+- driftScoreComponent.metricType !== null
+
+### DriftVelocity (quality)
+Invariants — do not violate:
+- driftVelocity.windowSizeMs > 0
+- driftVelocity.priorScore.computedAt < driftVelocity.currentScore.computedAt
+- driftVelocity.sessionId !== null
+
+### DriftThreshold (substance)
+Invariants — do not violate:
+- driftThreshold.projectionTriggerValue > 0 && driftThreshold.projectionTriggerValue < driftThreshold.recompilationTriggerValue
+- driftThreshold.recompilationTriggerValue <= 1
+- driftThreshold.velocityAdaptationTriggerValue > 0
+
+### GateDecision (event)
+Invariants — do not violate:
+- gateDecision.verdict === 'BLOCK' ? gateDecision.violatedInvariantIds.length > 0 : true
+- gateDecision.verdict === 'BLOCK' ? gateDecision.postBlockAction !== null : true
+- gateDecision.verdict === 'BLOCK' && gateDecision.severity === 'HARD' ? gateDecision.postBlockAction === 'HALT' || gateDecision.postBlockAction === 'ESCALATE' : true
+- gateDecision.decidedAt !== null
+
+### ToolCall (event)
+Invariants — do not violate:
+- toolCall.toolName !== null && toolCall.toolName.length > 0
+- toolCall.sessionId !== null
+- toolCall.agentId !== null
+
+### GovernorState (state)
+Invariants — do not violate:
+- governorState.basePollingIntervalMs > 0
+- governorState.currentPollingIntervalMs > 0 && governorState.currentPollingIntervalMs <= governorState.basePollingIntervalMs
+- governorState.sessionId !== null
+- governorState.currentDriftScore !== null
+
+### RuntimeWorldModel (state)
+Invariants — do not violate:
+- runtimeWorldModel.sessionId !== null
+- runtimeWorldModel.eventLog !== null
+- runtimeWorldModel.version !== null
+- runtimeWorldModel.updateMechanism === 'EVENT_SOURCED'
+
+### CompiledWorldModel (substance)
+Invariants — do not violate:
+- compiledWorldModel.expectedState !== null
+- compiledWorldModel.artifactSetId !== null
+- compiledWorldModel.sessionId !== null
+
+### WorldModelEvent (event)
+Invariants — do not violate:
+- worldModelEvent.sequenceNumber >= 0
+- worldModelEvent.sessionId !== null
+- worldModelEvent.occurredAt !== null
+
+### ArtifactSet (substance)
+Invariants — do not violate:
+- artifactSet.coherenceVerified === true || artifactSet.status === 'CANDIDATE'
+- artifactSet.claudeMd !== null && artifactSet.agentDefinitions !== null && artifactSet.preToolHooks !== null && artifactSet.mcpServer !== null && artifactSet.worldModel !== null
+- artifactSet.contentHash !== null
+- artifactSet.sessionId !== null
+
+### ArtifactReference (relation)
+Invariants — do not violate:
+- artifactReference.contentHash !== null
+- artifactReference.artifactType !== null
+- artifactReference.storagePath !== null
+
+### CoherenceVerificationResult (event)
+Invariants — do not violate:
+- coherenceVerificationResult.verdict === 'REJECT' ? coherenceVerificationResult.rejectionClass !== null : true
+- coherenceVerificationResult.verdict === 'REJECT' ? coherenceVerificationResult.postRejectionAction !== null : true
+- coherenceVerificationResult.verdict === 'REJECT' && coherenceVerificationResult.rejectionClass === 'RECOVERABLE' ? coherenceVerificationResult.postRejectionAction === 'RETRY_WITH_LOCALIZATION' : true
+- coherenceVerificationResult.verdict === 'REJECT' && coherenceVerificationResult.rejectionClass === 'UNRECOVERABLE' ? coherenceVerificationResult.postRejectionAction === 'ROLLBACK' || coherenceVerificationResult.postRejectionAction === 'SUSPEND_PENDING_REVIEW' : true
+
+### InterStageIR (substance)
+Invariants — do not violate:
+- interStageIR.validationHash !== null
+- interStageIR.sourceStage !== null && interStageIR.targetStage !== null
+- interStageIR.envelopeVersion !== null
+- interStageIR.payloadSchemaVersion !== null
+- interStageIR.provenance !== null
+
+### ProvenanceRecord (substance)
+Invariants — do not violate:
+- provenanceRecord.compilationRunId !== null
+- provenanceRecord.stageSequence.length > 0
+- provenanceRecord.sessionId !== null
+
+### PipelineStageFailure (event)
+Invariants — do not violate:
+- pipelineStageFailure.failureMode !== null
+- pipelineStageFailure.retryCount >= 0
+- pipelineStageFailure.inputIRHash !== null
+- pipelineStageFailure.compilationRunId !== null
+
+### OperatorOverride (event)
+Invariants — do not violate:
+- operatorOverride.authorizationToken !== null
+- operatorOverride.auditLogEntryHash !== null
+- operatorOverride.overrideType !== null
+- operatorOverride.overrideType === 'SUPPRESS_CONSTRAINT' ? operatorOverride.targetEntityId !== null : true
+
+### AuditLogEntry (event)
+Invariants — do not violate:
+- auditLogEntry.previousEntryHash !== null
+- auditLogEntry.contentHash !== null
+- auditLogEntry.actorId !== null
+- auditLogEntry.sessionId !== null
+
+### Session (substance)
+Invariants — do not violate:
+- session.status !== 'RUNTIME' || session.compiledInvariantSetId !== null
+- session.status !== 'RUNTIME' || session.deployedArtifactSetId !== null
+- session.status === 'BOOTSTRAP' ? session.bootstrapTransitionedAt === null : true
+- session.ontologyBaseLayerId !== null
+
+### BootstrapState (state)
+Invariants — do not violate:
+- bootstrapState.seedInvariantSetId !== null
+- bootstrapState.compilationTriggered === true ? bootstrapState.transitionedAt !== null : bootstrapState.transitionedAt === null
+
+### OntologyBaseLayer (substance)
+Invariants — do not violate:
+- ontologyBaseLayer.ontologyNodes.length > 0
+- ontologyBaseLayer.contentHash !== null
+
+### OntologyNode (substance)
+Invariants — do not violate:
+- ontologyNode.embeddingVector.length > 0
+- ontologyNode.label !== null && ontologyNode.label.length > 0
+
+### ProjectionTrigger (event)
+Invariants — do not violate:
+- projectionTrigger.triggerSource === 'DRIFT_THRESHOLD_BREACH' ? projectionTrigger.currentDriftScore !== null : true
+- projectionTrigger.triggerSource === 'USER_RESTATEMENT' ? projectionTrigger.actionRequired === 'FULL_RECOMPILATION' : true
+- projectionTrigger.triggerSource === 'DRIFT_THRESHOLD_BREACH' ? projectionTrigger.actionRequired === 'PROJECTION' || projectionTrigger.actionRequired === 'FULL_RECOMPILATION' : true
+- projectionTrigger.triggeredAt !== null
+
+### ObservabilitySnapshot (state)
+Invariants — do not violate:
+- observabilitySnapshot.currentDriftScore >= 0 && observabilitySnapshot.currentDriftScore <= 1
+- observabilitySnapshot.deployedArtifactSetVersion !== null
+- observabilitySnapshot.snapshotAt !== null
+
+## Bounded Contexts
+### CompilationPipeline
+Root entity: InterStageIR
+Owns: InterStageIR, ProvenanceRecord, PipelineStageFailure
+
+### GovernanceCompilation
+Root entity: CompiledInvariantSet
+Owns: CompiledInvariantSet, CompiledInvariant, SeedInvariantSet, BootstrapState
+
+### RuntimeEnforcement
+Root entity: Session
+Owns: Session, GateDecision, ToolCall, GovernorState, DriftScore, DriftScoreComponent, DriftVelocity, DriftThreshold, ProjectionTrigger, OperatorOverride
+
+### WorldModelManagement
+Root entity: RuntimeWorldModel
+Owns: RuntimeWorldModel, CompiledWorldModel, WorldModelEvent
+
+### ArtifactLifecycle
+Root entity: ArtifactSet
+Owns: ArtifactSet, ArtifactReference, CoherenceVerificationResult
+
+### Observability
+Root entity: ObservabilitySnapshot
+Owns: ObservabilitySnapshot, AuditLogEntry
+
+### OntologyKnowledge
+Root entity: OntologyBaseLayer
+Owns: OntologyBaseLayer, OntologyNode
+
+## Workflows
+### semantic-compilation-pipeline
+Trigger: operator submits natural language intent string to Ada compilation endpoint, or system detects absent CompiledInvariantSet for session
+- **intent-ingestion-and-tokenization**: tokenize and segment natural language intent into semantic units; assign compilationRunId; emit InterStageIR_v1 with rawTokens, sessionId, compilationRunId, timestamp
+- **ontology-resolution**: map each semantic unit to OntologyNode references; resolve synonyms, ambiguities via OntologyKnowledge context; emit InterStageIR_v2 with resolvedNodes, unresolvedTerms, ontologyVersion
+- **invariant-extraction**: extract candidate CompiledInvariants from resolved ontology nodes; assign hardPredicate, semanticAnchor, proximityThreshold, severity, sourceStage=3 to each; emit InterStageIR_v3 with candidateInvariants list
+- **world-model-compilation**: derive expectedState from candidateInvariants and resolved ontology; compute CompiledWorldModel with expectedState snapshot; assign version, contentHash, producedAt, artifactSetId; emit InterStageIR_v4 with compiledWorldModelId
+- **governance-artifact-generation**: generate CLAUDE.md, agent definitions, pre-tool hooks, MCP server configuration from compiledWorldModelId and candidateInvariants; bundle into ArtifactSet keyed by artifactSetId; emit InterStageIR_v5 with artifactSetId and artifact content hashes
+- **artifact-coherence-verification**: run ArtifactCoherenceVerifier across all artifacts in ArtifactSet; check cross-artifact semantic consistency, referential integrity of ArtifactReferences, and invariant coverage completeness; emit CoherenceVerificationResult with pass/fail and error localizations
+- **compiled-invariant-set-finalization**: promote candidateInvariants to CompiledInvariantSet with final id, sessionId, version, contentHash, compiledAt, bootstrapFlag=false, authoredBy=compilationRunId; persist CompiledInvariantSet; emit InterStageIR_v6 with compiledInvariantSetId; prior CompiledInvariantSet transitions to superseded
+- **runtime-activation**: activate CompiledInvariantSet in SemanticGateEnforcer for sessionId; load ArtifactSet into runtime enforcement context; set GovernorState.currentPollingIntervalMs to basePollingIntervalMs; emit compilation-complete event to observability
+- **projection-engine-initialization**: initialize projection engine with CompiledWorldModel.expectedState as baseline; compute initial ProjectionTrigger thresholds from DriftThreshold for sessionId; register projection engine with governor polling loop
+
+### runtime-enforcement-and-drift-control-loop
+Trigger: GovernorState polling timer fires (interval elapsed) OR ToolCall event arrives at SemanticGateEnforcer
+- **governor-poll-world-model**: read RuntimeWorldModel.observedState snapshot; compute DriftScore as weighted composite: (embeddingDistance * 0.4) + ((1 - predicateSatisfactionRatio) * 0.4) + (structuralDiffRatio * 0.2); normalize each component to [0,1]; store DriftScoreComponents; update GovernorState.currentDriftScore; compute DriftVelocity from priorScore delta over windowSizeMs; update GovernorState.lastPollAt
+- **adaptive-interval-adjustment**: if DriftVelocity.value > velocityAdaptationTriggerValue: halve currentPollingIntervalMs (floor at 500ms); if DriftVelocity.value < (velocityAdaptationTriggerValue * 0.3) and currentPollingIntervalMs < basePollingIntervalMs: double currentPollingIntervalMs (ceiling at basePollingIntervalMs); update GovernorState.currentPollingIntervalMs
+- **drift-threshold-evaluation**: compare DriftScore.value against DriftThreshold.projectionTriggerValue (0.25) and DriftThreshold.recompilationTriggerValue (0.65); if score >= recompilationTriggerValue emit RECOMPILATION_TRIGGER event; else if score >= projectionTriggerValue emit PROJECTION_TRIGGER event; else emit NO_ACTION
+- **projection-engine-regeneration**: regenerate projected state from current RuntimeWorldModel.observedState and CompiledWorldModel.expectedState delta; update projection artifacts (not full recompilation — no pipeline traversal); emit updated ProjectionTrigger with new projectedState; write to RuntimeWorldModel as projection update
+- **tool-call-gate-evaluation**: for each CompiledInvariant in CompiledInvariantSet: evaluate hardPredicate against ToolCall.parameters; check semanticAnchor proximity within proximityThreshold; collect violatedInvariantIds; determine worst-case severity across violations; emit GateDecision with verdict=ALLOW if no violations, BLOCK if any violation
+- **post-block-action-dispatch**: dispatch post-block action based on severity: if severity=LOW retry ToolCall with parameters modified to satisfy violated invariants (parameter relaxation within proximitThreshold); if severity=MEDIUM invoke projection engine to replan agent action sequence and resubmit revised ToolCall; if severity=HIGH halt tool call execution and escalate to operator via OperatorOverride interface
+- **operator-override-processing**: validate override scope against immutable governance core constraint: reject any override targeting CompiledInvariant.hardPredicate or CompiledInvariantSet structure; apply override to mutable runtime parameter (gate bypass for specific toolCallId, or interval adjustment, or threshold modification); write OperatorOverride record to append-only AuditLogEntry with operatorId, overrideScope, justification, timestamp
+
+### cold-start-bootstrap
+Trigger: session opens and no CompiledInvariantSet exists for sessionId, or system initializes for first time
+- **seed-invariant-set-validation**: load SeedInvariantSet; verify designerSignature cryptographic validity; verify authorVersion matches expected system version; read permissivenessLevel to configure bootstrap governance strictness
+- **minimal-compiled-invariant-set-creation**: promote SeedInvariantSet.invariants to CompiledInvariantSet with bootstrapFlag=true, authoredBy=SEED_DESIGNER, version=0, sessionId bound; persist CompiledInvariantSet; emit BootstrapState record with sessionId, seedId, permissivenessLevel, bootstrapStartedAt
+- **bootstrap-gate-arming**: arm SemanticGateEnforcer with bootstrap CompiledInvariantSet; configure gate with permissivenessLevel from SeedInvariantSet (PERMISSIVE allows more tool calls through during bootstrap; STRICT applies full seed invariants); activate deny-all for any tool call not covered by seed invariants
+- **bootstrap-to-compiled-transition**: atomically swap SemanticGateEnforcer from bootstrap CompiledInvariantSet to fully compiled CompiledInvariantSet; mark bootstrap CompiledInvariantSet as superseded; transition session from bootstrapping to active; emit BOOTSTRAP_COMPLETE event to observability
+
+## Open Design Questions
+- What are the default numeric values for DriftThreshold.projectionTriggerValue and DriftThreshold.recompilationTriggerValue? Entity defines ordering (projection < recompilation ≤ 1) but not initial calibration values.
+- What are the default weights for the three DriftScoreComponent types (EMBEDDING_DISTANCE, STRUCTURAL_DIFF, PREDICATE_SATISFACTION_RATIO)? The composite metric is defined but weight allocation is unspecified.
+- What is the governor's default basePollingIntervalMs? Entity requires it to be > 0 and co-designed with world model update frequency (C8), but no default is specified.
+- What is the minimum floor for governor polling interval adaptation? currentPollingIntervalMs <= basePollingIntervalMs defines the ceiling, but no lower bound prevents the governor from polling at impractically high frequencies.
+- How does the system handle session resumption after a crash or unexpected termination? Session state machine has no 'resuming' state, and RuntimeWorldModel event log recoverability is unspecified.
+- Can the pipeline re-enter prior stages (e.g., GOV stage detecting invariant conflict and feeding back to INT stage), or is it strictly feedforward? U14 is unresolved and affects PipelineOrchestrator's orchestration logic.
+- What specific transformations does each of the 9 pipeline stages perform on the InterStageIR payload? Stage names map to workflow steps but the semantic content of each transformation is undefined.
+- What is the maximum retry count for a PipelineStageFailure before the compilation run is abandoned? Entity tracks retryCount but no ceiling is defined.
+- What specific predicates or checks constitute the SeedInvariantSet's designer signature validation? Entity requires designerSignature !== null but the cryptographic scheme is unspecified.
+- What is the exact payload schema for each stage-specific InterStageIR payload? The envelope is uniform but payload schemas per stage are not defined.
+- How does DriftScoreComputer handle the case where OntologyBaseLayer embeddings have changed between compilation and runtime — does it recompute baselines or flag an ontology drift event?
+- What constitutes a 'session' boundary for multi-project scenarios — is it one session per project, per intent, or per operator interaction?
+- What is the DriftThreshold.velocityAdaptationTriggerValue used for — does it trigger additional governor behavior beyond polling interval adjustment?

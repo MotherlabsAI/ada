@@ -1,4 +1,18 @@
 ---
+ada_postcode: "ML.AGT.handoffemitter/v1"
+ada_type: agent
+ada_name: HandoffEmitter
+ada_bounded_context: elicitation
+ada_parent: "ML.SYN.71346834/v1"
+ada_edges:
+  implements:
+    - "emitHandoff(session)"
+  depends_on:
+    - "PostcodeAddressFactory"
+    - "ReadinessAssessor"
+ada_compiled_at: 1776596371483
+---
+---
 name: elicitation-agent
 description: Use when elicitation tasks arise. Owns HandoffEmitter. Does not modify files outside elicitation.
 model: claude-sonnet-4-6

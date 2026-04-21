@@ -55,6 +55,8 @@ import { resumeCommand } from "./commands/resume.js";
 import { verifyCommand } from "./commands/verify.js";
 import { scanCommand } from "./commands/scan.js";
 import { mcpCommand } from "./commands/mcp.js";
+import { gateCommand } from "./commands/gate.js";
+import { thinkCommand } from "./commands/think.js";
 import { configCommand } from "./commands/config.js";
 import { hookCommand } from "./commands/hook.js";
 import {
@@ -64,6 +66,9 @@ import {
 import { reviewAmendmentsCommand } from "./commands/review-amendments.js";
 import { headlessCommand } from "./commands/headless.js";
 import { orchestrateCommand } from "./commands/orchestrate.js";
+import { selfLoopCommand } from "./commands/self-loop.js";
+import { governCommand } from "./commands/govern.js";
+import { convergeCommand } from "./commands/converge.js";
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -181,6 +186,10 @@ async function main(): Promise<void> {
     case "scan":
       await scanCommand();
       break;
+    case "self-loop": {
+      await selfLoopCommand(args.slice(1));
+      break;
+    }
     case "compile-headless": {
       const positional = args.slice(1).filter((a) => !a.startsWith("--"));
       await headlessCommand(positional);
@@ -189,6 +198,24 @@ async function main(): Promise<void> {
     case "mcp":
       await mcpCommand();
       break;
+    case "gate": {
+      const rest = args.slice(1);
+      const code = await gateCommand(rest);
+      process.exit(code);
+    }
+    case "think": {
+      const rest = args.slice(1);
+      const code = await thinkCommand(rest);
+      process.exit(code);
+    }
+    case "govern": {
+      await governCommand(args.slice(1));
+      break;
+    }
+    case "converge": {
+      await convergeCommand(args.slice(1));
+      break;
+    }
     case "orchestrate": {
       const maxParallelArg = args.find((a) => a.startsWith("--max-parallel="));
       const subGoalArg = args.find((a) => a.startsWith("--sub-goal="));
@@ -218,6 +245,10 @@ async function main(): Promise<void> {
   Commands:
     ada scan                 Show what Ada sees in this codebase before compiling
     ada run                  Launch Claude Code with governor watching for drift
+    ada govern               Persistent session log governor — watches .ada/session-log.jsonl
+                             --log <path>   Custom log path (default .ada/session-log.jsonl)
+                             --poll N       Poll interval ms (default 5000)
+                             --batch N      Entries per drift check (default 8)
     ada verify               Verify codebase against compiled blueprint
     ada hook install         Install pre-push hook — ada verify runs before every push
     ada hook uninstall       Remove the hook
@@ -230,6 +261,21 @@ async function main(): Promise<void> {
                              --dry-run          Print execution plan only
                              --max-parallel=N   Run N subGoals concurrently (default 1)
                              --sub-goal=<name>  Run only the named subGoal
+    ada converge             Unattended RSI loop — execute → observe → recompile → repeat
+                             --max-sessions N        Max execution sessions (default 5)
+                             --confidence N          Target confidence 0–1 (default 0.85)
+                             --session-timeout N     Per-session timeout ms (default 3600000)
+                             --total-timeout N       Total run timeout ms (default 28800000 = 8hr)
+                             --verbose               Show all governor signals
+                             --dry-run               Print plan and exit
+    ada self-loop            Sandboxed self-compilation convergence loop
+                             --max-iter N            Max iterations (default 10)
+                             --iter-timeout N        Per-iteration timeout ms (default 600000)
+                             --total-timeout N       Total run timeout ms (default 7200000)
+                             --confidence-target N   Confidence floor 0.0–1.0 (default 0.90)
+                             --stable-iters N        Stop on N stable open-q fingerprints (default 2)
+                             --verbose               Echo all headless stderr
+                             --dry-run               Print first intent and exit
 
   Setup:
     ada config set-key           (prompts for your Anthropic key)

@@ -1,9 +1,25 @@
 import { createHash } from "crypto";
 
 export type Layer = "L0G" | "L1S" | "L2I" | "L3E" | "L4A";
-export type Concern = "ENT" | "FNC" | "REL" | "POL" | "EVT" | "MET" | "CFG" | "ERR";
+export type Concern =
+  | "ENT"
+  | "FNC"
+  | "REL"
+  | "POL"
+  | "EVT"
+  | "MET"
+  | "CFG"
+  | "ERR";
 export type Scope = "GLO" | "LOC" | "CMP" | "INT" | "EXT";
-export type Dimension = "WHT" | "WHY" | "HOW" | "WHO" | "WEN" | "WRE" | "IFS" | "AMT";
+export type Dimension =
+  | "WHT"
+  | "WHY"
+  | "HOW"
+  | "WHO"
+  | "WEN"
+  | "WRE"
+  | "IFS"
+  | "AMT";
 export type Domain = "SFT" | "ORG" | "BIZ" | "OPS" | "COG" | "MED";
 
 export interface PostcodeCoordinate {
@@ -84,7 +100,7 @@ const STAGE_TO_COORDINATE: Record<StageCode, PostcodeCoordinate> = {
     layer: "L3E",
     concern: "POL",
     scope: "GLO",
-    dimension: "IFS",
+    dimension: "WHY",
     domain: "SFT",
   },
   BLD: {
@@ -148,7 +164,9 @@ export function generatePostcode(
       : stageOrCoordinate;
 
   if (!coordinate) {
-    throw new Error(`Invalid stage or coordinate: ${JSON.stringify(stageOrCoordinate)}`);
+    throw new Error(
+      `Invalid stage or coordinate: ${JSON.stringify(stageOrCoordinate)}`,
+    );
   }
 
   const hash = createHash("sha256").update(content).digest("hex").slice(0, 8);

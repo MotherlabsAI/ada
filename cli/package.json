@@ -1,11 +1,12 @@
 {
   "name": "@motherlabs/ada",
-  "version": "0.1.12",
+  "version": "0.1.15",
   "description": "Ada — semantic compiler. Turn intent into governed Claude Code sessions.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "ada": "dist/index.js"
+    "ada": "dist/index.js",
+    "ada-gate-hook": "dist/bin/ada-gate-hook.js"
   },
   "files": [
     "dist/",

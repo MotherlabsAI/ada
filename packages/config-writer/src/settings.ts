@@ -62,7 +62,13 @@ export function buildSettings(hooks: readonly HookScript[]): Settings {
 
   return {
     hooks: {
-      PreToolUse: preToolUse,
+      PreToolUse: [
+        ...preToolUse,
+        {
+          matcher: "Write|Edit|MultiEdit|Bash",
+          hooks: [{ type: "command", command: "hooks/pre-tool/ada-gate.sh" }],
+        },
+      ],
       PostToolUse: [
         ...postToolUse,
         {

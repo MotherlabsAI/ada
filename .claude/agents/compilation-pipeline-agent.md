@@ -1,4 +1,19 @@
 ---
+ada_postcode: "ML.AGT.fallbackblueprintresult/v1"
+ada_type: agent
+ada_name: FallbackBlueprintResult
+ada_bounded_context: compilation-pipeline
+ada_parent: "ML.SYN.71346834/v1"
+ada_edges:
+  implements:
+    - "recordFallback(iterationHistory)"
+    - "getBestIteration()"
+    - "getUncertaintyMarkers()"
+  depends_on:
+    - "ConfidenceTracker"
+ada_compiled_at: 1776596371483
+---
+---
 name: compilation-pipeline-agent
 description: Use when compilation-pipeline tasks arise. Owns FallbackBlueprintResult. Does not modify files outside compilation-pipeline.
 model: claude-sonnet-4-6

@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import { Governor } from "./governor";
-import { createGovernedCanUseTool } from "./interceptor";
+import { describe, it, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { Governor } from "./governor.js";
+import { createGovernedCanUseTool } from "./interceptor.js";
 import * as fs from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
@@ -9,7 +10,7 @@ import { ManifoldStore, SemanticNode } from "@ada/provenance";
 describe("Governor & Interceptor Integration", () => {
   const testDir = path.join(process.cwd(), ".ada-test-gov");
 
-  beforeAll(() => {
+  before(() => {
     if (fs.existsSync(testDir)) {
       fs.rmSync(testDir, { recursive: true, force: true });
     }
@@ -20,7 +21,7 @@ describe("Governor & Interceptor Integration", () => {
     execSync("git commit --allow-empty -m 'initial commit'", { cwd: testDir });
   });
 
-  afterAll(() => {
+  after(() => {
     if (fs.existsSync(testDir)) {
       fs.rmSync(testDir, { recursive: true, force: true });
     }
@@ -30,7 +31,6 @@ describe("Governor & Interceptor Integration", () => {
     const store = new ManifoldStore(testDir);
     const governor = new Governor(testDir);
 
-    // Setup manifold with an invariant in a bounded context
     const contextNode: SemanticNode = {
       id: "ML.L2I.ENT.LOC.WHT.SFT.abcdef12/v1",
       coordinate: {
@@ -55,32 +55,45 @@ describe("Governor & Interceptor Integration", () => {
       metrics: { totalEntropy: 0.1, nodeCount: 1, invariantPassRate: 1.0 },
     });
 
-    // Mock tool call to write_file in the Payments context with invalid input
     const tool = { name: "write_file" };
     const input = { file_path: "src/Payments/transaction.json", amount: -100 };
-    const originalCanUseTool = vi.fn().mockResolvedValue({ behavior: "allow" });
 
-    const governedCanUseTool = createGovernedCanUseTool(governor, originalCanUseTool);
+    let originalCalled = false;
+    const originalCanUseTool = async () => {
+      originalCalled = true;
+      return { behavior: "allow" as const };
+    };
 
+    const governedCanUseTool = createGovernedCanUseTool(
+      governor,
+      originalCanUseTool,
+    );
     const result = await governedCanUseTool(tool, input, {}, {}, "tool-123");
 
-    expect(result.behavior).toBe("deny");
-    expect(result.message).toContain("Manifold Invariant Violation");
-    expect(result.decisionReason.reason).toBe("amount > 0");
-    expect(originalCanUseTool).not.toHaveBeenCalled();
+    assert.equal(result.behavior, "deny");
+    assert.ok(result.message.includes("Manifold Invariant Violation"));
+    assert.equal(result.decisionReason.reason, "amount > 0");
+    assert.equal(originalCalled, false);
   });
 
   it("permits tool calls that satisfy manifold invariants", async () => {
     const governor = new Governor(testDir);
     const tool = { name: "write_file" };
     const input = { file_path: "src/Payments/transaction.json", amount: 100 };
-    const originalCanUseTool = vi.fn().mockResolvedValue({ behavior: "allow" });
 
-    const governedCanUseTool = createGovernedCanUseTool(governor, originalCanUseTool);
+    let originalCalled = false;
+    const originalCanUseTool = async () => {
+      originalCalled = true;
+      return { behavior: "allow" as const };
+    };
 
+    const governedCanUseTool = createGovernedCanUseTool(
+      governor,
+      originalCanUseTool,
+    );
     const result = await governedCanUseTool(tool, input, {}, {}, "tool-456");
 
-    expect(result.behavior).toBe("allow");
-    expect(originalCanUseTool).toHaveBeenCalled();
+    assert.equal(result.behavior, "allow");
+    assert.equal(originalCalled, true);
   });
 });

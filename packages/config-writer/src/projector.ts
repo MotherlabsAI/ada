@@ -48,22 +48,23 @@ export class ManifoldProjector {
       "L3E",
       "POL",
       "GLO",
-      "IFS",
+      "WHY",
       "SFT",
     );
-    const governorDecision: GovernorDecision = (govNode?.content as GovernorDecision) || {
-      decision: "ITERATE" as GovernorDecisionType,
-      confidence: 0,
-      coverageScore: 0,
-      coherenceScore: 0,
-      gatePassRate: 0,
-      provenanceIntact: false,
-      rejectionReasons: [],
-      violations: [],
-      nextAction: null,
-      challenges: [],
-      postcode: { raw: "ML.GOV.MISSING" } as any,
-    };
+    const governorDecision: GovernorDecision =
+      (govNode?.content as GovernorDecision) || {
+        decision: "ITERATE" as GovernorDecisionType,
+        confidence: 0,
+        coverageScore: 0,
+        coherenceScore: 0,
+        gatePassRate: 0,
+        provenanceIntact: false,
+        rejectionReasons: [],
+        violations: [],
+        nextAction: null,
+        challenges: [],
+        postcode: { raw: "ML.GOV.MISSING" } as any,
+      };
 
     // 3. Locate Persona (Domain Context)
     const perNode = this.findNodeByCoordinate(
@@ -97,17 +98,16 @@ export class ManifoldProjector {
     dimension: string,
     domain: string,
   ): SemanticNode | null {
-    // Return the node that matches the coordinate axes
-    // In case of multiple versions, the ManifoldState should ideally only contain the active ones
-    return (
-      Object.values(state.nodes).find(
-        (n) =>
-          n.coordinate.layer === layer &&
-          n.coordinate.concern === concern &&
-          n.coordinate.scope === scope &&
-          n.coordinate.dimension === dimension &&
-          n.coordinate.domain === domain,
-      ) || null
+    // Multiple iterations each write a unique-hash node for the same coordinate.
+    // Return the LAST match so we always project the most recent iteration's output.
+    const matches = Object.values(state.nodes).filter(
+      (n) =>
+        n.coordinate.layer === layer &&
+        n.coordinate.concern === concern &&
+        n.coordinate.scope === scope &&
+        n.coordinate.dimension === dimension &&
+        n.coordinate.domain === domain,
     );
+    return matches[matches.length - 1] ?? null;
   }
 }

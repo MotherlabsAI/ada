@@ -8,9 +8,9 @@ export interface SkillCandidate {
   readonly name: string;
   readonly description: string;
   readonly trigger: string;
-  readonly frequency: number; // how many sessions showed this pattern
+  readonly frequency: number; // how many runs showed this pattern
   readonly sessionIds: readonly string[];
-  readonly observedPaths: readonly string[]; // representative file paths from pattern
+  readonly observedPaths: readonly string[];
   readonly suggestedSkillBody: string;
   readonly status: "pending" | "approved" | "rejected";
   readonly proposedAt: number;
@@ -30,15 +30,6 @@ export interface SkillProposal {
   readonly reviewedAt: number | null;
 }
 
-// ─── Session log types ────────────────────────────────────────────────────────
-
-interface LogEntry {
-  ts: number;
-  session: string;
-  tool: string;
-  path: string;
-}
-
 // ─── Paths ────────────────────────────────────────────────────────────────────
 
 function getProjectDir(): string {
@@ -52,10 +43,6 @@ function getProjectDir(): string {
   );
 }
 
-function sessionLogPath(projectDir: string): string {
-  return path.join(projectDir, ".ada", "session-log.jsonl");
-}
-
 function skillProposalsPath(projectDir: string): string {
   return path.join(projectDir, ".ada", "skill-proposals.json");
 }
@@ -64,178 +51,153 @@ function skillCandidatesPath(projectDir: string): string {
   return path.join(projectDir, ".ada", "skill-candidates.json");
 }
 
-// ─── Session log reader ───────────────────────────────────────────────────────
+// ─── Governor-lesson extractor ────────────────────────────────────────────────
 
-function readLog(projectDir: string): LogEntry[] {
+interface GovRecord {
+  runDir: string;
+  decision: string;
+  violations: Array<{
+    stageCode: string;
+    ruleViolated: string;
+    description: string;
+    severity: string;
+  }>;
+  nextAction: string | null;
+}
+
+function extractGovernorLessons(projectDir: string): SkillCandidate[] {
+  const runsDir = path.join(projectDir, ".ada", "runs");
+  let runDirs: string[] = [];
   try {
-    const raw = fs.readFileSync(sessionLogPath(projectDir), "utf8");
-    return raw
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => {
+    runDirs = fs
+      .readdirSync(runsDir)
+      .map((d) => path.join(runsDir, d))
+      .filter((d) => {
         try {
-          return JSON.parse(line) as LogEntry;
+          return fs.statSync(d).isDirectory();
         } catch {
-          return null;
+          return false;
         }
-      })
-      .filter((e): e is LogEntry => e !== null);
+      });
   } catch {
     return [];
   }
-}
 
-// ─── Pattern extraction ───────────────────────────────────────────────────────
-
-/**
- * Groups log entries by session and extracts "write signatures" —
- * the ordered sequence of directory prefixes that were written.
- */
-function extractSessionSignatures(entries: LogEntry[]): Map<string, string[]> {
-  const bySession = new Map<string, LogEntry[]>();
-  for (const e of entries) {
-    if (!e.session) continue;
-    const existing = bySession.get(e.session) ?? [];
-    existing.push(e);
-    bySession.set(e.session, existing);
-  }
-
-  const signatures = new Map<string, string[]>();
-  for (const [sessionId, sessionEntries] of bySession) {
-    const writes = sessionEntries
-      .filter((e) => ["Write", "Edit", "MultiEdit"].includes(e.tool) && e.path)
-      .map((e) => e.path);
-
-    // Extract the top-level directory prefix for each path
-    const prefixes = writes.map((p) => {
-      const parts = p.split("/").filter(Boolean);
-      return parts.length >= 2 ? `${parts[0]}/${parts[1]}` : (parts[0] ?? p);
-    });
-
-    // Deduplicated ordered sequence
-    const seen = new Set<string>();
-    const sig: string[] = [];
-    for (const p of prefixes) {
-      if (!seen.has(p)) {
-        seen.add(p);
-        sig.push(p);
-      }
-    }
-
-    if (sig.length >= 2) signatures.set(sessionId, sig);
-  }
-
-  return signatures;
-}
-
-/**
- * Finds patterns that appear in 2+ sessions (same top-level prefix sequence).
- */
-function findRepeatedPatterns(
-  signatures: Map<string, string[]>,
-): Array<{ pattern: string; sessions: string[]; paths: string[] }> {
-  // Canonicalize: join the top-2 prefixes as the pattern key
-  const patternSessions = new Map<string, string[]>();
-  const patternPaths = new Map<string, string[]>();
-
-  for (const [sessionId, sig] of signatures) {
-    const key = sig.slice(0, 3).join(" → ");
-    const existing = patternSessions.get(key) ?? [];
-    existing.push(sessionId);
-    patternSessions.set(key, existing);
-
-    const paths = patternPaths.get(key) ?? [];
-    paths.push(...sig);
-    patternPaths.set(key, paths);
-  }
-
-  const repeated: Array<{
-    pattern: string;
-    sessions: string[];
-    paths: string[];
-  }> = [];
-  for (const [pattern, sessions] of patternSessions) {
-    if (sessions.length >= 2) {
-      repeated.push({
-        pattern,
-        sessions,
-        paths: [...new Set(patternPaths.get(pattern) ?? [])].slice(0, 8),
+  const govRecords: GovRecord[] = [];
+  for (const runDir of runDirs) {
+    const govPath = path.join(runDir, "GOV.json");
+    try {
+      const gov = JSON.parse(fs.readFileSync(govPath, "utf8")) as {
+        decision?: string;
+        violations?: Array<{
+          stageCode: string;
+          ruleViolated: string;
+          description: string;
+          severity: string;
+        }>;
+        nextAction?: string | null;
+      };
+      govRecords.push({
+        runDir,
+        decision: gov.decision ?? "UNKNOWN",
+        violations: gov.violations ?? [],
+        nextAction: gov.nextAction ?? null,
       });
+    } catch {
+      /* skip missing or corrupt GOV artifacts */
     }
   }
 
-  return repeated;
-}
+  if (govRecords.length < 2) return [];
 
-/**
- * Converts a detected pattern into a skill candidate with a suggested SKILL.md body.
- */
-function patternToCandidate(
-  pattern: string,
-  sessions: string[],
-  paths: string[],
-): SkillCandidate {
-  const id = `sk-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-  const slug = pattern
-    .replace(/[^a-z0-9]+/gi, "-")
-    .toLowerCase()
-    .slice(0, 40);
-  const name = `implement-${slug}`;
-  const trigger = `Pattern: ${pattern}`;
-  const description = `Extracted from ${sessions.length} sessions implementing ${pattern}`;
+  // Group violation types across runs — only ITERATE/REJECT runs carry lessons
+  const violationGroups = new Map<
+    string,
+    Array<{ runDir: string; description: string; nextAction: string | null }>
+  >();
+  for (const rec of govRecords) {
+    if (rec.decision !== "ITERATE" && rec.decision !== "REJECT") continue;
+    for (const v of rec.violations) {
+      const key = `${v.stageCode}:${v.ruleViolated}`;
+      const existing = violationGroups.get(key) ?? [];
+      existing.push({
+        runDir: rec.runDir,
+        description: v.description,
+        nextAction: rec.nextAction,
+      });
+      violationGroups.set(key, existing);
+    }
+  }
 
-  const suggestedSkillBody = [
-    "---",
-    `name: ${name}`,
-    `description: "Use when implementing the ${pattern} pattern (extracted from session evidence)."`,
-    "---",
-    "",
-    `# ${name}`,
-    "",
-    `Trigger: implementation work matching the pattern ${pattern}`,
-    "",
-    "## Steps",
-    "1. **read-contract**",
-    `   - Pre: \`ada.get_contract(context) returns a valid contract\``,
-    `   - Action: \`read delegation contract, note allowedPathGlobs and stop conditions\``,
-    `   - Post: \`contract scope is understood before any file writes\``,
-    "",
-    "2. **check-drift-before-start**",
-    `   - Pre: \`ada.check_drift(description) returns aligned=true\``,
-    `   - Action: \`call ada.check_drift with description of what you are about to implement\``,
-    `   - Post: \`implementation is aligned with compiled blueprint intent\``,
-    "",
-    "3. **implement-component**",
-    `   - Pre: \`blueprint component for this context is understood via ada.get_blueprint\``,
-    `   - Action: \`implement the component following blueprint interfaces and invariants\``,
-    `   - Post: \`all declared interfaces are implemented; TypeScript compiles\``,
-    "",
-    "4. **verify-outcome**",
-    `   - Pre: \`implementation files exist\``,
-    `   - Action: \`call ada.verify(layer='outcome') to check postcondition coverage\``,
-    `   - Post: \`verification score >= 80%; no critical findings\``,
-    "",
-    "## Evidence observed in sessions",
-    ...paths.map((p) => `- ${p}`),
-    "",
-    "## Human review notes",
-    "<!-- Add notes here before approving -->",
-    "",
-  ].join("\n");
+  const candidates: SkillCandidate[] = [];
+  for (const [key, instances] of violationGroups) {
+    if (instances.length < 2) continue;
 
-  return {
-    id,
-    name,
-    description,
-    trigger,
-    frequency: sessions.length,
-    sessionIds: sessions,
-    observedPaths: paths,
-    suggestedSkillBody,
-    status: "pending",
-    proposedAt: Date.now(),
-    reviewedAt: null,
-  };
+    const colonIdx = key.indexOf(":");
+    const stageCode = key.slice(0, colonIdx);
+    const ruleViolated = key.slice(colonIdx + 1);
+    const slug = `fix-${key
+      .replace(/[^a-z0-9]+/gi, "-")
+      .toLowerCase()
+      .slice(0, 50)}`;
+    const id = `sk-gov-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const latestNextAction =
+      instances[instances.length - 1]?.nextAction ?? null;
+    const trigger = `${stageCode} violation: ${ruleViolated}`;
+
+    const suggestedSkillBody = [
+      "---",
+      `name: ${slug}`,
+      `description: "Use when ${stageCode} fails with '${ruleViolated}' (extracted from governor ITERATE history)."`,
+      "---",
+      "",
+      `# ${slug}`,
+      "",
+      `Trigger: ${trigger}`,
+      "",
+      "## Context",
+      `Detected in ${instances.length} compilation runs as a recurring governor violation.`,
+      ...(latestNextAction
+        ? [`Last governor correction: ${latestNextAction}`]
+        : []),
+      "",
+      "## Steps",
+      "1. **diagnose-violation**",
+      `   - Pre: violation "${ruleViolated}" present in ${stageCode} stage`,
+      `   - Action: review the ${stageCode} stage output and identify root cause`,
+      `   - Post: root cause understood`,
+      "",
+      "2. **apply-correction**",
+      latestNextAction
+        ? `   - Action: ${latestNextAction.slice(0, 400)}`
+        : `   - Action: apply targeted fix to ${stageCode} stage output`,
+      `   - Post: violation resolved; coverage/coherence scores improve`,
+      "",
+      "## Observed in runs",
+      ...instances.map(
+        (i) => `- ${path.basename(i.runDir)}: ${i.description.slice(0, 100)}`,
+      ),
+      "",
+      "## Human review notes",
+      "<!-- Add notes here before approving -->",
+    ].join("\n");
+
+    candidates.push({
+      id,
+      name: slug,
+      description: `Governor violation "${ruleViolated}" at ${stageCode} — ${instances.length} occurrences`,
+      trigger,
+      frequency: instances.length,
+      sessionIds: instances.map((i) => path.basename(i.runDir)),
+      observedPaths: [],
+      suggestedSkillBody,
+      status: "pending",
+      proposedAt: Date.now(),
+      reviewedAt: null,
+    });
+  }
+
+  return candidates;
 }
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
@@ -283,67 +245,43 @@ function saveProposals(projectDir: string, proposals: SkillProposal[]): void {
 
 export function extractSkills(): { content: string; isError: boolean } {
   const projectDir = getProjectDir();
-  const entries = readLog(projectDir);
+  const lessons = extractGovernorLessons(projectDir);
 
-  if (entries.length === 0) {
+  if (lessons.length === 0) {
     return {
       content:
-        "No session log found. Run at least two sessions with tool call activity before extracting skills.\n" +
-        `Expected: ${sessionLogPath(projectDir)}`,
+        "No governor lesson patterns found yet.\n" +
+        "Governor-lesson candidates require 2+ compilation runs with the same violation type (ITERATE/REJECT).\n" +
+        "Continue compiling and re-run after more runs accumulate.",
       isError: false,
     };
   }
 
-  const signatures = extractSessionSignatures(entries);
-  const patterns = findRepeatedPatterns(signatures);
-
-  if (patterns.length === 0) {
-    return {
-      content:
-        `Analyzed ${signatures.size} sessions, ${entries.length} tool calls.\n` +
-        "No repeated patterns found yet — patterns require the same sequence to appear in 2+ distinct sessions.\n" +
-        "Continue building and re-run after more sessions accumulate.",
-      isError: false,
-    };
-  }
-
-  // Load existing candidates to avoid duplicates
   const existing = loadCandidates(projectDir);
-  const existingPatterns = new Set(existing.map((c) => c.trigger));
-
-  const newCandidates: SkillCandidate[] = [];
-  for (const { pattern, sessions, paths } of patterns) {
-    const trigger = `Pattern: ${pattern}`;
-    if (!existingPatterns.has(trigger)) {
-      newCandidates.push(patternToCandidate(pattern, sessions, paths));
-    }
-  }
-
+  const existingTriggers = new Set(existing.map((c) => c.trigger));
+  const newCandidates = lessons.filter((c) => !existingTriggers.has(c.trigger));
   const allCandidates = [...existing, ...newCandidates];
   saveCandidates(projectDir, allCandidates);
 
   const lines = [
-    `Skill extraction complete.`,
-    `Sessions analyzed: ${signatures.size}`,
-    `Tool calls processed: ${entries.length}`,
-    `Patterns found: ${patterns.length}`,
+    `Skill extraction complete (governor-lesson mode).`,
     `New candidates: ${newCandidates.length}`,
     `Total candidates: ${allCandidates.length}`,
     "",
   ];
 
   if (newCandidates.length > 0) {
-    lines.push("New skill candidates:");
+    lines.push("New skill candidates (from governor ITERATE patterns):");
     for (const c of newCandidates) {
       lines.push(`  [${c.id}] ${c.name}`);
-      lines.push(`    Pattern: ${c.trigger}`);
-      lines.push(`    Seen in ${c.frequency} sessions`);
+      lines.push(`    Trigger: ${c.trigger}`);
+      lines.push(`    Seen in ${c.frequency} runs`);
     }
     lines.push("");
     lines.push("Review with: ada review-skills");
   } else {
     lines.push(
-      "No new patterns — all detected patterns are already candidates.",
+      "No new patterns — all detected violations are already candidates.",
     );
   }
 

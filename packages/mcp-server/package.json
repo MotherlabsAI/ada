@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@ada/compiler": "workspace:*",
+    "@ada/config-writer": "workspace:*",
+    "@ada/governor": "workspace:*",
     "@ada/provenance": "workspace:*",
     "@anthropic-ai/sdk": "^0.80.0",
     "@modelcontextprotocol/sdk": "^1.12.1",

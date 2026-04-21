@@ -105,6 +105,15 @@ function listGitTree(
 
 // ─── Loaders ──────────────────────────────────────────────────────────────────
 
+// ─── Blueprint cache ──────────────────────────────────────────────────────────
+//
+// loadBlueprint() is called on every MCP tool invocation. At gate-per-keystroke
+// rates (ada.gate on every PreToolUse) the disk read dominates. Cache keyed by
+// file mtimeMs; invalidate on mtime change. Private to this module.
+let cachedBlueprint: Blueprint | null = null;
+let cachedMtime: number | null = null;
+let cachedPath: string | null = null;
+
 export function loadBlueprint(): Blueprint | null {
   // ADA_STATE_PATH takes explicit precedence; otherwise fall back to project dir.
   // This ensures query_constraints works in spawned Claude Code sessions where
@@ -114,10 +123,27 @@ export function loadBlueprint(): Blueprint | null {
     path.join(getProjectDir(), ".ada", "state.json");
 
   try {
+    const stat = fs.statSync(statePath);
+    const mtime = stat.mtimeMs;
+
+    if (
+      cachedBlueprint !== null &&
+      cachedMtime === mtime &&
+      cachedPath === statePath
+    ) {
+      return cachedBlueprint;
+    }
+
     const raw = fs.readFileSync(statePath, "utf8");
     const parsed = JSON.parse(raw) as { blueprint?: Blueprint };
-    return parsed.blueprint ?? null;
+    cachedBlueprint = parsed.blueprint ?? null;
+    cachedMtime = mtime;
+    cachedPath = statePath;
+    return cachedBlueprint;
   } catch {
+    cachedBlueprint = null;
+    cachedMtime = null;
+    cachedPath = null;
     return null;
   }
 }

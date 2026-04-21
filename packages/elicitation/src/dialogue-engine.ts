@@ -185,7 +185,8 @@ function callCLIText(prompt: string): Promise<string> {
 }
 
 async function callLLM(prompt: string): Promise<string> {
-  if (process.env["ANTHROPIC_API_KEY"]) {
+  const apiKey = process.env["ANTHROPIC_API_KEY"];
+  if (apiKey?.startsWith("sk-ant-")) {
     return callAPIText(prompt);
   }
   return callCLIText(prompt);
@@ -525,8 +526,14 @@ Respond ONLY with a JSON object:
     }
 
     if (!parsed) {
-      parsed = this._defaultProposal(gap, draft);
+      const fallback = this._defaultProposal(gap, draft);
+      if (fallback.proposedText) {
+        parsed = fallback;
+      }
     }
+
+    // If LLM failed and no fallback, skip proposal entirely
+    if (!parsed) return null;
 
     // Need turnId — this should always be set by caller
     const turn = this.store.getOpenTurnForGap(gap.gapId);
@@ -695,15 +702,8 @@ Respond ONLY with a JSON object:
   ): LLMProposalOutput {
     const rawShort = draft.rawIntent.slice(0, 100);
 
-    const proposedText =
-      gap.targetField === "goals"
-        ? `Enable users to ${rawShort}`
-        : gap.targetField === "constraints"
-          ? `The system must operate securely and within defined boundaries`
-          : `Further clarification needed for ${gap.targetField}`;
-
-    const rationale = `Derived directly from raw intent: "${rawShort}"`;
-
-    return { proposedText, rationale };
+    // This fallback should rarely fire — only when callCLIText also fails.
+    // Return empty strings so the caller can skip showing a broken proposal.
+    return { proposedText: "", rationale: "" };
   }
 }

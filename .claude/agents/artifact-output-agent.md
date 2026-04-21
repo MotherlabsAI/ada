@@ -1,4 +1,15 @@
 ---
+ada_postcode: "ML.AGT.derivebuildcontract/v1"
+ada_type: agent
+ada_name: deriveBuildContract
+ada_bounded_context: artifact-output
+ada_parent: "ML.SYN.71346834/v1"
+ada_edges:
+  implements:
+    - "deriveBuildContract(blueprint, governorDecision)"
+ada_compiled_at: 1776596371483
+---
+---
 name: artifact-output-agent
 description: Use when artifact-output tasks arise. Owns deriveBuildContract. Does not modify files outside artifact-output.
 model: claude-sonnet-4-6
