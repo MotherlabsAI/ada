@@ -1,49 +1,60 @@
 ---
+ada_postcode: "ML.SKL.semantic-compilation-pipeline/v1"
+ada_type: skill
+ada_name: semantic-compilation-pipeline
+ada_compiled_at: 1776806934913
+---
+---
 name: semantic-compilation-pipeline
-description: "Use when user submits raw intent string via CLI pattern detected."
+description: "Use when operator submits natural language intent string to Ada compilation endpoint, or system detects absent CompiledInvariantSet for session pattern detected."
 ---
 
 # semantic-compilation-pipeline
 
-Trigger: user submits raw intent string via CLI
+Trigger: operator submits natural language intent string to Ada compilation endpoint, or system detects absent CompiledInvariantSet for session
 
 ## Steps
-1. **parse-intent-graph**
-   - Pre: `rawIntent is non-empty string and DeterminismMetadata is initialised with frozen modelId and temperature=0`
-   - Action: `LLM parses rawIntent into IntentGraph with goals, constraints, unknowns, and assigns postcode`
-   - Post: `IntentGraph.postcode is set, IntentGraph.goals is non-empty, all IntentUnknowns have impact classification`
+1. **intent-ingestion-and-tokenization**
+   - Pre: `raw intent string is non-empty, session exists in opening or active state, no concurrent compilation is running for this sessionId`
+   - Action: `tokenize and segment natural language intent into semantic units; assign compilationRunId; emit InterStageIR_v1 with rawTokens, sessionId, compilationRunId, timestamp`
+   - Post: `InterStageIR_v1 record exists with contentHash, sessionId bound, rawTokens non-empty, compilationRunId unique`
 
-2. **evaluate-ambiguity-gate**
-   - Pre: `IntentGraph is present and postcode is set`
-   - Action: `inspect IntentGraph.unknowns; for each unknown with impact=blocking generate a ClarificationRequest with suggestedDefault`
-   - Post: `all blocking unknowns have a ClarificationRequest assigned, or zero blocking unknowns exist`
+2. **ontology-resolution**
+   - Pre: `InterStageIR_v1 exists and contentHash validates; OntologyBaseLayer is loaded and version-pinned for this compilationRunId`
+   - Action: `map each semantic unit to OntologyNode references; resolve synonyms, ambiguities via OntologyKnowledge context; emit InterStageIR_v2 with resolvedNodes, unresolvedTerms, ontologyVersion`
+   - Post: `InterStageIR_v2 exists; unresolvedTerms count is below permissible threshold (<=10% of tokens); ontologyVersion recorded in provenance`
 
-3. **model-domain**
-   - Pre: `IntentGraph.postcode is set and zero blocking unknowns remain unresolved`
-   - Action: `derive DomainContext from IntentGraph: identify domain, stakeholders, ubiquitousLanguage, and excludedConcerns; open ProvenanceGate from IntentGraph.postcode`
-   - Post: `DomainContext.postcode is set and references IntentGraph.postcode as parent; ProvenanceGate PASSED with entropyEstimate < threshold`
+3. **invariant-extraction**
+   - Pre: `InterStageIR_v2 exists and validates; unresolved term ratio below threshold; compilationRunId active`
+   - Action: `extract candidate CompiledInvariants from resolved ontology nodes; assign hardPredicate, semanticAnchor, proximityThreshold, severity, sourceStage=3 to each; emit InterStageIR_v3 with candidateInvariants list`
+   - Post: `InterStageIR_v3 exists with at least 1 candidate invariant; each invariant has non-null hardPredicate and severity; contentHash recorded`
 
-4. **map-entities**
-   - Pre: `DomainContext.postcode is set and ProvenanceGate from model-domain has PASSED`
-   - Action: `derive EntityMap from DomainContext: enumerate entities with properties, classify boundedContexts, open ProvenanceGate from DomainContext.postcode`
-   - Post: `EntityMap.entities is non-empty, each entity belongs to exactly one boundedContext, EntityMap.postcode set, ProvenanceGate PASSED`
+4. **world-model-compilation**
+   - Pre: `InterStageIR_v3 exists with non-empty candidateInvariants; RuntimeWorldModel for sessionId exists in seeding or live state`
+   - Action: `derive expectedState from candidateInvariants and resolved ontology; compute CompiledWorldModel with expectedState snapshot; assign version, contentHash, producedAt, artifactSetId; emit InterStageIR_v4 with compiledWorldModelId`
+   - Post: `CompiledWorldModel record persisted with valid contentHash; expectedState is structurally complete; CompiledWorldModel.version increments monotonically from prior version`
 
-5. **define-process**
-   - Pre: `EntityMap.postcode is set, EntityMap is not degraded, ProvenanceGate from map-entities has PASSED`
-   - Action: `derive ProcessFlow from EntityMap: define workflows, state machines, temporal relations, and failure modes for all entities with lifecycle states; open ProvenanceGate from EntityMap.postcode`
-   - Post: `ProcessFlow covers every entity in EntityMap, all stateful entities have at least one state machine, ProvenanceGate PASSED`
+5. **governance-artifact-generation**
+   - Pre: `InterStageIR_v4 exists; CompiledWorldModel persisted; artifactSetId assigned`
+   - Action: `generate CLAUDE.md, agent definitions, pre-tool hooks, MCP server configuration from compiledWorldModelId and candidateInvariants; bundle into ArtifactSet keyed by artifactSetId; emit InterStageIR_v5 with artifactSetId and artifact content hashes`
+   - Post: `ArtifactSet contains all 4 artifact types; each artifact has a stable ArtifactReference with contentHash; InterStageIR_v5 contentHash covers all artifact hashes`
 
-6. **synthesize-blueprint**
-   - Pre: `DomainContext, EntityMap, and ProcessFlow all have postcodes set and all their ProvenanceGates have PASSED`
-   - Action: `merge DomainContext, EntityMap, and ProcessFlow into a unified Blueprint; assign Blueprint.postcode derived from all three parent postcodes; record DeterminismMetadata snapshot`
-   - Post: `Blueprint is internally consistent, all cross-references between entities and workflows resolve, Blueprint.postcode encodes all parent postcodes`
+6. **artifact-coherence-verification**
+   - Pre: `ArtifactSet is complete with all 4 artifact types; all contentHashes recorded in InterStageIR_v5; compilationRunId still active`
+   - Action: `run ArtifactCoherenceVerifier across all artifacts in ArtifactSet; check cross-artifact semantic consistency, referential integrity of ArtifactReferences, and invariant coverage completeness; emit CoherenceVerificationResult with pass/fail and error localizations`
+   - Post: `CoherenceVerificationResult.status = PASS; all inter-artifact references resolve; invariant coverage is complete (every CompiledInvariant referenced by at least one artifact)`
 
-7. **audit-blueprint**
-   - Pre: `Blueprint is present with valid postcode and all cross-references resolved`
-   - Action: `run policy checks against Blueprint: verify provenance chain is unbroken, cumulativeEntropy is below ceiling, no unchallenged DeadlockRisk or ContextConflict exists; produce AuditReport with all PolicyViolations`
-   - Post: `AuditReport is complete with PASS or FAIL verdict; every PolicyViolation has a severity (blocking | advisory) and a reference to the Blueprint element that triggered it`
+7. **compiled-invariant-set-finalization**
+   - Pre: `CoherenceVerificationResult.status = PASS; all artifact contentHashes validated; compilationRunId active`
+   - Action: `promote candidateInvariants to CompiledInvariantSet with final id, sessionId, version, contentHash, compiledAt, bootstrapFlag=false, authoredBy=compilationRunId; persist CompiledInvariantSet; emit InterStageIR_v6 with compiledInvariantSetId; prior CompiledInvariantSet transitions to superseded`
+   - Post: `CompiledInvariantSet persisted and version-incremented; prior version marked superseded; SessionId bound to new compiledInvariantSetId; AuditLogEntry written for finalization event`
 
-8. **govern-blueprint**
-   - Pre: `AuditReport is present with verdict PASS or FAIL and all blocking violations are resolved or explicitly accepted by policy`
-   - Action: `Governor evaluates AuditReport and emits GovernorDecision: ACCEPT if no blocking violations, REJECT if violations are unresolvable, ITERATE if violations are resolvable by re-running from a specific stage`
-   - Post: `GovernorDecision is one of {ACCEPT, REJECT, ITERATE}; if ITERATE, decision includes reentryStage and violationIds; if ACCEPT, Blueprint is emitted as final output with CompilationRun sealed`
+8. **runtime-activation**
+   - Pre: `CompiledInvariantSet is finalized and persisted; ArtifactSet is coherent and active; GovernorState for sessionId exists`
+   - Action: `activate CompiledInvariantSet in SemanticGateEnforcer for sessionId; load ArtifactSet into runtime enforcement context; set GovernorState.currentPollingIntervalMs to basePollingIntervalMs; emit compilation-complete event to observability`
+   - Post: `SemanticGateEnforcer is armed with current compiledInvariantSetId; GovernorState is active; session transitions from bootstrapping or compiling to active; ObservabilitySnapshot records activation`
+
+9. **projection-engine-initialization**
+   - Pre: `session is in active state; CompiledWorldModel is loaded; CompiledInvariantSet is armed in gate`
+   - Action: `initialize projection engine with CompiledWorldModel.expectedState as baseline; compute initial ProjectionTrigger thresholds from DriftThreshold for sessionId; register projection engine with governor polling loop`
+   - Post: `projection engine is registered and baseline is set; DriftThreshold persisted for sessionId; governor polling loop includes projection engine callback`

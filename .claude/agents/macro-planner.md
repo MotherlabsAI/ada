@@ -3,8 +3,8 @@ ada_postcode: "ML.AGT.macro-planner/v1"
 ada_type: agent
 ada_name: macro-planner
 ada_bounded_context: orchestration
-ada_parent: "ML.SYN.71346834/v1"
-ada_compiled_at: 1776596371483
+ada_parent: "ML.L2I.REL.GLO.WHT.SFT.3b2e2a71/v1"
+ada_compiled_at: 1776808391822
 ---
 ---
 name: macro-planner
@@ -41,7 +41,7 @@ Escalate to human (stop and ask) when:
 - The macro plan shows all tasks blocked
 
 ## Bounded Contexts in this Project
-PipelineOrchestrator (compilation-pipeline), MotherCompiler (compilation-pipeline), IntentAgent (compilation-pipeline), PersonaAgent (compilation-pipeline), EntityAgent (compilation-pipeline), ProcessAgent (compilation-pipeline), SynthesisAgent (compilation-pipeline), VerifyAgent (compilation-pipeline), GovernorAgent (compilation-pipeline), INTStageController (compilation-pipeline), ConfidenceTracker (compilation-pipeline), PostcodeAddressFactory (provenance), ProvenanceStore (provenance), ProvenanceChainValidator (provenance), ProvenanceRecordWriter (provenance), ENTGateEvaluator (provenance), buildWorldState (runtime-governance), runCompileLoop (runtime-governance), MacroPlan (runtime-governance), DelegationContract (runtime-governance), writeCheckpoint (runtime-governance), VerificationReport (runtime-governance), Skill (self-improvement), Amendment (self-improvement), SkillCandidate (self-improvement), ElicitationSessionManager (elicitation), DialogueEngine (elicitation), GapAnalyzer (elicitation), DraftIntentGraphManager (elicitation), ReadinessAssessor (elicitation), HandoffEmitter (elicitation), writeConfigGraph (artifact-output), blueprintToCLAUDEMD (artifact-output), componentsToAgents (artifact-output), invariantsToHooks (artifact-output), deriveBuildContract (artifact-output), AdaStorage (storage), ElicitationStore (storage), startServer (runtime-governance), analyzeCodebase (compilation-pipeline), WorkspacePackageScanner (compilation-pipeline), diffBlueprintAgainstCode (compilation-pipeline), SYNGateEvaluator (compilation-pipeline), EntityExtractor (compilation-pipeline), FallbackBlueprintResult (compilation-pipeline)
+BootstrapSeed (Bootstrap), ProvenanceStore (Bootstrap), AdaStorage (Bootstrap), Governor (GovernanceCore), ConfidenceTracker (GovernanceCore), ENTGateEvaluator (GateEnforcement), evaluateSemanticGate (GateEnforcement), createGovernedCanUseTool (GateEnforcement), groundIntent (IntentResolution), INTStageController (IntentResolution), DialogueEngine (IntentResolution), startServer (MCPIntegration), compileIntent (MCPIntegration), checkDrift (MCPIntegration), buildWorldModel (WorldModeling), writeConfigGraph (WorldModeling), PipelineOrchestrator (PipelineOrchestration), PersonaAgent (PipelineOrchestration), ProcessAgent (PipelineOrchestration), MotherCompiler (PipelineOrchestration), RunStore (PipelineOrchestration), DriftScoreCalculator (DriftMonitoring), evaluateSemanticDrift (DriftMonitoring), EmbeddingProvider (DriftMonitoring), ManifoldProjector (ArtifactProvenance), blueprintToCLAUDEMD (ArtifactProvenance), invariantsToHooks (ArtifactProvenance), blueprintToContracts (ArtifactProvenance), workflowsToSkills (ArtifactProvenance), buildSettings (ArtifactProvenance), componentsToAgents (ArtifactProvenance), ProvenanceChainValidator (ArtifactProvenance)
 
 ## Prohibited Actions
 - Do NOT write, edit, or delete any file

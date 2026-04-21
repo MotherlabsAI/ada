@@ -11,11 +11,11 @@
         ]
       },
       {
-        "matcher": "Bash|Write|Edit",
+        "matcher": "Write|Edit|MultiEdit|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "hooks/pre-tool/provenancerecord-immutable-after-write-no-mutation-operat.sh"
+            "command": "hooks/pre-tool/ada-gate.sh"
           }
         ]
       }
@@ -66,7 +66,9 @@
     "ada": {
       "type": "stdio",
       "command": "ada",
-      "args": ["mcp"],
+      "args": [
+        "mcp"
+      ],
       "env": {
         "ADA_PROJECT_DIR": "${CLAUDE_PROJECT_DIR:-}"
       }
