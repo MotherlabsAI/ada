@@ -42,3 +42,13 @@ export interface SuggestedAgent {
   readonly description: string;
   readonly tools: readonly string[];
 }
+
+// ─── G3: Session Reload Signal ────────────────────────────────────────────────
+// Emitted by ProjectionEngine after artifact regeneration to notify the active
+// Claude Code session via MCP that configuration has changed.
+
+export interface SessionReloadSignal {
+  readonly type: "SESSION_RELOAD";
+  readonly triggeredBy: string;
+  readonly artifactsRegenerated: readonly string[];
+}

@@ -23,7 +23,11 @@ export {
   type ExtendedThinkingCall,
   type ExtendedThinkingResult,
 } from "./llm-client.js";
-export type { GovernorSignal, SuggestedAgent } from "./signals.js";
+export type {
+  GovernorSignal,
+  SuggestedAgent,
+  SessionReloadSignal,
+} from "./signals.js";
 export type {
   GateFailurePayload,
   ActorClass,
