@@ -74,6 +74,12 @@ export type {
   AcceptanceCriterion,
   BuildContract,
   SubGoalSpec,
+  MetaInvariant,
+  PersonaResolver,
+  ProcessModeler,
+  PipelineStageExecutor,
+  StageHandlerRegistration,
+  BoundedContextMapping,
 } from "./types.js";
 
 export { IntentAgent } from "./agents/intent.js";

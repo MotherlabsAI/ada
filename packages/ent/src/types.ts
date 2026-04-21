@@ -191,3 +191,13 @@ export interface EntityMap {
   readonly entityCount: number;
   readonly postcode: string;
 }
+
+// ─── G15: ENT Gate Pass Condition ────────────────────────────────────────────
+// All four must be true for the ENT gate to pass.
+
+export interface ENTGatePassCondition {
+  readonly entityCountGtZero: boolean;
+  readonly provenanceIntact: boolean;
+  readonly allBlockersCleared: boolean;
+  readonly whoEntityDefined: boolean; // WHO entity must have role, scope, trustLevel
+}

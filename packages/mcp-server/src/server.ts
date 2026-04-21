@@ -62,12 +62,12 @@ export async function startServer(): Promise<void> {
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
       {
-        name: "ada.get_blueprint",
+        name: "ada_get_blueprint",
         description: "Returns the full active Blueprint",
         inputSchema: { type: "object" as const, properties: {} },
       },
       {
-        name: "ada.get_invariants",
+        name: "ada_get_invariants",
         description: "Returns predicate-form invariants for the named entity",
         inputSchema: {
           type: "object" as const,
@@ -76,7 +76,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.verify_code",
+        name: "ada_verify_code",
         description:
           "Checks a code fragment against entity invariants from active Blueprint",
         inputSchema: {
@@ -89,7 +89,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.get_workflow",
+        name: "ada_get_workflow",
         description:
           "Returns steps, preconditions, postconditions for the named workflow",
         inputSchema: {
@@ -99,7 +99,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.log_drift",
+        name: "ada_log_drift",
         description: "Logs semantic drift to provenance store",
         inputSchema: {
           type: "object" as const,
@@ -116,7 +116,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.propose_agent",
+        name: "ada_propose_agent",
         description: "Writes a new agent .md to .claude/agents/",
         inputSchema: {
           type: "object" as const,
@@ -133,7 +133,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.query_constraints",
+        name: "ada_query_constraints",
         description:
           "Returns invariants and workflow steps from the compiled blueprint matching the given scope. Use before modifying any entity or workflow to understand the constraints Ada compiled from original intent.",
         inputSchema: {
@@ -149,7 +149,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.check_drift",
+        name: "ada_check_drift",
         description:
           "Checks whether a described action or change aligns with Ada's compiled intent graph. Returns aligned=true/false with violations and matched goals. Use before implementing any significant change.",
         inputSchema: {
@@ -165,7 +165,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.propose_amendment",
+        name: "ada_propose_amendment",
         description:
           "Proposes a change to the compiled blueprint when implementation reveals it is incomplete or incorrect. Ada processes the queue via 'ada review-amendments'. Use when you discover during implementation that a goal is missing, an entity needs a new invariant, or a workflow step is wrong.",
         inputSchema: {
@@ -199,13 +199,13 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.extract_skills",
+        name: "ada_extract_skills",
         description:
           "Analyzes the session log to find repeated implementation patterns across sessions. Proposes skill candidates to .ada/skill-candidates.json for human review via 'ada review-skills'. Patterns must appear in 2+ distinct sessions to qualify.",
         inputSchema: { type: "object" as const, properties: {} },
       },
       {
-        name: "ada.propose_skill",
+        name: "ada_propose_skill",
         description:
           "Queues a skill proposal for human review. The skill will NOT be written to .claude/skills/ until a human approves it via 'ada review-skills'. Governance rule: skills improve workflows — they do not modify compiled intent, entity invariants, or delegation policies.",
         inputSchema: {
@@ -239,7 +239,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.verify_stack",
+        name: "ada_verify_stack",
         description:
           "Runs the Ada verification stack against the current world-state. " +
           "Without a layer, runs all five: structural (dependency graph), execution (tool coverage), " +
@@ -269,7 +269,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.emit_config",
+        name: "ada_emit_config",
         description:
           "Alias for ada.project kind=claude-code. Regenerate Claude Code governance artifacts " +
           "(CLAUDE.md, agents, hooks, settings, .mcp.json, contracts, world-model) from the current " +
@@ -288,7 +288,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.project",
+        name: "ada_project",
         description:
           "Regenerate governance or documentation artifacts from the compiled blueprint in " +
           ".ada/state.json — without re-running the compilation pipeline. " +
@@ -314,7 +314,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.gate",
+        name: "ada_gate",
         description:
           "Semantic action-time gate. Evaluates a proposed tool call against " +
           "the compiled Blueprint invariants and workflow preconditions. Returns " +
@@ -355,7 +355,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.get_contract",
+        name: "ada_get_contract",
         description:
           "Returns the delegation contract for a bounded context. Includes scope (allowed paths and tools), stop conditions, required evidence, max recursion depth, and current delegation depth. Call at the start of any agent session to understand your bounds.",
         inputSchema: {
@@ -370,7 +370,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.enter_delegation",
+        name: "ada_enter_delegation",
         description:
           "Registers this agent as entering a delegation for the given context. Validates that max recursion depth is not exceeded. Call when a macro planner or orchestrator is about to spawn a child agent.",
         inputSchema: {
@@ -390,7 +390,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.exit_delegation",
+        name: "ada_exit_delegation",
         description:
           "Removes this agent from the delegation stack. Call when a delegated agent has completed its task and is returning control to its parent.",
         inputSchema: {
@@ -406,13 +406,13 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.get_macro_plan",
+        name: "ada_get_macro_plan",
         description:
           "Returns the ordered execution plan for the compiled blueprint. Uses dependency analysis to sequence components and world-state to mark already-complete tasks. Call at the start of any multi-component implementation session.",
         inputSchema: { type: "object" as const, properties: {} },
       },
       {
-        name: "ada.advance_execution",
+        name: "ada_advance_execution",
         description:
           "Get your task brief, bounded context contract, and execution instructions. Call this first at the start of every session. Reads subGoals from the active Blueprint, finds the first unblocked subGoal assigned to this agentId (or the first incomplete one), and returns a structured task brief with mission, entities, workflows, invariants, and governance instructions.",
         inputSchema: {
@@ -433,7 +433,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.set_task_status",
+        name: "ada_set_task_status",
         description:
           "Report task completion or status. Call when your bounded context is complete. Writes to .ada/execution-state.json and reports which dependent subGoals are now unblocked. Call when starting a task (in_progress) and when finishing (complete).",
         inputSchema: {
@@ -465,7 +465,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.complete_subgoal",
+        name: "ada_complete_subgoal",
         description:
           "Marks the current bounded context as complete and signals the Ada orchestrator to unlock dependent subGoals. Call this at the end of every orchestrated session after all components in your bounded context are implemented and verified.",
         inputSchema: {
@@ -487,7 +487,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.report_execution_failure",
+        name: "ada_report_execution_failure",
         description:
           "Reports a failure during component execution and receives a repair directive: retry (with attempts remaining) or escalate (max retries reached — surface to human). Call when a component implementation attempt fails. If the directive is escalate, call ada.report_gap and do not retry.",
         inputSchema: {
@@ -512,7 +512,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.resolve_repair",
+        name: "ada_resolve_repair",
         description:
           "Marks a component's repair cycle as resolved after a successful retry. Clears the failure count so future failures start fresh. Call after a retry attempt succeeds.",
         inputSchema: {
@@ -528,7 +528,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.record_fact",
+        name: "ada_record_fact",
         description:
           "Records a fact about the world state with an explicit confidence score (0–1). Use to track observations from tool outputs (source=tool_output) or logical inferences (source=inferred). High-confidence facts lower the overall uncertainty score; low-confidence facts raise it. The aggregate uncertainty is reflected in ada.get_runtime_state.",
         inputSchema: {
@@ -560,13 +560,13 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.get_runtime_state",
+        name: "ada_get_runtime_state",
         description:
           "Returns the current world-state snapshot: sessions, tool calls, component execution status, environment facts, and checkpoints. Use when you need to understand what has actually been done vs what was planned.",
         inputSchema: { type: "object" as const, properties: {} },
       },
       {
-        name: "ada.checkpoint",
+        name: "ada_checkpoint",
         description:
           "Creates a named checkpoint of the current world state. Uses git stash for hard rollback capability. Call before any significant change that might need to be undone.",
         inputSchema: {
@@ -581,7 +581,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.rollback_to",
+        name: "ada_rollback_to",
         description:
           "Rolls back the filesystem to a named checkpoint using git stash pop. Removes the checkpoint and all later checkpoints from the list.",
         inputSchema: {
@@ -596,7 +596,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.get_world_model",
+        name: "ada_get_world_model",
         description:
           "Returns the compiled world model. Without a stage, returns the full manifest (runId, intent, decision, stage index). With a stage code (CTX/INT/PER/ENT/PRO/SYN/VER/GOV), returns that stage's artifact.",
         inputSchema: {
@@ -611,7 +611,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.report_implementation_decision",
+        name: "ada_report_implementation_decision",
         description:
           "Report when Claude Code makes an implementation decision that deviates from the blueprint. Stored in .ada/feedback/ and injected into the next 'ada compile --amend' run.",
         inputSchema: {
@@ -625,7 +625,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.report_gap",
+        name: "ada_report_gap",
         description:
           "Report when the blueprint is missing something needed for implementation. Stored in .ada/feedback/ and injected into the next 'ada compile --amend' run.",
         inputSchema: {
@@ -637,7 +637,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.compile",
+        name: "ada_compile",
         description:
           "Compiles human intent through Ada's 9-stage pipeline (CTX→INT→PER→ENT→PRO→SYN→VER→GOV→BLD). " +
           "Call this FIRST when given a new intent with no existing blueprint. " +
@@ -671,7 +671,7 @@ export async function startServer(): Promise<void> {
         },
       },
       {
-        name: "ada.research",
+        name: "ada_research",
         description:
           "Runs targeted web search for current best practices, API details, security patterns, or library versions. " +
           "Call when you are uncertain about a current pattern or API mid-execution. " +
@@ -699,21 +699,21 @@ export async function startServer(): Promise<void> {
     const args = (request.params.arguments ?? {}) as Record<string, unknown>;
 
     switch (request.params.name) {
-      case "ada.get_blueprint": {
+      case "ada_get_blueprint": {
         const r = getBlueprint();
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.get_invariants": {
+      case "ada_get_invariants": {
         const r = getInvariants(args["entityName"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.verify_code": {
+      case "ada_verify_code": {
         const r = verifyCode(
           args["code"] as string,
           args["entityName"] as string,
@@ -723,14 +723,14 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.get_workflow": {
+      case "ada_get_workflow": {
         const r = getWorkflow(args["workflowName"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.log_drift": {
+      case "ada_log_drift": {
         const r = logDrift(
           args["location"] as string,
           args["original"] as string,
@@ -742,7 +742,7 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.propose_agent": {
+      case "ada_propose_agent": {
         const r = proposeAgent(
           args["name"] as string,
           args["description"] as string,
@@ -754,21 +754,21 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.query_constraints": {
+      case "ada_query_constraints": {
         const r = queryConstraints(args["scope"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.check_drift": {
+      case "ada_check_drift": {
         const r = checkDrift(args["description"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.propose_amendment": {
+      case "ada_propose_amendment": {
         const r = proposeAmendment(
           args["stage"] as string,
           args["field"] as string,
@@ -781,14 +781,14 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.extract_skills": {
+      case "ada_extract_skills": {
         const r = extractSkills();
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.propose_skill": {
+      case "ada_propose_skill": {
         const r = proposeSkill(
           args["name"] as string,
           args["description"] as string,
@@ -801,7 +801,7 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.verify_stack": {
+      case "ada_verify_stack": {
         const r = runVerificationStack(
           args["layer"] as VerifierLayer | undefined,
           args["scope"] as string | undefined,
@@ -811,14 +811,14 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.emit_config": {
+      case "ada_emit_config": {
         const r = emitConfig({ kind: args["kind"] as string });
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.project": {
+      case "ada_project": {
         const r = projectBlueprint({
           kind: args["kind"] as string,
           ...(typeof args["outDir"] === "string"
@@ -830,7 +830,7 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.gate": {
+      case "ada_gate": {
         const filePath = args["filePath"];
         const contentArg = args["content"];
         const command = args["command"];
@@ -847,14 +847,14 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.get_contract": {
+      case "ada_get_contract": {
         const r = getContract(args["context"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.enter_delegation": {
+      case "ada_enter_delegation": {
         const r = enterDelegation(
           args["context"] as string,
           args["agentId"] as string,
@@ -864,21 +864,21 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.exit_delegation": {
+      case "ada_exit_delegation": {
         const r = exitDelegation(args["agentId"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.get_macro_plan": {
+      case "ada_get_macro_plan": {
         const r = getMacroPlan();
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.advance_execution": {
+      case "ada_advance_execution": {
         const r = advanceExecution(
           args["agentId"] as string,
           args["projectDir"] as string | undefined,
@@ -888,7 +888,7 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.set_task_status": {
+      case "ada_set_task_status": {
         const r = setTaskStatusSubGoal(
           args["component"] as string,
           args["status"] as "in_progress" | "complete" | "blocked",
@@ -900,7 +900,7 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.complete_subgoal": {
+      case "ada_complete_subgoal": {
         const r = completeSubGoal(
           args["subGoalName"] as string,
           (args["evidence"] as string[]) ?? [],
@@ -910,7 +910,7 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.report_execution_failure": {
+      case "ada_report_execution_failure": {
         const r = reportExecutionFailure(
           args["componentName"] as string,
           args["failureDescription"] as string,
@@ -921,14 +921,14 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.resolve_repair": {
+      case "ada_resolve_repair": {
         const r = resolveRepair(args["componentName"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.record_fact": {
+      case "ada_record_fact": {
         const r = recordFact(
           args["fact"] as string,
           args["confidence"] as number,
@@ -940,35 +940,35 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.get_runtime_state": {
+      case "ada_get_runtime_state": {
         const r = getRuntimeState();
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.checkpoint": {
+      case "ada_checkpoint": {
         const r = createCheckpoint(args["description"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.rollback_to": {
+      case "ada_rollback_to": {
         const r = rollbackTo(args["checkpointId"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.get_world_model": {
+      case "ada_get_world_model": {
         const r = getWorldModel(args["stage"] as string | undefined);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.report_implementation_decision": {
+      case "ada_report_implementation_decision": {
         const r = reportImplementationDecision(
           args["componentName"] as string,
           args["decision"] as string,
@@ -979,30 +979,34 @@ export async function startServer(): Promise<void> {
           isError: r.isError,
         };
       }
-      case "ada.report_gap": {
+      case "ada_report_gap": {
         const r = reportGap(args["description"] as string);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.compile": {
+      case "ada_compile": {
         const { intent, projectDir, amend, noWebResearch } = args as {
           intent: string;
           projectDir?: string;
           amend?: boolean;
           noWebResearch?: boolean;
         };
-        const r = compileIntent(intent, projectDir ?? process.cwd(), {
-          ...(amend !== undefined && { amend }),
-          ...(noWebResearch !== undefined && { noWebResearch }),
-        });
+        const r = await compileIntent(
+          intent,
+          projectDir ?? process.env["ADA_PROJECT_DIR"] ?? process.cwd(),
+          {
+            ...(amend !== undefined && { amend }),
+            ...(noWebResearch !== undefined && { noWebResearch }),
+          },
+        );
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,
         };
       }
-      case "ada.research": {
+      case "ada_research": {
         const { query, focus } = args as { query: string; focus?: string };
         const r = await researchTopic(query, focus);
         return {

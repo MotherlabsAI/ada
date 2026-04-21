@@ -1,142 +1,105 @@
-import { execSync } from "child_process";
-import * as path from "path";
 import * as fs from "fs";
-import * as os from "os";
+import * as path from "path";
+import { MotherCompiler } from "@ada/compiler";
+import type { CompileResult, StageCompleteEvent } from "@ada/compiler";
 
 /**
- * ada.compile — triggers full 9-stage Ada compilation from within Claude Code.
+ * ada_compile — triggers full Ada compilation directly via MotherCompiler.
  *
- * This is the entry-point tool. Claude calls this first when given intent.
- * It runs the full Ada pipeline (CTX→INT→PER→ENT→PRO→SYN→VER→GOV→BLD),
- * writes CLAUDE.md + agent files + contracts + world model to the project,
- * and returns a summary of what was compiled.
- *
- * Claude can then immediately call ada.get_macro_plan() to start executing.
+ * Bypasses the CLI entirely (no shell, no TTY requirement, no arg-length limit).
+ * Changes cwd to projectDir before compiling (MotherCompiler uses process.cwd()
+ * internally for .ada/ directory), restores it after.
  */
-export function compileIntent(
+export async function compileIntent(
   intent: string,
   projectDir: string,
   options: { amend?: boolean; noWebResearch?: boolean },
-): { content: string; isError: boolean } {
+): Promise<{ content: string; isError: boolean }> {
   if (!intent || intent.trim().length === 0) {
     return { content: "Intent is required.", isError: true };
   }
 
-  // Find the ada CLI binary
-  const adaBin = findAdaBin();
-  if (!adaBin) {
+  const cwd = projectDir || process.env["ADA_PROJECT_DIR"] || process.cwd();
+
+  if (cwd === "/") {
     return {
-      content: "Ada CLI binary not found. Ensure ada is installed and on PATH.",
+      content:
+        "No project directory specified. Pass projectDir or set ADA_PROJECT_DIR.",
       isError: true,
     };
   }
-
-  const cwd = projectDir || process.cwd();
 
   if (!fs.existsSync(cwd)) {
     return { content: `Project directory not found: ${cwd}`, isError: true };
   }
 
-  const flags: string[] = ["--no-execute"];
-  if (options.amend) flags.push("--amend");
-
-  const env: NodeJS.ProcessEnv = { ...process.env };
-  if (options.noWebResearch) env["ADA_WEB_RESEARCH"] = "false";
-
+  // MotherCompiler.compile() uses process.cwd() to locate .ada/ — chdir first
+  const originalCwd = process.cwd();
   try {
-    const result = execSync(
-      `${adaBin} compile ${JSON.stringify(intent)} ${flags.join(" ")}`,
-      {
-        cwd,
-        env,
-        timeout: 600_000, // 10 minutes max
-        encoding: "utf8",
-        stdio: ["pipe", "pipe", "pipe"],
-      },
-    );
-
-    // Load the compiled blueprint to summarize
-    const stateFile = path.join(cwd, ".ada", "state.json");
-    if (!fs.existsSync(stateFile)) {
-      return {
-        content: result || "Compilation completed but no state file found.",
-        isError: false,
-      };
-    }
-
-    const state = JSON.parse(fs.readFileSync(stateFile, "utf8")) as Record<
-      string,
-      unknown
-    >;
-    const bp = state["blueprint"] as Record<string, unknown> | undefined;
-
-    if (!bp) {
-      return { content: result || "Compilation completed.", isError: false };
-    }
-
-    const arch = bp["architecture"] as Record<string, unknown> | undefined;
-    const components = (arch?.["components"] as unknown[]) ?? [];
-    const audit = bp["audit"] as Record<string, unknown> | undefined;
-    const decision =
-      audit?.["governorDecision"] ?? state["decision"] ?? "unknown";
-    const summary = (bp["summary"] as string) ?? "No summary";
-
-    const lines = [
-      `✓ Compilation complete — Governor decision: ${decision}`,
-      ``,
-      `Summary: ${summary}`,
-      ``,
-      `Bounded contexts (${components.length}):`,
-      ...(components as Array<Record<string, unknown>>).map(
-        (c) => `  • ${String(c["name"])} (${String(c["boundedContext"])})`,
-      ),
-      ``,
-      `Confidence: ${audit?.["confidence"] ?? "—"}`,
-      `Coverage: ${audit?.["coverageScore"] ?? "—"}`,
-      ``,
-      `Next steps:`,
-      `  1. Call ada.get_macro_plan() to get the ordered execution plan`,
-      `  2. Call ada.get_contract("<bounded_context>") before starting each context`,
-      `  3. Ada governs your execution — call ada.check_drift() before major decisions`,
-    ];
-
-    return { content: lines.join("\n"), isError: false };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    // execSync throws on non-zero exit; stderr is in the message
+    process.chdir(cwd);
+  } catch (e) {
     return {
-      content: `Compilation failed:\n${msg.slice(0, 2000)}`,
+      content: `Cannot chdir to project directory: ${cwd} — ${String(e)}`,
       isError: true,
     };
   }
-}
 
-function findAdaBin(): string | null {
-  // 1. Check PATH
+  const stageLog: string[] = [];
+  const compiler = new MotherCompiler();
+
   try {
-    execSync("which ada", { encoding: "utf8", stdio: "pipe" });
-    return "ada";
-  } catch {
-    /* not on PATH */
-  }
+    const result: CompileResult = await compiler.compile(intent, {
+      onStageComplete(event: StageCompleteEvent) {
+        stageLog.push(
+          `  ◆ ${event.stage}  entropy:${event.entropyEstimate.toFixed(3)}`,
+        );
+      },
+    });
 
-  // 2. Check common install locations
-  const candidates = [
-    path.join(os.homedir(), ".local", "bin", "ada"),
-    "/usr/local/bin/ada",
-    "/opt/homebrew/bin/ada",
-  ];
-  for (const c of candidates) {
-    if (fs.existsSync(c)) return c;
-  }
+    // Persist state file so other MCP tools can read it
+    const adaDir = path.join(cwd, ".ada");
+    fs.mkdirSync(adaDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(adaDir, "state.json"),
+      JSON.stringify(result, null, 2),
+      "utf8",
+    );
 
-  // 3. Try to find it relative to the mcp-server (dev mode)
-  try {
-    const devBin = path.resolve(__dirname, "../../../../cli/dist/index.js");
-    if (fs.existsSync(devBin)) return `node ${devBin}`;
-  } catch {
-    /* skip */
-  }
+    const bp = result.blueprint;
+    const gov = result.governorDecision;
+    const components = bp?.architecture?.components ?? [];
+    const audit = bp?.audit;
 
-  return null;
+    const lines = [
+      `✓ Compilation complete`,
+      `  Decision: ${gov?.decision ?? "unknown"}`,
+      `  Confidence: ${gov?.confidence ?? "—"}`,
+      ``,
+      `Pipeline:`,
+      ...stageLog,
+      ``,
+      `Summary: ${bp?.summary ?? "—"}`,
+      ``,
+      `Bounded contexts (${components.length}):`,
+      ...components.map((c) => `  • ${c.name} (${c.boundedContext})`),
+      ``,
+      `Coverage: ${audit?.coverageScore ?? "—"}   Coherence: ${audit?.coherenceScore ?? "—"}`,
+      ``,
+      `Next: call ada_get_macro_plan to get the ordered execution plan`,
+    ];
+
+    return { content: lines.join("\n"), isError: false };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      content: `Compilation failed:\n${msg.slice(0, 3000)}`,
+      isError: true,
+    };
+  } finally {
+    try {
+      process.chdir(originalCwd);
+    } catch {
+      /* ignore */
+    }
+  }
 }

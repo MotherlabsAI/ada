@@ -476,3 +476,41 @@ export interface StageCompleteEvent {
   readonly entropyEstimate: number;
   readonly challenges: readonly Challenge[];
 }
+
+// ─── G4: Meta Invariants ──────────────────────────────────────────────────────
+
+export interface MetaInvariant {
+  readonly id: string;
+  readonly text: string;
+  readonly immutable: true;
+}
+
+// ─── G6: Pipeline Stage Contracts ────────────────────────────────────────────
+
+export interface PersonaResolver {
+  resolve(intentGraph: IntentGraph): Promise<DomainContext>;
+}
+
+export interface ProcessModeler {
+  model(
+    entityMap: EntityMap,
+    domainContext: DomainContext,
+  ): Promise<ProcessFlow>;
+}
+
+export interface PipelineStageExecutor {
+  execute(stage: CompilerStageCode, input: unknown): Promise<unknown>;
+}
+
+export interface StageHandlerRegistration {
+  readonly stageCode: CompilerStageCode;
+  readonly handler: PipelineStageExecutor;
+}
+
+// ─── G15: Bounded Context Mapping ────────────────────────────────────────────
+
+export interface BoundedContextMapping {
+  readonly contextName: string;
+  readonly entities: readonly string[];
+  readonly dependsOn: readonly string[];
+}

@@ -41,3 +41,17 @@ export interface DriftCheckResult {
   readonly governorDecision: string;
   readonly postcodes: readonly string[];
 }
+
+// ─── G5: MCP Server types ─────────────────────────────────────────────────────
+
+export interface MCPTool {
+  readonly name: string;
+  readonly description: string;
+  readonly inputSchema: Record<string, unknown>;
+}
+
+export interface MCPServer {
+  readonly transport: "stdio";
+  readonly protocol: "json-rpc";
+  readonly tools: readonly MCPTool[];
+}

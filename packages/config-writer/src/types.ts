@@ -89,3 +89,45 @@ export interface ConfigGraph {
   readonly worldModelJson: string; // JSON-serialized WorldModel
   readonly worldModelMd: string; // human-readable world model MD
 }
+
+// ─── G14: World Model Persistence ────────────────────────────────────────────
+
+export interface WorldModelNode {
+  readonly id: string;
+  readonly type: "blueprint" | "agent" | "skill" | "hook";
+  readonly label: string;
+  readonly postcode: string;
+}
+
+export interface WorldModelEdge {
+  readonly from: string;
+  readonly to: string;
+  readonly relation: "satisfies" | "derives" | "constrains" | "contains";
+}
+
+export interface WorldModelPersistence {
+  readonly filePath: ".ada/world-model.json";
+  readonly nodes: readonly WorldModelNode[];
+  readonly edges: readonly WorldModelEdge[];
+  readonly sessionRestored: boolean;
+}
+
+// ─── G8: Partial Regeneration ────────────────────────────────────────────────
+
+export interface ArtifactRegenerationEntry {
+  readonly artifactPath: string;
+  readonly oldPostcode: string;
+  readonly newPostcode: string;
+}
+
+export interface PartialRegenerationPlan {
+  readonly changedPostcodes: readonly string[];
+  readonly artifactsToRegenerate: readonly ArtifactRegenerationEntry[];
+  readonly fullRegenerationForced: boolean;
+}
+
+// ─── G3: Projection Engine ───────────────────────────────────────────────────
+
+export interface ProjectionEngine {
+  regenerate(changedPostcodes: string[]): Promise<ArtifactRegenerationEntry[]>;
+}

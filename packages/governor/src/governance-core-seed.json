@@ -1,0 +1,56 @@
+{
+  "version": "1.0.0",
+  "immutable": true,
+  "metaInvariants": [
+    {
+      "id": "MI-001",
+      "text": "Pipeline stages execute in strictly sequential order: CTX → INT → PER → ENT → PRO → SYN → VER → GOV → BLD",
+      "rule": "G10"
+    },
+    {
+      "id": "MI-002",
+      "text": "Governor iteration is bounded at 3 maximum. The 4th invocation is a terminal REJECT.",
+      "rule": "G15"
+    },
+    {
+      "id": "MI-003",
+      "text": "MCP transport is stdio with JSON-RPC protocol. Ada never exposes REST or HTTP surfaces.",
+      "rule": "G5"
+    },
+    {
+      "id": "MI-004",
+      "text": "Gate failure recovery produces a structured GateFailurePayload — never a plain error string.",
+      "rule": "G1"
+    },
+    {
+      "id": "MI-005",
+      "text": "PreToolUse write-block hook ships as a static BootstrapSeed artifact checked into source control. Pipeline validates and extends it but never creates it from scratch.",
+      "rule": "G9"
+    },
+    {
+      "id": "MI-006",
+      "text": "Stages 1-4 (CTX, INT, PER, ENT) run at temperature 0 with structured output enforcement.",
+      "rule": "G10"
+    },
+    {
+      "id": "MI-007",
+      "text": "WHO entity (the governed operator) must be defined with role, scope, and trust level for ENT gate to pass.",
+      "rule": "G15"
+    },
+    {
+      "id": "MI-008",
+      "text": "ContinuousGovernor activates on every PreToolUse event, every 50 tokens of assistant output, and when drift score exceeds 0.3.",
+      "rule": "G13"
+    },
+    {
+      "id": "MI-009",
+      "text": "WorldModel persists across sessions via .ada/world-model.json. Session restore reads this file at SessionStart hook.",
+      "rule": "G14"
+    },
+    {
+      "id": "MI-010",
+      "text": "BLD stage performs partial regeneration: only artifacts whose blueprint postcode has changed are rewritten. Full regeneration is opt-in via --force.",
+      "rule": "G8"
+    }
+  ]
+}

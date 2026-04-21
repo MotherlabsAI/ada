@@ -5,4 +5,8 @@ export type {
   VerifyResult,
   WorkflowSpec,
   AgentFileSpec,
+  ConstraintQueryResult,
+  DriftCheckResult,
+  MCPTool,
+  MCPServer,
 } from "./types.js";

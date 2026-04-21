@@ -24,6 +24,19 @@ export {
   type ExtendedThinkingResult,
 } from "./llm-client.js";
 export type { GovernorSignal, SuggestedAgent } from "./signals.js";
+export type {
+  GateFailurePayload,
+  ActorClass,
+  WHOEntity,
+  EmbeddingVector,
+  EmbeddingProvider,
+  DriftScore,
+  DriftScoreCalculator,
+  GovernorActivationEvent,
+  PreToolUseHook,
+  BootstrapSeed,
+  MetaInvariantEntry,
+} from "./types.js";
 export {
   watchSessionLog,
   type SessionLogEntry,

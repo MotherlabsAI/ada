@@ -7,6 +7,12 @@ import {
   type SemanticGateInput,
   type SemanticGateResult,
 } from "./semantic-gate.js";
+import type {
+  DriftScore,
+  DriftScoreCalculator,
+  GovernorActivationEvent,
+} from "./types.js";
+import type { GovernorSignal } from "./signals.js";
 
 export interface GovernorOptions {
   readonly blueprint?: Blueprint | null;
@@ -156,3 +162,120 @@ function denyMessageFor(result: SemanticGateResult): string {
 }
 
 export type { SemanticGateResult, GateVerdict } from "./semantic-gate.js";
+
+// ─── G13: ContinuousGovernor ──────────────────────────────────────────────────
+// Runtime wrapper over Governor. Activates on PreToolUse events (G7), every 50
+// tokens of assistant output, and explicit drift score > 0.3. Does not replicate
+// pipeline Governor logic — delegates to Governor.validate() for gate checks.
+
+export class ContinuousGovernor {
+  private readonly inner: Governor;
+  private readonly driftCalculator: DriftScoreCalculator | null;
+  private tokenCount = 0;
+
+  private static readonly TOKEN_CHECKPOINT = 50;
+  private static readonly DRIFT_THRESHOLD = 0.3;
+  private static readonly PRE_TOOL_TIMEOUT_MS = 30_000;
+
+  constructor(inner: Governor, driftCalculator?: DriftScoreCalculator) {
+    this.inner = inner;
+    this.driftCalculator = driftCalculator ?? null;
+  }
+
+  // Called on every PreToolUse hook event (G7, G13a).
+  // Times out at 30s and degrades to advisory — never fully blocks on timeout.
+  async onPreToolUse(
+    toolName: string,
+    input: unknown,
+    emit: (signal: GovernorSignal) => void,
+  ): Promise<void> {
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error("timeout")),
+        ContinuousGovernor.PRE_TOOL_TIMEOUT_MS,
+      ),
+    );
+
+    try {
+      const result = await Promise.race([
+        this.inner.validate(toolName, input),
+        timeoutPromise,
+      ]);
+
+      if (!result.result) {
+        emit({
+          type: "DRIFT",
+          severity: "major",
+          location: toolName,
+          detail: result.message ?? `PreToolUse gate blocked: ${toolName}`,
+        });
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message === "timeout") {
+        // G7: ceiling exceeded — degrade to advisory, do not block
+        emit({
+          type: "DRIFT",
+          severity: "minor",
+          location: toolName,
+          detail: `PreToolUse gate timed out after ${ContinuousGovernor.PRE_TOOL_TIMEOUT_MS}ms — advisory mode`,
+        });
+      }
+    }
+  }
+
+  // Called every 50 tokens of assistant output (G13b).
+  // Fires async drift check without blocking the token stream.
+  onTokenCheckpoint(
+    currentOutput: string,
+    baselineOutput: string,
+    emit: (signal: GovernorSignal) => void,
+  ): void {
+    this.tokenCount += ContinuousGovernor.TOKEN_CHECKPOINT;
+    void this.checkDrift(
+      "token-checkpoint",
+      currentOutput,
+      baselineOutput,
+      emit,
+    );
+  }
+
+  // Called when caller has already computed a drift score (G13c).
+  async onExplicitDrift(
+    score: DriftScore,
+    location: string,
+    emit: (signal: GovernorSignal) => void,
+  ): Promise<void> {
+    if (score.exceeded) {
+      emit({
+        type: "DRIFT",
+        severity: score.value > 0.7 ? "critical" : "major",
+        location,
+        detail: `Drift score ${score.value.toFixed(2)} exceeds threshold ${score.threshold}`,
+      });
+    }
+  }
+
+  private async checkDrift(
+    activation: GovernorActivationEvent,
+    current: string,
+    baseline: string,
+    emit: (signal: GovernorSignal) => void,
+  ): Promise<void> {
+    if (!this.driftCalculator) return;
+    try {
+      const score = await this.driftCalculator.calculate(current, baseline);
+      if (score.exceeded) {
+        emit({
+          type: "DRIFT",
+          severity: score.value > 0.7 ? "critical" : "major",
+          location: `continuous-governor:${activation}`,
+          detail: `Drift score ${score.value.toFixed(2)} exceeds threshold ${score.threshold} at token ${this.tokenCount}`,
+        });
+      } else {
+        emit({ type: "CONFIDENCE", value: 1 - score.value });
+      }
+    } catch {
+      // drift check failure is non-fatal
+    }
+  }
+}
