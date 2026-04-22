@@ -39,6 +39,12 @@ function printHelp(): void {
                              --comment     Output as GitHub PR comment markdown
                              --json        Output raw JSON report
     ada mcp                  Start MCP spec authority server (stdio)
+    ada context ["<intent>"] Long-running daemon: writes live .ada/state.json
+                             so Claude Code (via \`ada mcp\`) always sees the
+                             freshest project context. CTX is available in
+                             ~200 ms; LLM stages fill in progressively when
+                             an intent is supplied. Ctrl-C to stop.
+                             --verbose         Log per-stage events
 
     ada status               Show the current project's compile status
     ada history              List past compilation runs across all projects
@@ -126,6 +132,15 @@ async function main(): Promise<void> {
     case "mcp": {
       const { mcpCommand } = await import("./commands/mcp.js");
       await mcpCommand();
+      break;
+    }
+    case "context": {
+      const positional = args.slice(1).filter((a) => !a.startsWith("--"));
+      const intent = positional.length > 0 ? positional.join(" ") : undefined;
+      const { contextCommand } = await import("./commands/context.js");
+      await contextCommand(intent, {
+        verbose: flags.has("--verbose"),
+      });
       break;
     }
     case "status": {
