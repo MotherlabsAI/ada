@@ -1,24 +1,30 @@
 import * as fs from "fs";
 import * as path from "path";
-import { spawn } from "@ada/orchestrator";
+import React from "react";
+import { render } from "ink";
 import {
-  watch,
+  watchSessionLog,
   archiveSessionLog,
   mergeSessionDelta,
   createProjectionEngine,
+  extractSessionInsights,
+  updateSessionPatterns,
+  findRelevantTopics,
+  buildTopicContext,
+  type SessionPatterns,
 } from "@ada/governor";
 import type { GovernorSignal } from "@ada/governor";
 import { loadBlueprintState } from "@ada/compiler";
-import { glyphs } from "../ui/design-system.js";
+import {
+  RunScreen,
+  addActivityEvent,
+  type RunState,
+} from "../ui/run-screen.js";
 
-/** Ensure a directory exists, creating it recursively if needed. */
 function ensureDir(dir: string): void {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
-/** Append a JSONL line to a file, creating it if needed. Never throws. */
 function appendJsonl(filePath: string, record: unknown): void {
   try {
     fs.appendFileSync(filePath, JSON.stringify(record) + "\n", "utf8");
@@ -35,182 +41,105 @@ export async function runCommand(): Promise<void> {
   const driftAlertsPath = path.join(adaDir, "drift-alerts.jsonl");
   const worldModelDeltaPath = path.join(adaDir, "world-model-delta.json");
 
-  // Load blueprint if one exists — governor watches against it
-  let blueprint: Parameters<typeof watch>[0] | undefined;
+  // Load blueprint
+  let blueprint: Parameters<typeof watchSessionLog>[1] | undefined;
+  let projectDecision: string | null = null;
+  let projectConfidence = 0;
 
   if (fs.existsSync(statePath)) {
     try {
-      const { blueprint: bp } = loadBlueprintState(statePath);
-      blueprint = bp;
+      const loaded = loadBlueprintState(statePath);
+      blueprint = loaded.blueprint;
+      const raw = JSON.parse(fs.readFileSync(statePath, "utf8")) as Record<
+        string,
+        unknown
+      >;
+      if (typeof raw["decision"] === "string") {
+        projectDecision = raw["decision"];
+      }
+      if (typeof raw["confidence"] === "number") {
+        projectConfidence = raw["confidence"];
+      }
     } catch {
-      // Corrupt state — run ungoverned, no crash
+      // Corrupt state — run ungoverned
     }
   }
-
-  if (blueprint) {
-    console.log(
-      `  ${glyphs.identity.core} launching claude code with governor...`,
-    );
-  } else {
-    console.log(
-      `  ${glyphs.identity.core} launching claude code (no blueprint — run 'ada compile' first)...`,
-    );
-  }
-
-  const rawEvents = spawn({
-    workingDir: cwd,
-    outputFormat: "stream-json",
-  });
 
   if (!blueprint) {
-    // No blueprint — passthrough mode, just stream events
-    for await (const event of rawEvents) {
-      if (event.event.type === "content_block_start") {
-        process.stdout.write(".");
-      }
-    }
-    console.log("\n  session complete.\n");
-    return;
+    console.error(
+      "  ◈ no blueprint found — run ada compile <intent> first, then start claude in another terminal",
+    );
+    process.exit(1);
   }
 
-  // Build projection engine from blueprint — used for richer TICK_SUMMARY alerts
-  const projectionEngine = createProjectionEngine(blueprint);
-
-  // Governed mode — ensure .ada/ directory exists before writing
   ensureDir(adaDir);
 
-  // Wrap the raw event stream: tee each event to session-log.jsonl
-  async function* teeEvents(): AsyncGenerator<
-    Awaited<
-      ReturnType<(typeof rawEvents)[typeof Symbol.asyncIterator]>
-    >["value"]
-  > {
-    for await (const event of rawEvents) {
-      appendJsonl(sessionLogPath, { ts: Date.now(), event: event.event });
-      yield event;
+  // Load context panel data
+  const topEntities = blueprint.dataModel.entities
+    .slice(0, 6)
+    .map((e) => e.name);
+
+  let totalSessions = 0;
+  let avgConfidence = 0;
+  const patternsPath = path.join(adaDir, "topics", "_session-patterns.json");
+  if (fs.existsSync(patternsPath)) {
+    try {
+      const patterns = JSON.parse(
+        fs.readFileSync(patternsPath, "utf8"),
+      ) as SessionPatterns;
+      totalSessions = patterns.totalSessions;
+      avgConfidence = patterns.avgFinalConfidence;
+    } catch {
+      // ignore corrupt patterns
     }
   }
 
-  // onSignal: persist DRIFT and LOW_CONFIDENCE signals to drift-alerts.jsonl
-  const onSignal = (signal: GovernorSignal): void => {
-    if (signal.type === "DRIFT" || signal.type === "LOW_CONFIDENCE") {
-      const record =
-        signal.type === "DRIFT"
-          ? {
-              ts: Date.now(),
-              type: "DRIFT",
-              severity: signal.severity,
-              location: signal.location,
-              detail: signal.detail,
-            }
-          : {
-              ts: Date.now(),
-              type: "LOW_CONFIDENCE",
-              confidence: signal.confidence,
-              reason: signal.reason,
-            };
-      appendJsonl(driftAlertsPath, record);
-    }
+  // Pre-load topic context for future CLAUDE.md injection
+  const relevantTopics = findRelevantTopics(adaDir, blueprint, 3);
+  void buildTopicContext(relevantTopics);
+
+  // Initial run state
+  const sessionStart = Date.now();
+  const state: RunState = {
+    projectDecision,
+    projectConfidence,
+    cwd,
+    sessionStart,
+    events: [],
+    driftCount: 0,
+    criticalCount: 0,
+    confidence: projectConfidence,
+    lastTickMs: null,
+    sessionComplete: false,
+    finalDecision: null,
+    eventCount: 0,
+    blueprintSummary: blueprint.summary ?? null,
+    topEntities,
+    totalSessions,
+    avgConfidence,
   };
 
-  // Session-level accumulators for world-model-delta
-  let driftCount = 0;
-  let checkpointCount = 0;
-  const sessionStart = Date.now();
-  const criticalDrifts: Array<{ location: string; detail: string }> = [];
-  let finalConfidence = 1.0;
+  // Ink render
+  const { rerender, unmount } = render(
+    React.createElement(RunScreen, { state }),
+  );
 
-  for await (const signal of watch(blueprint, teeEvents(), 0.7, { onSignal })) {
-    switch (signal.type) {
-      case "DRIFT":
-        driftCount++;
-        if (signal.severity === "critical") {
-          criticalDrifts.push({
-            location: signal.location,
-            detail: signal.detail,
-          });
-          console.error(
-            `\n  ${glyphs.status.fail} drift [${signal.severity}] ${signal.location}: ${signal.detail}`,
-          );
-        }
-        break;
-
-      case "LOW_CONFIDENCE":
-        console.error(
-          `\n  ${glyphs.status.alert} confidence low (${Math.round(signal.confidence * 100)}%) — ${signal.reason}`,
-        );
-        break;
-
-      case "CHECKPOINT":
-        checkpointCount++;
-        process.stdout.write(
-          `\n  ${glyphs.status.pass} checkpoint ${checkpointCount} written\n`,
-        );
-        break;
-
-      case "TICK_SUMMARY": {
-        // Use projection engine to decide whether to surface this tick
-        const evaluation = projectionEngine.evaluate(
-          signal.driftCount,
-          signal.criticalCount,
-          signal.confidence,
-        );
-        if (evaluation.shouldAlert && evaluation.reason !== null) {
-          process.stderr.write(
-            `\n  ${glyphs.status.alert} tick alert: ${evaluation.reason} — confidence ${Math.round(signal.confidence * 100)}%\n`,
-          );
-        } else if (signal.driftCount > 0 || signal.criticalCount > 0) {
-          process.stderr.write(
-            `\n  · tick: ${signal.driftCount} drifts (${signal.criticalCount} critical), confidence ${Math.round(signal.confidence * 100)}%\n`,
-          );
-        }
-        break;
-      }
-
-      case "CONFIDENCE":
-        // Intermediate confidence update — quiet
-        break;
-
-      case "SESSION_COMPLETE": {
-        finalConfidence = signal.finalConfidence;
-        const pct = Math.round(signal.finalConfidence * 100);
-        const icon =
-          signal.decision === "ACCEPT"
-            ? glyphs.status.pass
-            : signal.decision === "DRIFT"
-              ? glyphs.status.alert
-              : glyphs.status.fail;
-
-        console.log(`\n  ${icon} session complete — confidence ${pct}%`);
-        if (driftCount > 0) {
-          console.log(
-            `  ${driftCount} drift signal${driftCount === 1 ? "" : "s"} detected`,
-          );
-        }
-        if (signal.decision === "HALT") {
-          // Write delta before exiting
-          writeWorldModelDelta();
-          process.exit(1);
-        }
-        break;
-      }
-    }
+  function update(): void {
+    rerender(React.createElement(RunScreen, { state }));
   }
 
-  // Write idle consolidation delta after session ends
-  writeWorldModelDelta();
+  const projectionEngine = createProjectionEngine(blueprint);
 
-  // Three-layer memory update
-  archiveSessionLog(adaDir); // Layer 3: move session-log.jsonl to .ada/sessions/{ts}.jsonl
-  mergeSessionDelta(adaDir); // Layer 1: update world-model-index.md with delta confidence
-
-  console.log();
+  // Session accumulators
+  let checkpointCount = 0;
+  const criticalDrifts: Array<{ location: string; detail: string }> = [];
+  let finalConfidence = projectConfidence;
 
   function writeWorldModelDelta(): void {
     try {
       const delta = {
         sessionEnd: Date.now(),
-        driftCount,
+        driftCount: state.driftCount,
         criticalDrifts,
         finalConfidence,
         durationMs: Date.now() - sessionStart,
@@ -221,7 +150,125 @@ export async function runCommand(): Promise<void> {
         "utf8",
       );
     } catch {
-      // Best-effort — never crash on delta write failure
+      // Best-effort
     }
   }
+
+  async function cleanup(): Promise<void> {
+    writeWorldModelDelta();
+    const archivedPath = archiveSessionLog(adaDir);
+    const insights =
+      archivedPath != null
+        ? extractSessionInsights(archivedPath, {
+            durationMs: Date.now() - sessionStart,
+            finalConfidence,
+            driftCount: state.driftCount,
+            criticalDrifts,
+          })
+        : undefined;
+    mergeSessionDelta(adaDir, insights);
+    if (insights != null) updateSessionPatterns(adaDir, insights);
+    await new Promise<void>((resolve) => setTimeout(resolve, 1500));
+    unmount();
+  }
+
+  // Abort controller — fired by Ctrl+C to stop the file watcher cleanly
+  const ac = new AbortController();
+
+  process.once("SIGINT", () => {
+    ac.abort();
+    state.sessionComplete = true;
+    state.finalDecision = "STOPPED";
+    update();
+  });
+
+  // Watch session log — Claude writes PostToolUse entries, we evaluate drift
+  for await (const signal of watchSessionLog(sessionLogPath, blueprint, {
+    signal: ac.signal,
+  })) {
+    switch (signal.type) {
+      case "DRIFT": {
+        state.driftCount++;
+        state.eventCount++;
+        if (signal.severity === "critical") {
+          state.criticalCount++;
+          criticalDrifts.push({
+            location: signal.location,
+            detail: signal.detail,
+          });
+        }
+        appendJsonl(driftAlertsPath, {
+          ts: Date.now(),
+          type: "DRIFT",
+          severity: signal.severity,
+          location: signal.location,
+          detail: signal.detail,
+        });
+        addActivityEvent(state, {
+          kind: "drift",
+          label: "DRIFT",
+          detail: `${signal.severity} · ${signal.location}`,
+        });
+        update();
+        break;
+      }
+
+      case "LOW_CONFIDENCE":
+        appendJsonl(driftAlertsPath, {
+          ts: Date.now(),
+          type: "LOW_CONFIDENCE",
+          confidence: signal.confidence,
+          reason: signal.reason,
+        });
+        break;
+
+      case "CHECKPOINT":
+        checkpointCount++;
+        addActivityEvent(state, {
+          kind: "checkpoint",
+          label: "checkpoint",
+          detail: `#${checkpointCount}`,
+        });
+        update();
+        break;
+
+      case "TICK_SUMMARY": {
+        state.lastTickMs = Date.now();
+        state.confidence = signal.confidence;
+        const evaluation = projectionEngine.evaluate(
+          signal.driftCount,
+          signal.criticalCount,
+          signal.confidence,
+        );
+        if (evaluation.shouldAlert && evaluation.reason !== null) {
+          addActivityEvent(state, {
+            kind: "drift",
+            label: "TICK",
+            detail: evaluation.reason,
+          });
+        }
+        update();
+        break;
+      }
+
+      case "CONFIDENCE":
+        state.confidence = signal.value ?? state.confidence;
+        update();
+        break;
+
+      case "SESSION_COMPLETE":
+        finalConfidence = signal.finalConfidence;
+        state.sessionComplete = true;
+        state.finalDecision = signal.decision;
+        state.confidence = signal.finalConfidence;
+        update();
+        if (signal.decision === "HALT") {
+          await cleanup();
+          process.exit(1);
+        }
+        break;
+    }
+  }
+
+  await cleanup();
 }

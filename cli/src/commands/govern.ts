@@ -95,7 +95,7 @@ export async function governCommand(argv: readonly string[]): Promise<void> {
         });
         // Machine-readable signal to stdout
         process.stdout.write(
-          JSON.stringify({ type: "DRIFT", ...signal, ts: Date.now() }) + "\n",
+          JSON.stringify({ ...signal, ts: Date.now() }) + "\n",
         );
         break;
       }
@@ -112,11 +112,7 @@ export async function governCommand(argv: readonly string[]): Promise<void> {
           reason: signal.reason,
         });
         process.stdout.write(
-          JSON.stringify({
-            type: "LOW_CONFIDENCE",
-            ...signal,
-            ts: Date.now(),
-          }) + "\n",
+          JSON.stringify({ ...signal, ts: Date.now() }) + "\n",
         );
         break;
 

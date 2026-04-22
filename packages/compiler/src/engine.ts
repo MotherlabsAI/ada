@@ -9,6 +9,7 @@ import { GovernorAgent } from "./agents/governor.js";
 import { deriveBuildContract } from "./agents/bld.js";
 import { buildGate } from "./gate.js";
 import { runFormatStage } from "./format-stage.js";
+import { runBoundedVerification } from "./bounded-verifier.js";
 import type {
   Blueprint,
   CompileResult,
@@ -1192,9 +1193,11 @@ export class MotherCompiler {
       { blueprint, intentGraph },
       stageCallbacks("VER"),
     );
+    const boundedVerification = runBoundedVerification(intentGraph, blueprint);
     const auditReport = {
       ...verifyResult.output,
       postcode: verifyResult.postcode,
+      boundedVerification,
     };
     stageRecords.push({
       stageCode: "VER",

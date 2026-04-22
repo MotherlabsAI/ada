@@ -94,6 +94,8 @@ export class GovernorAgent extends Agent<PipelineState, GovernorDecision> {
     const entityCount = input.entity?.entities.length ?? 0;
     const workflowCount = input.process?.workflows.length ?? 0;
     const componentCount = input.synthesis?.architecture.components.length ?? 0;
+    const bv = input.verify?.boundedVerification;
+    const intentGraph = input.intent;
 
     // Check provenance — do all gates resolve?
     const provenanceIntact =
@@ -103,6 +105,16 @@ export class GovernorAgent extends Agent<PipelineState, GovernorDecision> {
           (c) => c.id.includes("parse-failure") && c.severity === "blocking",
         ),
       );
+
+    const bvSection = bv
+      ? `
+BOUNDED VERIFICATION (deterministic — no LLM):
+  bound: ${bv.verificationBound.toUpperCase()}
+  coverage ratio: ${(bv.coverageRatio * 100).toFixed(0)}% (${(intentGraph?.goals?.length ?? 0) - bv.uncoveredGoals.length}/${intentGraph?.goals?.length ?? 0} goals covered)
+  uncovered goals: ${bv.uncoveredGoals.length === 0 ? "none" : bv.uncoveredGoals.map((g) => `${g.goalId}: ${g.description}`).join("; ")}
+  contradictions: ${bv.contradictoryInvariants.length === 0 ? "none" : bv.contradictoryInvariants.map((c) => `${c.entity}: "${c.a}" vs "${c.b}"`).join("; ")}
+  scope drift: ${bv.provenanceGaps.length === 0 ? "none" : bv.provenanceGaps.join(", ")}`
+      : "";
 
     return `You are the Governor. Your lens: PROVENANCE — full pipeline state.
 Decide: ACCEPT, REJECT, or ITERATE.
@@ -116,7 +128,7 @@ PIPELINE SUMMARY:
   gate pass rate: ${gatePassRate.toFixed(2)} (need ≥ 0.80)
   provenance: ${provenanceIntact ? "intact" : "BROKEN"}
   entropy: ${input.cumulativeEntropy.toFixed(2)}
-
+${bvSection}
 GATES:
   ${gateDetails || "no gates recorded"}
 

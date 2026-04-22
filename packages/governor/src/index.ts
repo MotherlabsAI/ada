@@ -53,7 +53,18 @@ export {
   generateTopicFiles,
   writeTopicFiles,
   archiveSessionLog,
+  extractSessionInsights,
+  updateSessionPatterns,
+  consolidateSessions,
+  pruneOldSessions,
+  findRelevantTopics,
+  buildTopicContext,
   type TopicFile,
+  type SessionInsights,
+  type SessionPatterns,
+  type ConsolidateResult,
+  type ConsolidateOptions,
+  type RelevantTopic,
 } from "./world-model.js";
 export {
   computeDriftThresholds,

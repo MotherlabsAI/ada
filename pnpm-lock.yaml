@@ -32,6 +32,27 @@ importers:
 
   cli:
     dependencies:
+      '@ada/compiler':
+        specifier: workspace:*
+        version: link:../packages/compiler
+      '@ada/config-writer':
+        specifier: workspace:*
+        version: link:../packages/config-writer
+      '@ada/elicitation':
+        specifier: workspace:*
+        version: link:../packages/elicitation
+      '@ada/governor':
+        specifier: workspace:*
+        version: link:../packages/governor
+      '@ada/mcp-server':
+        specifier: workspace:*
+        version: link:../packages/mcp-server
+      '@ada/orchestrator':
+        specifier: workspace:*
+        version: link:../packages/orchestrator
+      '@ada/storage':
+        specifier: workspace:*
+        version: link:../packages/storage
       '@anthropic-ai/sdk':
         specifier: ^0.80.0
         version: 0.80.0(zod@4.3.6)
@@ -59,11 +80,40 @@ importers:
         specifier: ^9.0.0
         version: 9.6.0
 
+  packages/artifact:
+    dependencies:
+      '@ada/compilation-configuration':
+        specifier: workspace:*
+        version: link:../compilation-configuration
+      '@ada/workspace':
+        specifier: workspace:*
+        version: link:../workspace
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/blueprintregistry:
     dependencies:
       '@ada/ent':
         specifier: workspace:*
         version: link:../ent
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/compilation-configuration:
+    dependencies:
+      '@ada/workspace':
+        specifier: workspace:*
+        version: link:../workspace
     devDependencies:
       '@types/node':
         specifier: ^25.5.0
@@ -352,6 +402,15 @@ importers:
       '@types/better-sqlite3':
         specifier: ^7.6.8
         version: 7.6.13
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/workspace:
+    devDependencies:
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0

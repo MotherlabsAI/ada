@@ -297,6 +297,30 @@ export interface SemanticDrift {
   readonly severity: "critical" | "major" | "minor";
 }
 
+// ─── Bounded Verification ─────────────────────────────────────────────────────
+// Deterministic (no LLM) certificate computed after VER stage.
+// Produces hard bounds rather than probabilistic scores.
+
+export interface UncoveredGoal {
+  readonly goalId: string;
+  readonly description: string;
+  readonly type: IntentGoal["type"];
+}
+
+export interface ContradictoryInvariantPair {
+  readonly entity: string;
+  readonly a: string;
+  readonly b: string;
+}
+
+export interface BoundedVerificationResult {
+  readonly uncoveredGoals: readonly UncoveredGoal[];
+  readonly contradictoryInvariants: readonly ContradictoryInvariantPair[];
+  readonly provenanceGaps: readonly string[]; // component names missing postcode trace
+  readonly coverageRatio: number; // covered goals / total goals
+  readonly verificationBound: "complete" | "partial" | "insufficient";
+}
+
 export interface AuditReport {
   readonly coverageScore: number;
   readonly coherenceScore: number;
@@ -305,6 +329,7 @@ export interface AuditReport {
   readonly passed: boolean;
   readonly challenges: readonly Challenge[];
   readonly postcode: PostcodeAddress;
+  readonly boundedVerification?: BoundedVerificationResult;
 }
 
 // ─── Governor Agent Output ───

@@ -18,7 +18,7 @@
  * Fail-open by default. Set ADA_GATE_STRICT=1 to fail-closed on unavailable
  * LLM or missing key. Set ADA_GATE_MODE=off to disable entirely.
  */
-import { readFileSync } from "fs";
+import { readFileSync, appendFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
 import { evaluateSemanticGate } from "@ada/governor";
 import type { Blueprint } from "@ada/compiler";
@@ -31,11 +31,10 @@ interface PreToolUsePayload {
 
 async function readStdin(): Promise<string> {
   return new Promise((resolve) => {
-    const chunks: Buffer[] = [];
-    process.stdin.on("data", (c) => chunks.push(c));
-    process.stdin.on("end", () =>
-      resolve(Buffer.concat(chunks).toString("utf8")),
-    );
+    process.stdin.setEncoding("utf8");
+    const parts: string[] = [];
+    process.stdin.on("data", (c: string) => parts.push(c));
+    process.stdin.on("end", () => resolve(parts.join("")));
     process.stdin.on("error", () => resolve(""));
   });
 }
@@ -53,6 +52,31 @@ function loadBlueprint(): Blueprint | null {
     return parsed.blueprint ?? null;
   } catch {
     return null;
+  }
+}
+
+function writeGateLog(
+  projectDir: string,
+  toolName: string,
+  verdict: string,
+  reasoning: string,
+  filePath: string | undefined,
+  violated: readonly string[],
+): void {
+  try {
+    const adaDir = join(projectDir, ".ada");
+    if (!existsSync(adaDir)) mkdirSync(adaDir, { recursive: true });
+    const record = JSON.stringify({
+      ts: Date.now(),
+      toolName,
+      verdict,
+      reasoning,
+      filePath,
+      violated,
+    });
+    appendFileSync(join(adaDir, "gate-log.jsonl"), record + "\n", "utf8");
+  } catch {
+    // Best-effort — never crash on log write failure
   }
 }
 
@@ -120,7 +144,20 @@ async function main(): Promise<void> {
       : "";
   const suggestion = result.suggested ? `\nSuggested: ${result.suggested}` : "";
 
+  const projectDir =
+    process.env["ADA_PROJECT_DIR"] ??
+    process.env["CLAUDE_PROJECT_DIR"] ??
+    process.cwd();
+
   if (result.verdict === "BLOCK") {
+    writeGateLog(
+      projectDir,
+      toolName,
+      "BLOCK",
+      result.reasoning,
+      filePath,
+      result.violated,
+    );
     process.stderr.write(
       `Ada gate: action blocked.\n${result.reasoning}${violated}${suggestion}\n`,
     );
@@ -128,6 +165,14 @@ async function main(): Promise<void> {
   }
 
   // AMEND_FIRST
+  writeGateLog(
+    projectDir,
+    toolName,
+    "AMEND_FIRST",
+    result.reasoning,
+    filePath,
+    result.violated,
+  );
   process.stderr.write(
     `Ada gate: amendment required.\n${result.reasoning}${violated}${suggestion}\n`,
   );
@@ -135,6 +180,6 @@ async function main(): Promise<void> {
 }
 
 main().catch(() => {
-  // Unhandled error — fail-open
-  process.exit(0);
+  process.stderr.write("Ada gate: internal error — failing closed\n");
+  process.exit(2);
 });

@@ -313,6 +313,28 @@ export function classifyDepth(rawIntent: string): ElicitationPlan {
     };
   }
 
+  // ── Fast-fail: intent too short to identify the subject ──────────────────
+  // An intent under 4 words with no recognizable domain or scope signal cannot
+  // be compiled deterministically. Ada needs to know *what* is being built.
+  if (wordCount < 4 && !isTrivialDomain && !isSelfReferential) {
+    return {
+      questionCount: 1,
+      questions: [
+        {
+          type: "scope_boundary",
+          rationale:
+            "Intent is too short to identify what is being built — Ada needs the subject before compilation can begin",
+          priority: "mandatory",
+          targetField: "goals",
+        },
+      ],
+      skipReason: null,
+      confidence: "low",
+      domainLabel,
+      terminationReason: "needs_elicitation",
+    };
+  }
+
   const questions: PlannedQuestion[] = [];
 
   // ── Q1: Scope boundary ───────────────────────────────────────────────────

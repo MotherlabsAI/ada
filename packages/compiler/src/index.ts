@@ -1,4 +1,10 @@
 export { MotherCompiler, type CompileOptions } from "./engine.js";
+export { runBoundedVerification } from "./bounded-verifier.js";
+export type {
+  BoundedVerificationResult,
+  UncoveredGoal,
+  ContradictoryInvariantPair,
+} from "./types.js";
 export {
   SONNET,
   OPUS,

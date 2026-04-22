@@ -1,0 +1,62 @@
+{
+  "context": "Workspace",
+  "componentName": "WorkspacePackageScanner",
+  "scope": {
+    "boundedContext": "Workspace",
+    "allowedPathGlobs": [
+      "src/workspace/**",
+      "packages/workspace/**",
+      "apps/workspace/**",
+      "lib/workspace/**"
+    ],
+    "forbiddenPathGlobs": [
+      "!src/compilationconfiguration/**",
+      "!packages/compilationconfiguration/**",
+      "!apps/compilationconfiguration/**",
+      "!lib/compilationconfiguration/**",
+      "!src/compilationconfiguration/**",
+      "!packages/compilationconfiguration/**",
+      "!apps/compilationconfiguration/**",
+      "!lib/compilationconfiguration/**",
+      "!src/artifact/**",
+      "!packages/artifact/**",
+      "!apps/artifact/**",
+      "!lib/artifact/**"
+    ],
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash",
+      "Glob",
+      "Grep"
+    ]
+  },
+  "stopConditions": [
+    "Any invariant violation detected",
+    "Two consecutive tool failures on the same operation",
+    "Implementation diverges from compiled blueprint intent",
+    "Failure mode reached: pnpm-workspace.yaml is absent or malformed YAML; glob expansion matches a directory whose package.json is missing or has no name field; WorkspaceRoot.packageNames is empty — no packages discovered",
+    "Failure mode reached: a WorkspacePackage.tsConfigPath does not exist on disk; TsConfig.composite is false or missing for a WorkspacePackage — incremental project-references build will silently skip type-checking this package; a PackageDependencyEdge exists from A to B but TsConfig for A has no ProjectReference to B's tsconfig — tsc -b will not enforce build order for this edge; a ProjectReference in a TsConfig points to a path that does not resolve to any WorkspacePackage.tsConfigPath — dangling reference"
+  ],
+  "requiredEvidence": [
+    "WorkspaceRoot.packageNames is populated; a WorkspacePackage entity exists for every matched directory containing a valid package.json; each WorkspacePackage.name matches its package.json name field",
+    "PackageDependencyEdge set is complete; every edge references two valid WorkspacePackage entities; WorkspacePackage.internalDependencies lists resolved package references",
+    "BuildOrder.hasCycle is false; BuildOrder.orderedPackages contains all WorkspacePackage names exactly once; for every PackageDependencyEdge (A→B), B appears before A in BuildOrder.orderedPackages",
+    "every WorkspacePackage.isComposite is true; every required ProjectReference exists and its referencedTsConfigPath resolves to a valid file; no TsConfig.projectReferences references a path outside the workspace",
+    "no .js, .d.ts, or .tsbuildinfo files exist under any WorkspacePackage.distDir; DistArtifact state is absent for all packages",
+    "tsc process exits with code 0; for each WorkspacePackage, DistArtifact.jsFiles is non-empty, DistArtifact.declarationFiles is non-empty, TsBuildInfo.filePath exists with updated lastBuildTimestamp; DistArtifact state is complete for all packages"
+  ],
+  "reportingCadence": "on-completion",
+  "maxRecursionDepth": 0,
+  "inheritedPermissions": [
+    "Bash(pnpm *)",
+    "Bash(tsc *)",
+    "Bash(node *)",
+    "Bash(git status)",
+    "Bash(git diff *)",
+    "mcp__ada__*"
+  ],
+  "compiledAt": 1776882827970,
+  "blueprintPostcode": "{\"prefix\":\"ML\",\"coordinate\":{\"layer\":\"L2I\",\"concern\":\"REL\",\"scope\":\"GLO\",\"dimension\":\"WHT\",\"domain\":\"SFT\"},\"hash\":\"c427a515\",\"version\":1,\"raw\":\"ML.L2I.REL.GLO.WHT.SFT.c427a515/v1\"}"
+}

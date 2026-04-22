@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { MotherCompiler } from "@ada/compiler";
+import type { PriorBlueprintContext } from "@ada/compiler";
 import { writeConfigGraph } from "@ada/config-writer";
 import { writeWorldModel } from "../world-model.js";
 
@@ -9,11 +10,66 @@ import { writeWorldModel } from "../world-model.js";
 // Progress → stderr. Final JSON result → stdout.
 // Intended for use by agents, scripts, and CI pipelines.
 //
-// Usage: ada compile-headless "<intent>" [target-dir]
+// Usage: ada compile-headless "<intent>" [target-dir] [--prior-state <path>]
+
+function loadPriorState(statePath: string): PriorBlueprintContext | undefined {
+  try {
+    const raw = JSON.parse(fs.readFileSync(statePath, "utf8")) as Record<
+      string,
+      unknown
+    >;
+    const bp = raw["blueprint"] as Record<string, unknown> | undefined;
+    const ps = raw["pipelineState"] as Record<string, unknown> | undefined;
+    if (!bp || !ps) return undefined;
+    const arch = bp["architecture"] as Record<string, unknown> | undefined;
+    const ig = ps["intent"] as Record<string, unknown> | undefined;
+    const persona = ps["persona"] as Record<string, unknown> | undefined;
+    return {
+      summary: typeof bp["summary"] === "string" ? bp["summary"] : "",
+      architecturePattern:
+        typeof arch?.["pattern"] === "string" ? arch["pattern"] : "",
+      components: Array.isArray(arch?.["components"])
+        ? (arch["components"] as Array<Record<string, unknown>>).map((c) => ({
+            name: String(c["name"] ?? ""),
+            responsibility: String(c["responsibility"] ?? ""),
+            boundedContext: String(c["boundedContext"] ?? ""),
+          }))
+        : [],
+      goals: Array.isArray(ig?.["goals"])
+        ? (ig["goals"] as Array<Record<string, unknown>>).map((g) => ({
+            id: String(g["id"] ?? ""),
+            description: String(g["description"] ?? ""),
+          }))
+        : [],
+      constraints: Array.isArray(ig?.["constraints"])
+        ? (ig["constraints"] as Array<Record<string, unknown>>).map((c) => ({
+            id: String(c["id"] ?? ""),
+            description: String(c["description"] ?? ""),
+          }))
+        : [],
+      excludedConcerns: Array.isArray(persona?.["excludedConcerns"])
+        ? (persona["excludedConcerns"] as unknown[]).map(String)
+        : [],
+    };
+  } catch {
+    return undefined;
+  }
+}
 
 export async function headlessCommand(args: string[]): Promise<void> {
   const intent = args[0];
-  const targetDir = path.resolve(args[1] ?? process.cwd());
+
+  // Parse --prior-state <path> flag
+  const priorStateIdx = args.indexOf("--prior-state");
+  const priorStatePath =
+    priorStateIdx !== -1 ? args[priorStateIdx + 1] : undefined;
+
+  // Positional args: intent, [target-dir] — skip flag pairs
+  const positional = args.filter(
+    (a, i) =>
+      !a.startsWith("--") && (i === 0 || args[i - 1] !== "--prior-state"),
+  );
+  const targetDir = path.resolve(positional[1] ?? process.cwd());
 
   if (!intent) {
     process.stderr.write(
@@ -46,14 +102,25 @@ export async function headlessCommand(args: string[]): Promise<void> {
   const total = stageOrder.length;
   let currentStageIdx = 0;
 
+  const priorBlueprint = priorStatePath
+    ? loadPriorState(priorStatePath)
+    : undefined;
+
   process.stderr.write(`[ada] headless compile  runId=${runId}\n`);
   process.stderr.write(`[ada] intent: ${intent.slice(0, 120)}\n`);
-  process.stderr.write(`[ada] target: ${targetDir}\n\n`);
+  process.stderr.write(`[ada] target: ${targetDir}\n`);
+  if (priorBlueprint) {
+    process.stderr.write(
+      `[ada] amending: ${priorBlueprint.components.length} prior components\n`,
+    );
+  }
+  process.stderr.write("\n");
 
   let result: Awaited<ReturnType<MotherCompiler["compile"]>>;
 
   try {
     result = await compiler.compile(intent, {
+      priorBlueprint,
       onStageStart(stage) {
         currentStageIdx++;
         process.stderr.write(`[${currentStageIdx}/${total}] ${stage} ...\n`);

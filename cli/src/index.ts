@@ -69,6 +69,7 @@ import { orchestrateCommand } from "./commands/orchestrate.js";
 import { selfLoopCommand } from "./commands/self-loop.js";
 import { governCommand } from "./commands/govern.js";
 import { convergeCommand } from "./commands/converge.js";
+import { consolidateCommand } from "./commands/consolidate.js";
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -216,6 +217,21 @@ async function main(): Promise<void> {
       await convergeCommand(args.slice(1));
       break;
     }
+    case "consolidate": {
+      const pruneDaysArg = args.find((a) => a.startsWith("--prune-days="));
+      await consolidateCommand({
+        ...(pruneDaysArg
+          ? {
+              pruneOlderThanDays: parseInt(
+                pruneDaysArg.split("=")[1] ?? "30",
+                10,
+              ),
+            }
+          : {}),
+        verbose: flags.has("--verbose"),
+      });
+      break;
+    }
     case "orchestrate": {
       const maxParallelArg = args.find((a) => a.startsWith("--max-parallel="));
       const subGoalArg = args.find((a) => a.startsWith("--sub-goal="));
@@ -250,6 +266,9 @@ async function main(): Promise<void> {
                              --poll N       Poll interval ms (default 5000)
                              --batch N      Entries per drift check (default 8)
     ada verify               Verify codebase against compiled blueprint
+    ada consolidate          Distill all session archives into world model index
+                             --prune-days=N     Delete sessions older than N days
+                             --verbose          Show per-session detail
     ada hook install         Install pre-push hook — ada verify runs before every push
     ada hook uninstall       Remove the hook
     ada config set-key       Persist Anthropic API key

@@ -339,22 +339,24 @@ async function recompile(
   intent: string,
   iterDir: string,
   opts: ConvergeOptions,
+  priorStatePath?: string,
 ): Promise<Blueprint | null> {
   fs.mkdirSync(iterDir, { recursive: true });
 
   const cliPath = process.argv[1] ?? "";
   const nodeBin = process.execPath;
 
+  const spawnArgs = [cliPath, "compile-headless", intent, iterDir];
+  if (priorStatePath && fs.existsSync(priorStatePath)) {
+    spawnArgs.push("--prior-state", priorStatePath);
+  }
+
   return new Promise((resolve) => {
     let stdoutBuf = "";
-    const child = cpSpawn(
-      nodeBin,
-      [cliPath, "compile-headless", intent, iterDir],
-      {
-        stdio: ["ignore", "pipe", "pipe"],
-        env: { ...process.env },
-      },
-    );
+    const child = cpSpawn(nodeBin, spawnArgs, {
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env },
+    });
 
     const timer = setTimeout(() => {
       child.kill("SIGTERM");
@@ -528,6 +530,8 @@ export async function convergeCommand(argv: readonly string[]): Promise<void> {
   const sessions: SessionResult[] = [];
   const startedAt = Date.now();
   let blueprint = initialBlueprint;
+  // Track rolling prior state path — each recompile carries forward the last blueprint
+  let currentStatePath = statePath;
 
   const ac = new AbortController();
   process.on("SIGINT", () => {
@@ -586,9 +590,15 @@ export async function convergeCommand(argv: readonly string[]): Promise<void> {
         `${result.drifts.length} drift signals\n\n`,
     );
 
-    const newBlueprint = await recompile(enrichedIntent, iterDir, opts);
+    const newBlueprint = await recompile(
+      enrichedIntent,
+      iterDir,
+      opts,
+      currentStatePath,
+    );
     if (newBlueprint) {
       blueprint = newBlueprint;
+      currentStatePath = path.join(iterDir, ".ada", "state.json");
     } else {
       process.stderr.write(
         `  ${glyphs.status.alert} recompile failed — continuing with prior blueprint\n\n`,

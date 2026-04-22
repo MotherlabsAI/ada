@@ -3,8 +3,8 @@ ada_postcode: "ML.AGT.execution-orchestrator/v1"
 ada_type: agent
 ada_name: execution-orchestrator
 ada_bounded_context: orchestration
-ada_parent: "ML.L2I.REL.GLO.WHT.SFT.3b2e2a71/v1"
-ada_compiled_at: 1776808391822
+ada_parent: "ML.L2I.REL.GLO.WHT.SFT.c427a515/v1"
+ada_compiled_at: 1776882827969
 ---
 ---
 name: execution-orchestrator

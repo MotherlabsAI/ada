@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import Anthropic from "@anthropic-ai/sdk";
+import type { Message } from "@anthropic-ai/sdk/resources/messages/messages.js";
 import { OPUS_4_7 } from "@ada/compiler";
 
 /**
@@ -196,9 +197,9 @@ export async function thinkCommand(argv: readonly string[]): Promise<number> {
 
   const client = new Anthropic({ apiKey });
 
-  let response: Awaited<ReturnType<typeof client.messages.create>>;
+  let response: Message;
   try {
-    response = await client.messages.create({
+    response = (await client.messages.create({
       model: OPUS_4_7,
       max_tokens: 8192,
       temperature: 1,
@@ -218,7 +219,7 @@ export async function thinkCommand(argv: readonly string[]): Promise<number> {
           ),
         },
       ],
-    } as Parameters<typeof client.messages.create>[0]);
+    } as Parameters<typeof client.messages.create>[0])) as Message;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`  × compilation failed: ${msg}`);

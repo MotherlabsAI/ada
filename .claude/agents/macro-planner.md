@@ -3,8 +3,8 @@ ada_postcode: "ML.AGT.macro-planner/v1"
 ada_type: agent
 ada_name: macro-planner
 ada_bounded_context: orchestration
-ada_parent: "ML.L2I.REL.GLO.WHT.SFT.3b2e2a71/v1"
-ada_compiled_at: 1776808391822
+ada_parent: "ML.L2I.REL.GLO.WHT.SFT.c427a515/v1"
+ada_compiled_at: 1776882827969
 ---
 ---
 name: macro-planner
@@ -41,7 +41,7 @@ Escalate to human (stop and ask) when:
 - The macro plan shows all tasks blocked
 
 ## Bounded Contexts in this Project
-BootstrapSeed (Bootstrap), ProvenanceStore (Bootstrap), AdaStorage (Bootstrap), Governor (GovernanceCore), ConfidenceTracker (GovernanceCore), ENTGateEvaluator (GateEnforcement), evaluateSemanticGate (GateEnforcement), createGovernedCanUseTool (GateEnforcement), groundIntent (IntentResolution), INTStageController (IntentResolution), DialogueEngine (IntentResolution), startServer (MCPIntegration), compileIntent (MCPIntegration), checkDrift (MCPIntegration), buildWorldModel (WorldModeling), writeConfigGraph (WorldModeling), PipelineOrchestrator (PipelineOrchestration), PersonaAgent (PipelineOrchestration), ProcessAgent (PipelineOrchestration), MotherCompiler (PipelineOrchestration), RunStore (PipelineOrchestration), DriftScoreCalculator (DriftMonitoring), evaluateSemanticDrift (DriftMonitoring), EmbeddingProvider (DriftMonitoring), ManifoldProjector (ArtifactProvenance), blueprintToCLAUDEMD (ArtifactProvenance), invariantsToHooks (ArtifactProvenance), blueprintToContracts (ArtifactProvenance), workflowsToSkills (ArtifactProvenance), buildSettings (ArtifactProvenance), componentsToAgents (ArtifactProvenance), ProvenanceChainValidator (ArtifactProvenance)
+WorkspacePackageScanner (Workspace), validateDependencyGraph (Workspace), topoOrder (Workspace), topoWaves (Workspace), deriveBuildContract (CompilationConfiguration), CompositeBuildExecutor (CompilationConfiguration), verify (Artifact)
 
 ## Prohibited Actions
 - Do NOT write, edit, or delete any file

@@ -19,9 +19,37 @@ export function getWorldModel(stage?: string): {
   isError: boolean;
 } {
   if (stage) {
+    // topic:<name> — read from .ada/topics/{name}.json
+    if (stage.startsWith("topic:")) {
+      const topicName = stage.slice("topic:".length);
+      const topicPath = path.join(
+        process.cwd(),
+        ".ada",
+        "topics",
+        `${topicName}.json`,
+      );
+      if (!fs.existsSync(topicPath)) {
+        return {
+          content: `No topic file found for "${topicName}". Available: run ada init or check .ada/topics/`,
+          isError: true,
+        };
+      }
+      try {
+        return {
+          content: fs.readFileSync(topicPath, "utf8"),
+          isError: false,
+        };
+      } catch {
+        return {
+          content: `Failed to read topic file "${topicName}"`,
+          isError: true,
+        };
+      }
+    }
+
     if (!VALID_STAGES.has(stage.toUpperCase())) {
       return {
-        content: `Unknown stage "${stage}". Valid stages: CTX, INT, PER, ENT, PRO, SYN, VER, GOV`,
+        content: `Unknown stage "${stage}". Valid stages: CTX, INT, PER, ENT, PRO, SYN, VER, GOV — or use "topic:<name>" for .ada/topics/<name>.json`,
         isError: true,
       };
     }
