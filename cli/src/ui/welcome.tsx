@@ -1,6 +1,55 @@
 import React, { useState, useEffect } from "react";
 import { Text, Box, useInput, useApp, useStdout } from "ink";
+import * as fs from "fs";
+import * as path from "path";
 import { palette, glyphs } from "./design-system.js";
+
+// ─── Project state (read once at launch) ─────────────────────────────────────
+
+interface ProjectState {
+  readonly decision: "ACCEPT" | "REJECT" | "ITERATE";
+  readonly confidence: number;
+  readonly compiledAgo: string;
+  readonly openChallenges: number;
+}
+
+function loadProjectState(): ProjectState | null {
+  try {
+    const p = path.join(process.cwd(), ".ada", "state.json");
+    if (!fs.existsSync(p)) return null;
+    const raw = JSON.parse(fs.readFileSync(p, "utf8")) as {
+      governorDecision?: {
+        decision?: string;
+        confidence?: number;
+        challenges?: unknown[];
+      };
+      timestamp?: number;
+      compilationRun?: { startedAt?: number };
+    };
+    const gov = raw.governorDecision;
+    if (!gov) return null;
+    const ts = raw.timestamp ?? raw.compilationRun?.startedAt ?? 0;
+    const ageMs = ts > 0 ? Date.now() - ts : 0;
+    const compiledAgo =
+      ageMs <= 0
+        ? "just now"
+        : ageMs < 60_000
+          ? `${Math.round(ageMs / 1000)}s ago`
+          : ageMs < 3_600_000
+            ? `${Math.round(ageMs / 60_000)}m ago`
+            : ageMs < 86_400_000
+              ? `${Math.round(ageMs / 3_600_000)}h ago`
+              : `${Math.round(ageMs / 86_400_000)}d ago`;
+    return {
+      decision: (gov.decision as ProjectState["decision"]) ?? "REJECT",
+      confidence: gov.confidence ?? 0,
+      compiledAgo,
+      openChallenges: (gov.challenges ?? []).length,
+    };
+  } catch {
+    return null;
+  }
+}
 
 // ─── Ada Welcome Screen ───────────────────────────────────────────────────────
 //
@@ -252,6 +301,56 @@ function PipelinePanel({
   );
 }
 
+// ─── Project state line ───────────────────────────────────────────────────────
+
+function ProjectStateLine({
+  state,
+}: {
+  state: ProjectState | null;
+}): React.ReactElement {
+  const sep = <Text color={palette.text.ghost}>{"  ·  "}</Text>;
+  if (!state) {
+    return (
+      <Text color={palette.text.ghost}>
+        {"◈  no blueprint  ·  describe what you want to build"}
+      </Text>
+    );
+  }
+  const decisionColor =
+    state.decision === "ACCEPT"
+      ? palette.semantic.verified
+      : state.decision === "ITERATE"
+        ? palette.semantic.warning
+        : palette.semantic.failure;
+  return (
+    <Text>
+      <Text color={palette.text.tertiary}>{"◈  blueprint  "}</Text>
+      <Text color={decisionColor} bold>
+        {state.decision}
+      </Text>
+      {sep}
+      <Text color={palette.text.secondary}>
+        {"conf "}
+        <Text color={palette.accent.primary}>
+          {Math.round(state.confidence * 100)}
+          {"%"}
+        </Text>
+      </Text>
+      {sep}
+      <Text color={palette.text.dim}>{state.compiledAgo}</Text>
+      {state.openChallenges > 0 ? (
+        <>
+          {sep}
+          <Text color={palette.semantic.warningDim}>
+            {state.openChallenges}
+            {" open"}
+          </Text>
+        </>
+      ) : null}
+    </Text>
+  );
+}
+
 // ─── Rule: ◇ ───────────────── ◇ ─────────────────────────────────────────────
 
 interface RuleProps {
@@ -383,6 +482,8 @@ export function WelcomeScreen({
   const cwdDisplay =
     cwd.length > maxCwdLen ? "\u2026" + cwd.slice(-(maxCwdLen - 1)) : cwd;
 
+  const projectState = loadProjectState();
+
   useInput((char, key) => {
     if (key.return) {
       onSubmit(input.trim());
@@ -407,6 +508,10 @@ export function WelcomeScreen({
         <Box flexDirection="row" gap={4} alignItems="flex-start">
           <Diamond step={revealStep} />
           <PipelinePanel visible={pipelineRows} litRow={litRow} wide={true} />
+        </Box>
+
+        <Box paddingTop={1} paddingLeft={1}>
+          <ProjectStateLine state={projectState} />
         </Box>
 
         <Text>{""}</Text>
@@ -434,6 +539,10 @@ export function WelcomeScreen({
           {"a  d  a"}
         </Text>
         <Text color={palette.text.ghost}>{"◈ motherlabs"}</Text>
+      </Box>
+
+      <Box paddingTop={1}>
+        <ProjectStateLine state={projectState} />
       </Box>
 
       <Box paddingTop={1} flexDirection="column">
