@@ -164,8 +164,23 @@ export async function contextCommand(
     );
   }
 
+  // ── Heartbeat ──
+  // Keep the Node event loop alive. An unresolved Promise alone is not
+  // sufficient: without an active handle (timer / socket / IO), Node exits
+  // with code 0 when there's nothing to do. A ref'd interval guarantees
+  // the daemon stays up until SIGINT/SIGTERM. Also doubles as a periodic
+  // durability ping that re-saves the latest snapshot every 30 s.
+  const heartbeat: NodeJS.Timeout = setInterval(() => {
+    try {
+      store.save(store.getLatest());
+    } catch {
+      /* best-effort */
+    }
+  }, 30000);
+
   // ── Signal handler ──
   onCancel(async () => {
+    clearInterval(heartbeat);
     try {
       store.save(store.getLatest());
     } catch {
