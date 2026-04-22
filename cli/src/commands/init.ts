@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as readline from "readline";
-import { spawn as cpSpawn } from "child_process";
+import { spawn as cpSpawn, spawnSync as cpSpawnSync } from "child_process";
 import Anthropic from "@anthropic-ai/sdk";
 import { MotherCompiler } from "@ada/compiler";
 import type {
@@ -19,12 +19,17 @@ import { createCompileRenderer, STAGE_ORDER } from "../ui/terminal.js";
 import type { ArtifactEntry } from "../ui/artifact-list.js";
 import { glyphs } from "../ui/design-system.js";
 import {
-  classifyDepth,
   createElicitationSessionManager,
+  type ClarificationRequestRecord,
 } from "@ada/elicitation";
 
 export interface InitOptions {
   readonly noExecute?: boolean;
+  // amend: preserve pre-existing CLAUDE.md / agents / skills / hooks /
+  // settings.json on disk. Only net-new files are written. Intended for
+  // re-running ada init inside a project that already has a hand-tuned
+  // CLAUDE.md (e.g. the ada repo itself).
+  readonly amend?: boolean;
 }
 
 // ─── Stage summary derivation ─────────────────────────────────────────────────
@@ -210,10 +215,13 @@ function writeGitHook(projectDir: string): void {
 // If 0 questions: returns rawIntent unchanged.
 
 async function runElicitationPrePhase(rawIntent: string): Promise<string> {
-  const plan = classifyDepth(rawIntent);
+  // Session decides whether clarification is needed. If no initial
+  // ClarificationRequest is produced, there are no blocking gaps → skip.
+  const manager = createElicitationSessionManager();
+  const startResult = await manager.startSession(rawIntent);
 
-  if (plan.terminationReason === "ready") {
-    return rawIntent; // nothing to ask
+  if (!startResult.clarificationRequest) {
+    return rawIntent; // no blocking gaps — nothing to ask
   }
 
   const rl = readline.createInterface({
@@ -224,24 +232,15 @@ async function runElicitationPrePhase(rawIntent: string): Promise<string> {
   const ask = (prompt: string): Promise<string> =>
     new Promise((resolve) => rl.question(prompt, (ans) => resolve(ans.trim())));
 
-  const n = plan.questionCount;
   console.log(
-    `\n  ${glyphs.identity.open} ${n} quick question${n > 1 ? "s" : ""} before I compile.\n`,
+    `\n  ${glyphs.identity.open} a quick question or two before I compile.\n`,
   );
-
-  const manager = createElicitationSessionManager();
-  const startResult = await manager.startSession(rawIntent);
-
-  // Fast path in session: classifier already ran, 0-question path
-  if (startResult.handoff || !startResult.turn) {
-    rl.close();
-    return rawIntent;
-  }
 
   const qas: { question: string; answer: string }[] = [];
   let sessionId = startResult.session.sessionId;
   let currentTurnId = startResult.turn.turnId;
-  let clarificationRequest = startResult.clarificationRequest;
+  let clarificationRequest: ClarificationRequestRecord | null =
+    startResult.clarificationRequest;
 
   while (clarificationRequest) {
     console.log(`  ${glyphs.chevron} ${clarificationRequest.question}`);
@@ -523,7 +522,6 @@ export async function initCommand(
       "utf8",
     );
 
-    await sleep(2000);
     renderer.unmount();
     console.log(
       `\n  ${glyphs.chevron} partial blueprint written (fallback). Review CLAUDE.md warnings.\n`,
@@ -539,10 +537,20 @@ export async function initCommand(
   }
 
   const targetDir = process.cwd();
+
+  // Detect whether this is an ada-aware repo BEFORE config-writer runs.
+  // Used to: (a) decide whether --append-system-prompt points at the full
+  // project CLAUDE.md (when true) or just the narrow blueprint summary
+  // (when false); (b) report correct "written" vs "preserved" artifact
+  // state in the TUI when --amend skips existing files.
+  const preExistingClaudeMd = fs.existsSync(path.join(targetDir, "CLAUDE.md"));
+  const amendMode = options.amend === true;
+
   const configGraph = writeConfigGraph(
     finalResult.blueprint,
     decision,
     targetDir,
+    { amend: amendMode },
   );
 
   writeWorldModel(finalResult, runId, targetDir);
@@ -565,27 +573,39 @@ export async function initCommand(
     /* never crash the init flow for storage errors */
   }
 
+  const claudeMdWasWritten = !(amendMode && preExistingClaudeMd);
+  const settingsPath = path.join(targetDir, ".claude", "settings.json");
+  const settingsWritten = !amendMode || !fs.existsSync(settingsPath);
+
   const artifactEntries: ArtifactEntry[] = [
-    { path: "CLAUDE.md", written: true },
+    {
+      path: "CLAUDE.md",
+      written: claudeMdWasWritten,
+      detail: claudeMdWasWritten ? undefined : "preserved (amend)",
+    },
     {
       path: ".claude/agents/",
       written: configGraph.agents.length > 0,
-      detail: `${configGraph.agents.length} agents`,
+      detail: `${configGraph.agents.length} agents${amendMode ? " (net-new)" : ""}`,
     },
     {
       path: "hooks/pre-tool/",
       written: configGraph.hooks.length > 0,
-      detail: `${configGraph.hooks.length} scripts`,
+      detail: `${configGraph.hooks.length} scripts${amendMode ? " (net-new)" : ""}`,
     },
     {
       path: ".claude/skills/",
       written: configGraph.skills.length > 0,
       detail:
         configGraph.skills.length > 0
-          ? `${configGraph.skills.length} files`
+          ? `${configGraph.skills.length} files${amendMode ? " (net-new)" : ""}`
           : undefined,
     },
-    { path: ".claude/settings.json", written: true },
+    {
+      path: ".claude/settings.json",
+      written: settingsWritten,
+      detail: settingsWritten ? undefined : "preserved (amend)",
+    },
     {
       path: ".git/hooks/post-commit",
       written: fs.existsSync(path.join(targetDir, ".git")),
@@ -611,7 +631,6 @@ export async function initCommand(
     "utf8",
   );
 
-  await sleep(2000);
   renderer.unmount();
 
   // ── Post-run Q&A — Ada answers questions before spawning Claude Code ───────
@@ -627,11 +646,29 @@ export async function initCommand(
 
   console.log(`\n  ${glyphs.chevron} spawning claude in new terminal...\n`);
 
-  const summaryLine = finalResult.blueprint.summary
+  // System-prompt addendum strategy:
+  //   - fresh repo (no pre-existing CLAUDE.md): addendum = narrow blueprint
+  //     summary so Claude is laser-focused on the one intent
+  //   - ada-aware repo (--amend OR pre-existing CLAUDE.md): addendum
+  //     reminds Claude that the full project doc is the primary orientation
+  //     and the blueprint summary is one intent within it. This is the
+  //     mode that makes recursive self-improvement tolerable ("use ada to
+  //     improve ada") — Claude reads the hand-tuned CLAUDE.md rather than
+  //     tunnel-visioning on a single feature's blueprint summary.
+  const projectAware = amendMode || preExistingClaudeMd;
+  const blueprintSummary = finalResult.blueprint.summary
     .slice(0, 1000)
     .replace(/'/g, "'\\''");
-  const initialPrompt =
-    "Read CLAUDE.md, then read all agent files in .claude/agents/. Follow the build order and session protocol. Begin building now.";
+  const summaryLine = projectAware
+    ? [
+        "This project has a hand-tuned CLAUDE.md at its root — read it in full for global orientation before anything else.",
+        `The blueprint you are building against is one intent within this project: ${blueprintSummary}`,
+        "Hold both the project's invariants (from CLAUDE.md and existing .claude/agents/) and this blueprint's specifics. Do not overwrite hand-tuned agent files.",
+      ].join(" ").replace(/'/g, "'\\''")
+    : blueprintSummary;
+  const initialPrompt = projectAware
+    ? "Read CLAUDE.md first (it is the operator's orientation doc for this project). Then read .ada/state.json and the agent files under .claude/agents/ relevant to the current intent. Follow the project's session protocol. Begin."
+    : "Read CLAUDE.md, then read all agent files in .claude/agents/. Follow the build order and session protocol. Begin building now.";
 
   // Write the command to a temp script so osascript do script doesn't need
   // to embed the full command string (avoids escaping corruption with long
@@ -645,14 +682,52 @@ export async function initCommand(
   const scriptPath = path.join(os.tmpdir(), `ada-spawn-${Date.now()}.sh`);
   fs.writeFileSync(scriptPath, scriptContent, { mode: 0o755 });
 
-  cpSpawn(
-    "osascript",
-    [
-      "-e",
-      `tell application "Terminal" to do script "bash '${scriptPath}'"`,
-      "-e",
-      `tell application "Terminal" to activate`,
-    ],
-    { detached: true, stdio: "ignore" },
-  ).unref();
+  // Platform-specific terminal spawn. macOS uses osascript; Linux walks a
+  // list of known terminal emulators; other platforms print the command.
+  if (process.platform === "darwin") {
+    cpSpawn(
+      "osascript",
+      [
+        "-e",
+        `tell application "Terminal" to do script "bash '${scriptPath}'"`,
+        "-e",
+        `tell application "Terminal" to activate`,
+      ],
+      { detached: true, stdio: "ignore" },
+    ).unref();
+    return;
+  }
+
+  if (process.platform === "linux") {
+    const candidates: Array<[string, string[]]> = [];
+    const envTerm = process.env["TERMINAL"];
+    if (envTerm) candidates.push([envTerm, ["-e", "bash", scriptPath]]);
+    candidates.push(
+      ["x-terminal-emulator", ["-e", `bash '${scriptPath}'`]],
+      ["gnome-terminal", ["--", "bash", scriptPath]],
+      ["konsole", ["-e", "bash", scriptPath]],
+      ["xfce4-terminal", ["-e", `bash '${scriptPath}'`]],
+      ["xterm", ["-e", "bash", scriptPath]],
+    );
+
+    for (const [cmd, argv] of candidates) {
+      const which = cpSpawnSync("which", [cmd], { encoding: "utf8" });
+      if (which.status === 0) {
+        cpSpawn(cmd, argv, { detached: true, stdio: "ignore" }).unref();
+        return;
+      }
+    }
+
+    console.log(
+      `\n  ${glyphs.chevron} no terminal emulator found — open a new shell and run:\n`,
+    );
+    console.log(`    bash ${scriptPath}\n`);
+    return;
+  }
+
+  // Unknown platform (win32, freebsd, etc.) — print instructions
+  console.log(
+    `\n  ${glyphs.chevron} auto-spawn not supported on ${process.platform} — open a new shell and run:\n`,
+  );
+  console.log(`    bash ${scriptPath}\n`);
 }

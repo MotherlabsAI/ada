@@ -6,6 +6,7 @@ import { glyphs, formatElapsed } from "../ui/design-system.js";
 export interface CompileOptions {
   readonly output?: string;
   readonly strict?: boolean;
+  readonly quiet?: boolean;
 }
 
 export async function compileCommand(
@@ -14,12 +15,29 @@ export async function compileCommand(
 ): Promise<void> {
   const compiler = new MotherCompiler();
   const start = Date.now();
+  const quiet = options.quiet === true || process.env.ADA_QUIET === "1";
+
+  let lastDot = 0;
 
   const result = await compiler.compile(intent, {
+    onStageStart(stage) {
+      if (quiet) return;
+      process.stderr.write(`\n  ${glyphs.chevron} ${stage}`);
+      lastDot = Date.now();
+    },
+    onStageToken(_event: { stage: string; token: string }) {
+      if (quiet) return;
+      const now = Date.now();
+      if (now - lastDot >= 33) {
+        process.stderr.write(".");
+        lastDot = now;
+      }
+    },
     onStageComplete(event: StageCompleteEvent) {
       const elapsed = formatElapsed(Date.now() - start);
+      const prefix = quiet ? `  ${glyphs.chevron} ${event.stage}  ` : `\n    `;
       process.stderr.write(
-        `  ${glyphs.chevron} ${event.stage}  ${glyphs.status.pass}  entropy:${event.entropyEstimate.toFixed(3)}  ${elapsed}\n`,
+        `${prefix}${glyphs.status.pass}  entropy:${event.entropyEstimate.toFixed(3)}  ${elapsed}\n`,
       );
     },
   });
