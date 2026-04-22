@@ -1,4 +1,5 @@
 import type { PostcodeAddress, ManifoldState } from "@ada/provenance";
+import type { CodebaseContext } from "./context/types.js";
 
 // ─── Stage Codes ───
 
@@ -513,4 +514,66 @@ export interface BoundedContextMapping {
   readonly contextName: string;
   readonly entities: readonly string[];
   readonly dependsOn: readonly string[];
+}
+
+// ─── InterStageIR — typed contracts between pipeline stages ──────────────────
+// Each stage has a typed input and output. These enable router composition.
+
+export interface InterStageIR_v1 {
+  readonly compilationRunId: string;
+  readonly contentHash: string; // SHA of serialized codebaseContext
+  readonly timestamp: number;
+  readonly sessionId?: string;
+  readonly codebaseContext: CodebaseContext;
+  readonly rawIntent: string;
+}
+
+export interface InterStageIR_v2 {
+  readonly compilationRunId: string;
+  readonly contentHash: string;
+  readonly intentGraph: IntentGraph;
+  readonly unresolvedTerms: readonly string[]; // terms the INT agent couldn't resolve
+  readonly ontologyVersion: string; // "v1" for now
+}
+
+export interface InterStageIR_v3 {
+  readonly compilationRunId: string;
+  readonly contentHash: string;
+  readonly domainContext: DomainContext;
+  readonly candidateInvariants: readonly string[]; // extracted predicate strings
+}
+
+export interface InterStageIR_v4 {
+  readonly compilationRunId: string;
+  readonly contentHash: string;
+  readonly entityMap: EntityMap;
+  readonly compiledWorldModelId: string; // derived: hash of entityMap
+}
+
+export interface InterStageIR_v5 {
+  readonly compilationRunId: string;
+  readonly contentHash: string;
+  readonly blueprint: Blueprint;
+  readonly artifactSetId: string; // derived: hash of blueprint postcode
+  readonly artifactContentHashes: readonly string[];
+}
+
+export interface InterStageIR_v6 {
+  readonly compilationRunId: string;
+  readonly contentHash: string;
+  readonly auditReport: AuditReport;
+  readonly governorDecision: GovernorDecision;
+  readonly compiledInvariantSetId: string; // hash of finalized invariants
+}
+
+// Helper: compute a content hash from any serializable object
+export function computeIRHash(content: unknown): string {
+  const str = JSON.stringify(content);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // convert to 32bit int
+  }
+  return Math.abs(hash).toString(16).padStart(8, "0");
 }

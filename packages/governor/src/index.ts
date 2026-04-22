@@ -9,7 +9,7 @@ export {
   type GateVerdict,
 } from "./semantic-gate.js";
 export { ConfidenceTracker } from "./confidence.js";
-export { watch } from "./watch.js";
+export { watch, type WatchOptions } from "./watch.js";
 export { evaluateInvariants, type DriftResult } from "./drift.js";
 export {
   evaluateSemanticDrift,
@@ -46,3 +46,18 @@ export {
   type SessionLogEntry,
   type SessionLogOptions,
 } from "./session-log.js";
+export {
+  generateWorldModelIndex,
+  mergeSessionDelta,
+  writeWorldModelIndex,
+  generateTopicFiles,
+  writeTopicFiles,
+  archiveSessionLog,
+  type TopicFile,
+} from "./world-model.js";
+export {
+  computeDriftThresholds,
+  createProjectionEngine,
+  type DriftThreshold,
+  type ProjectionEngine,
+} from "./projection.js";

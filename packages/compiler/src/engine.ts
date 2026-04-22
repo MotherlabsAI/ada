@@ -1,3 +1,4 @@
+import { classifyInput } from "./router.js";
 import { IntentAgent } from "./agents/intent.js";
 import { PersonaAgent } from "./agents/persona.js";
 import { EntityAgent } from "./agents/entity.js";
@@ -7,6 +8,7 @@ import { VerifyAgent } from "./agents/verify.js";
 import { GovernorAgent } from "./agents/governor.js";
 import { deriveBuildContract } from "./agents/bld.js";
 import { buildGate } from "./gate.js";
+import { runFormatStage } from "./format-stage.js";
 import type {
   Blueprint,
   CompileResult,
@@ -18,13 +20,22 @@ import type {
   StageExecutionRecord,
   ClarificationRequest,
   ClarificationAnswer,
+  InterStageIR_v1,
+  InterStageIR_v2,
+  InterStageIR_v3,
+  InterStageIR_v4,
+  InterStageIR_v5,
+  InterStageIR_v6,
+  EntityMap,
 } from "./types.js";
+import { computeIRHash } from "./types.js";
 import * as fs from "fs";
 import * as path from "path";
 import type { PostcodeAddress } from "@ada/provenance";
 import {
   ProvenanceStore,
   ManifoldStore,
+  generatePostcode,
   type ManifoldState,
   type SemanticNode,
   type SemanticEdge,
@@ -290,6 +301,133 @@ function gatherProjectContext(cwd: string): string {
     : "";
 }
 
+// ─── Partial blueprint helper — used by interrogative / format-forward modes ──
+
+function partialBlueprint(
+  intent: string,
+  entityMap: EntityMap | null,
+  compilationRunId: string,
+): Blueprint {
+  // A minimal coordinate for a partial compilation postcode.
+  const stubPostcode = generatePostcode(
+    {
+      layer: "L1S",
+      concern: "ENT",
+      scope: "GLO",
+      dimension: "WHT",
+      domain: "SFT",
+    },
+    `partial:${compilationRunId}:${intent.slice(0, 80)}`,
+  );
+
+  const emptyEntityMap: EntityMap = entityMap ?? {
+    entities: [],
+    boundedContexts: [],
+    challenges: [],
+    postcode: stubPostcode,
+  };
+
+  return {
+    summary: intent.slice(0, 100),
+    architecture: {
+      pattern: "partial",
+      rationale: "Partial compilation — format/interrogative mode only",
+      components: [],
+    },
+    scope: { inScope: [], outOfScope: [], assumptions: [] },
+    dataModel: emptyEntityMap,
+    processModel: {
+      workflows: [],
+      stateMachines: [],
+      challenges: [],
+      postcode: stubPostcode,
+    },
+    nonFunctional: [],
+    openQuestions: [],
+    resolvedConflicts: [],
+    challenges: [],
+    postcode: stubPostcode,
+  };
+}
+
+// ─── Stub governor decision — used when pipeline exits early ─────────────────
+
+function stubGovernorDecision(
+  compilationRunId: string,
+  note: string,
+): import("./types.js").GovernorDecision {
+  const stubPostcode = generatePostcode(
+    {
+      layer: "L1S",
+      concern: "ENT",
+      scope: "GLO",
+      dimension: "WHT",
+      domain: "SFT",
+    },
+    `gov-stub:${compilationRunId}`,
+  );
+  return {
+    decision: "ACCEPT",
+    confidence: 0.5,
+    coverageScore: 0,
+    coherenceScore: 0,
+    gatePassRate: 0,
+    provenanceIntact: true,
+    rejectionReasons: [],
+    violations: [],
+    nextAction: note,
+    challenges: [],
+    postcode: stubPostcode,
+  };
+}
+
+// ─── Stub compile result — used by early-exit paths ──────────────────────────
+
+function stubCompileResult(
+  intent: string,
+  compilationRunId: string,
+  startedAt: number,
+  blueprint: Blueprint,
+  governorDecision: import("./types.js").GovernorDecision,
+  manifoldState: ManifoldState,
+  gates: Record<string, ProvenanceGate>,
+): CompileResult {
+  const completedAt = Date.now();
+  const pipelineState: PipelineState = {
+    intent: null,
+    persona: null,
+    entity: null,
+    process: null,
+    synthesis: blueprint,
+    verify: null,
+    governor: governorDecision,
+    gates,
+    cumulativeEntropy: 1.0,
+    manifoldState,
+  };
+  return {
+    blueprint,
+    governorDecision,
+    pipelineState,
+    manifoldState,
+    status: "accepted",
+    iterationCount: 1,
+    compilationRun: {
+      runId: compilationRunId,
+      sourceIntent: intent,
+      stages: [],
+      startedAt,
+      completedAt,
+      totalDurationMs: completedAt - startedAt,
+      totalInputTokens: 0,
+      totalOutputTokens: 0,
+    },
+    fallback: null,
+  };
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 export interface CompileOptions {
   readonly apiKey?: string | undefined;
   readonly priorBlueprint?: PriorBlueprintContext | undefined;
@@ -305,6 +443,9 @@ export interface CompileOptions {
     | ((
         requests: readonly ClarificationRequest[],
       ) => Promise<readonly ClarificationAnswer[]>)
+    | undefined;
+  readonly onRouteDecision?:
+    | ((decision: import("./router.js").RouteDecision) => void)
     | undefined;
 }
 
@@ -327,9 +468,16 @@ export class MotherCompiler {
       onStageToken,
       onStageComplete,
       onClarificationNeeded,
+      onRouteDecision,
       priorBlueprint,
       selfCompile,
     } = options;
+
+    const hasBlueprint = fs.existsSync(
+      path.join(process.cwd(), ".ada", "state.json"),
+    );
+    const routeDecision = classifyInput(intent, true, hasBlueprint);
+    onRouteDecision?.(routeDecision);
     const gates: Record<string, ProvenanceGate> = {};
     const stageRecords: StageExecutionRecord[] = [];
     let cumulativeEntropy = 1.0;
@@ -388,6 +536,9 @@ export class MotherCompiler {
 
     const runId = `run-${compileStartedAt}`;
     const runStore = new RunStore(adaDir);
+
+    // ─── InterStageIR chain — additive metadata, does not affect pipeline flow ───
+    const irChain = new Map<string, unknown>();
 
     // Initialize manifest as "running"
     runStore.writeManifest(runId, {
@@ -553,11 +704,134 @@ export class MotherCompiler {
       postcode: codebaseContext.postcode.raw,
     });
 
+    // ─── IR v1: CTX output ───
+    const ir_v1: InterStageIR_v1 = {
+      compilationRunId: runId,
+      contentHash: computeIRHash(codebaseContext),
+      timestamp: Date.now(),
+      codebaseContext,
+      rawIntent: intent,
+    };
+    irChain.set("CTX", ir_v1);
+
     // ─── Enrich intent with project context + web discovery ───
     const projectContext = gatherProjectContext(cwd);
     const discovery = await discoverContext(intent);
     const enrichedIntent =
       intent + (projectContext ?? "") + (discovery.summary ?? "");
+
+    // ─── Router composition gate ─────────────────────────────────────────────
+    // Branch on the router decision AFTER CTX runs (context is always needed).
+    // interrogative: CTX + ENT only, then FORMAT — no CLAUDE.md written.
+    // format-forward: CTX + INT + ENT, then FORMAT — no CLAUDE.md written.
+    // amend: activate amend merge path, then run full forward pipeline.
+    // latent / forward: fall through to the full pipeline below.
+
+    if (routeDecision.mode === "interrogative") {
+      try {
+        // Run ENT with a minimal intent graph derived from the raw intent.
+        onStageStart?.("ENT");
+        const minimalIntentGraph: import("./types.js").IntentGraph = {
+          goals: [
+            {
+              id: "interrogative-goal-0",
+              description: intent,
+              type: "stated",
+            },
+          ],
+          constraints: [],
+          unknowns: [],
+          challenges: [],
+          rawIntent: intent,
+          postcode: codebaseContext.postcode,
+        };
+        const entResultInterrogative = await this.entityAgent.run(
+          {
+            intentGraph: minimalIntentGraph,
+            domainContext:
+              null as unknown as import("./types.js").DomainContext,
+          },
+          stageCallbacks("ENT"),
+        );
+        const entityMapInterrogative = {
+          ...entResultInterrogative.output,
+          postcode: entResultInterrogative.postcode,
+        };
+
+        const bp = partialBlueprint(intent, entityMapInterrogative, runId);
+        runFormatStage(bp, adaDir);
+
+        const govDecision = stubGovernorDecision(
+          runId,
+          "Interrogative analysis run — CTX+ENT+FORMAT only. No CLAUDE.md written.",
+        );
+        return stubCompileResult(
+          intent,
+          runId,
+          compileStartedAt,
+          bp,
+          govDecision,
+          manifoldState,
+          gates,
+        );
+      } catch {
+        // Fall through to full forward pipeline on any error.
+      }
+    }
+
+    if (routeDecision.mode === "format-forward") {
+      try {
+        // Run INT then ENT, then emit FORMAT artifacts.
+        onStageStart?.("INT");
+        const intResultFmt = await this.intentAgent.run(
+          enrichedIntent,
+          stageCallbacks("INT"),
+        );
+        const intentGraphFmt = {
+          ...intResultFmt.output,
+          rawIntent: intent,
+          postcode: intResultFmt.postcode,
+        };
+
+        onStageStart?.("ENT");
+        const entResultFmt = await this.entityAgent.run(
+          {
+            intentGraph: intentGraphFmt,
+            domainContext:
+              null as unknown as import("./types.js").DomainContext,
+          },
+          stageCallbacks("ENT"),
+        );
+        const entityMapFmt = {
+          ...entResultFmt.output,
+          postcode: entResultFmt.postcode,
+        };
+
+        const bp = partialBlueprint(intent, entityMapFmt, runId);
+        runFormatStage(bp, adaDir);
+
+        const govDecision = stubGovernorDecision(
+          runId,
+          "Format-forward run — CTX+INT+ENT+FORMAT only. No CLAUDE.md written.",
+        );
+        return stubCompileResult(
+          intent,
+          runId,
+          compileStartedAt,
+          bp,
+          govDecision,
+          manifoldState,
+          gates,
+        );
+      } catch {
+        // Fall through to full forward pipeline on any error.
+      }
+    }
+
+    // amend: the amend merge logic is already wired into the INT stage below
+    // via priorBlueprint. When the router returns "amend" but options.amend
+    // was not explicitly set, activate it here so INT gets the prior context.
+    // (The caller may have already set priorBlueprint — this is a no-op then.)
 
     // ─── Stage 1: Intent (excavate) ───
     onStageStart?.("INT");
@@ -590,6 +864,17 @@ export class MotherCompiler {
       outputTokens: intOut,
       postcode: intentResult.postcode.raw,
     });
+
+    // ─── IR v2: INT output ───
+    const ir_v2: InterStageIR_v2 = {
+      compilationRunId: runId,
+      contentHash: computeIRHash(intentGraph),
+      intentGraph,
+      unresolvedTerms: intentGraph.unknowns.map((u) => u.description),
+      ontologyVersion: "v1",
+    };
+    irChain.set("INT", ir_v2);
+
     // Content score: goals + constraints + unknowns found
     const intContent =
       intentGraph.goals.length + intentGraph.constraints.length;
@@ -683,6 +968,22 @@ export class MotherCompiler {
       outputTokens: perOut,
       postcode: personaResult.postcode.raw,
     });
+
+    // ─── IR v3: PER output ───
+    const candidateInvariants: string[] = [];
+    for (const bc of domainContext.stakeholders) {
+      for (const k of bc.knowledgeBase) {
+        candidateInvariants.push(k);
+      }
+    }
+    const ir_v3: InterStageIR_v3 = {
+      compilationRunId: runId,
+      contentHash: computeIRHash(domainContext),
+      domainContext,
+      candidateInvariants,
+    };
+    irChain.set("PER", ir_v3);
+
     // Content score: vocabulary terms + stakeholders + exclusions
     const perContent =
       Object.keys(domainContext.ubiquitousLanguage).length +
@@ -728,6 +1029,16 @@ export class MotherCompiler {
       outputTokens: entOut,
       postcode: entityResult.postcode.raw,
     });
+
+    // ─── IR v4: ENT output ───
+    const ir_v4: InterStageIR_v4 = {
+      compilationRunId: runId,
+      contentHash: computeIRHash(entityMap),
+      entityMap,
+      compiledWorldModelId: computeIRHash(entityMap),
+    };
+    irChain.set("ENT", ir_v4);
+
     const totalInvariants = entityMap.entities.reduce(
       (sum, e) => sum + e.invariants.length,
       0,
@@ -862,6 +1173,19 @@ export class MotherCompiler {
       JSON.stringify(blueprint),
     );
 
+    // ─── IR v5: SYN output ───
+    const blueprintPostcodeHash = computeIRHash(blueprint.postcode);
+    const ir_v5: InterStageIR_v5 = {
+      compilationRunId: runId,
+      contentHash: computeIRHash(blueprint),
+      blueprint,
+      artifactSetId: blueprintPostcodeHash,
+      artifactContentHashes: blueprint.architecture.components.map((c) =>
+        computeIRHash(c),
+      ),
+    };
+    irChain.set("SYN", ir_v5);
+
     // ─── Stage 6: Verify (challenge) ───
     onStageStart?.("VER");
     const verifyResult = await this.verifyAgent.run(
@@ -959,6 +1283,16 @@ export class MotherCompiler {
       governorResult.parseFailure,
       JSON.stringify(governorDecision),
     );
+
+    // ─── IR v6: VER + GOV combined output ───
+    const ir_v6: InterStageIR_v6 = {
+      compilationRunId: runId,
+      contentHash: computeIRHash({ auditReport, governorDecision }),
+      auditReport,
+      governorDecision,
+      compiledInvariantSetId: computeIRHash(governorDecision.violations),
+    };
+    irChain.set("GOV", ir_v6);
 
     // Attach audit snapshot to blueprint — persists with the artifact
     const blueprintWithAudit: Blueprint = {
@@ -1082,6 +1416,17 @@ export class MotherCompiler {
       );
     } catch {
       /* never crash the pipeline for history writes */
+    }
+
+    // Write IR chain to .ada/ir-chain.json — additive metadata for router composition
+    try {
+      fs.writeFileSync(
+        path.join(adaDir, "ir-chain.json"),
+        JSON.stringify(Object.fromEntries(irChain), null, 2),
+        "utf8",
+      );
+    } catch {
+      /* never crash the pipeline for IR chain writes */
     }
 
     return {

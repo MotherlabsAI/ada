@@ -35,6 +35,13 @@ export type GovernorSignal =
       readonly type: "SESSION_RELOAD";
       readonly triggeredBy: string;
       readonly artifactsRegenerated: readonly string[];
+    }
+  | {
+      readonly type: "TICK_SUMMARY";
+      readonly driftCount: number;
+      readonly criticalCount: number;
+      readonly confidence: number;
+      readonly sessionMs: number;
     };
 
 export interface SuggestedAgent {

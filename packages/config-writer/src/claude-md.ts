@@ -6,7 +6,6 @@ export function blueprintToCLAUDEMD(
   warnings?: string[],
   domainContext?: DomainContext,
 ): string {
-  // Compute topological order first — used in both frontmatter and body
   const components = blueprint.architecture.components;
   const ordered = topologicalSort(components);
 
@@ -22,7 +21,7 @@ export function blueprintToCLAUDEMD(
 
   const lines: string[] = [];
 
-  // 0. Warning banner (fallback/partial compilation)
+  // Warning banner (fallback/partial compilation)
   if (warnings && warnings.length > 0) {
     lines.push(
       "> **WARNING: Partial compilation** — this blueprint was produced by fallback.",
@@ -33,20 +32,51 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 1. Title + Summary section
-  lines.push(`# ${blueprint.summary.split(".")[0]}`);
+  // Title + one-sentence summary
+  const title = blueprint.summary.split(".")[0] ?? "Compiled project";
+  lines.push(`# ${title} — compiled by Ada`);
   lines.push("");
-  lines.push("## Summary");
-  lines.push(blueprint.summary);
-  lines.push("");
-
-  // 2. Architecture section
-  lines.push("## Architecture");
-  lines.push(`Pattern: ${blueprint.architecture.pattern}`);
-  lines.push(blueprint.architecture.rationale);
+  lines.push(`> ${blueprint.summary}`);
   lines.push("");
 
-  // 3. Out of scope — safety constraint, always inline
+  // Compilation metadata
+  lines.push("## Compilation");
+  const auditDecision = blueprint.audit?.governorDecision ?? "ACCEPT";
+  const auditConf = blueprint.audit
+    ? `${(blueprint.audit.confidence * 100).toFixed(0)}%`
+    : "—";
+  const compiledAt = new Date().toISOString().slice(0, 16).replace("T", " ");
+  lines.push(
+    `- Decision: ${auditDecision}  Confidence: ${auditConf}  Compiled: ${compiledAt}`,
+  );
+  lines.push(
+    "- Blueprint: `.ada/state.json`  World model: `.ada/manifest.json`",
+  );
+  lines.push("");
+
+  // Bounded contexts — unique set from components
+  const contexts = [
+    ...new Set(ordered.map((c) => c.boundedContext).filter(Boolean)),
+  ];
+  if (contexts.length > 0) {
+    lines.push("## Bounded Contexts");
+    for (const ctx of contexts) {
+      const rootComp = ordered.find((c) => c.boundedContext === ctx);
+      lines.push(`- ${ctx}${rootComp ? ` — root: ${rootComp.name}` : ""}`);
+    }
+    lines.push("");
+  }
+
+  // Agents — component names by bounded context (orientation only)
+  if (ordered.length > 0) {
+    lines.push("## Agents");
+    for (const c of ordered) {
+      lines.push(`- ${c.name} \`${c.boundedContext}\``);
+    }
+    lines.push("");
+  }
+
+  // Out of scope — safety fence, kept short
   const outOfScope = blueprint.scope?.outOfScope?.length
     ? blueprint.scope.outOfScope
     : (domainContext?.excludedConcerns ?? []);
@@ -59,37 +89,26 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 4. Components — topological order, component names only
-  if (components.length > 0) {
-    lines.push("## Components");
-    for (let i = 0; i < ordered.length; i++) {
-      const c = ordered[i]!;
-      lines.push(`${i + 1}. **${c.name}** \`${c.boundedContext}\``);
-    }
-    lines.push("");
-  }
-
-  // 5. Working Principles
-  lines.push("## Working Principles");
+  // Constraints — hook reference + critical invariants only (HALT conditions)
+  lines.push("## Constraints");
   lines.push(
-    "Implement exactly what the compiled blueprint specifies. Follow invariants from agent files. Call `ada.query_constraints` before modifying any entity. Do not add scope beyond what is specified.",
+    "Ada's PreToolUse hook is active — loads `.ada/state.json` and gates every tool call.",
   );
+  lines.push("See `hooks/pre-tool/ada-gate.sh` for enforcement logic.");
   lines.push("");
-
-  // 6. Done — non-functional requirements
-  if (blueprint.nonFunctional && blueprint.nonFunctional.length > 0) {
-    lines.push("## Done");
-    for (const nfr of blueprint.nonFunctional) {
-      if (nfr.predicate) {
-        lines.push(`- ${nfr.predicate}: ${nfr.requirement}`);
-      } else {
-        lines.push(`- ${nfr.requirement}`);
-      }
+  // Emit up to 5 NFRs that have a formal predicate (these are the HALT triggers)
+  const hardNFRs = (blueprint.nonFunctional ?? [])
+    .filter((n) => n.predicate)
+    .slice(0, 5);
+  if (hardNFRs.length > 0) {
+    lines.push("Critical constraints (violation = HALT):");
+    for (const nfr of hardNFRs) {
+      lines.push(`- \`${nfr.predicate}\`: ${nfr.requirement}`);
     }
     lines.push("");
   }
 
-  // 7. Open Questions — conditional
+  // Open questions — blocking unknowns only
   if (blueprint.openQuestions && blueprint.openQuestions.length > 0) {
     lines.push("## Open Questions");
     for (const q of blueprint.openQuestions) {
@@ -98,7 +117,7 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 8. Orchestration map (only when subGoals present)
+  // Orchestration map — present only when subGoals exist
   if (blueprint.subGoals && blueprint.subGoals.length > 0) {
     lines.push("## Orchestration Map");
     lines.push(
@@ -132,56 +151,24 @@ export function blueprintToCLAUDEMD(
     lines.push("");
   }
 
-  // 9. Ada MCP — pull context on demand, never push
+  // Ada MCP — always present, condensed
   lines.push("## Ada MCP");
   lines.push(
     "The MCP server is the spec authority. Pull context on demand — never assume from memory.",
   );
   lines.push("");
   lines.push(
-    "**Start of every task:** call `ada.advance_execution(agentId)` — returns your task brief, bounded context contract, and execution instructions.",
-  );
-  lines.push("");
-  lines.push("**Before modifying any entity:**");
-  lines.push(
-    "- `ada.query_constraints(entityName)` — get invariants and constraints",
+    "**Start of every task:** call `ada.advance_execution(agentId)` to get your task brief.",
   );
   lines.push(
-    "- `ada.check_drift(description)` — verify a planned action against original intent",
-  );
-  lines.push("");
-  lines.push("**During execution:**");
-  lines.push(
-    "- `ada.get_contract(boundedContext)` — read your delegation contract",
+    "**Before modifying any entity:** call `ada.query_constraints(entityName)`.",
   );
   lines.push(
-    "- `ada.get_workflow(workflowName)` — get step-by-step workflow with Hoare triples",
-  );
-  lines.push(
-    "- `ada.report_execution_failure(component, description)` — request retry guidance",
-  );
-  lines.push(
-    "- `ada.set_task_status(component, 'complete', [evidence])` — mark complete",
+    "**Before significant changes:** call `ada.check_drift(description)`.",
   );
   lines.push("");
 
-  // 10. Compilation health (small, valuable)
-  if (blueprint.audit) {
-    const a = blueprint.audit;
-    const pct = (n: number) => `${(n * 100).toFixed(0)}%`;
-    lines.push("## Compilation Health");
-    lines.push(
-      `**Decision:** ${a.governorDecision}  **Confidence:** ${pct(a.confidence)}  **Gates:** ${pct(a.gatePassRate)}`,
-    );
-    if (a.violationCount > 0) {
-      lines.push(
-        `> ${a.violationCount} policy violation(s) — query \`ada.get_world_model("GOV")\` for details`,
-      );
-    }
-    lines.push("");
-  }
-
-  // 11. Session protocol
+  // This session — minimal call to action
   lines.push("## This Session");
   lines.push(
     "You are the lead agent. Call `ada.advance_execution(agentId)` to get your first task. Follow the execution brief. Verify postconditions before marking complete.",

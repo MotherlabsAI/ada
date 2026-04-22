@@ -425,6 +425,29 @@ function ArtifactRow(): React.ReactElement {
   );
 }
 
+// ─── First-run orienting message ──────────────────────────────────────────────
+
+interface FirstRunHintProps {
+  readonly isNewUser: boolean;
+  readonly hasTyped: boolean;
+}
+
+function FirstRunHint({
+  isNewUser,
+  hasTyped,
+}: FirstRunHintProps): React.ReactElement | null {
+  if (!isNewUser || hasTyped) return null;
+  return (
+    <Box paddingLeft={1} paddingBottom={1}>
+      <Text color={palette.text.secondary}>
+        {
+          "◈  new here — Ada compiles your intent into governed Claude Code context"
+        }
+      </Text>
+    </Box>
+  );
+}
+
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
 interface FooterProps {
@@ -450,7 +473,10 @@ function Footer({ cwdDisplay }: FooterProps): React.ReactElement {
         <Text color={palette.text.ghost}>{"◈"}</Text>
         <Text color={palette.text.ghost}>ada {VERSION}</Text>
         <Text color={palette.text.ghost}>{glyphs.pipeline.separator}</Text>
-        <Text color={palette.text.dim}>{cwdDisplay}</Text>
+        <Text color={palette.text.dim}>
+          {"◈  cwd: "}
+          {cwdDisplay}
+        </Text>
       </Box>
     </Box>
   );
@@ -483,6 +509,8 @@ export function WelcomeScreen({
     cwd.length > maxCwdLen ? "\u2026" + cwd.slice(-(maxCwdLen - 1)) : cwd;
 
   const projectState = loadProjectState();
+  const isNewUser =
+    projectState === null && !fs.existsSync(path.join(process.cwd(), ".ada"));
 
   useInput((char, key) => {
     if (key.return) {
@@ -513,6 +541,8 @@ export function WelcomeScreen({
         <Box paddingTop={1} paddingLeft={1}>
           <ProjectStateLine state={projectState} />
         </Box>
+
+        <FirstRunHint isNewUser={isNewUser} hasTyped={active} />
 
         <Text>{""}</Text>
         <Rule cols={cols} active={active} padLeft={padLeft} />
@@ -557,6 +587,8 @@ export function WelcomeScreen({
           ) : null,
         )}
       </Box>
+
+      <FirstRunHint isNewUser={isNewUser} hasTyped={active} />
 
       <Box paddingTop={1} flexDirection="column">
         <Rule cols={cols} active={active} padLeft={padLeft} />

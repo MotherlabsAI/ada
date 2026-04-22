@@ -81,32 +81,19 @@ function makeBlueprint(overrides?: Partial<Blueprint>): Blueprint {
 
 // ─── Required sections ────────────────────────────────────────────────────────
 
-test("output contains ## Summary section", () => {
+test("output contains ## Compilation section", () => {
   const output = blueprintToCLAUDEMD(makeBlueprint());
-  assert.ok(output.includes("## Summary"), "must include ## Summary");
+  assert.ok(output.includes("## Compilation"), "must include ## Compilation");
 });
 
-test("output contains ## Working Principles section", () => {
+test("output contains ## Agents section", () => {
   const output = blueprintToCLAUDEMD(makeBlueprint());
-  assert.ok(
-    output.includes("## Working Principles"),
-    "must include ## Working Principles",
-  );
+  assert.ok(output.includes("## Agents"), "must include ## Agents");
 });
 
-test("output contains ## Architecture section", () => {
+test("output contains ## Constraints section", () => {
   const output = blueprintToCLAUDEMD(makeBlueprint());
-  assert.ok(output.includes("## Architecture"), "must include ## Architecture");
-});
-
-test("output contains ## Components section", () => {
-  const output = blueprintToCLAUDEMD(makeBlueprint());
-  assert.ok(output.includes("## Components"), "must include ## Components");
-});
-
-test("output contains ## Done section", () => {
-  const output = blueprintToCLAUDEMD(makeBlueprint());
-  assert.ok(output.includes("## Done"), "must include ## Done");
+  assert.ok(output.includes("## Constraints"), "must include ## Constraints");
 });
 
 test("output contains ## Ada MCP section", () => {
@@ -119,9 +106,9 @@ test("output contains ## This Session section", () => {
   assert.ok(output.includes("## This Session"), "must include ## This Session");
 });
 
-// ─── Summary content ──────────────────────────────────────────────────────────
+// ─── Orientation content ──────────────────────────────────────────────────────
 
-test("summary text appears in output", () => {
+test("summary text appears in output (blockquote)", () => {
   const bp = makeBlueprint();
   const output = blueprintToCLAUDEMD(bp);
   assert.ok(
@@ -142,7 +129,31 @@ test("title is derived from summary (first sentence)", () => {
   );
 });
 
-// ─── Components section ───────────────────────────────────────────────────────
+test("title includes '— compiled by Ada' suffix", () => {
+  const output = blueprintToCLAUDEMD(makeBlueprint());
+  assert.ok(
+    output.includes("— compiled by Ada"),
+    "title must include compiled-by-Ada suffix",
+  );
+});
+
+test("compilation section references .ada/state.json", () => {
+  const output = blueprintToCLAUDEMD(makeBlueprint());
+  assert.ok(
+    output.includes(".ada/state.json"),
+    "compilation section must reference .ada/state.json",
+  );
+});
+
+test("constraints section references the hook file", () => {
+  const output = blueprintToCLAUDEMD(makeBlueprint());
+  assert.ok(
+    output.includes("hooks/pre-tool/ada-gate.sh"),
+    "constraints section must reference the gate hook path",
+  );
+});
+
+// ─── Components / Agents section ─────────────────────────────────────────────
 
 test("all component names appear in output", () => {
   const bp = makeBlueprint();
@@ -205,16 +216,6 @@ test("5-component blueprint lists all component names", () => {
   ]) {
     assert.ok(output.includes(name), `${name} must appear in output`);
   }
-});
-
-test("architecture pattern and rationale appear in output", () => {
-  const bp = makeBlueprint();
-  const output = blueprintToCLAUDEMD(bp);
-  assert.ok(output.includes("layered"), "architecture pattern must appear");
-  assert.ok(
-    output.includes("Simple CRUD with clear separation of concerns."),
-    "architecture rationale must appear",
-  );
 });
 
 // ─── Out of Scope — conditional section ──────────────────────────────────────
@@ -286,21 +287,27 @@ test("blueprint.scope.outOfScope takes precedence over domainContext.excludedCon
   );
 });
 
-// ─── Non-functional requirements ─────────────────────────────────────────────
+// ─── Constraints section — NFR predicates ────────────────────────────────────
 
-test("non-functional requirement text appears in Done section", () => {
-  const output = blueprintToCLAUDEMD(makeBlueprint());
-  assert.ok(
-    output.includes("TypeScript strict mode with no implicit any"),
-    "string NFR must appear",
-  );
-});
-
-test("structured non-functional requirements appear with predicate", () => {
+test("NFR predicate appears in Constraints section (not Done)", () => {
   const output = blueprintToCLAUDEMD(makeBlueprint());
   assert.ok(
     output.includes("passwords.never_plaintext"),
-    "structured NFR predicate must appear",
+    "structured NFR predicate must appear in Constraints",
+  );
+  assert.ok(
+    !output.includes("## Done"),
+    "## Done section must not appear (invariants moved to hook)",
+  );
+});
+
+test("NFR without predicate does not appear in output", () => {
+  const output = blueprintToCLAUDEMD(makeBlueprint());
+  // The NFR "TypeScript strict mode..." has no predicate — it must not appear
+  // in the orientation document (it lives in the hook enforcement layer instead)
+  assert.ok(
+    !output.includes("TypeScript strict mode with no implicit any"),
+    "NFR without predicate must not appear in CLAUDE.md orientation",
   );
 });
 
@@ -353,9 +360,9 @@ test("no warning banner when warnings is undefined", () => {
   );
 });
 
-// ─── Line count ───────────────────────────────────────────────────────────────
+// ─── Line count — CLAUDE.md must be < 150 lines ───────────────────────────────
 
-test("output is under 250 lines for a typical 5-component blueprint", () => {
+test("output is under 150 lines for a typical 5-component blueprint", () => {
   const bp = makeBlueprint({
     architecture: {
       pattern: "modular-monolith",
@@ -407,12 +414,12 @@ test("output is under 250 lines for a typical 5-component blueprint", () => {
   });
   const output = blueprintToCLAUDEMD(bp);
   const lineCount = output.split("\n").length;
-  assert.ok(lineCount < 250, `expected < 250 lines, got ${lineCount}`);
+  assert.ok(lineCount < 150, `expected < 150 lines, got ${lineCount}`);
 });
 
 // ─── Topological order ────────────────────────────────────────────────────────
 
-test("dependency appears before dependent in Components section", () => {
+test("dependency appears before dependent in Agents section", () => {
   const bp = makeBlueprint({
     architecture: {
       pattern: "layered",
@@ -441,5 +448,25 @@ test("dependency appears before dependent in Components section", () => {
   assert.ok(
     storeIdx < controllerIdx,
     "Store (dependency) must appear before Controller (dependent)",
+  );
+});
+
+// ─── No verbose spec content in CLAUDE.md ────────────────────────────────────
+
+test("architecture rationale does not appear in output", () => {
+  const bp = makeBlueprint();
+  const output = blueprintToCLAUDEMD(bp);
+  assert.ok(
+    !output.includes("Simple CRUD with clear separation of concerns."),
+    "architecture rationale must not appear in orientation document",
+  );
+});
+
+test("component responsibility descriptions do not appear in output", () => {
+  const bp = makeBlueprint();
+  const output = blueprintToCLAUDEMD(bp);
+  assert.ok(
+    !output.includes("Persists and retrieves tasks."),
+    "component responsibility must not appear in orientation document",
   );
 });

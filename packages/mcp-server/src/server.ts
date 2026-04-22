@@ -41,6 +41,8 @@ import { researchTopic } from "./tools/research.js";
 import { adaGate } from "./tools/gate.js";
 import { emitConfig } from "./tools/emit-config.js";
 import { projectBlueprint } from "./tools/project.js";
+import { getFormatOutput } from "./tools/get-format-output.js";
+import { getDriftAlerts } from "./tools/get-drift-alerts.js";
 
 export async function startServer(): Promise<void> {
   const server = new Server(
@@ -692,6 +694,43 @@ export async function startServer(): Promise<void> {
           required: ["query"],
         },
       },
+      {
+        name: "ada_get_format_output",
+        description:
+          "Returns format output artifacts from .ada/format/. " +
+          "Without a type, lists available files. " +
+          "With type=schema, returns schema.ts. " +
+          "With type=diagrams, returns diagrams.md. " +
+          "With type=placement, returns placement.md.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            type: {
+              type: "string" as const,
+              enum: ["schema", "diagrams", "placement"],
+              description:
+                "Optional: which format artifact to return. Omit to list all available.",
+            },
+          },
+        },
+      },
+      {
+        name: "ada_get_drift_alerts",
+        description:
+          "Returns drift alerts recorded during governed sessions from .ada/drift-alerts.jsonl. " +
+          "Each alert includes timestamp, type, severity, location, and detail. " +
+          "Use to understand what governance violations occurred during execution.",
+        inputSchema: {
+          type: "object" as const,
+          properties: {
+            limit: {
+              type: "number" as const,
+              description:
+                "Optional: maximum number of most recent alerts to return. Omit to return all.",
+            },
+          },
+        },
+      },
     ],
   }));
 
@@ -1009,6 +1048,20 @@ export async function startServer(): Promise<void> {
       case "ada_research": {
         const { query, focus } = args as { query: string; focus?: string };
         const r = await researchTopic(query, focus);
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada_get_format_output": {
+        const r = getFormatOutput(args["type"] as string | undefined);
+        return {
+          content: [{ type: "text" as const, text: r.content }],
+          isError: r.isError,
+        };
+      }
+      case "ada_get_drift_alerts": {
+        const r = getDriftAlerts(args["limit"] as number | undefined);
         return {
           content: [{ type: "text" as const, text: r.content }],
           isError: r.isError,

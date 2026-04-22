@@ -3,6 +3,15 @@ import * as path from "path";
 import { loadBlueprintState } from "@ada/compiler";
 import { watchSessionLog } from "@ada/governor";
 
+/** Append a JSONL line to a file. Never throws. */
+function appendJsonl(filePath: string, record: unknown): void {
+  try {
+    fs.appendFileSync(filePath, JSON.stringify(record) + "\n", "utf8");
+  } catch {
+    // Best-effort — never crash the watcher over persistence failures
+  }
+}
+
 export async function governCommand(argv: readonly string[]): Promise<void> {
   const cwd = process.cwd();
 
@@ -42,6 +51,8 @@ export async function governCommand(argv: readonly string[]): Promise<void> {
     process.exit(1);
   }
 
+  const driftAlertsPath = path.join(cwd, ".ada", "drift-alerts.jsonl");
+
   const ac = new AbortController();
   process.on("SIGINT", () => ac.abort());
   process.on("SIGTERM", () => ac.abort());
@@ -74,6 +85,14 @@ export async function governCommand(argv: readonly string[]): Promise<void> {
           `  [${ts}] ${icon} drift [${signal.severity}] ${signal.location}\n` +
             `           ${signal.detail}\n`,
         );
+        // Persist to drift-alerts.jsonl
+        appendJsonl(driftAlertsPath, {
+          ts: Date.now(),
+          type: "DRIFT",
+          severity: signal.severity,
+          location: signal.location,
+          detail: signal.detail,
+        });
         // Machine-readable signal to stdout
         process.stdout.write(
           JSON.stringify({ type: "DRIFT", ...signal, ts: Date.now() }) + "\n",
@@ -85,6 +104,13 @@ export async function governCommand(argv: readonly string[]): Promise<void> {
         process.stderr.write(
           `  [${ts}] ⚠ confidence ${Math.round(signal.confidence * 100)}% — ${signal.reason}\n`,
         );
+        // Persist to drift-alerts.jsonl
+        appendJsonl(driftAlertsPath, {
+          ts: Date.now(),
+          type: "LOW_CONFIDENCE",
+          confidence: signal.confidence,
+          reason: signal.reason,
+        });
         process.stdout.write(
           JSON.stringify({
             type: "LOW_CONFIDENCE",

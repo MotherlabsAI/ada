@@ -13,6 +13,7 @@ import type {
 } from "@ada/compiler";
 import { writeConfigGraph, ManifoldProjector } from "@ada/config-writer";
 import { writeWorldModel } from "../world-model.js";
+import { writeWorldModelIndex, writeTopicFiles } from "@ada/governor";
 import { AdaStorage } from "@ada/storage";
 import { createCompileRenderer, STAGE_ORDER } from "../ui/terminal.js";
 import type { CompileRenderer } from "../ui/terminal.js";
@@ -921,6 +922,9 @@ export async function initCommand(
       selfCompile: options.selfCompile,
       onClarificationNeeded:
         iterationCount === 1 ? handleClarification : undefined,
+      onRouteDecision(decision) {
+        process.stderr.write(`  ◈  ${decision.announcement}\n`);
+      },
       onStageStart(stage) {
         stageStart = Date.now();
         renderer.onStageStart(stage);
@@ -1153,6 +1157,18 @@ export async function initCommand(
   writeWorldModel(finalResult, runId, targetDir);
   writeGitHook(targetDir);
 
+  // Write world model index and topic files immediately at compile time
+  // so .ada/world-model-index.md and .ada/topics/{context}.json exist before
+  // any session starts — not just after the first governed session completes.
+  try {
+    const adaDir = path.join(targetDir, ".ada");
+    fs.mkdirSync(adaDir, { recursive: true });
+    writeWorldModelIndex(adaDir, finalResult.blueprint);
+    writeTopicFiles(adaDir, finalResult.blueprint);
+  } catch {
+    /* best-effort — never crash the init flow for world model writes */
+  }
+
   // Register run in global project history
   try {
     const storage = new AdaStorage();
@@ -1222,6 +1238,36 @@ export async function initCommand(
 
   // ── Readable post-compile summary ──────────────────────────────────────────
   await runCompileSummary(finalResult, intent);
+
+  // ── Post-compile handoff screen ────────────────────────────────────────────
+  // Only on ACCEPT (REJECT/ITERATE have their own messaging above).
+  // Printed to stderr so it doesn't pollute stdout JSON output.
+  {
+    const conf = Math.round(decision.confidence * 100);
+    const sep = glyphs.identity.core; // ◈
+    process.stderr.write(
+      `  ${sep}  blueprint ready — decision: ACCEPT  conf: ${conf}%\n`,
+    );
+    process.stderr.write(`\n`);
+    process.stderr.write(
+      `  ${sep}  next:  ada run          launch a governed Claude Code session\n`,
+    );
+    process.stderr.write(
+      `            ada verify       check codebase against blueprint\n`,
+    );
+    process.stderr.write(
+      `            ada scan         see what Ada sees in this project\n`,
+    );
+
+    // Warn if the user compiled from a directory with no package.json —
+    // a common mistake that causes Ada to write artifacts in the wrong place.
+    const hasPkg = fs.existsSync(path.join(targetDir, "package.json"));
+    if (!hasPkg) {
+      process.stderr.write(
+        `\n  ⚠  no package.json found in cwd — did you mean to compile from your project root?\n`,
+      );
+    }
+  }
 
   // ── Auto-spawn Claude Code ─────────────────────────────────────────────────
   if (options.noExecute) {
