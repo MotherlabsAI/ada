@@ -33,10 +33,12 @@ function violatesInvariant(output: string, invariant: EntityInvariant): boolean 
   // Heuristic: check if output contains values that contradict the predicate
   const predicate = invariant.predicate;
 
-  // Check for null/undefined violations
+  // Check for null/undefined violations.
+  // Match both JSON.stringify's compact form ("id":null) and pretty-printed
+  // form ("id": null) by tolerating any whitespace between colon and value.
   if (predicate.includes("!== null") || predicate.includes("!= null")) {
     const field = predicate.split(".").pop()?.split(" ")[0];
-    if (field && output.includes(`"${field}": null`)) {
+    if (field && new RegExp(`"${field}"\\s*:\\s*null\\b`).test(output)) {
       return true;
     }
   }
