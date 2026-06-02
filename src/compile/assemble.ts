@@ -21,6 +21,8 @@ import type {
 import { TRUTH_GLYPH } from "../core/grammar.js";
 import { clusterOf } from "../core/ids.js";
 import { projectWiki } from "../pack/wiki.js";
+import { scoreNode, type RubricScore } from "./rubric.js";
+import type { Score } from "../core/types.js";
 
 export interface NodeSpec {
   id: string;
@@ -70,7 +72,33 @@ function graphSymbol(glyph: Glyph, truth: TruthClass, c: CheckClass): string {
   return parts.join(" ");
 }
 
-function toCapsule(spec: NodeSpec): NodeCapsule {
+/**
+ * Maps a deterministic RubricScore to the capsule's recorded quality block.
+ * genericnessScore is inverted (more banned/less-specific => higher genericness);
+ * actionEnablementScore reflects whether the node traces to intent and compiles
+ * to concrete artifacts (the two dimensions that make it actionable downstream).
+ */
+function qualityFromRubric(score: RubricScore): NodeCapsule["quality"] {
+  const d = score.dimensions;
+  const genericnessScore: Score = !d.notGeneric
+    ? "high"
+    : !d.specific
+      ? "medium"
+      : "low";
+  const actionEnablementScore: Score =
+    d.intentTraced && d.compilesToConcrete
+      ? "high"
+      : d.intentTraced || d.compilesToConcrete
+        ? "medium"
+        : "low";
+  return {
+    gateStatus: score.verdict === "reject" ? "failed" : "passed",
+    genericnessScore,
+    actionEnablementScore,
+  };
+}
+
+function toCapsule(spec: NodeSpec, score?: RubricScore): NodeCapsule {
   const cluster = clusterOf(spec.id);
   const glyph: Glyph = spec.truth === "residue" ? "◌" : "◇";
   const targets = targetsFor(spec);
@@ -120,11 +148,13 @@ function toCapsule(spec: NodeSpec): NodeCapsule {
       graphSymbol: graphSymbol(glyph, spec.truth, spec.checkClass),
       openPriority: spec.depth === "L5" ? "high" : "medium",
     },
-    quality: {
-      gateStatus: "passed",
-      genericnessScore: "low",
-      actionEnablementScore: "high",
-    },
+    quality: score
+      ? qualityFromRubric(score)
+      : {
+          gateStatus: "passed",
+          genericnessScore: "low",
+          actionEnablementScore: "high",
+        },
   };
 }
 
@@ -172,13 +202,41 @@ function rootNode(intent: string, clusters: string[]): NodeCapsule {
   });
 }
 
-export function assemblePack(
+/** A spec the deterministic rubric refused to admit to the pack. */
+export interface RejectedNode {
+  spec: NodeSpec;
+  score: RubricScore;
+}
+
+/** Result of gated assembly: the pack plus the rubric audit trail. */
+export interface GatedPack {
+  model: PackModel;
+  kept: NodeSpec[];
+  rejected: RejectedNode[];
+}
+
+/**
+ * Assembles a pack, gating each spec on the deterministic quality rubric
+ * (AXIOM A3: the checkable sliver of meaning-quality). Specs whose verdict is
+ * "reject" are dropped from the pack and returned in `rejected` for auditing;
+ * surviving capsules carry quality stamped from their rubric score.
+ */
+export function assemblePackGated(
   slug: string,
   intent: string,
   specs: NodeSpec[],
-): PackModel {
-  const clusters = [...new Set(specs.map((s) => clusterOf(s.id)))];
-  const nodes = [rootNode(intent, clusters), ...specs.map(toCapsule)];
+): GatedPack {
+  const scored = specs.map((spec) => ({ spec, score: scoreNode(spec) }));
+  const keptScored = scored.filter((s) => s.score.verdict !== "reject");
+  const rejected: RejectedNode[] = scored.filter(
+    (s) => s.score.verdict === "reject",
+  );
+  const kept = keptScored.map((s) => s.spec);
+  const clusters = [...new Set(kept.map((s) => clusterOf(s.id)))];
+  const nodes = [
+    rootNode(intent, clusters),
+    ...keptScored.map((s) => toCapsule(s.spec, s.score)),
+  ];
   const edges = buildEdges(nodes);
   const seed: Seed = {
     rootIntent: intent,
@@ -195,7 +253,7 @@ export function assemblePack(
       "The user works in Claude Code.",
       "The output must feed Claude Code as governed context.",
     ],
-    unknownContext: specs
+    unknownContext: kept
       .filter((s) => s.truth === "residue")
       .flatMap((s) => [s.label, ...s.unknowns])
       .slice(0, 8),
@@ -220,7 +278,7 @@ export function assemblePack(
     edges,
   };
   const wiki = projectWiki(graph, seed);
-  return {
+  const model: PackModel = {
     slug,
     seed,
     graph,
@@ -228,4 +286,14 @@ export function assemblePack(
     provenance:
       "Excavated by the Ada compile workforce from one intent, aligned to the context-engineering taxonomy; every node anti-generic-gated. Exploratory layer (AXIOM A1); provenance via truth-class + fromPrompt (AXIOM A2).",
   };
+  return { model, kept, rejected };
+}
+
+/** Back-compat thin wrapper: assembles a gated pack and returns just the model. */
+export function assemblePack(
+  slug: string,
+  intent: string,
+  specs: NodeSpec[],
+): PackModel {
+  return assemblePackGated(slug, intent, specs).model;
 }
