@@ -105,6 +105,25 @@ export function clusterColour(clusters: string[], cluster: string): Colour {
   return CLUSTER_PALETTE[(i < 0 ? 0 : i) % CLUSTER_PALETTE.length]!;
 }
 
+/** Human names for area codes — nobody should guess "ATT" from thin air. */
+const CLUSTER_LABELS: Record<string, string> = {
+  ROOT: "Context root",
+  ATT: "Attention",
+  COPY: "Copy & language",
+  SEO: "Discovery — SEO & AI",
+  UNK: "Unknown-unknowns",
+  L2C: "Language → Code",
+  DOMAIN: "Domain entities",
+  WORKFLOW: "Workflows",
+  DATA: "Data model",
+  CHECK: "Checks (C)",
+  BLUEPRINT: "Blueprint",
+  CLAUDE: "Claude export",
+};
+export function clusterLabel(code: string): string {
+  return CLUSTER_LABELS[code] ?? code;
+}
+
 /** A selectable row in the folder-tree: a cluster header or a node under an open cluster. */
 export interface TreeRow extends Line {
   kind: "cluster" | "node";
@@ -139,7 +158,7 @@ export function graphTree(
     rows.push({
       kind: "cluster",
       ref: cluster,
-      text: `${sel ? "›" : " "} ${isOpen ? "▾" : "▸"} ● ${cluster}  (${inCluster.length})`,
+      text: `${sel ? "›" : " "} ${isOpen ? "▾" : "▸"} ● ${clusterLabel(cluster)}  (${inCluster.length})`,
       colour,
       bold: true,
     });

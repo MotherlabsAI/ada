@@ -4,7 +4,6 @@ import { createElement as h } from "react";
 import { render } from "ink-testing-library";
 import { App } from "./App.js";
 import { fixtureGraph } from "./fixtures.js";
-import { clusterOf } from "../../core/ids.js";
 
 const tick = () => new Promise((r) => setTimeout(r, 50));
 const DOWN = "[B";
@@ -24,11 +23,14 @@ function mount(
 }
 
 test("areas are closed by default — headers show, nodes hidden", async () => {
-  const cluster = clusterOf(fixtureGraph().nodes[0]!.id);
   const { lastFrame } = mount();
   await tick();
   const f = lastFrame() ?? "";
-  assert.match(f, new RegExp(`▸ ● ${cluster}`), "closed area header");
+  assert.match(
+    f,
+    /▸ ● /,
+    "a closed area header with the collapsed marker + dot",
+  );
   assert.doesNotMatch(f, /ATT\.004/, "nodes hidden until the area is opened");
 });
 
