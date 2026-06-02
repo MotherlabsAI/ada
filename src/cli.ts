@@ -28,6 +28,7 @@ import {
   resume,
 } from "./tui/navigator.js";
 import { runChecks, renderReport } from "./c/run.js";
+import { canRunInk } from "./tui/ink/canRunInk.js";
 import { paint, bold, dim } from "./core/grammar.js";
 
 const cwd = process.cwd();
@@ -145,9 +146,10 @@ async function cmdTui(args: string[]): Promise<void> {
   const slug = resolveSlug(positional[0]);
   const nodeId = positional[1];
 
-  // The Ink workbench needs a TTY. Without one (pipes, CI, scripted use),
-  // fall back to the existing static render so `ada tui` is never a dead end.
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+  // The Ink workbench needs a TTY *and* raw-mode support (useInput). Without it
+  // (pipes, CI, scripted use, or a stdin that can't raw-mode), fall back to the
+  // static render so `ada tui` is never a dead end.
+  if (!canRunInk(process.stdin, process.stdout)) {
     console.log(renderStatic(cwd, slug, nodeId));
     return;
   }
@@ -162,23 +164,31 @@ async function cmdTui(args: string[]): Promise<void> {
   const { graph, manifest, stateFile } = loadPackData(cwd, slug);
   const initialState = readPackState(stateFile);
 
-  const { waitUntilExit } = render(
-    createElement(App, {
-      slug,
-      graph,
-      manifest,
-      initialState,
-      onPersist: (state) => writePackState(stateFile, state),
-      onExport: (s) => {
-        // Surface the export hint; the deterministic export already lives on disk.
-        process.stderr.write(
-          paint("⇒ ", "cyan") +
-            dim(`run \`ada export ${s}\` for the file list\n`),
-        );
-      },
-    }),
-  );
-  await waitUntilExit();
+  try {
+    const { waitUntilExit } = render(
+      createElement(App, {
+        slug,
+        graph,
+        manifest,
+        initialState,
+        onPersist: (state) => writePackState(stateFile, state),
+        onExport: (s) => {
+          // Surface the export hint; the deterministic export already lives on disk.
+          process.stderr.write(
+            paint("⇒ ", "cyan") +
+              dim(`run \`ada export ${s}\` for the file list\n`),
+          );
+        },
+      }),
+    );
+    await waitUntilExit();
+  } catch (err) {
+    // Raw mode can still be refused by some terminals; never leave a blank flash.
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(paint("✗ TUI could not start: ", "rose") + dim(msg));
+    console.error(dim("  falling back to the static view —"));
+    console.log(renderStatic(cwd, slug, nodeId));
+  }
 }
 
 async function cmdDeeper(args: string[]): Promise<void> {
