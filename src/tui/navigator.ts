@@ -1,11 +1,22 @@
 /** Terminal navigator over a pack (spec §10). Readline-based for P0 (DECISION D5). */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import type { Graph, NodeCapsule, PackManifest } from "../core/types.js";
 import { paint, bold, dim, TRUTH_GLYPH, CHECK_LABEL } from "../core/grammar.js";
 import { clusterOf } from "../core/ids.js";
-import { paths } from "../pack/layout.js";
+import { paths, packsRoot } from "../pack/layout.js";
+
+/** Lists pack slugs on disk so a wrong/mangled slug self-corrects. */
+function availablePacks(cwd: string): string[] {
+  try {
+    return readdirSync(packsRoot(cwd), { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
+  } catch {
+    return [];
+  }
+}
 
 interface Loaded {
   graph: Graph;
@@ -22,9 +33,11 @@ interface PackState {
 export function loadPack(cwd: string, slug: string): Loaded {
   const p = paths(cwd, slug);
   if (!existsSync(p.graphJson)) {
-    throw new Error(
-      `No pack "${slug}". Run \`ada compile\` first (looked in ${p.graphJson}).`,
-    );
+    const packs = availablePacks(cwd);
+    const hint = packs.length
+      ? `\n  available: ${packs.join(", ")}`
+      : "\n  no packs yet — run `ada compile` first.";
+    throw new Error(`No pack "${slug}".${hint}`);
   }
   const graph = JSON.parse(readFileSync(p.graphJson, "utf8")) as Graph;
   const manifest = JSON.parse(readFileSync(p.manifest, "utf8")) as PackManifest;

@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "tsc -p tsconfig.json && node --test \"dist/**/*.test.js\"",
+    "tui": "tsc -p tsconfig.json && node dist/cli.js tui service-business-recognition",
     "ada": "node dist/cli.js",
     "clean": "rm -rf dist"
   },
