@@ -6,6 +6,7 @@
  *   ada init                         scaffold .ada/ in the current directory
  *   ada compile "<intent>" [--slug]  compile intent into a pack
  *   ada open [slug] [nodeId]         navigate the pack (interactive in a TTY)
+ *   ada tui [slug]                   launch the Ink workbench (TTY) — sister to Claude Code
  *   ada deeper <slug> <nodeId>       expand a node into its full wiki article
  *   ada flag <slug> <nodeId>         flag a node for inclusion
  *   ada resume [slug]                show flagged / last-opened state
@@ -54,6 +55,7 @@ const HELP = [
   "  ada init                          scaffold .ada/ here",
   '  ada compile "<intent>" [--slug=x] compile intent into a pack',
   "  ada open [slug] [nodeId]          navigate the pack",
+  "  ada tui [slug]                    launch the Ink workbench (TTY)",
   "  ada deeper <slug> <nodeId>        full wiki article for a node",
   "  ada flag <slug> <nodeId>          flag a node",
   "  ada resume [slug]                 show flagged / last state",
@@ -138,6 +140,47 @@ async function cmdOpen(args: string[]): Promise<void> {
   await interactive(cwd, slug);
 }
 
+async function cmdTui(args: string[]): Promise<void> {
+  const { positional } = parseFlags(args);
+  const slug = resolveSlug(positional[0]);
+  const nodeId = positional[1];
+
+  // The Ink workbench needs a TTY. Without one (pipes, CI, scripted use),
+  // fall back to the existing static render so `ada tui` is never a dead end.
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    console.log(renderStatic(cwd, slug, nodeId));
+    return;
+  }
+
+  // Defer the React/Ink import so non-TTY callers never pay for it.
+  const { createElement } = await import("react");
+  const { render } = await import("ink");
+  const { App } = await import("./tui/ink/App.js");
+  const { loadPackData, readPackState, writePackState } =
+    await import("./tui/ink/usePack.js");
+
+  const { graph, manifest, stateFile } = loadPackData(cwd, slug);
+  const initialState = readPackState(stateFile);
+
+  const { waitUntilExit } = render(
+    createElement(App, {
+      slug,
+      graph,
+      manifest,
+      initialState,
+      onPersist: (state) => writePackState(stateFile, state),
+      onExport: (s) => {
+        // Surface the export hint; the deterministic export already lives on disk.
+        process.stderr.write(
+          paint("⇒ ", "cyan") +
+            dim(`run \`ada export ${s}\` for the file list\n`),
+        );
+      },
+    }),
+  );
+  await waitUntilExit();
+}
+
 async function cmdDeeper(args: string[]): Promise<void> {
   const { positional } = parseFlags(args);
   const slug = resolveSlug(positional[0]);
@@ -206,6 +249,8 @@ async function main(): Promise<void> {
       return cmdCompile(rest);
     case "open":
       return cmdOpen(rest);
+    case "tui":
+      return cmdTui(rest);
     case "deeper":
       return cmdDeeper(rest);
     case "flag":
