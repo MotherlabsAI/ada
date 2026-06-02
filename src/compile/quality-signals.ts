@@ -20,15 +20,28 @@ export function hasBannedGenericPhrase(text: string): boolean {
 /** Counts concrete specificity signals: numbers/units, named mechanisms, proper-ish nouns. */
 export function specificityScore(text: string): number {
   let score = 0;
-  if (/\d/.test(text)) score += 1; // any number
-  if (/\d+\s?(ms|s|px|%|min|hr|x)\b/i.test(text)) score += 1; // number with a unit
+  // Any numeric signal: a bare digit, a written sub-second/sub-minute, or a "<N" bound.
+  const hasNumber =
+    /\d/.test(text) ||
+    /\bsub-(second|minute)\b/i.test(text) ||
+    /<\s?\d/.test(text);
+  if (hasNumber) score += 1;
+  // A number bound to a unit — incl. compact forms (2.6s, 200ms, <1s) and written sub-second.
   if (
-    /[A-Z][a-z]+(?:'s)?\b.*\b(theory|effect|law|pattern|gap|budget|system)\b/i.test(
-      text,
-    )
+    /(<\s?)?\d+(\.\d+)?\s?(ms|s|px|%|min|hr|x)\b/i.test(text) ||
+    /\bsub-(second|minute)\b/i.test(text)
   )
-    score += 1; // named mechanism
-  const commas = (text.match(/,/g) ?? []).length; // clause density ~ concreteness
-  if (commas >= 2) score += 1;
+    score += 1;
+  // A named mechanism: a classic domain noun after a capitalized term, OR a
+  // possessive/multi-word proper-noun mechanism (e.g. "Google's local pack",
+  // "ChatGPT's entity matcher"). Real specificity often names the actor, not a "theory".
+  const namedMechanism =
+    /[A-Z][a-z]+(?:['’]s)?\b.*\b(theory|effect|law|pattern|gap|budget|system|gate|pack|matcher|window|protocol|action)\b/i.test(
+      text,
+    ) || /[A-Z][a-zA-Z]+['’]s\s+[a-z]+\b/.test(text);
+  if (namedMechanism) score += 1;
+  // Clause density ~ concreteness: commas, semicolons, or em-dashes.
+  const clauseMarks = (text.match(/[,;—]/g) ?? []).length;
+  if (clauseMarks >= 2) score += 1;
   return score;
 }
