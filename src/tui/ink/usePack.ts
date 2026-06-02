@@ -6,7 +6,7 @@
  * readline navigator so the two front-ends stay interchangeable, and reads the
  * pack's `.state.json` using the same shape the navigator writes (PackState).
  */
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import type { Graph, PackManifest } from "../../core/types.js";
 import { loadPack } from "../navigator.js";
 
@@ -43,4 +43,18 @@ export function readPackState(stateFile: string): PackState {
   } catch {
     return { flagged: [], rejected: [] };
   }
+}
+
+/**
+ * Persist flagged/rejected/last back to `.state.json`, byte-compatible with the
+ * navigator's writer (2-space JSON + trailing newline). The TUI only ever writes
+ * *state*, never the pack itself — the pack stays the source of truth.
+ */
+export function writePackState(stateFile: string, state: PackState): void {
+  const out: PackState = {
+    flagged: state.flagged,
+    rejected: state.rejected,
+    ...(state.lastNode ? { lastNode: state.lastNode } : {}),
+  };
+  writeFileSync(stateFile, JSON.stringify(out, null, 2) + "\n", "utf8");
 }
