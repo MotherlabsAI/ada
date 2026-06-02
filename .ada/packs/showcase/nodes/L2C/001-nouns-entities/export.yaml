@@ -1,10 +1,8 @@
-compileTargets:
+node_id: "L2C.001"
+targets:
   - "graph"
   - "wiki"
-  - "code"
   - "blueprint"
   - "claude"
   - "c"
-exportsTo:
-  - "BLUEPRINT.md"
-  - "CONTEXT.md"
+  - "residue"

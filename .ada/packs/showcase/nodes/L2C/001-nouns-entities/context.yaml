@@ -1,21 +1,68 @@
-role:
-  cluster: "L2C"
-  nodeType: "translation_primitive"
-  compileTargets:
-    - "graph"
-    - "wiki"
-    - "code"
-    - "blueprint"
-    - "claude"
-    - "c"
-localContext:
-  summary: "Nouns in user language become durable software entities: clients, bookings, staff, services, payments."
-  whyItMatters: "Entities are the stable spine of the schema; everything else hangs off them."
-  failureIfMissing: "Duplicate or vague models the executor cannot build a coherent schema from."
+id: "L2C.001"
+label: "Nouns → Entities"
+glyph: "◇"
+display: "◇ ● ∴ κ ⇒ L2C.001 — Nouns → Entities"
+cluster:
+  id: "L2C"
+  label: "Language-to-Code Translation"
+status:
+  lifecycle: "finished"
+  maturity: "engineered_v0.2"
+  qualityGate: "required"
+semantic_role:
+  type: "translation_primitive"
+  purpose: "Convert raw noun phrases into candidate software/domain entities."
+  bounded_claim: "Entity extraction improves downstream code generation by stabilizing the objects Claude Code should reason about. It does not guarantee full schema correctness."
+input_contract:
+  accepts:
+    - "raw_prompt"
+    - "SEED.root_intent"
+    - "SEED.domain"
+    - "user_notes"
+    - "source_documents"
+    - "existing_repo_context"
+  required:
+    - "raw_prompt"
+  optional:
+    - "business_type"
+    - "target_stack"
+    - "existing_schema"
+    - "existing_page_map"
+    - "existing_brand_terms"
+output_contract:
+  emits:
+    - "canonical_entity_registry"
+    - "candidate_entity_list"
+    - "alias_map"
+    - "ambiguous_noun_residue"
+    - "relationship_hints"
+    - "field_hints"
+    - "ownership_hints"
+    - "lifecycle_hints"
+    - "risk_hints"
+    - "wiki_article"
+    - "C_candidates"
+    - "Claude_instructions"
+    - "blueprint_hints"
+local_context:
+  summary: "User language contains nouns that may represent durable objects in the working world. This node extracts and classifies those nouns so later agents build stable schemas, routes, UI screens, wiki sections, and checks."
+  why_it_matters: "Claude Code often builds weak systems when nouns stay vague — duplicate models, inconsistent names, missing relationships, UI that does not match the domain. This node stops raw nouns from drifting."
+  failure_if_missing:
+    - "Duplicate entities appear under different names."
+    - "Important business objects are treated as loose text."
+    - "Database schema does not match the user's domain."
+    - "UI navigation is organized around generic pages instead of domain objects."
+    - "Claude Code invents entities that were never intended."
+    - "C checks cannot bind to stable objects."
 epistemics:
-  claimClass: "translation_primitive"
-  confidence: "high"
-  sourceStatus: "derived_from_intent"
-  assumptions: []
-  unknowns:
-    - "Exact persistence engine not yet selected."
+  truth_status: "semantic_inference"
+  source_status: "derived_from_user_language"
+  confidence_default: "medium"
+  requires_human_review_when:
+    - "noun could be entity or attribute"
+    - "noun implies legal/payment/customer-data risk"
+    - "noun is domain-specific and ambiguous"
+    - "noun appears only once but may be important"
+checkability:
+  class: "C3_C4_candidate"
+  explanation: "Partly checkable (dedup, definitions, residue, name alignment); naming taste + MVP inclusion are human-gated."

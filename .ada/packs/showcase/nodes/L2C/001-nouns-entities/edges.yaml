@@ -1,13 +1,74 @@
--
-  from: "L2C.001"
-  to: "DATA.001"
-  type: "compiles_to"
-  note: "nouns become the entity registry"
--
-  from: "L2C.001"
-  to: "DATA.003"
-  type: "compiles_to"
--
-  from: "ROOT.007"
-  to: "L2C.001"
-  type: "contains"
+node_id: "L2C.001"
+parents:
+  -
+    id: "ROOT.007"
+    label: "Language-to-Code Spine"
+    edge: "contains"
+  -
+    id: "SEED.003"
+    label: "Domain Field"
+    edge: "depends_on"
+  -
+    id: "INTAKE.001"
+    label: "Raw Prompt"
+    edge: "derived_from"
+children:
+  -
+    id: "DATA.001"
+    label: "Canonical Entity Registry"
+    edge: "compiles_to"
+  -
+    id: "DATA.002"
+    label: "Database Schema"
+    edge: "compiles_to"
+  -
+    id: "BLUEPRINT.006"
+    label: "Data Model Plan"
+    edge: "compiles_to"
+  -
+    id: "UI.010"
+    label: "Client List View"
+    edge: "enables"
+  -
+    id: "CLAUDE.002"
+    label: "CLAUDE.md Export"
+    edge: "exports_to"
+  -
+    id: "C.001"
+    label: "C Registry"
+    edge: "verified_by"
+siblings:
+  -
+    id: "L2C.002"
+    label: "Verbs → Actions"
+    edge: "adjacent_to"
+  -
+    id: "L2C.003"
+    label: "Roles → Permissions"
+    edge: "adjacent_to"
+  -
+    id: "L2C.004"
+    label: "States → State Machines"
+    edge: "adjacent_to"
+  -
+    id: "L2C.015"
+    label: "Relationship Language → Foreign Keys"
+    edge: "adjacent_to"
+riskEdges:
+  -
+    id: "GOV.005"
+    label: "Customer Data Gate"
+    edge: "guarded_by"
+  -
+    id: "GOV.012"
+    label: "Unsupported Claim Rule"
+    edge: "guarded_by"
+residueEdges:
+  -
+    id: "SEED.012"
+    label: "Unknown Context Field"
+    edge: "residue_of"
+  -
+    id: "PACK.011"
+    label: "residue.md"
+    edge: "exports_to"

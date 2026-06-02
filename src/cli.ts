@@ -14,11 +14,11 @@
  *   ada export [slug]                list the exported Claude + blueprint files
  */
 import { mkdir, readdir } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { buildShowcasePack } from "./compile/showcase.js";
 import { writePack } from "./pack/writer.js";
-import { paths, packsRoot } from "./pack/layout.js";
+import { paths, packsRoot, nodeDir } from "./pack/layout.js";
 import { nodeWiki } from "./pack/wiki.js";
 import {
   loadPack,
@@ -199,7 +199,11 @@ async function cmdDeeper(args: string[]): Promise<void> {
   const { graph } = loadPack(cwd, slug);
   const node = graph.nodes.find((n) => n.id === nodeId);
   if (!node) throw new Error(`No node ${nodeId} in pack ${slug}.`);
-  console.log(nodeWiki(node));
+  // Prefer the engineered wiki.md on disk (the fat node) over the generated capsule.
+  const wikiPath = join(nodeDir(cwd, slug, node), "wiki.md");
+  console.log(
+    existsSync(wikiPath) ? readFileSync(wikiPath, "utf8") : nodeWiki(node),
+  );
 }
 
 async function cmdFlag(args: string[]): Promise<void> {

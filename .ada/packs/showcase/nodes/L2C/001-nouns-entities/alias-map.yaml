@@ -1,0 +1,55 @@
+node_id: "L2C.001"
+aliases:
+  Client:
+    accepted:
+      - "client"
+      - "customer"
+      - "lead after conversion"
+    rejected:
+      - "user"
+    note: "Avoid User unless system/auth identity is meant."
+  Appointment:
+    accepted:
+      - "booking"
+      - "appointment"
+      - "calendar slot"
+      - "session"
+    preferred: "Appointment"
+    note: "Preserve Booking as a workflow/action term unless the domain prefers Booking."
+  StaffMember:
+    accepted:
+      - "staff"
+      - "employee"
+      - "artist"
+      - "provider"
+      - "team member"
+    preferred: "StaffMember"
+    note: "Avoid generic User unless it is an authenticated account."
+  Payment:
+    accepted:
+      - "payment"
+      - "transaction"
+      - "checkout"
+      - "paid amount"
+    preferred: "Payment"
+  Deposit:
+    accepted:
+      - "deposit"
+      - "retainer"
+      - "booking fee"
+    preferred: "Deposit"
+    note: "May be a separate object or a Payment subtype — keep as a design decision."
+  ContentAsset:
+    accepted:
+      - "content"
+      - "asset"
+      - "media"
+      - "post"
+      - "portfolio image"
+    preferred: "ContentAsset"
+  Review:
+    accepted:
+      - "review"
+      - "testimonial"
+      - "proof"
+    preferred: "Review"

@@ -1,0 +1,175 @@
+candidate_entities:
+  -
+    id: "ENTITY.client"
+    canonicalName: "Client"
+    classification: "primary_domain_entity"
+    confidence: "high"
+    definition: "A person or organization receiving services from the business."
+    fieldHints:
+      - "id"
+      - "name"
+      - "email"
+      - "phone"
+      - "status"
+      - "source"
+      - "created_at"
+      - "updated_at"
+    relationshipHints:
+      - "Client has many Appointments"
+      - "Client has many Payments"
+      - "Client has many Notes"
+    riskHints:
+      - "contains customer data"
+      - "requires privacy boundary"
+    checkability: "C4"
+  -
+    id: "ENTITY.appointment"
+    canonicalName: "Appointment"
+    classification: "primary_workflow_entity"
+    confidence: "high"
+    definition: "A scheduled service interaction between a client and a staff member."
+    fieldHints:
+      - "id"
+      - "client_id"
+      - "staff_id"
+      - "service_id"
+      - "starts_at"
+      - "ends_at"
+      - "status"
+      - "deposit_id"
+      - "created_at"
+    relationshipHints:
+      - "Appointment belongs to Client"
+      - "Appointment belongs to StaffMember"
+      - "Appointment may have Deposit"
+      - "Appointment may have Payment"
+    lifecycleHints:
+      - "requested"
+      - "confirmed"
+      - "rescheduled"
+      - "cancelled"
+      - "completed"
+      - "no_show"
+    riskHints:
+      - "double booking"
+      - "timezone mismatch"
+      - "cancelled appointment accepting payment"
+    checkability: "C4"
+  -
+    id: "ENTITY.payment"
+    canonicalName: "Payment"
+    classification: "financial_entity"
+    confidence: "high"
+    definition: "A recorded monetary transaction linked to a client, appointment, or service."
+    fieldHints:
+      - "id"
+      - "client_id"
+      - "appointment_id"
+      - "amount"
+      - "currency"
+      - "status"
+      - "provider"
+      - "provider_reference"
+      - "created_at"
+    riskHints:
+      - "negative payment"
+      - "currency mismatch"
+      - "ledger mismatch"
+      - "refund handling"
+    checkability: "C5"
+  -
+    id: "ENTITY.staff_member"
+    canonicalName: "StaffMember"
+    classification: "actor_entity"
+    confidence: "high"
+    definition: "A person who performs services, manages workflow, or has system permissions."
+    fieldHints:
+      - "id"
+      - "name"
+      - "role"
+      - "active"
+      - "schedule"
+      - "created_at"
+    relationshipHints:
+      - "StaffMember has many Appointments"
+      - "StaffMember may offer many Services"
+    checkability: "C4"
+  -
+    id: "ENTITY.content_asset"
+    canonicalName: "ContentAsset"
+    classification: "supporting_content_entity"
+    confidence: "medium"
+    definition: "A reusable media or text asset used for website, social, campaign, or internal knowledge purposes."
+    fieldHints:
+      - "id"
+      - "title"
+      - "type"
+      - "status"
+      - "file_url"
+      - "caption"
+      - "created_at"
+    ambiguity:
+      - "Could be CMS content, social content, portfolio content, or internal asset."
+    residue:
+      - "Ask what content types matter first."
+    checkability: "C3"
+  -
+    id: "ENTITY.review"
+    canonicalName: "Review"
+    classification: "proof_entity"
+    confidence: "medium"
+    definition: "A third-party or user-provided proof object used to support trust claims."
+    fieldHints:
+      - "id"
+      - "client_name"
+      - "rating"
+      - "body"
+      - "source"
+      - "published_at"
+    riskHints:
+      - "review authenticity"
+      - "source attribution"
+    checkability: "C3"
+  -
+    id: "ENTITY.automation"
+    canonicalName: "Automation"
+    classification: "workflow_support_entity"
+    confidence: "low"
+    definition: "A triggered or agent-assisted workflow that performs or suggests repeated work."
+    fieldHints:
+      - "id"
+      - "trigger"
+      - "action"
+      - "scope"
+      - "status"
+    ambiguity:
+      - "Could mean background jobs, AI agents, scheduled tasks, or Claude Code workflows."
+    residue:
+      - "Branch into AGENT and WORKFLOW clusters before implementation."
+    checkability: "C2"
+ambiguous_nouns:
+  -
+    term: "command center"
+    possibleMeanings:
+      - "dashboard"
+      - "admin app"
+      - "internal operations system"
+      - "AI workflow hub"
+    action: "preserve as residue until UI/product scope is selected"
+  -
+    term: "content"
+    possibleMeanings:
+      - "social media content"
+      - "website content"
+      - "portfolio assets"
+      - "internal knowledge"
+    action: "ask lightweight follow-up or branch into ContentAsset subtypes"
+  -
+    term: "AI automations"
+    possibleMeanings:
+      - "agent tasks"
+      - "background jobs"
+      - "content generation"
+      - "customer-service assistant"
+      - "Claude Code workflows"
+    action: "branch into AGENT and WORKFLOW clusters"

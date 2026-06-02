@@ -1,0 +1,56 @@
+node_id: "L2C.001"
+subnodes:
+  -
+    id: "L2C.001.01"
+    label: "Raw Noun Surface"
+  -
+    id: "L2C.001.02"
+    label: "Noun Phrase Extraction"
+  -
+    id: "L2C.001.03"
+    label: "Candidate Entity Detection"
+  -
+    id: "L2C.001.04"
+    label: "Entity vs Attribute Split"
+  -
+    id: "L2C.001.05"
+    label: "Entity vs Action Split"
+  -
+    id: "L2C.001.06"
+    label: "Entity vs View Split"
+  -
+    id: "L2C.001.07"
+    label: "Entity vs Document Split"
+  -
+    id: "L2C.001.08"
+    label: "Canonical Naming"
+  -
+    id: "L2C.001.09"
+    label: "Synonym / Alias Merge"
+  -
+    id: "L2C.001.10"
+    label: "Plural / Singular Normalization"
+  -
+    id: "L2C.001.11"
+    label: "Relationship Hinting"
+  -
+    id: "L2C.001.12"
+    label: "Ownership Hinting"
+  -
+    id: "L2C.001.13"
+    label: "Status / Lifecycle Hinting"
+  -
+    id: "L2C.001.14"
+    label: "Required Field Hinting"
+  -
+    id: "L2C.001.15"
+    label: "Risk Hinting"
+  -
+    id: "L2C.001.16"
+    label: "Source Evidence Attachment"
+  -
+    id: "L2C.001.17"
+    label: "Ambiguous Noun Residue"
+  -
+    id: "L2C.001.18"
+    label: "C Candidate Generation"

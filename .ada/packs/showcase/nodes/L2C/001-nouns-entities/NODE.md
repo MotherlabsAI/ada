@@ -1,13 +1,25 @@
-# ◇ ● ∴ κ ⇒ L2C.001 — Nouns -> Entities
+# ◇ ● ∴ κ ⇒ L2C.001 — Nouns → Entities
 
-- cluster: L2C · depth: L5 · truth: ∴ inference
-- checkability: C3 (deterministic)
-- compiles to: graph, wiki, code, blueprint, claude, c
+cluster: L2C / Language-to-Code Translation   ·   checkability: C3_C4_candidate   ·   export: graph,wiki,blueprint,claude,c,residue
 
-**Summary.** Nouns in user language become durable software entities: clients, bookings, staff, services, payments.
+## Primitive
+User nouns often become durable domain/software entities.
 
-**Why.** Entities are the stable spine of the schema; everything else hangs off them.
+## Meaning
+User language contains nouns that may represent durable objects in the working world. This node extracts and classifies those nouns so later agents build stable schemas, routes, UI screens, wiki sections, and checks.
 
-**Failure if missing.** Duplicate or vague models the executor cannot build a coherent schema from.
+## Compiles to
+  Client, Appointment, Payment, StaffMember, ContentAsset, Review, Automation
 
-See `wiki.md` for the full article, `edges.yaml` for links, `checkability.yaml` for checks.
+## C candidates
+  κ schema.no_duplicate_entity_names
+  κ schema.primary_entities_have_definitions
+  κ residue.ambiguous_nouns_preserved
+  κ claude.no_unregistered_primary_entities
+
+## Residue
+  Ω command center
+  Ω content
+  Ω AI automations
+
+See `wiki.md` (full article), `entity-candidates.yaml` (work product), `c-candidates.yaml` + `c/checks/entity/` (runnable).

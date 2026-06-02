@@ -1,45 +1,29 @@
-node_id: "L2C.001"
-class: "C3_C4_candidate"
-deterministicSurface:
-  - "graph schema"
-  - "entity registry"
-  - "route map"
-  - "database schema"
-  - "UI map"
-  - "Claude export"
-  - "C registry"
-notDeterministic:
-  - "perfect entity judgment"
-  - "domain-expert naming taste"
-  - "business-priority selection"
-  - "which entities belong in MVP"
-humanReviewRequired:
-  - "entity vs attribute decision"
-  - "MVP inclusion decision"
-  - "domain-specific naming choice"
-  - "ambiguous noun resolution"
-C_possible:
+candidates:
   -
     id: "schema.no_duplicate_entity_names"
     title: "No duplicate canonical entity names"
     class: "C3"
     predicate: "The canonical entity registry must not contain duplicate canonical_name values."
     failureClass: "duplicate_entity"
+    export: "c/checks/entity/schema.no_duplicate_entity_names.mjs"
   -
     id: "schema.primary_entities_have_definitions"
     title: "Primary entities must have definitions"
     class: "C3"
     predicate: "Every primary/workflow/financial/actor entity must include a non-empty definition."
     failureClass: "undefined_primary_entity"
+    export: "c/checks/entity/schema.primary_entities_have_definitions.mjs"
   -
     id: "residue.ambiguous_nouns_preserved"
     title: "Ambiguous nouns must be preserved as residue"
     class: "C3"
     predicate: "Any noun marked ambiguous must appear in residue."
     failureClass: "lost_ambiguity"
+    export: "c/checks/entity/residue.ambiguous_nouns_preserved.mjs"
   -
     id: "claude.no_unregistered_primary_entities"
     title: "Claude must not introduce unregistered primary entities"
     class: "C4"
     predicate: "Generated code/specs must not introduce new primary entity names unless listed as proposed or residue."
     failureClass: "silent_entity_drift"
+    export: "c/checks/entity/claude.no_unregistered_primary_entities.mjs"
