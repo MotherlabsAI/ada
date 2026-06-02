@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.json && node --test \"dist/**/*.test.js\"",
     "ada": "node dist/cli.js",
     "clean": "rm -rf dist"
   },
@@ -16,8 +17,14 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/react": "^19.2.16",
+    "ink-testing-library": "^4.0.0",
     "typescript": "^5.7.0"
   },
   "license": "UNLICENSED",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "ink": "^7.0.5",
+    "react": "^19.2.7"
+  }
 }
