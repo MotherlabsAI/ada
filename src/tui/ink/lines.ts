@@ -53,6 +53,8 @@ export function graphLines(
 ): { lines: Line[]; selectedLine: number } {
   const rejected = opts.rejected ?? new Set<string>();
   const clusters = [...new Set(graph.nodes.map((n) => clusterOf(n.id)))];
+  // Fixed-width ID column so labels line up across every row regardless of id length.
+  const idW = Math.max(4, ...graph.nodes.map((n) => n.id.length)) + 2;
   const lines: Line[] = [];
   let selectedLine = 0;
   for (const cluster of clusters) {
@@ -65,11 +67,13 @@ export function graphLines(
     for (const n of inCluster) {
       const sel = n.id === opts.selectedId;
       if (sel) selectedLine = lines.length;
-      const mark = sel ? "› " : "  ";
+      const mark = sel ? "›" : " ";
       const flag = opts.flagged.has(n.id) ? " ⊙" : "";
       const rej = rejected.has(n.id) ? " ✗" : "";
+      // ONE primary glyph + fixed-width id column (spec AESTH.002/003: low glyph
+      // density, one glyph per node). The rich badges live in the reader, not here.
       lines.push({
-        text: `${mark}${n.ui.graphSymbol} ${n.id}  ${n.label}${flag}${rej}`,
+        text: `${mark} ${n.glyph}  ${n.id.padEnd(idW)}${n.label}${flag}${rej}`,
         colour: n.colour,
         bold: sel,
         dim: rejected.has(n.id),
