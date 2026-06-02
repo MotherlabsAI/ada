@@ -1,0 +1,17 @@
+role:
+  cluster: "DOMAIN"
+  nodeType: "entity"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "A person who books and pays for services."
+  whyItMatters: "The core relationship the whole command center revolves around."
+  failureIfMissing: "No durable customer record; history and payments cannot be tied together."
+epistemics:
+  claimClass: "entity"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

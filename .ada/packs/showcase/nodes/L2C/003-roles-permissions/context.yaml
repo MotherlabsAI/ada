@@ -1,0 +1,18 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+    - "gov"
+localContext:
+  summary: "Roles become permissions and policies: owner, staff, front-desk, client."
+  whyItMatters: "Who-can-do-what is a security invariant, not a UI detail."
+  failureIfMissing: "Privilege bugs: a client cancels another client's booking; staff sees the full ledger."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

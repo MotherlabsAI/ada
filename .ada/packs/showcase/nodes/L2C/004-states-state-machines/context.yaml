@@ -1,0 +1,17 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "Lifecycle words become state machines: lead -> booked -> deposit-paid -> completed | cancelled | no-show."
+  whyItMatters: "Illegal transitions are a major source of silent data corruption."
+  failureIfMissing: "A cancelled booking gets charged; a completed booking is rebooked."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

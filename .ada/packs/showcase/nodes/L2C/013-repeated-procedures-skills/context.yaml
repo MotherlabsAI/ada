@@ -1,0 +1,15 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "claude"
+localContext:
+  summary: "Procedures the operator repeats become Claude Code skills the executor can invoke."
+  whyItMatters: "Repeated work belongs in a named, reusable procedure, not re-explained each time."
+  failureIfMissing: "The same instructions get re-typed and drift."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

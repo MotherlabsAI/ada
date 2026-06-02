@@ -1,0 +1,13 @@
+# ◇ ● ∴ ⇒ ATT.006 — Curiosity Loop
+
+- cluster: ATT · depth: L4 · truth: ∴ inference
+- checkability: C1 (human review)
+- compiles to: graph, wiki, c, claude, blueprint
+
+**Summary.** Loewenstein's information-gap theory says curiosity is the itch to close a gap between known and wanted-known. But the dominant gap for a high-intent local-service buyer is not entertainment-curiosity, it's RESOLUTION-curiosity: how fast, how much, by whom, what happens next. The media/SaaS reflex of opening teaser loops ('you won't believe trick #3') inverts here: a buyer in acute pain (burst pipe, dead AC) reads withheld information as evasion and friction, not intrigue, and leaves for whoever answered. So the only correct loop on a service homepage is TIGHT and SAME-VIEWPORT: pose the buyer's literal question ('How soon can you come?') and answer it in the next breath ('Same-day, usually within 2 hours'). The single loop you may leave open is the micro-commitment, where the gap is closed by an action rather than more reading ('See your quote in 60 seconds'). Net: curiosity here is not a hook device, it's a SEQUENCING contract — each section opens the next ranked buyer question (speed -> price/quote -> who shows up -> proof -> book) and the booking flow is the terminal closure. Two operational constraints bound it: the business must be able to honestly commit to the speed/price answer the loop promises, and the question ladder must come from real PAA/call-log mining, not invented order.
+
+**Why.** Misapplied curiosity (teasers, withheld pricing, vague 'contact us') reads as evasion to a high-intent buyer and increases drop-off. Tight open-then-close loops convert anxiety into momentum down the page toward the CTA.
+
+**Failure if missing.** Page withholds the answers buyers most want (speed, price, who shows up), creating anxiety-gaps the visitor closes by leaving for a competitor who answered them; or uses clickbait loops that feel evasive to someone in urgency.
+
+See `wiki.md` for the full article, `edges.yaml` for links, `checkability.yaml` for checks.

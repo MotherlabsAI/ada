@@ -1,0 +1,6 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "Deterministic count of high-contrast/animated elements above the fold (>N fails)"
+  - "Static contrast-ratio measurement of CTA vs page background"
+  - "Presence/absence of auto-rotating carousel in markup"

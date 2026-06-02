@@ -1,0 +1,17 @@
+{
+  "slug": "service-business-recognition",
+  "product": "Ada by Motherlabs",
+  "schemaVersion": "0.1.0",
+  "createdNote": "Excavated by the Ada compile workforce from one intent, aligned to the context-engineering taxonomy; every node anti-generic-gated. Exploratory layer (AXIOM A1); provenance via truth-class + fromPrompt (AXIOM A2).",
+  "nodeCount": 24,
+  "edgeCount": 32,
+  "checkCount": 3,
+  "residueCount": 8,
+  "clusters": [
+    "ROOT",
+    "ATT",
+    "COPY",
+    "SEO",
+    "UNK"
+  ]
+}

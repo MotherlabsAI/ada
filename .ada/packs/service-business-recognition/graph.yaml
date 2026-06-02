@@ -1,0 +1,1513 @@
+id: "graph-service-business-recognition"
+version: "0.1.0"
+packSlug: "service-business-recognition"
+nodes:
+  -
+    id: "ROOT.000"
+    label: "Context Engineering World Model"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L5"
+    truth: "inference"
+    role:
+      cluster: "ROOT"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The working world model compiled from one intent. It does not model everything — only the bounded context needed to act: ATT, COPY, SEO, UNK."
+      whyItMatters: "The map the executor operates inside. Without it, Claude Code builds from a raw prompt."
+      failureIfMissing: "The build proceeds on guesses instead of structure."
+    worldLinks:
+      parents: []
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns: []
+    checkability:
+      class: "C0"
+      explanation: "Exploratory context; not a deterministic guarantee."
+      candidates: []
+    ui:
+      visibleBadges:
+        - "L5"
+        - "C0"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "high"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "ATT.004"
+    label: "Salience"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "ATT"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+    localContext:
+      summary: "Salience on a service homepage is a zero-sum budget, not an additive property: the pre-attentive system allocates a fixed pool of attention in the first ~200ms purely on raw contrast (luminance, color, size, motion) before any reading, so every element you make \"pop\" steals salience from the proof-of-trust + booking-CTA pair that must win inside the 2.6s impression window. The trade craft is to engineer exactly three salience peaks — headline value-prop, star-rating/review-count chip, booking CTA — on an otherwise flat field, and to DELIBERATELY de-salience the logo, nav, and decorative hero photo so the trust+action peak has no rivals. The classic flattening failure is a rotating hero slider + chat bubble + cookie banner + \"Call Now\" button all firing at once; motion (the slider) is the worst offender because it captures pre-attentive attention involuntarily and cannot be suppressed by intent. This is enforceable: lint rejects auto-rotating carousels above the fold, counts high-contrast/animated elements (>N fails), and verifies the CTA holds the single highest contrast ratio against a near-monochrome page. On mobile the budget shrinks — the fold holds ~half the elements — so the three-peak rule tightens to two, and the open trade is whether the phone-call or online-booking CTA holds the lone peak, decided by how the business actually takes jobs."
+      whyItMatters: "If salience is spread evenly the visitor's pre-attentive system finds no anchor, defaults to the F-pattern failure-scan, and bounces before the booking path is ever seen. Concentrating the salience budget is the single highest-leverage attention decision on the page."
+      failureIfMissing: "Hero competes with slider, chat widget, and nav for the same pre-attentive contrast; nothing wins; visitor scans, finds no anchor in 2.6s, and bounces without seeing the booking CTA."
+    worldLinks:
+      parents: []
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo: []
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "The specific trade in this niche — whether phone-call CTA or online-booking CTA should hold the single salience peak (depends on how the business actually takes jobs)"
+        - "Whether the audience skews mobile, where the salience budget is even smaller and the fold is ~half the elements"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "Deterministic count of high-contrast/animated elements above the fold (>N fails)"
+        - "Static contrast-ratio measurement of CTA vs page background"
+        - "Presence/absence of auto-rotating carousel in markup"
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C2"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "ATT.005"
+    label: "Relevance Detection"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "ATT"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+    localContext:
+      summary: "A sub-second relevance gate fires before a single word is read: \"Am I in the right place for what I need, here, now?\" For local-service buyers it tests three tokens that must clear the fold without scrolling — SERVICE (named in the customer's words, not the trade's jargon), PLACE (city/neighborhood, doubling as the \"near me\" geo signal), and SITUATION-FIT (emergency vs scheduled, residential vs commercial). The non-obvious move: relevance is scored against the query the visitor just typed, so the H1 must echo the searcher's own language — \"Emergency Plumber in Kelowna — Same-Day,\" not \"Quality You Can Trust Since 1998.\" The slogan fails because it carries zero matchable tokens; the visitor cannot confirm fit and bounces. The deeper point is mechanism convergence: the same place+service+intent tokens a human uses to confirm fit are the exact entities Google's local pack ranks on and ChatGPT's entity-matcher binds the page to. One headline decision satisfies three judges at once — which is also why it is the single cheapest, highest-yield fix on the page. The trap: situation-fit is not assumable. Pick \"emergency\" when the buyer's real dominant mode is \"planned\" and the token actively repels the right visitor."
+      whyItMatters: "Relevance detection is the gate before salience even matters — a perfectly salient CTA on a page that fails the 'right place?' check still bounces. Echoing query language is the cheapest, highest-yield headline decision and the only one that simultaneously serves human, Google, and LLM."
+      failureIfMissing: "Headline is a brand slogan with no service/place/intent tokens; visitor cannot confirm fit in <1s, assumes wrong page, bounces; Google and ChatGPT also fail to bind the page to the local query."
+    worldLinks:
+      parents:
+        - "ATT.004"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo: []
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "The exact searcher vocabulary for this trade and region (requires keyword/PAA mining, not assumable)"
+        - "Whether the buyer's dominant situation is emergency or planned — changes the situation-fit token entirely"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "Deterministic check: H1 contains a service term AND a place term (token presence)"
+        - "Schema areaServed/serviceType present and matches H1 tokens"
+        - "Absence of banned slogan phrases in H1 (lint list)"
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C2"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "ATT.006"
+    label: "Curiosity Loop"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "ATT"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Loewenstein's information-gap theory says curiosity is the itch to close a gap between known and wanted-known. But the dominant gap for a high-intent local-service buyer is not entertainment-curiosity, it's RESOLUTION-curiosity: how fast, how much, by whom, what happens next. The media/SaaS reflex of opening teaser loops ('you won't believe trick #3') inverts here: a buyer in acute pain (burst pipe, dead AC) reads withheld information as evasion and friction, not intrigue, and leaves for whoever answered. So the only correct loop on a service homepage is TIGHT and SAME-VIEWPORT: pose the buyer's literal question ('How soon can you come?') and answer it in the next breath ('Same-day, usually within 2 hours'). The single loop you may leave open is the micro-commitment, where the gap is closed by an action rather than more reading ('See your quote in 60 seconds'). Net: curiosity here is not a hook device, it's a SEQUENCING contract — each section opens the next ranked buyer question (speed -> price/quote -> who shows up -> proof -> book) and the booking flow is the terminal closure. Two operational constraints bound it: the business must be able to honestly commit to the speed/price answer the loop promises, and the question ladder must come from real PAA/call-log mining, not invented order."
+      whyItMatters: "Misapplied curiosity (teasers, withheld pricing, vague 'contact us') reads as evasion to a high-intent buyer and increases drop-off. Tight open-then-close loops convert anxiety into momentum down the page toward the CTA."
+      failureIfMissing: "Page withholds the answers buyers most want (speed, price, who shows up), creating anxiety-gaps the visitor closes by leaving for a competitor who answered them; or uses clickbait loops that feel evasive to someone in urgency."
+    worldLinks:
+      parents:
+        - "ATT.005"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "Whether this business can actually commit to a speed/price answer (operational reality constrains what loops can be honestly closed)"
+        - "The ranked list of this niche's top buyer questions (needs PAA / call-log mining)"
+    checkability:
+      class: "C1"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "Deterministic presence check: does each major section subhead resolve a known buyer question (mapped list)?"
+        - "Presence of a same-viewport answer to top FAQ (question and answer co-located)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C1"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "ATT.007"
+    label: "Attention Leak"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "ATT"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "An attention leak is any above-the-fold element that opens a path AWAY from booking before the visitor commits — and the leaks that hurt most are the ones service-business owners install on purpose. The reframe that earns the node: a leak is not a bounce, it's a DELAYED-DECISION machine. Every nav link, every header social icon, every chat bubble adds a choice (Hick's law selection cost) and an off-ramp where the buyer's urgency cools before it converts. The four costliest leaks, ranked by damage: (1) header social icons — a one-way door to Instagram from which no one returns to book; (2) a fat 8-link top-nav where every item is an exit into low-intent pages; (3) an auto-play hero video that eats the fold and the patience; (4) a live-chat bubble that lets the visitor defer (\"I'll ask later\") instead of closing now. The non-obvious lever: plugging leaks usually beats improving the CTA, because a leak bleeds attention you already WON — the visitor arrived ready and you handed them an exit. So a high-converting local-service homepage is closer to a landing page than a \"website\": minimal header (logo + phone + one booking CTA), social and secondary links demoted to the footer, the same booking action repeated down the page rather than competing CTAs, and zero outbound links on the conversion path until the lead is captured. The counterintuitive move — REMOVING navigation — typically raises bookings. The one carve-out: a leak can be load-bearing (a strong third-party review profile may be worth the exit because it closes trust the page can't), so the rule is \"no exit until captured,\" not \"no links ever.\""
+      whyItMatters: "Plugging leaks is often a bigger conversion lever than improving the CTA itself, because a leak diverts attention that was already won. Owners systematically add leaks (more links, more widgets, social icons up top) believing they help."
+      failureIfMissing: "Header social icons and an 8-item nav send won attention off to Instagram or deep into low-intent pages; urgency cools; the booking action is never reached even though the visitor arrived ready."
+    worldLinks:
+      parents:
+        - "ATT.004"
+        - "ATT.006"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "Whether any 'leak' is actually load-bearing for this business (e.g., a thriving review profile link may be worth the exit)"
+        - "Mobile sticky-CTA behavior interaction with leaks"
+    checkability:
+      class: "C3"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "Deterministic count of outbound/exit links above the fold (threshold check)"
+        - "Presence of autoplay video attribute in hero markup"
+        - "Count of distinct competing CTAs above the fold"
+        - "Social-icon placement check (header vs footer)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C3"
+        - "inference"
+      graphSymbol: "◇ ● ∴ κ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "ATT.013"
+    label: "Visual Hierarchy / Scale"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L4"
+    truth: "source"
+    role:
+      cluster: "ATT"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Visual hierarchy is the explicit ranking that forces the eye to read importance in your order; on a service homepage the load-bearing tool is SCALE-CONTRAST, not absolute size — a real typographic leap (think H1:body ratio >=3x, not 18px vs 16px) so the relevance-confirming value prop is read first, trust chip second, CTA third. The non-obvious insight: the F-pattern is a FAILURE STATE, not a target layout — NN/g's own follow-up shows it emerges when hierarchy is weak and the eye gives up and skims the left gutter. So \"designing for the F-pattern\" is backwards; you build steep hierarchy precisely to PREVENT the F-scan. For a single-focus conversion homepage the intentional structure is the Z-pattern: brand top-left, phone/CTA top-right, diagonal to the hero value prop, resting bottom-right on the booking action. The hierarchy must survive the mobile collapse: at 375px the three tiers stack, the hero image is usually demoted or removed (real owner/van photo can raise trust; stock is a leak), and tier-3 booking needs a sticky CTA so it stays reachable without scrolling back."
+      whyItMatters: "Hierarchy is what converts the salience budget (ATT.004) into a READING ORDER. Without a steep scale leap the eye defaults to the F-failure-scan and the value prop, trust, and CTA are read in the wrong order or not at all. It's the difference between a designed page and a skimmed one."
+      failureIfMissing: "Flat type scale and even weighting trigger the F-pattern failure-scan; eye skims the left gutter, the centered/right-aligned CTA and trust chip go unseen, conversion path is never read top-to-bottom."
+    worldLinks:
+      parents:
+        - "ATT.004"
+        - "ATT.005"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "grounded_in_domain_knowledge"
+      assumptions: []
+      unknowns:
+        - "Whether a hero image helps or hurts for this specific service (a real photo of the owner/van can raise trust; stock imagery is a leak)"
+        - "Exact mobile fold height across the target audience's device mix"
+    checkability:
+      class: "C3"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "Deterministic H1:body font-size ratio threshold from rendered CSS"
+        - "Sticky-CTA presence at mobile breakpoint in markup/CSS"
+        - "Single-H1 check; heading-level order validity"
+        - "Contrast-ratio tiering between the three elements"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C3"
+        - "source"
+      graphSymbol: "◇ ● ∵ κ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "ATT.022"
+    label: "Brand Recall"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L5"
+    truth: "inference"
+    role:
+      cluster: "ATT"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "For a local-service business, recall is not logo-awareness but NAME-TO-NEED BINDING: when the pipe bursts at 11pm, does your name surface, and can it be re-found across the messy path local buyers actually take (saw the van -> Googled the name -> checked reviews -> asked ChatGPT 'is X plumber any good' -> booked)? Two non-obvious consequences. (1) Recall now depends on byte-identical NAP — exact business name, address, phone across homepage, Google Business Profile, LocalBusiness JSON-LD, and citations — because any drift FRAGMENTS THE ENTITY, breaking both human re-finding and the entity-resolution that lets Google and an LLM treat your scattered surfaces as one provider. A second location or a 'LLC' that appears in some places and not others quietly splits you into two weaker entities. (2) In the AEO era the recall HOLDER has moved: the buyer outsources memory to an agent, so being the name ChatGPT returns for '{service} in {city}' is the modern top-of-mind — and that slot is won by entity consistency, not ad spend. The homepage's job is to be the canonical, schema-marked source of the brand entity (sameAs links to GBP/socials, one constant NAP string, a distinctive verbal hook repeated in title tag/hero/footer) that both human memory and the model's entity graph can latch onto. The verifiable leverage point: the business name must be a single injected constant — never paraphrased — and lint-checked for byte-equality across H1, title, OG, schema, and footer. A pronounceable, locally-anchored name plus relentless consistency beats a clever logo, because consistency is the only part of recall the compiler can actually enforce."
+      whyItMatters: "Recall is the bridge between the other clusters: attention won today only converts later if the name can be re-found at the moment of need. In 2026 the recall holder is often an LLM, so brand-entity consistency is simultaneously a memory, SEO, and AEO asset — fragmentation silently kills all three."
+      failureIfMissing: "Name/NAP drifts across homepage, GBP, and schema; the buyer who saw the van can't re-find you and ChatGPT can't resolve you as one entity, so a competitor with consistent citations gets recommended instead."
+    worldLinks:
+      parents:
+        - "ATT.005"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "External citation consistency (GBP, directories) is off-page and not verifiable from the repo alone"
+        - "Whether the chosen name is actually memorable/pronounceable for the local market (qualitative)"
+        - "How a given LLM currently resolves the entity (not deterministically inspectable)"
+    checkability:
+      class: "C4"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "Deterministic byte-equality check of business name across H1, title tag, OG tags, schema, footer"
+        - "NAP triple (name/address/phone) consistency across all on-page surfaces"
+        - "Presence and well-formedness of sameAs array in LocalBusiness schema"
+    ui:
+      visibleBadges:
+        - "L5"
+        - "C4"
+        - "inference"
+      graphSymbol: "◇ ● ∴ κ ⇒"
+      openPriority: "high"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "COPY.055"
+    label: "H1 Contract"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "COPY"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "For a local service business the H1 is not a slogan, it is a three-part contract: WHAT (the service noun) + WHERE (the geo) + WHO-it's-for or the quantified differentiator. \"Emergency Plumbing in Kelowna — On-Site in 90 Minutes\" is a contract the page can pay off; \"Quality You Can Trust\" is a promise nothing downstream can honour. The non-obvious move: this one string is read by three different machines at once, and most operators optimize for only the first. (1) Google's local relevance matcher needs the service+geo tokens to confirm the page answers \"[service] near me\". (2) An LLM entity extractor (ChatGPT/Perplexity, asked \"who does X in Y\") lifts the H1 near-verbatim as the clean entity+geo citation — abstract value-words give it nothing to quote. (3) The arriving human, three seconds from bouncing, is doing message-match: the H1 has to echo the exact query they typed in the ad or search box, or they conclude they're in the wrong place. The keyword matcher, the entity extractor, and the skeptical human are mutually reinforcing readers — a generic H1 fails all three simultaneously, so bounce and irrelevance compound into lost rank AND lost bookings from the same defect. Practical consequence: one contract per money page (per service-area), with the differentiator quantified (speed, hours, guarantee) rather than asserted — and where no genuine differentiator exists, compete on the tightest service+geo specificity available rather than reaching for an abstraction."
+      whyItMatters: "The H1 is the single highest-leverage string on the site: it gates the bounce decision, supplies the strongest on-page relevance signal for local rank, and is the most-quoted span when an LLM summarises 'who provides this service here'. Get it generic and all three downstream systems degrade at once."
+      failureIfMissing: "Without a contract H1 the page reads as a generic brochure: Google can't confirm service+location match, LLMs have no clean entity+geo string to cite, and a visitor arriving from a specific query feels the page didn't answer them and leaves. Bounce and irrelevance compound into both lost rank and lost bookings."
+    worldLinks:
+      parents: []
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "The exact service noun + city tokens for this specific business (not yet supplied)"
+        - "Whether the business has a genuine quantified differentiator (speed, guarantee, hours) or must compete on geo+service alone"
+        - "Whether ad/search query intent is known well enough to message-match the H1 per traffic source"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: assert exactly one <h1> element exists on each page (DOM count == 1)"
+        - "C3: H1 text contains the page's declared service noun AND the declared geo token (substring/entity match against the page's frontmatter)"
+        - "C2: rubric score that the differentiator is concrete/quantified, not an abstract value-word ('trust', 'quality', 'excellence') — flagged against a banned-abstraction list"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C2"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "COPY.057"
+    label: "CTA as Earned Request"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "COPY"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "A booking CTA borrows ALL its persuasive force from the proof and clarity above it — never from the button verb — so the page must have already earned the ask by the point of asking. Frontier nuances specific to local-service sites: (1) First-person, action-then-value phrasing wins — \"Book My Free Estimate\" beats \"Submit\" or \"Contact Us\" because \"My\" creates ownership and the verb names what the visitor RECEIVES, not the labor they perform. (2) One page asks for exactly ONE action, repeated verbatim at every commitment point (hero, post-value, post-proof, footer) plus a sticky mobile call-or-book bar; a menu of asks splits intent and flattens the funnel. (3) The CTA must pre-state what happens next (\"we call back within 1 hour, no obligation\") so the click is a known low-anxiety step, not a leap into a void where the visitor silently fears a salesperson will hound them. The load-bearing insight for local service: the click is almost never the conversion — the phone call or confirmed slot is — so the CTA is a promise about the next 60 seconds, and its real job is to remove last-inch hesitation, not to generate desire. Two enforceable consequences: the primary CTA verb is downstream of the business's true conversion channel (phone vs form vs calendar vs SMS), and single-action discipline is a lint rule (all primary CTA targets resolve to one action; banned-generic verbs rejected), not a copywriting suggestion."
+      whyItMatters: "The CTA is where attention becomes a booking or evaporates. A page can rank and get cited and still convert nothing if the ask is generic ('Submit'), multiplied (five different asks), or anxiety-inducing (no statement of what follows). This node is the literal hinge of 'converts attention into bookings'."
+      failureIfMissing: "Visitors who are sold still don't act: 'Submit' frames effort not reward, competing CTAs scatter the decision, and an unexplained next-step ('then what — a salesperson hounds me?') manufactures last-second hesitation. Ranked, trusted traffic leaks out at the final inch."
+    worldLinks:
+      parents:
+        - "COPY.055"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "Primary conversion action for this business: phone call vs form vs calendar-booking vs SMS — changes the CTA verb"
+        - "Actual response-time the business can honestly promise in the next-step micro-copy"
+        - "Whether a second-tier 'soft' CTA (e.g. 'see pricing') is permitted or whether strict single-action is required"
+    checkability:
+      class: "C3"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: all primary CTA elements on a page point to the same action/target (href or handler) — set cardinality == 1"
+        - "C3: every page above-the-fold contains at least one CTA element (presence predicate)"
+        - "C3: CTA button text is non-empty and not in a banned-generic list ('Submit','Send','Click here')"
+        - "C2: rubric — CTA names the value received and is first-person; subjective, human/rubric-gated"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C3"
+        - "inference"
+      graphSymbol: "◇ ● ∴ κ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "COPY.059"
+    label: "Objection Handling"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "COPY"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Conversion copy for a local service business is the pre-emptive resolution of the 4-6 mundane unspoken objections that actually stall a booking: \"Do you serve MY neighbourhood?\", \"What will this roughly cost?\", \"Are you licensed/insured?\", \"Can you come WHEN I need you?\", \"Will a stranger be respectful in my home?\". Three non-obvious moves separate a page that converts from one that merely informs. First, positional resolution: each objection must be answered at the exact scroll-point where the doubt fires (price worry beside the pricing/CTA, trust worry beside the booking form, service-area note near the hero) — an answer placed three sections too late arrives after the abandon. Second, mined-not-invented: the objection set must come from real signals (sales-call transcripts, the questions people phone to ask, complaints in competitors' reviews), because a meeting-room guess optimizes the wrong doubts. Third, dual-reader payoff: the same self-contained Q/A that disarms a human is exactly the FAQPage/QAPage content ChatGPT and AI Overviews lift to answer \"is X licensed / how much does X cost\" — so objection handling in structured form serves the buyer and the agent reader from one artifact. The load-bearing risk: the highest-frequency objection (price) is also the one many trades refuse to answer publicly, so the page either publishes an honest range or must convert that refusal into a credible \"here's why we quote on-site\" answer rather than silence."
+      whyItMatters: "Unhandled objections are the silent majority of lost bookings — the visitor never tells you why they left. Surfacing the real objection set and resolving each at its decision moment is the difference between a page that informs and a page that converts, and the same content feeds AEO/agent recognition."
+      failureIfMissing: "Visitors self-disqualify on questions the page could have answered in one sentence ('they probably don't cover my area', 'probably expensive', 'are they even licensed?'). The page looks complete but leaks every visitor whose specific doubt went unaddressed, and LLMs have no crisp Q/A to cite."
+    worldLinks:
+      parents:
+        - "COPY.055"
+        - "COPY.057"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "The actual top objections for this business — requires sales-call/review/transcript mining not yet done"
+        - "Whether the business can publish honest price ranges (some trades resist) — affects the highest-frequency objection"
+        - "Service-area boundaries and licensing facts needed to answer the objections truthfully"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: each objection in the inventory has at least one corresponding answer block present on the page (coverage predicate: |answered| == |objections|)"
+        - "C3: FAQ Q/A pairs are valid self-contained schema.org QAPage/FAQPage JSON-LD that parses and validates"
+        - "C2: rubric — is the objection set real/mined vs invented, and is each answer placed at the decision moment (positional correctness)? human/rubric-gated"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C2"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "COPY.060"
+    label: "Proof Placement"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "COPY"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Model proof as a layer threaded to objection peaks, not a \"Testimonials\" section. Two operating rules. (1) Objection-MATCHED placement: the single proof beside each primary CTA must rebut the objection firing at that CTA — price hesitation gets a value/cost testimonial; fear of a stranger in the home gets a courteous, on-time-technician one. A few decision-moment, objection-matched proofs beat a wall of generic praise stockpiled in a footer or logo row. (2) For a local business the proof that moves rank, humans, AND agents is the same canonical fact — Google rating/review count, years in business, license/insurance numbers, named local references — so author proof once as structured, reusable claims that simultaneously populate the trust strip near the booking form and feed Review/AggregateRating + LocalBusiness JSON-LD (the path to SERP star eligibility and agent-citable credibility). Decorative quotes do none of this; structured claims do all three. Caveat: self-serving AggregateRating markup is policy-restricted, so star eligibility depends on real, attributable review data existing."
+      whyItMatters: "Proof placed at the decision moment is what converts a persuaded-but-cautious local buyer; proof modelled as structured claims is what earns review stars in the SERP and gives agents citable evidence. Misplaced proof (all at the bottom) is psychologically wasted and structurally invisible."
+      failureIfMissing: "Testimonials sit on a separate page or footer where they reassure no one at the moment of doubt; reviews aren't structured so no star rating shows in search; agents find no citable evidence of credibility. The business looks unproven exactly where it needed to feel safe."
+    worldLinks:
+      parents:
+        - "COPY.057"
+        - "COPY.059"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "Whether real, attributable testimonials and verifiable review data exist yet for this business"
+        - "Actual Google rating/review count and whether AggregateRating eligibility is met (self-serving review markup is policy-restricted)"
+        - "License numbers, years-in-business, and named references available for the trust strip"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: at least one proof element (testimonial/rating/badge) is present within N DOM nodes of each primary CTA (adjacency predicate)"
+        - "C3: Review/AggregateRating JSON-LD validates and its rating/count fields are present and within schema-legal ranges"
+        - "C2: rubric — is each proof objection-matched and specific (named person, real result) vs generic? human/rubric-gated"
+        - "C1: human verification that quoted testimonials are real/consented (cannot be automated)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C2"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "COPY.061"
+    label: "Specificity"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "COPY"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Specificity is the cheapest credibility multiplier on a service-business page and the one operators reflexively discard: \"on-site within 90 minutes, 4,200 jobs across Kelowna since 2009\" beats \"fast, reliable service\" on all three readers at once. Concrete numbers, named neighbourhoods, dated facts, and exact prices (1) flip a skeptical human from puffery-discount to verify-mode, (2) hand Google and answer engines extractable entities/quantities for long-tail relevance, and (3) leave the adjective-fog competitor un-citable. The non-obvious frontier point: in the query fan-out / passage-retrieval regime, ChatGPT, Perplexity, and AI Overviews preferentially lift self-contained sentences carrying a concrete attributable fact (\"responds in 90 minutes\", \"serves these 6 areas\") over abstraction — so specificity is now simultaneously a conversion lever AND an agent-recognition lever, and the SAME fact-bearing sentence is what gets snippet-extracted. This compiles to hard discipline: a banned-abstraction lexicon (quality/trust/professional/best/reliable) that lints every claim in heading position, and quantified-claim slots (response time, job count, years, # areas, price-from) Claude must fill with REAL supplied facts — never inventing a number (Axiom A2), flagging any unfillable slot as an Ω residue gap. The honest-specificity trap most guides miss: trivially-specific-but-meaningless (\"uses 3-step process\") passes a regex but fails the differentiation rubric, and the highest-leverage slot — exact published prices — is the one trades operators most resist, so it must be surfaced as an explicit decision, not assumed."
+      whyItMatters: "Specificity is the trait that lets the same sentence persuade a human, get indexed for a long-tail query, and get lifted by an answer engine. Vagueness fails all three readers simultaneously and is the default failure mode of generated and lazy copy — directly threatening 'ranks', 'recognized by agents', and 'converts'."
+      failureIfMissing: "Copy collapses into interchangeable adjective-fog: humans discount it as marketing puff, Google finds no distinguishing entities for long-tail relevance, and LLMs skip past it for a competitor who stated a concrete fact. The business becomes one undifferentiated 'quality local provider' among hundreds."
+    worldLinks:
+      parents:
+        - "COPY.055"
+        - "COPY.061"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "The real numbers/facts for this business (response time, job count, years, prices, areas) — must be supplied, not invented per Axiom A2"
+        - "Whether the business is willing to publish exact prices (key specificity lever often resisted in trades)"
+        - "Which long-tail queries the specific facts should target for relevance"
+    checkability:
+      class: "C3"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: page body contains zero terms from the banned-abstraction list in heading/claim positions (regex/lexicon predicate)"
+        - "C3: each declared value-claim slot resolves to a token matching a number/date/proper-noun pattern (non-empty, typed)"
+        - "C2: rubric — is the specific fact actually meaningful/differentiating vs trivially specific? human/rubric-gated"
+        - "C1: human verification that each concrete number is TRUE (specificity must be honest, not invented)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C3"
+        - "inference"
+      graphSymbol: "◇ ● ∴ κ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "COPY.070"
+    label: "Risk Framing"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "COPY"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "For a local service, the booking decision is governed by perceived RISK, not perceived benefit — the buyer's live question is not \"how good?\" but \"what if this goes wrong, costs more than quoted, or wastes my time?\" Copy that explicitly transfers that risk from buyer to business converts disproportionately. The trades-specific levers: a free no-obligation estimate (kills the \"what if it's expensive just to find out\" fear), a named guarantee with a SPECIFIC remedy (\"on time or we waive the call-out fee\", \"fixed-price quote, no surprises\"), and upfront pricing that pre-empts being overcharged. Three non-obvious moves: (1) a guarantee is a revenue strategy, not a refund policy — the rare remedy payout is dwarfed by the conversion lift, so price it as marketing spend, not liability; (2) a concrete remedy (\"double your money back\", \"we waive the fee\") vastly outperforms vague \"satisfaction guaranteed\" because loss-aversion only fires on a quantified, claimable loss the buyer can picture; (3) the strongest frame inverts loss-aversion onto inaction — make NOT booking the riskier choice (the leak keeps rotting the subfloor; the problem compounds), never via fake countdowns. Hard constraint: every promise is an operational obligation the executor and business must keep, so the compiler emits risk-reversal copy ONLY for guarantees the business has confirmed — unconfirmed guarantees become residue, never invented."
+      whyItMatters: "Risk is the last barrier between a persuaded local buyer and a booking. Explicit, specific risk-reversal is one of the highest-lift copy moves available and is nearly absent from generic competitor pages, making it both a conversion lever and a differentiator. It directly addresses 'converts attention into bookings'."
+      failureIfMissing: "The visitor stays one step back ('I'll get a few more quotes first', 'I don't want to pay just to be told the problem') because the page left all the risk on their side. Persuaded traffic defers indefinitely, and deferral is a lost booking."
+    worldLinks:
+      parents:
+        - "COPY.057"
+        - "COPY.059"
+        - "COPY.070"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "Which guarantees the business is willing and able to honour (free estimate? on-time? fixed-price? money-back?)"
+        - "Whether the business can/will publish transparent pricing"
+        - "Legal/industry constraints on guarantee wording for the specific trade and jurisdiction"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: a risk-reversal element (guarantee/no-obligation/free-estimate phrase) is present within N nodes of the primary CTA (presence+adjacency predicate)"
+        - "C3: page contains no fabricated-scarcity patterns from a banned list (fake countdown timers, 'only 2 left') — lint predicate"
+        - "C2: rubric — is the guarantee remedy specific and credible vs vague 'satisfaction guaranteed'? human/rubric-gated"
+        - "C1: human/business sign-off that every stated guarantee is one they will actually honour (a promise is an operational liability)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C2"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "SEO.112"
+    label: "NAP Consistency"
+    glyph: "◇"
+    colour: "cyan"
+    status: "finished"
+    depth: "L4"
+    truth: "source"
+    role:
+      cluster: "SEO"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "For a local service business, NAP (Name, Address, Phone) is the primary key the entity graph joins on, not a contact detail. Google, ChatGPT, and Perplexity don't \"trust\" a business; they triangulate it across the site, Google Business Profile, Yelp, Apple Maps, BBB, and data aggregators (Data Axle, Neustar/Localeze, Foursquare). A single divergence — a suite number, an old phone, \"Mon-Fri 9-5\" on site vs \"Mon-Sat 8-6\" on Yelp — forces a fuzzy matcher under uncertainty to either pick one record at random or suppress that field to avoid hallucinating. The non-obvious part: byte-identical formatting matters more than people assume. \"Ste 200\" vs \"Suite 200\", \"(250) 555-0100\" vs \"250-555-0100\", \"St.\" vs \"Street\" all read as candidate conflicts, so define a canonical NAP string once and emit it verbatim into the footer, the LocalBusiness schema, the GBP, and every citation. The phone is the sharpest trap: a single global tracked-or-untracked decision is mandatory, because per-channel call-tracking numbers (a DID swapped by Google Ads or a CallRail dynamic-insertion script) are the most common silent NAP-poisoner — they break entity identity by design and are invisible in a manual page audit because the swap happens client-side after render. Corollary: schema telephone and the rendered footer can pass a byte-diff yet still diverge at the aggregator tier, so the audit must reach the off-site listings, not just the built site."
+      whyItMatters: "NAP is the join key that lets an AI merge five disconnected web records into one confident entity it will name in an answer. Inconsistency directly lowers citation probability because the model resolves ambiguity by omission."
+      failureIfMissing: "The business exists as several low-confidence half-entities; AI assistants either cite a competitor with cleaner data or state the business's hours/address as 'unverified', and local-pack ranking suffers from conflicting signals."
+    worldLinks:
+      parents:
+        - "META.05"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "grounded_in_domain_knowledge"
+      assumptions: []
+      unknowns:
+        - "Whether a call-tracking number is desired (breaks NAP identity by design) or a single static number is acceptable"
+        - "Which off-site directories the business is already listed on and whether those listings are owner-controlled"
+        - "The legally correct business name (DBA vs registered entity vs brand)"
+    checkability:
+      class: "C3"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "grep all rendered NAP instances on the built site and assert byte-equality with the canonical constant (deterministic)"
+        - "assert schema telephone/address fields === canonical config values (deterministic JSON compare)"
+        - "fetch GBP/Yelp/Apple records via API and string-diff against canonical (deterministic where APIs exist; partial coverage)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C3"
+        - "source"
+      graphSymbol: "◇ ● ∵ κ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "SEO.118"
+    label: "Answer Atom: What It Is"
+    glyph: "◇"
+    colour: "cyan"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "SEO"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "An answer atom is a single self-contained passage (~40-110 words, one retriever chunk) that fully answers one specific query with zero dependence on surrounding paragraphs. The unit AEO actually optimizes is the atom, not the page — the page is just a container of independently-liftable answers, each targeting one real query. For a local service business, the highest-value atoms are operational facts framed as answers, not \"about us\" prose: \"Does [Business] offer 24/7 emergency [service] in [city]? Yes — we dispatch a licensed technician to [neighborhoods] within [X] hours, including weekends.\" Non-obvious rule: write each atom so it survives being ripped out and pasted into a chat answer verbatim. That means the entity name and city must appear INSIDE the atom — no \"we,\" \"here,\" or \"this service\" — because by the time the assistant quotes you it has lost all page context and any deictic reference resolves to nothing. The deictic-pronoun ban is the operational core, and it's checkable: a regex asserting no first-person/deictic tokens inside an atom block is a deterministic proxy for self-containment. This reframes a service page from \"a description\" into \"a set of standalone answers,\" each mapped query → atom → page anchor for downstream FAQ/schema and internal linking."
+      whyItMatters: "AI answer engines retrieve and cite at the passage level, not the page level. If your facts are smeared across paragraphs that only make sense together, none of them is liftable, so you get read but never cited."
+      failureIfMissing: "Pages rank but are never quoted by ChatGPT/Perplexity/AI Overviews; the model summarizes a competitor whose facts were packaged as standalone answers."
+    worldLinks:
+      parents:
+        - "META.05"
+        - "SEO.124"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "The actual ranked list of questions prospects ask (requires GBP Q&A, call logs, or PAA data from the real market)"
+        - "Which questions are booking-driving vs merely informational (affects atom priority)"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "self-containment lint: assert no first-person/deictic pronouns ('we','our','this','here') inside an atom block (deterministic regex, proxy for self-containment)"
+        - "word-count bound: assert each atom is within 40-110 words (deterministic)"
+        - "entity+city presence: assert business name and target city literal appear inside each atom (deterministic string check)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C2"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "SEO.121"
+    label: "Claim Clarity for Citation"
+    glyph: "◇"
+    colour: "cyan"
+    status: "finished"
+    depth: "L5"
+    truth: "inference"
+    role:
+      cluster: "SEO"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Answer engines cite only claims they can ground: statements specific enough to attach to your URL with low contradiction risk from other sources. The local-service failure mode is vague brag-copy (\"top-quality service, fast response, competitive pricing\") — unverifiable, unattributable, and byte-identical to every competitor, so it is unciteable. Claim clarity converts puffery into grounded, attributable facts: \"licensed and insured since 2009 (WA contractor lic. #ABC123),\" \"average on-site arrival 47 min within Kelowna city limits,\" \"flat-rate $89 diagnostic, waived if you book the repair.\" The mechanism: specificity is citation currency. A number, named credential, dated fact, or bounded guarantee is a discrete, low-risk thing to quote; an adjective is nothing the model can stand behind. The non-obvious layer most copy guidance misses: each clear claim must be paired with its evidence locus (license registry, review profile, warranty doc) so the model AND a skeptical human land on the same corroboration — co-located evidence is what raises grounding confidence above the citation threshold, not the claim alone. For local services this is doubly leveraged: the credentials that ground a claim (state license #, service-radius minutes, flat-rate pricing) are exactly the trust signals that close the booking, so one rewrite serves both the extractor and the human conversion."
+      whyItMatters: "Models down-rank or skip claims they cannot verify because hallucinating a false claim is the expensive error they are tuned to avoid. Clear, grounded claims are the only ones that survive into a cited answer."
+      failureIfMissing: "Copy reads fine to humans but gives AI nothing quotable; the business is described in generic terms or omitted, and conversion suffers because prospects see no differentiated, trustable specifics."
+    worldLinks:
+      parents:
+        - "META.05"
+        - "SEO.133"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "Which specific claims are actually true and legally safe to publish (license numbers, response times, guarantees) — requires owner-supplied facts"
+        - "Whether quantified claims (e.g., arrival times) can be substantiated if challenged"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "puffery-term lint: flag banned vague adjectives ('best','top-quality','affordable','fast','leading') without an adjacent number/credential (deterministic wordlist, proxy)"
+        - "claim-evidence pairing: assert each flagged claim has an adjacent citation/link or data attribute (deterministic structural check)"
+        - "numeric/credential density: count grounded tokens (numbers, license patterns, dates) per page vs threshold (deterministic proxy, not semantic truth)"
+    ui:
+      visibleBadges:
+        - "L5"
+        - "C2"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "high"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "SEO.124"
+    label: "Chunk Coherence for Agent Retrieval"
+    glyph: "◇"
+    colour: "cyan"
+    status: "finished"
+    depth: "L5"
+    truth: "inference"
+    role:
+      cluster: "SEO"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Answer engines never rank your page; their retriever slices it into fixed-length windows (~100 tokens, sliding, overlapping) that ignore your H2 and paragraph boundaries, embeds each slice, and ranks slices. Chunk coherence is the discipline of guaranteeing that wherever the blade falls, the slice is still a complete, citable thought. The trap that kills service-business pages: the question sits in an H2, the answer is three paragraphs down, and a back-reference two sentences in (\"it\", \"they\", \"this service\", \"the company\") points across the cut — so the lifted slice is ambiguous, never names the business or the city, and a competitor with co-located Q+A+entity wins the citation even though your page is more complete. Engineer coherence by co-residence: force the question phrase, the answer, the entity name, the city, and the one citable number (\"$149\", \"same-day\", \"24/7\") into the same ~100-token window; resolve every pronoun and definite-NP back-reference inline; never let a heading break fall between a question and its answer's first sentence. This is the retrieval-side twin of answer atoms (SEO.118): atoms are how you author a chunk the retriever can lift whole. The asymmetry that makes this high-leverage for local services — local intent is dense with the entity and city that MUST appear in-slice, yet templated service pages scatter them across header, hero, and footer, so the one window the retriever lifts is exactly the one that names neither. Verify deterministically, not by reading: slide a 100-token window across the tokenized DOM and assert each target answer span carries question-cue + entity + city + number inside one window; lint for unresolved referents inside answer blocks; assert no H2/H3 boundary splits a Q from its answer. Caveat: exact window size/overlap differs across AI Overviews, Perplexity, and ChatGPT and drifts — engineer to the tightest plausible window so you survive all of them."
+      whyItMatters: "Citation happens at the chunk level under fixed-window chunking. If your answer doesn't survive an arbitrary cut, it is invisible to the answer engine no matter how well the page ranks."
+      failureIfMissing: "Retrievers lift fragmented or pronoun-broken slices that fail to mention the business or resolve the question; the engine cites a cleaner-chunked competitor even when your page is more complete."
+    worldLinks:
+      parents:
+        - "META.05"
+        - "SEO.118"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "The exact chunk size/overlap each target engine (AI Overviews vs Perplexity vs ChatGPT) uses — public values are approximate and drift"
+        - "Whether the chosen page-builder/CMS lets answer blocks render as atomic, non-fragmented units"
+    checkability:
+      class: "C3"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "sliding-window simulation: tokenize page, slide a 100-token window, assert each target answer span contains question-cue + entity + city + number within one window (deterministic)"
+        - "intra-chunk coreference lint: flag unresolved pronouns/definite NPs inside answer blocks (deterministic regex over a referent list, proxy)"
+        - "heading-break check: assert no H2/H3 boundary falls between a question heading and its answer's first sentence (deterministic DOM check)"
+    ui:
+      visibleBadges:
+        - "L5"
+        - "C3"
+        - "inference"
+      graphSymbol: "◇ ● ∴ κ ⇒"
+      openPriority: "high"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "SEO.125"
+    label: "Schema Markup"
+    glyph: "◇"
+    colour: "cyan"
+    status: "finished"
+    depth: "L4"
+    truth: "source"
+    role:
+      cluster: "SEO"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "For a local service business, schema is the machine-readable assertion of entity identity that lets Google and AI assistants resolve \"who and what is this source\" without NLP guesswork. Load-bearing types: a SPECIFIC LocalBusiness subtype (Plumber, Electrician, HVACBusiness — not bare LocalBusiness), with name/address/telephone bound byte-for-byte to the canonical NAP constant (SEO.112), plus geo, areaServed, openingHoursSpecification, priceRange; one Service node per offering linked to the business; and AggregateRating/Review only where first-party and policy-compliant (self-serving review markup is restricted). The single highest-leverage, most-overlooked property is sameAs — an array of authoritative URLs (GBP, Wikidata, LinkedIn, Yelp, Facebook, BBB) that merges your scattered records into one confident entity; it does in structured data exactly the disambiguation job NAP does in prose. Post-2023 reality: FAQPage and HowTo rich results were retired for most sites, so emitting FAQPage chasing visual rich results is a misread — schema's value now is entity grounding and AI-citation confidence, not blue-link decoration. This is the most deterministically verifiable node in the cluster: required-property presence, type validity, NAP-binding equality, and sameAs reachability are all CI-checkable with zero subjective judgment."
+      whyItMatters: "Clean entity schema with sameAs measurably raises AI-citation likelihood because the model can resolve the source's identity confidently; it is the structured backbone that NAP, claims, and reviews all bind to."
+      failureIfMissing: "The site is just unstructured text the AI must guess at; entity resolution stays low-confidence, local rich features (map pack data, knowledge panel) don't populate, and citation probability drops versus schema-clean competitors."
+    worldLinks:
+      parents:
+        - "META.05"
+        - "SEO.112"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "grounded_in_domain_knowledge"
+      assumptions: []
+      unknowns:
+        - "The correct LocalBusiness subtype for this specific trade (affects type validity)"
+        - "Which sameAs profiles actually exist and are owner-controlled"
+        - "Whether reviews/ratings are first-party and policy-compliant to mark up (self-serving review markup is restricted)"
+    checkability:
+      class: "C5"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "Schema.org / Google Rich Results validation of every emitted JSON-LD block, asserting zero errors (deterministic, automatable in CI)"
+        - "required-property presence: assert LocalBusiness has name/address/telephone/geo/areaServed/openingHours (deterministic JSON schema check)"
+        - "NAP-binding integrity: assert schema name/address/telephone === canonical NAP constant (deterministic compare)"
+        - "sameAs presence + URL well-formedness + reachability (deterministic)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C5"
+        - "source"
+      graphSymbol: "◇ ● ∵ κ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "SEO.133"
+    label: "Experience/Authority Signals"
+    glyph: "◇"
+    colour: "cyan"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "SEO"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "For a local trade, E-E-A-T is won on the first \"E\" — Experience — because it is the only signal a national content farm structurally cannot fake: first-hand operational proof tied to a real place and a real entity. The operative move is to convert every completed job into a citable evidence artifact rather than marketing copy: location-captioned before/after photos, named technician bios carrying license numbers, dated job descriptions (\"replaced a 40-gallon water heater in a 1970s Glenmore home, January 2026\"), volume facts (\"4,200+ calls since 2009\"), and recent owner-responded GBP reviews. These do double duty — humans read them as trust and convert; AI assistants read them as grounding evidence corroborating that this entity operates here doing this work, which lifts both citation confidence and local-pack rank. Two non-obvious consequences: (1) local authority is geographic-and-topical, not global — being the unambiguous answer to \"[trade] in [city]\" beats domain authority, so signals localize (neighborhood names, local-permit knowledge) instead of imitating a national brand; (2) reviews matter less as a star average and more as a corroborating corpus the model triangulates against your own claims — so claim and review should agree on specifics (services, service area, dates), because contradiction reads as low confidence to both the prospect and the model."
+      whyItMatters: "Experience and local authority are the trust substrate that makes clear claims (SEO.121) believable and makes the AI willing to recommend a real operator over a faceless lead-gen page. It is the local business's structural advantage."
+      failureIfMissing: "The site looks like an interchangeable template; AI assistants and prospects can't distinguish a real local operator from a lead-gen shell, so trust-gated bookings and citations go to competitors with visible proof."
+    worldLinks:
+      parents:
+        - "META.05"
+        - "SEO.121"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "high"
+      sourceStatus: "excavated_from_intent"
+      assumptions: []
+      unknowns:
+        - "Which real proof assets the owner can supply (photos, license numbers, true job counts) — cannot be invented"
+        - "Whether claimed credentials and experience figures are accurate and substantiable"
+        - "Current review volume/recency and whether the owner controls the review profiles"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "presence checks: assert bios-with-credentials, dated project entries, and quantified track-record facts exist on the site (deterministic structural check)"
+        - "localization density: count target-city/neighborhood literals in trust sections vs threshold (deterministic proxy)"
+        - "review freshness/linkage: assert GBP review link present and AggregateRating schema matches displayed count (deterministic where data available); actual trust/E-E-A-T impact is not machine-verifiable (C0)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C2"
+        - "inference"
+      graphSymbol: "◇ ● ∴ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "UNK.001"
+    label: "Agent transactability gap: ranking and being recognized are not the same as being bookable by an agent"
+    glyph: "◌"
+    colour: "amber"
+    status: "finished"
+    depth: "L3"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+    localContext:
+      summary: "The intent treats \"recognized by ChatGPT/agents\" and \"converts into bookings\" as two goals; in the 2026 agentic-booking regime they collapse into one. An agent that recognizes you but cannot transact with you yields zero bookings — and worse, books the competitor it CAN transact with. When ChatGPT Agent or Google AI Mode acts, it needs a machine-readable booking surface (Reserve with Google / GBP booking action, a Calendly-class link, or a documented booking endpoint), real-time availability, and a phone that gets answered. A human-only contact form is an agentic dead end. The failure is silent and the worst kind to debug: you rank, you get cited, the agent reaches your site, hits a form it can't complete or a \"call us\" with no answer, and routes the user elsewhere — leaving the owner with traffic, no bookings, and a wrong diagnosis (\"our SEO is broken\"). The leak is at the last inch, invisible in every analytics view that stops at the visit. The user said \"recognized\" (presentation) when the market now pays for \"transactable\" (action) — the single most under-specified seam in the intent. Concretely it compiles to: a booking-surface decision node, schema.org LocalBusiness with potentialAction=ReserveAction/OrderAction targeting that surface, a real-time availability source (not hand-edited hours) wired in, and an agent-completable form (stable field names, ARIA labels, no captcha on the happy path) with a structured fallback endpoint. Cheapest deterministic guard: assert ReserveAction exists in the JSON-LD and its target URL returns 200 — but note that whether real agents *choose* to transact stays observational, and which surface a given trade's customers' agents invoke (Reserve with Google vs Booksy vs raw endpoint) varies by vertical and region."
+      whyItMatters: "Without a machine-readable booking path, every dollar spent on ranking and entity recognition leaks at the last inch — the agent arrives and cannot close, so visibility converts to nothing."
+      failureIfMissing: "Site ranks and gets cited by ChatGPT, but agents that try to book hit an unparseable form or unanswered phone and book a competitor; the owner sees traffic with no bookings and blames SEO."
+    worldLinks:
+      parents: []
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo: []
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "low"
+      sourceStatus: "open_question"
+      assumptions: []
+      unknowns:
+        - "Which booking surface the target vertical's customers' agents actually invoke (Reserve with Google vs vertical platforms like Booksy vs raw endpoint) — varies by trade and region"
+        - "Whether the business has any real-time availability source at all, or runs on manual phone scheduling"
+        - "Whether an open, agent-facing booking protocol/standard will stabilize before launch or stay fragmented per-agent"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: assert potentialAction/ReserveAction exists in JSON-LD and its target URL returns 200 (deterministic schema + HTTP check)"
+        - "C2: headless-agent smoke test attempts a booking end-to-end and asserts a confirmation state — checkable but brittle across agent versions"
+        - "C1: whether real ChatGPT/Gemini agents actually choose to transact is observational, not a fixed predicate"
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C2"
+        - "residue"
+      graphSymbol: "◌ ● Ω ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "UNK.002"
+    label: "Entity disambiguation: the agent must resolve WHICH business you are before it can recommend you"
+    glyph: "◌"
+    colour: "amber"
+    status: "finished"
+    depth: "L4"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "\"Get recognized by ChatGPT\" sounds like a content problem. It is first an identity-resolution problem, and that gate is where local trades fail before content ever matters. An AI will not stake a recommendation on a business it cannot collapse to one canonical entity — and local service businesses are the worst case for collapse: identical names across towns (\"Acme Plumbing\"), franchise-vs-independent overlap, an owner's personal name shared with another local, a rebrand, or a drifted service area. Resolution confidence is built from two signals that must agree: NAP consistency across the web, and a sameAs graph (GBP, Wikidata, Facebook, LinkedIn, vertical directories) where independent sources cross-confirm one identity. The non-obvious mechanism: ChatGPT's local layer does not resolve places from your site — it resolves through canonical-profile providers (Foursquare/Places-backed) and only enriches from your site. So your on-site identity is the subordinate record. When it disagrees with the profile provider — a second phone number, a suite that drifted, an old address in the footer — confidence drops below threshold and the model does the safe thing: it omits you, or recommends the same-category competitor it CAN resolve cleanly. The failure is silent. You do not get a wrong answer you can see; you get absent from an answer you never watched. Fix the cheap, deterministic half first (one source-of-truth NAP rendered byte-identical site-wide, LocalBusiness JSON-LD with a stable @id and a non-empty sameAs[], areaServed bounding you to the right locality), because that is assertable in CI. Resolution to the right entity by a live model is observational and model-version dependent — you control the inputs to confidence, never the verdict."
+      whyItMatters: "An entity the model cannot resolve to one canonical identity is an entity it will not stake a recommendation on; disambiguation is the precondition for every downstream visibility win."
+      failureIfMissing: "AI cites a competitor or a wrong/duplicate listing, merges your business with a same-named one in another city, or omits you entirely because it cannot confidently tell which 'Acme Plumbing' you are."
+    worldLinks:
+      parents:
+        - "UNK.001"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "low"
+      sourceStatus: "open_question"
+      assumptions: []
+      unknowns:
+        - "Whether a same-named or duplicate listing already exists in the target market that will collide"
+        - "Whether the business has (or qualifies for) a Wikidata/notability anchor, or must rely solely on directory sameAs"
+        - "Exact set of canonical-profile providers a given AI uses for the target vertical and country"
+    checkability:
+      class: "C3"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: assert a single @id and a non-empty sameAs[] in LocalBusiness JSON-LD; assert NAP string is byte-identical across all rendered pages (deterministic)"
+        - "C3: assert phone/address in JSON-LD equals the GBP record via API diff"
+        - "C1: whether ChatGPT/Gemini actually resolve to the right entity is observational and model-version dependent"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C3"
+        - "residue"
+      graphSymbol: "◌ ● Ω κ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "UNK.003"
+    label: "Proof-near-claim and the trust surface AI engines need before they will cite you"
+    glyph: "◌"
+    colour: "amber"
+    status: "finished"
+    depth: "L4"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The user named the destination (\"convert attention into bookings,\" \"rank,\" \"get cited by ChatGPT/agents\") but skipped the substrate all three gate on: verifiable proof co-located with the specific claim it backs. The non-obvious mechanic is that one structural move satisfies two different judges at once. A chunked retriever (AI Overviews, ChatGPT, Perplexity) lifts a claim and its adjacent evidence as a single passage, so a license number, named+dated review with verbatim detail, or response-time stat sitting INSIDE the service block travels with the claim and makes the source \"safe to cite.\" The same adjacency de-risks a wary in-home buyer at the exact pixel where the decision happens. The corollary practitioners miss: this kills the conventional \"Reviews\" / \"About\" page pattern, where proof is one click away from every claim it should support — retriever and buyer both lose the link. Free-floating superlatives (\"best,\" \"trusted,\" \"#1\") are inert twice over: extractors can't ground them and skeptical local buyers discount them. Hard constraint specific to this domain: the proof atoms (actual license #, real insurance/bond, genuine reviews) must be supplied by the business and are subject to trade-specific jurisdictional display rules — they can never be invented, which makes the lint a two-stage check (presence of an evidence atom + audited authenticity of that atom), not a copywriting pass."
+      whyItMatters: "AI engines route citations to sources they judge safe; buyers of in-home/in-person services convert on de-risking proof — both reward evidence co-located with the claim, not a separate 'reviews' page."
+      failureIfMissing: "Pages read as generic marketing; AI engines cite a more evidenced competitor, and human visitors bounce because the de-risking proof (licensure, real reviews, guarantees) isn't where the decision is made."
+    worldLinks:
+      parents:
+        - "UNK.002"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "low"
+      sourceStatus: "open_question"
+      assumptions: []
+      unknowns:
+        - "Which proofs the business can legitimately make (actual license #, real insurance, genuine reviews) vs which would be fabricated — must be supplied, never invented"
+        - "Jurisdictional rules on displaying license/insurance for the specific trade"
+        - "Whether claimed ratings/awards are real and current"
+    checkability:
+      class: "C2"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: assert no banned superlative tokens ('best','#1','cheapest') appear without an adjacent evidence element (regex + DOM-proximity lint)"
+        - "C2: assert every aggregateRating in schema is backed by a real review source (manual/audited link), not a literal"
+        - "C1: whether the proof actually persuades a buyer or an engine is observational"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C2"
+        - "residue"
+      graphSymbol: "◌ ● Ω ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "UNK.004"
+    label: "Conversion instrumentation: 'converts into bookings' is unmeasurable without call + form + agent attribution wired from day one"
+    glyph: "◌"
+    colour: "amber"
+    status: "finished"
+    depth: "L4"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "For a local service business the dominant conversion is a phone call, and the instant a visitor leaves the page to dial, standard web analytics goes blind — so \"convert attention into bookings\" is unmeasurable unless call tracking, form events, chat capture, and agent-session tagging are wired from day one, before any ranking/AEO/ads spend can be judged. The non-obvious trap: dynamic number insertion (DNI) swaps the on-page phone number per visitor to attribute web sessions, but that directly collides with the NAP/entity-consistency requirement (UNK.002) that one identical number appear everywhere. Resolve it by reserving ONE canonical NAP number for schema, GBP, and citations and confining DNI to the on-page display number for tracked web sessions only — never letting the swap pool touch the canonical number. Second trap: a \"booking\" is not a conversion event; the unit must be a revenue-tagged qualified booking (service type, city, new-vs-existing, booked-or-not, revenue won) pushed back to a CRM, or the attribution data is noise that cannot separate which channel actually paid. Bake conversion taxonomy (form_submit, click_to_call, chat_start, booking_confirmed) and a likely-agent-traffic heuristic into the templates as dataLayer hooks; deferring this makes every downstream optimization retroactively unfalsifiable, since you cannot re-attribute calls that were never tracked."
+      whyItMatters: "If you can't attribute bookings to source, you can't tell whether ranking, AI recognition, or ads paid off — the entire 'converts attention into bookings' goal becomes unfalsifiable and untunable."
+      failureIfMissing: "Owner spends on SEO/AEO/ads with no idea what works; phone-call bookings (the majority) are invisible; DNI naively swaps the number everywhere and silently corrupts NAP/entity consistency."
+    worldLinks:
+      parents:
+        - "UNK.001"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "low"
+      sourceStatus: "open_question"
+      assumptions: []
+      unknowns:
+        - "Whether the business already uses a CRM/booking system the events must feed, or none exists"
+        - "Privacy/consent constraints (GDPR/CCPA) on call recording and tracking in the target jurisdiction"
+        - "Whether a reliable signal exists to distinguish agent-originated from human sessions in 2026"
+    checkability:
+      class: "C3"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: assert every CTA (tel: link, form, booking button) fires a defined conversion event (DOM + dataLayer assertion)"
+        - "C3: assert the schema/GBP phone number is excluded from the DNI swap pool (config check that canonical number is static)"
+        - "C2: assert CRM receives tagged leads end-to-end (integration smoke test)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C3"
+        - "residue"
+      graphSymbol: "◌ ● Ω κ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+  -
+    id: "UNK.005"
+    label: "Compliance and consent as a hard gate: review solicitation, tracking consent, and local licensing claims can sink the business"
+    glyph: "◌"
+    colour: "amber"
+    status: "finished"
+    depth: "L4"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "context_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "c"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The user framed three goals as growth; each is actually regulated speech or instrumented data collection where the naive build's default is a fineable offense. (1) Reviews: the FTC Consumer Reviews and Testimonials Rule (in force since Oct 21, 2024; civil penalties up to ~$53k per violation) makes review gating unlawful — soliciting only satisfied customers, suppressing sub-4-star reviews, or incentivizing a specific sentiment. Yet \"more reviews to rank and convert\" is exactly what an unconstrained build automates with a \"leave us a 5-star review\" prompt. Compliant pattern: solicit ALL customers identically, disclose any incentive, surface negatives — baked into the request flow, not bolted on. (2) Tracking: the call-tracking/analytics from UNK.004 trigger consent duties BEFORE the first tracked session is legal — two-party-consent recording states (e.g. CA, FL, PA), plus cookie/CCPA/GDPR gates — so consent must block on script load order, not run alongside it. (3) Identity claims: \"licensed/insured/certified\" badges are deceptive unless true and current per the trade's regulator. The cross-cutting failure mode: the same automation that maximizes growth is what trips each tripwire, so compliance must be a hard gate inside each feature's spec, not a separate review pass."
+      whyItMatters: "A growth tactic that violates the FTC reviews rule or call-recording/consent law converts the site from an asset into a liability — fines and platform removal erase any ranking gain."
+      failureIfMissing: "Automated 'leave us a 5-star review' gating draws an FTC warning/penalty; call recording without consent breaks two-party-consent law; an unverified 'licensed/certified' claim is deceptive — each can shut the channel or the business."
+    worldLinks:
+      parents:
+        - "UNK.003"
+        - "UNK.004"
+      children: []
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "context_capsule"
+      confidence: "low"
+      sourceStatus: "open_question"
+      assumptions: []
+      unknowns:
+        - "Target jurisdiction's call-recording consent regime (one-party vs two-party) and privacy law (GDPR/CCPA/other)"
+        - "Whether the business intends to offer review incentives at all (changes required disclosures)"
+        - "The specific trade regulator's rules on advertising licensure/certification in the operating region"
+    checkability:
+      class: "C3"
+      explanation: "Has deterministic check candidates."
+      candidates:
+        - "C3: assert review-request copy contains no sentiment-conditional/gating phrasing (banned-pattern lint) and applies to all customers (flow config check)"
+        - "C3: assert tracking/recording scripts do not execute before consent is granted (load-order/consent-gate assertion)"
+        - "C2: assert displayed credential strings map to an owner-provided evidence record (audited, not auto-verifiable)"
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C3"
+        - "residue"
+      graphSymbol: "◌ ● Ω κ ⇒"
+      openPriority: "medium"
+    quality:
+      gateStatus: "passed"
+      genericnessScore: "low"
+      actionEnablementScore: "high"
+edges:
+  -
+    from: "ROOT.000"
+    to: "ROOT.000"
+    type: "contains"
+  -
+    from: "ROOT.000"
+    to: "ATT.004"
+    type: "contains"
+  -
+    from: "ATT.004"
+    to: "ATT.005"
+    type: "contains"
+  -
+    from: "ATT.005"
+    to: "ATT.006"
+    type: "contains"
+  -
+    from: "ATT.004"
+    to: "ATT.007"
+    type: "contains"
+  -
+    from: "ATT.006"
+    to: "ATT.007"
+    type: "contains"
+  -
+    from: "ATT.004"
+    to: "ATT.013"
+    type: "contains"
+  -
+    from: "ATT.005"
+    to: "ATT.013"
+    type: "contains"
+  -
+    from: "ATT.005"
+    to: "ATT.022"
+    type: "contains"
+  -
+    from: "ROOT.000"
+    to: "COPY.055"
+    type: "contains"
+  -
+    from: "COPY.055"
+    to: "COPY.057"
+    type: "contains"
+  -
+    from: "COPY.055"
+    to: "COPY.059"
+    type: "contains"
+  -
+    from: "COPY.057"
+    to: "COPY.059"
+    type: "contains"
+  -
+    from: "COPY.057"
+    to: "COPY.060"
+    type: "contains"
+  -
+    from: "COPY.059"
+    to: "COPY.060"
+    type: "contains"
+  -
+    from: "COPY.055"
+    to: "COPY.061"
+    type: "contains"
+  -
+    from: "COPY.061"
+    to: "COPY.061"
+    type: "contains"
+  -
+    from: "COPY.057"
+    to: "COPY.070"
+    type: "contains"
+  -
+    from: "COPY.059"
+    to: "COPY.070"
+    type: "contains"
+  -
+    from: "COPY.070"
+    to: "COPY.070"
+    type: "contains"
+  -
+    from: "ROOT.000"
+    to: "SEO.112"
+    type: "contains"
+  -
+    from: "SEO.124"
+    to: "SEO.118"
+    type: "contains"
+  -
+    from: "SEO.133"
+    to: "SEO.121"
+    type: "contains"
+  -
+    from: "SEO.118"
+    to: "SEO.124"
+    type: "contains"
+  -
+    from: "SEO.112"
+    to: "SEO.125"
+    type: "contains"
+  -
+    from: "SEO.121"
+    to: "SEO.133"
+    type: "contains"
+  -
+    from: "ROOT.000"
+    to: "UNK.001"
+    type: "contains"
+  -
+    from: "UNK.001"
+    to: "UNK.002"
+    type: "contains"
+  -
+    from: "UNK.002"
+    to: "UNK.003"
+    type: "contains"
+  -
+    from: "UNK.001"
+    to: "UNK.004"
+    type: "contains"
+  -
+    from: "UNK.003"
+    to: "UNK.005"
+    type: "contains"
+  -
+    from: "UNK.004"
+    to: "UNK.005"
+    type: "contains"

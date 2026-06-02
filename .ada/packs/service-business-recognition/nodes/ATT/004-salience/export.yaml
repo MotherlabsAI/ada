@@ -1,0 +1,5 @@
+compileTargets:
+  - "graph"
+  - "wiki"
+  - "c"
+exportsTo: []

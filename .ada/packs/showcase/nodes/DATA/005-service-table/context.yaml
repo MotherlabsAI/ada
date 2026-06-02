@@ -1,0 +1,17 @@
+role:
+  cluster: "DATA"
+  nodeType: "table"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "services(id, name, minutes, price_cents)."
+  whyItMatters: "Duration and price drive scheduling and the ledger."
+  failureIfMissing: "No canonical duration; overlap and pricing cannot be computed."
+epistemics:
+  claimClass: "table"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

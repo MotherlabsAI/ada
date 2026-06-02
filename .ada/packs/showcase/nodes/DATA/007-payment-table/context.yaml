@@ -1,0 +1,17 @@
+role:
+  cluster: "DATA"
+  nodeType: "table"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "payments(id, booking_id, amount_cents, kind)."
+  whyItMatters: "The ledger; amounts are integer minor units."
+  failureIfMissing: "Negative amounts or floats produce financial errors."
+epistemics:
+  claimClass: "table"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

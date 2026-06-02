@@ -1,0 +1,21 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "graph"
+    - "wiki"
+    - "code"
+    - "blueprint"
+    - "claude"
+    - "c"
+localContext:
+  summary: "Nouns in user language become durable software entities: clients, bookings, staff, services, payments."
+  whyItMatters: "Entities are the stable spine of the schema; everything else hangs off them."
+  failureIfMissing: "Duplicate or vague models the executor cannot build a coherent schema from."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns:
+    - "Exact persistence engine not yet selected."

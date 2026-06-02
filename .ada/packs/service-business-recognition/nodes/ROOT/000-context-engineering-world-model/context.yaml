@@ -1,0 +1,18 @@
+role:
+  cluster: "ROOT"
+  nodeType: "context_capsule"
+  compileTargets:
+    - "graph"
+    - "wiki"
+    - "claude"
+    - "blueprint"
+localContext:
+  summary: "The working world model compiled from one intent. It does not model everything — only the bounded context needed to act: ATT, COPY, SEO, UNK."
+  whyItMatters: "The map the executor operates inside. Without it, Claude Code builds from a raw prompt."
+  failureIfMissing: "The build proceeds on guesses instead of structure."
+epistemics:
+  claimClass: "context_capsule"
+  confidence: "high"
+  sourceStatus: "excavated_from_intent"
+  assumptions: []
+  unknowns: []

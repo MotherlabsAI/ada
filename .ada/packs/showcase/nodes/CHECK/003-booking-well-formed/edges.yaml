@@ -1,0 +1,8 @@
+-
+  from: "CHECK.003"
+  to: "DATA.006"
+  type: "verified_by"
+-
+  from: "ROOT.008"
+  to: "CHECK.003"
+  type: "contains"

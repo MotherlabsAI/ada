@@ -1,0 +1,4 @@
+class: "C4"
+explanation: "Property-based / generative check is possible."
+candidates:
+  - "authz.every_action_has_required_role"

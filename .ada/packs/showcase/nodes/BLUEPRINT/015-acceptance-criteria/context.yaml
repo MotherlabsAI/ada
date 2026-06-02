@@ -1,0 +1,16 @@
+role:
+  cluster: "BLUEPRINT"
+  nodeType: "blueprint"
+  compileTargets:
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "The must-pass conditions for the booking feature, including 'no double-booking'."
+  whyItMatters: "Turns intent into a testable definition of done."
+  failureIfMissing: "'Done' is a matter of opinion."
+epistemics:
+  claimClass: "blueprint"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

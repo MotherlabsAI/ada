@@ -1,0 +1,17 @@
+role:
+  cluster: "DOMAIN"
+  nodeType: "entity"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "A booked slot: a client, a staff member, a service, a start and end time, and a lifecycle state."
+  whyItMatters: "The central transactional object; the double-booking invariant lives here."
+  failureIfMissing: "Overlapping or malformed bookings corrupt the calendar and the day-of-service flow."
+epistemics:
+  claimClass: "entity"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

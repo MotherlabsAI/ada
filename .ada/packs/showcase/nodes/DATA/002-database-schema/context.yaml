@@ -1,0 +1,17 @@
+role:
+  cluster: "DATA"
+  nodeType: "schema"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "The canonical relational schema the executor builds and migrates against."
+  whyItMatters: "One source of truth for shape; constraints live closest to the data."
+  failureIfMissing: "Drifting ad-hoc tables that no constraint protects."
+epistemics:
+  claimClass: "schema"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

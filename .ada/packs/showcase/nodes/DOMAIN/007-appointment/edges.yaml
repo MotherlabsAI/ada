@@ -1,0 +1,4 @@
+-
+  from: "DOMAIN.007"
+  to: "DATA.006"
+  type: "compiles_to"

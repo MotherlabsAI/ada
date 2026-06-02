@@ -1,0 +1,7 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "C3: a risk-reversal element (guarantee/no-obligation/free-estimate phrase) is present within N nodes of the primary CTA (presence+adjacency predicate)"
+  - "C3: page contains no fabricated-scarcity patterns from a banned list (fake countdown timers, 'only 2 left') — lint predicate"
+  - "C2: rubric — is the guarantee remedy specific and credible vs vague 'satisfaction guaranteed'? human/rubric-gated"
+  - "C1: human/business sign-off that every stated guarantee is one they will actually honour (a promise is an operational liability)"

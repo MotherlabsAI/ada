@@ -1,0 +1,5 @@
+class: "C3"
+explanation: "Deterministic predicate is possible."
+candidates:
+  - "schema.no_duplicate_entity_names"
+  - "schema.entity_names_match_context_pack"

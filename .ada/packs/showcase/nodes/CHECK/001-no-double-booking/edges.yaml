@@ -1,0 +1,27 @@
+-
+  from: "L2C.016"
+  to: "CHECK.001"
+  type: "generalizes_to"
+  note: "failure language became the overlap check"
+-
+  from: "CHECK.001"
+  to: "WORKFLOW.005"
+  type: "verified_by"
+  note: "booking flow is guarded by no_double_booking"
+-
+  from: "CHECK.001"
+  to: "DATA.006"
+  type: "verified_by"
+-
+  from: "BLUEPRINT.015"
+  to: "CHECK.001"
+  type: "depends_on"
+  note: "acceptance includes no double-booking"
+-
+  from: "CHECK.001"
+  to: "CLAUDE.008"
+  type: "exports_to"
+-
+  from: "ROOT.008"
+  to: "CHECK.001"
+  type: "contains"

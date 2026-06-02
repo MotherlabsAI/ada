@@ -1,0 +1,7 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "C3: at least one proof element (testimonial/rating/badge) is present within N DOM nodes of each primary CTA (adjacency predicate)"
+  - "C3: Review/AggregateRating JSON-LD validates and its rating/count fields are present and within schema-legal ranges"
+  - "C2: rubric — is each proof objection-matched and specific (named person, real result) vs generic? human/rubric-gated"
+  - "C1: human verification that quoted testimonials are real/consented (cannot be automated)"

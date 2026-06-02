@@ -1,0 +1,17 @@
+role:
+  cluster: "DATA"
+  nodeType: "registry"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "The de-duplicated list of domain entities and their canonical names."
+  whyItMatters: "One agreed name per entity prevents duplicate models and naming drift."
+  failureIfMissing: "The executor invents three names for the same thing."
+epistemics:
+  claimClass: "registry"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

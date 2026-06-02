@@ -1,0 +1,5 @@
+class: "C5"
+explanation: "Static, type, or database-level constraint is possible."
+candidates:
+  - "ledger.amounts_are_integer_minor_units"
+  - "ledger.non_negative_payment"

@@ -1,0 +1,16 @@
+role:
+  cluster: "BLUEPRINT"
+  nodeType: "blueprint"
+  compileTargets:
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "The tables, columns, and constraints the executor must create."
+  whyItMatters: "Pins the schema so checks and code agree."
+  failureIfMissing: "Schema drift between code and checks."
+epistemics:
+  claimClass: "blueprint"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

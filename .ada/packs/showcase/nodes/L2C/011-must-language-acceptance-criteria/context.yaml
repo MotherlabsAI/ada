@@ -1,0 +1,16 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "'Must' / 'never' phrases become acceptance criteria the executor builds against."
+  whyItMatters: "Acceptance criteria turn intent into a testable definition of done."
+  failureIfMissing: "The build is 'finished' but nobody can say whether it meets intent."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

@@ -1,0 +1,6 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "C3: assert no banned superlative tokens ('best','#1','cheapest') appear without an adjacent evidence element (regex + DOM-proximity lint)"
+  - "C2: assert every aggregateRating in schema is backed by a real review source (manual/audited link), not a literal"
+  - "C1: whether the proof actually persuades a buyer or an engine is observational"

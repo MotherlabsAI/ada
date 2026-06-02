@@ -1,0 +1,17 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "Money words become ledger objects in integer minor units: deposits, balances, refunds."
+  whyItMatters: "Floats and ad-hoc money math cause real financial errors."
+  failureIfMissing: "Rounding drift; negative balances; a refund that exceeds the payment."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

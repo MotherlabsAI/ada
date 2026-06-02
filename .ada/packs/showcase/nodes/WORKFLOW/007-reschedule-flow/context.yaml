@@ -1,0 +1,16 @@
+role:
+  cluster: "WORKFLOW"
+  nodeType: "workflow"
+  compileTargets:
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "Move a booking to a new slot without losing the deposit or creating an overlap."
+  whyItMatters: "Reschedules are where double-bookings and lost deposits sneak in."
+  failureIfMissing: "The old slot stays held, or the new slot overlaps another booking."
+epistemics:
+  claimClass: "workflow"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

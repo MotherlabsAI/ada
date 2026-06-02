@@ -1,0 +1,7 @@
+class: "C5"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "Schema.org / Google Rich Results validation of every emitted JSON-LD block, asserting zero errors (deterministic, automatable in CI)"
+  - "required-property presence: assert LocalBusiness has name/address/telephone/geo/areaServed/openingHours (deterministic JSON schema check)"
+  - "NAP-binding integrity: assert schema name/address/telephone === canonical NAP constant (deterministic compare)"
+  - "sameAs presence + URL well-formedness + reachability (deterministic)"

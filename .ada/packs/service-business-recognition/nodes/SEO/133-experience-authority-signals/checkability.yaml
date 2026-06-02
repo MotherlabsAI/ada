@@ -1,0 +1,6 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "presence checks: assert bios-with-credentials, dated project entries, and quantified track-record facts exist on the site (deterministic structural check)"
+  - "localization density: count target-city/neighborhood literals in trust sections vs threshold (deterministic proxy)"
+  - "review freshness/linkage: assert GBP review link present and AggregateRating schema matches displayed count (deterministic where data available); actual trust/E-E-A-T impact is not machine-verifiable (C0)"

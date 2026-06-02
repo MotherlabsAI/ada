@@ -1,0 +1,7 @@
+class: "C3"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "Deterministic H1:body font-size ratio threshold from rendered CSS"
+  - "Sticky-CTA presence at mobile breakpoint in markup/CSS"
+  - "Single-H1 check; heading-level order validity"
+  - "Contrast-ratio tiering between the three elements"

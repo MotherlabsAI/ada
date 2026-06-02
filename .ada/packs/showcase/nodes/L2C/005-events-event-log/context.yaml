@@ -1,0 +1,17 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "Things that happen become an append-only event log: booking.created, payment.captured."
+  whyItMatters: "Auditability and recovery depend on an immutable record of what occurred."
+  failureIfMissing: "No way to reconstruct how the system reached a bad state."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

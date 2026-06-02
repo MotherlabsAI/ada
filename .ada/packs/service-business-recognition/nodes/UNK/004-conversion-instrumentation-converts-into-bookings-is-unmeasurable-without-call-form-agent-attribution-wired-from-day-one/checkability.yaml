@@ -1,0 +1,6 @@
+class: "C3"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "C3: assert every CTA (tel: link, form, booking button) fires a defined conversion event (DOM + dataLayer assertion)"
+  - "C3: assert the schema/GBP phone number is excluded from the DNI swap pool (config check that canonical number is static)"
+  - "C2: assert CRM receives tagged leads end-to-end (integration smoke test)"

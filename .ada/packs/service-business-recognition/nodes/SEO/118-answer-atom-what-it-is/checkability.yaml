@@ -1,0 +1,6 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "self-containment lint: assert no first-person/deictic pronouns ('we','our','this','here') inside an atom block (deterministic regex, proxy for self-containment)"
+  - "word-count bound: assert each atom is within 40-110 words (deterministic)"
+  - "entity+city presence: assert business name and target city literal appear inside each atom (deterministic string check)"

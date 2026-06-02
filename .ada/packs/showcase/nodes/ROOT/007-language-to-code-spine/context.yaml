@@ -1,0 +1,19 @@
+role:
+  cluster: "ROOT"
+  nodeType: "spine"
+  compileTargets:
+    - "graph"
+    - "wiki"
+    - "blueprint"
+    - "claude"
+    - "c"
+localContext:
+  summary: "The translation layer that turns human language into software primitives: nouns into entities, verbs into actions, rules into checks."
+  whyItMatters: "Without it, the executor builds around vague prose instead of stable domain objects."
+  failureIfMissing: "Inconsistent names, duplicate models, weak schemas, UI that does not match the domain."
+epistemics:
+  claimClass: "spine"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

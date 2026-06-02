@@ -1,0 +1,17 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "'Belongs to' / 'has many' becomes foreign keys and referential integrity."
+  whyItMatters: "Relationships expressed in prose do not enforce integrity; keys do."
+  failureIfMissing: "Orphaned bookings; payments pointing at deleted clients."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

@@ -1,0 +1,6 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "puffery-term lint: flag banned vague adjectives ('best','top-quality','affordable','fast','leading') without an adjacent number/credential (deterministic wordlist, proxy)"
+  - "claim-evidence pairing: assert each flagged claim has an adjacent citation/link or data attribute (deterministic structural check)"
+  - "numeric/credential density: count grounded tokens (numbers, license patterns, dates) per page vs threshold (deterministic proxy, not semantic truth)"

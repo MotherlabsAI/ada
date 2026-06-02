@@ -1,0 +1,6 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "C3: assert exactly one <h1> element exists on each page (DOM count == 1)"
+  - "C3: H1 text contains the page's declared service noun AND the declared geo token (substring/entity match against the page's frontmatter)"
+  - "C2: rubric score that the differentiator is concrete/quantified, not an abstract value-word ('trust', 'quality', 'excellence') — flagged against a banned-abstraction list"

@@ -1,0 +1,89 @@
+{
+  "version": "1",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Create database schema + constraints",
+      "produces": [
+        "DATA.002"
+      ],
+      "dependsOn": []
+    },
+    {
+      "id": "T2",
+      "title": "Seed entities: staff, clients, services",
+      "produces": [
+        "DATA.003",
+        "DATA.004",
+        "DATA.005"
+      ],
+      "dependsOn": [
+        "T1"
+      ]
+    },
+    {
+      "id": "T3",
+      "title": "Implement booking service with overlap rejection",
+      "produces": [
+        "WORKFLOW.005"
+      ],
+      "dependsOn": [
+        "T2"
+      ],
+      "guards": [
+        "no_double_booking",
+        "booking_well_formed"
+      ]
+    },
+    {
+      "id": "T4",
+      "title": "Implement payment/deposit ledger (integer minor units)",
+      "produces": [
+        "DATA.007",
+        "WORKFLOW.006"
+      ],
+      "dependsOn": [
+        "T2"
+      ],
+      "guards": [
+        "non_negative_payment"
+      ]
+    },
+    {
+      "id": "T5",
+      "title": "Reschedule + cancellation flows",
+      "produces": [
+        "WORKFLOW.007",
+        "WORKFLOW.008"
+      ],
+      "dependsOn": [
+        "T3"
+      ],
+      "guards": [
+        "no_double_booking"
+      ]
+    },
+    {
+      "id": "T6",
+      "title": "Calendar + payments UI",
+      "produces": [
+        "UI"
+      ],
+      "dependsOn": [
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "T7",
+      "title": "Wire C checks into CI",
+      "produces": [
+        "VERIFY"
+      ],
+      "dependsOn": [
+        "T3",
+        "T4"
+      ]
+    }
+  ]
+}

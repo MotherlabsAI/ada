@@ -1,0 +1,16 @@
+role:
+  cluster: "CLAUDE"
+  nodeType: "claude_subagent"
+  compileTargets:
+    - "claude"
+    - "c"
+localContext:
+  summary: "A subagent that runs the pack's verify.mjs and reports pass/fail before code is accepted."
+  whyItMatters: "Wires the trust layer into the executor's loop."
+  failureIfMissing: "Code ships without the checks ever running."
+epistemics:
+  claimClass: "claude_subagent"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

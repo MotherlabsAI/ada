@@ -1,0 +1,16 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "code"
+    - "blueprint"
+localContext:
+  summary: "Recurring documents become templates: consent forms, quotes, receipts."
+  whyItMatters: "Templated documents are auditable and consistent; ad-hoc ones are not."
+  failureIfMissing: "Missing consent on file; inconsistent quote wording."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

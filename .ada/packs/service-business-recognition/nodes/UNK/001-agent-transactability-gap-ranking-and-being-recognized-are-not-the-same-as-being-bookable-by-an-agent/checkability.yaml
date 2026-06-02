@@ -1,0 +1,6 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "C3: assert potentialAction/ReserveAction exists in JSON-LD and its target URL returns 200 (deterministic schema + HTTP check)"
+  - "C2: headless-agent smoke test attempts a booking end-to-end and asserts a confirmation state — checkable but brittle across agent versions"
+  - "C1: whether real ChatGPT/Gemini agents actually choose to transact is observational, not a fixed predicate"

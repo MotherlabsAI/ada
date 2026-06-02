@@ -1,0 +1,15 @@
+role:
+  cluster: "CHECK"
+  nodeType: "deterministic_check"
+  compileTargets:
+    - "c"
+localContext:
+  summary: "Every active booking references a staff, client, and service, and starts before it ends."
+  whyItMatters: "Referential and temporal integrity for the core object."
+  failureIfMissing: "Orphaned or inverted-interval bookings."
+epistemics:
+  claimClass: "deterministic_check"
+  confidence: "high"
+  sourceStatus: "user_or_spec_provided"
+  assumptions: []
+  unknowns: []

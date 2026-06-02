@@ -1,0 +1,6 @@
+class: "C4"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "Deterministic byte-equality check of business name across H1, title tag, OG tags, schema, footer"
+  - "NAP triple (name/address/phone) consistency across all on-page surfaces"
+  - "Presence and well-formedness of sameAs array in LocalBusiness schema"

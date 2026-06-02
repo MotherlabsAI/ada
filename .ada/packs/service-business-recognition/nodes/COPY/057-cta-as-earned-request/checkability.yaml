@@ -1,0 +1,7 @@
+class: "C3"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "C3: all primary CTA elements on a page point to the same action/target (href or handler) — set cardinality == 1"
+  - "C3: every page above-the-fold contains at least one CTA element (presence predicate)"
+  - "C3: CTA button text is non-empty and not in a banned-generic list ('Submit','Send','Click here')"
+  - "C2: rubric — CTA names the value received and is first-person; subjective, human/rubric-gated"

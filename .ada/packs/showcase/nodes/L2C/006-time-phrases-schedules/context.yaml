@@ -1,0 +1,17 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "Time language becomes schedules and reminders: '24h before', 'every Monday', 'within 2 business days'."
+  whyItMatters: "Timezones, business hours, and DST are quietly hard and easy to get wrong."
+  failureIfMissing: "Reminders fire at 3am; 'next day' crosses a timezone and slips."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

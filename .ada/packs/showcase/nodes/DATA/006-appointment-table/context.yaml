@@ -1,0 +1,17 @@
+role:
+  cluster: "DATA"
+  nodeType: "table"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "bookings(id, staff_id, client_id, service_id, starts_at, ends_at, status)."
+  whyItMatters: "The transactional heart; the overlap and well-formedness checks run against this."
+  failureIfMissing: "Overlapping or orphaned bookings."
+epistemics:
+  claimClass: "table"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

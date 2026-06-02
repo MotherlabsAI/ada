@@ -1,0 +1,5 @@
+class: "C4"
+explanation: "Property-based / generative check is possible."
+candidates:
+  - "c.no_double_booking"
+  - "c.booking_well_formed"

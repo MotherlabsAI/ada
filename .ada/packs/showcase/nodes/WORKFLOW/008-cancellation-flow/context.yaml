@@ -1,0 +1,16 @@
+role:
+  cluster: "WORKFLOW"
+  nodeType: "workflow"
+  compileTargets:
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "Release a slot and apply the cancellation policy to the deposit."
+  whyItMatters: "Cancellation policy is real money and must be enforced, not implied."
+  failureIfMissing: "A cancelled booking still blocks the slot or is still charged."
+epistemics:
+  claimClass: "workflow"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

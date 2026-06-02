@@ -1,0 +1,16 @@
+role:
+  cluster: "WORKFLOW"
+  nodeType: "workflow"
+  compileTargets:
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "Capture a deposit at booking time and reconcile it at checkout."
+  whyItMatters: "Deposits are money; they must reconcile exactly."
+  failureIfMissing: "Deposit double-counted or dropped on reschedule."
+epistemics:
+  claimClass: "workflow"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

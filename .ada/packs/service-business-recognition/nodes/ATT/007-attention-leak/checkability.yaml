@@ -1,0 +1,7 @@
+class: "C3"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "Deterministic count of outbound/exit links above the fold (threshold check)"
+  - "Presence of autoplay video attribute in hero markup"
+  - "Count of distinct competing CTAs above the fold"
+  - "Social-icon placement check (header vs footer)"

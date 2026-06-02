@@ -1,0 +1,15 @@
+role:
+  cluster: "CHECK"
+  nodeType: "deterministic_check"
+  compileTargets:
+    - "c"
+localContext:
+  summary: "No active booking may overlap another active booking for the same staff member."
+  whyItMatters: "The signature trust invariant of the showcase; the spec's 'first trust moment'."
+  failureIfMissing: "Double-booked staff — the failure Ada exists to catch before the executor ships it."
+epistemics:
+  claimClass: "deterministic_check"
+  confidence: "high"
+  sourceStatus: "user_or_spec_provided"
+  assumptions: []
+  unknowns: []

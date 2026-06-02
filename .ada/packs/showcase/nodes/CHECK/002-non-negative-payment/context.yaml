@@ -1,0 +1,15 @@
+role:
+  cluster: "CHECK"
+  nodeType: "deterministic_check"
+  compileTargets:
+    - "c"
+localContext:
+  summary: "Every payment amount is non-negative; refunds are a refund kind with a positive amount."
+  whyItMatters: "Financial correctness, enforced at the data edge."
+  failureIfMissing: "Negative or malformed money."
+epistemics:
+  claimClass: "deterministic_check"
+  confidence: "high"
+  sourceStatus: "user_or_spec_provided"
+  assumptions: []
+  unknowns: []

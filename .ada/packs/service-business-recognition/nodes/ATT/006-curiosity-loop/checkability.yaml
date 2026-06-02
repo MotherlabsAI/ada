@@ -1,0 +1,5 @@
+class: "C1"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "Deterministic presence check: does each major section subhead resolve a known buyer question (mapped list)?"
+  - "Presence of a same-viewport answer to top FAQ (question and answer co-located)"

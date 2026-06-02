@@ -1,0 +1,6 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "C3: each objection in the inventory has at least one corresponding answer block present on the page (coverage predicate: |answered| == |objections|)"
+  - "C3: FAQ Q/A pairs are valid self-contained schema.org QAPage/FAQPage JSON-LD that parses and validates"
+  - "C2: rubric — is the objection set real/mined vs invented, and is each answer placed at the decision moment (positional correctness)? human/rubric-gated"

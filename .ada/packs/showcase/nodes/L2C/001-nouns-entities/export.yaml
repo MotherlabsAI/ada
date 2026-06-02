@@ -1,0 +1,10 @@
+compileTargets:
+  - "graph"
+  - "wiki"
+  - "code"
+  - "blueprint"
+  - "claude"
+  - "c"
+exportsTo:
+  - "BLUEPRINT.md"
+  - "CONTEXT.md"

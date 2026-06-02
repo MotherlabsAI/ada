@@ -1,0 +1,16 @@
+role:
+  cluster: "WORKFLOW"
+  nodeType: "workflow"
+  compileTargets:
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "Select service -> choose staff and slot -> confirm -> hold with deposit. The flow the double-booking check guards."
+  whyItMatters: "The highest-traffic, highest-stakes workflow in the command center."
+  failureIfMissing: "Two clients hold the same staff slot; the day falls apart at the desk."
+epistemics:
+  claimClass: "workflow"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

@@ -1,0 +1,7 @@
+class: "C3"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "C3: page body contains zero terms from the banned-abstraction list in heading/claim positions (regex/lexicon predicate)"
+  - "C3: each declared value-claim slot resolves to a token matching a number/date/proper-noun pattern (non-empty, typed)"
+  - "C2: rubric — is the specific fact actually meaningful/differentiating vs trivially specific? human/rubric-gated"
+  - "C1: human verification that each concrete number is TRUE (specificity must be honest, not invented)"

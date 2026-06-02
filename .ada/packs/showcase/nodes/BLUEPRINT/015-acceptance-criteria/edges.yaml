@@ -1,0 +1,5 @@
+-
+  from: "BLUEPRINT.015"
+  to: "CHECK.001"
+  type: "depends_on"
+  note: "acceptance includes no double-booking"

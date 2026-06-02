@@ -1,0 +1,5 @@
+compileTargets:
+  - "code"
+  - "blueprint"
+  - "c"
+exportsTo: []

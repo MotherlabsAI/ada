@@ -1,0 +1,5 @@
+-
+  from: "L2C.001"
+  to: "DATA.001"
+  type: "compiles_to"
+  note: "nouns become the entity registry"

@@ -1,0 +1,18 @@
+role:
+  cluster: "L2C"
+  nodeType: "residue"
+  compileTargets:
+    - "wiki"
+localContext:
+  summary: "What cannot be answered yet becomes visible residue instead of a fabricated answer."
+  whyItMatters: "A hole is better than a lie (AXIOM A4)."
+  failureIfMissing: "The system invents a constraint the user never set and builds on it."
+epistemics:
+  claimClass: "residue"
+  confidence: "low"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns:
+    - "Deposit amount policy"
+    - "Refund window"
+    - "Whether multi-location is in scope"

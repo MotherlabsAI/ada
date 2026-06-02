@@ -1,0 +1,15 @@
+role:
+  cluster: "BLUEPRINT"
+  nodeType: "blueprint"
+  compileTargets:
+    - "blueprint"
+localContext:
+  summary: "The deterministic build contract: scope, stack, data model, routes, tasks, tests, acceptance, done."
+  whyItMatters: "The execution boundary; where exploration stops and constraint begins (AXIOM A1)."
+  failureIfMissing: "The executor over-engineers or under-specifies without a contract."
+epistemics:
+  claimClass: "blueprint"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

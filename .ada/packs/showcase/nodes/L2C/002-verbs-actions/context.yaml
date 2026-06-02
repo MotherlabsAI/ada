@@ -1,0 +1,17 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "Verbs become services, jobs, and API actions: book, reschedule, cancel, charge, refund."
+  whyItMatters: "Actions define the executable surface area and the permission boundaries around it."
+  failureIfMissing: "Behaviour scattered across UI handlers with no service layer to test or guard."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

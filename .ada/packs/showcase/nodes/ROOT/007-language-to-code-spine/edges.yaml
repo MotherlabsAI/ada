@@ -1,0 +1,68 @@
+-
+  from: "ROOT.007"
+  to: "CLAUDE.002"
+  type: "exports_to"
+-
+  from: "ROOT.007"
+  to: "L2C.001"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.002"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.003"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.004"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.005"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.006"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.007"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.008"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.009"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.010"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.011"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.012"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.013"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.014"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.015"
+  type: "contains"
+-
+  from: "ROOT.007"
+  to: "L2C.016"
+  type: "contains"

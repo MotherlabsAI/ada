@@ -1,0 +1,15 @@
+role:
+  cluster: "CLAUDE"
+  nodeType: "claude_export"
+  compileTargets:
+    - "claude"
+localContext:
+  summary: "A loadable skill that teaches Claude Code how to use the Ada pack and run its C checks."
+  whyItMatters: "Packages the procedure so it is invoked, not re-explained."
+  failureIfMissing: "Pack sits unused; benefit unrealized."
+epistemics:
+  claimClass: "claude_export"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

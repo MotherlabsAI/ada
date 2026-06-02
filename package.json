@@ -1,0 +1,23 @@
+{
+  "name": "ada-context",
+  "version": "0.1.0",
+  "description": "Ada by Motherlabs — semantic context compiler. Turns intent into a filesystem-backed world model, deterministic C checks, and Claude Code-ready build packs.",
+  "type": "module",
+  "bin": {
+    "ada": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "ada": "node dist/cli.js",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

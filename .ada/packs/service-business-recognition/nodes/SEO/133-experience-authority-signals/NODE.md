@@ -1,0 +1,13 @@
+# ◇ ● ∴ ⇒ SEO.133 — Experience/Authority Signals
+
+- cluster: SEO · depth: L4 · truth: ∴ inference
+- checkability: C2 (rubric/LLM)
+- compiles to: graph, wiki, c, claude, blueprint
+
+**Summary.** For a local trade, E-E-A-T is won on the first "E" — Experience — because it is the only signal a national content farm structurally cannot fake: first-hand operational proof tied to a real place and a real entity. The operative move is to convert every completed job into a citable evidence artifact rather than marketing copy: location-captioned before/after photos, named technician bios carrying license numbers, dated job descriptions ("replaced a 40-gallon water heater in a 1970s Glenmore home, January 2026"), volume facts ("4,200+ calls since 2009"), and recent owner-responded GBP reviews. These do double duty — humans read them as trust and convert; AI assistants read them as grounding evidence corroborating that this entity operates here doing this work, which lifts both citation confidence and local-pack rank. Two non-obvious consequences: (1) local authority is geographic-and-topical, not global — being the unambiguous answer to "[trade] in [city]" beats domain authority, so signals localize (neighborhood names, local-permit knowledge) instead of imitating a national brand; (2) reviews matter less as a star average and more as a corroborating corpus the model triangulates against your own claims — so claim and review should agree on specifics (services, service area, dates), because contradiction reads as low confidence to both the prospect and the model.
+
+**Why.** Experience and local authority are the trust substrate that makes clear claims (SEO.121) believable and makes the AI willing to recommend a real operator over a faceless lead-gen page. It is the local business's structural advantage.
+
+**Failure if missing.** The site looks like an interchangeable template; AI assistants and prospects can't distinguish a real local operator from a lead-gen shell, so trust-gated bookings and citations go to competitors with visible proof.
+
+See `wiki.md` for the full article, `edges.yaml` for links, `checkability.yaml` for checks.

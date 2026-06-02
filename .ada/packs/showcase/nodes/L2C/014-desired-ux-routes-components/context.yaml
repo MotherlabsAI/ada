@@ -1,0 +1,16 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "code"
+    - "blueprint"
+localContext:
+  summary: "Experience language becomes routes and components: a calendar, a lead inbox, a payments view."
+  whyItMatters: "UX intent must map to concrete screens or it stays a vibe."
+  failureIfMissing: "The executor guesses the screens and builds the wrong workflow."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

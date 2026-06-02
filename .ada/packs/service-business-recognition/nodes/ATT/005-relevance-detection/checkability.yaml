@@ -1,0 +1,6 @@
+class: "C2"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "Deterministic check: H1 contains a service term AND a place term (token presence)"
+  - "Schema areaServed/serviceType present and matches H1 tokens"
+  - "Absence of banned slogan phrases in H1 (lint list)"

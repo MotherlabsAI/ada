@@ -1,0 +1,15 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "c"
+localContext:
+  summary: "Hard rules become validations: minimum deposit, cancellation window, max party size."
+  whyItMatters: "Rules stated in prose are not enforced; rules as validations are."
+  failureIfMissing: "Policy exists on paper but the system happily violates it."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

@@ -1,0 +1,4 @@
+class: "C5"
+explanation: "Static, type, or database-level constraint is possible."
+candidates:
+  - "c.booking_well_formed"

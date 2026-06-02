@@ -1,0 +1,6 @@
+class: "C3"
+explanation: "Has deterministic check candidates."
+candidates:
+  - "C3: assert a single @id and a non-empty sameAs[] in LocalBusiness JSON-LD; assert NAP string is byte-identical across all rendered pages (deterministic)"
+  - "C3: assert phone/address in JSON-LD equals the GBP record via API diff"
+  - "C1: whether ChatGPT/Gemini actually resolve to the right entity is observational and model-version dependent"

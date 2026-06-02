@@ -1,0 +1,17 @@
+role:
+  cluster: "DOMAIN"
+  nodeType: "entity"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "An up-front partial payment that holds a booking."
+  whyItMatters: "Deposits reduce no-shows and must reconcile against the final balance."
+  failureIfMissing: "A deposit exceeds the total, or is lost on reschedule."
+epistemics:
+  claimClass: "entity"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

@@ -1,0 +1,8 @@
+-
+  from: "L2C.003"
+  to: "ROOT.011"
+  type: "guarded_by"
+-
+  from: "ROOT.007"
+  to: "L2C.003"
+  type: "contains"

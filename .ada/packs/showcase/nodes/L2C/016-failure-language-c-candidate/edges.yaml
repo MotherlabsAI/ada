@@ -1,0 +1,9 @@
+-
+  from: "L2C.016"
+  to: "CHECK.001"
+  type: "generalizes_to"
+  note: "failure language became the overlap check"
+-
+  from: "ROOT.007"
+  to: "L2C.016"
+  type: "contains"

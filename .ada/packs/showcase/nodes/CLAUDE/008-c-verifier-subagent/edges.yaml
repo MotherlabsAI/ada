@@ -1,0 +1,4 @@
+-
+  from: "CHECK.001"
+  to: "CLAUDE.008"
+  type: "exports_to"

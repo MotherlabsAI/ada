@@ -1,0 +1,20 @@
+-
+  from: "ROOT.000"
+  to: "ROOT.000"
+  type: "contains"
+-
+  from: "ROOT.000"
+  to: "ATT.004"
+  type: "contains"
+-
+  from: "ROOT.000"
+  to: "COPY.055"
+  type: "contains"
+-
+  from: "ROOT.000"
+  to: "SEO.112"
+  type: "contains"
+-
+  from: "ROOT.000"
+  to: "UNK.001"
+  type: "contains"

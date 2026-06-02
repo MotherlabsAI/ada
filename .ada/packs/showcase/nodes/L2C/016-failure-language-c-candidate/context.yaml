@@ -1,0 +1,15 @@
+role:
+  cluster: "L2C"
+  nodeType: "translation_primitive"
+  compileTargets:
+    - "c"
+localContext:
+  summary: "'It must never X' becomes a candidate deterministic check."
+  whyItMatters: "Stated failure modes are the richest source of durable invariants."
+  failureIfMissing: "Known failure modes recur because nothing was written to catch them."
+epistemics:
+  claimClass: "translation_primitive"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

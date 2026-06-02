@@ -1,0 +1,4 @@
+class: "C4"
+explanation: "Property-based / generative check is possible."
+candidates:
+  - "schema.no_duplicate_entity_names"

@@ -1,0 +1,17 @@
+role:
+  cluster: "DATA"
+  nodeType: "table"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "staff(id, name, role, active)."
+  whyItMatters: "Scopes bookings and availability to a real person."
+  failureIfMissing: "Bookings cannot be attributed; availability is meaningless."
+epistemics:
+  claimClass: "table"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

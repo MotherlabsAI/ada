@@ -1,0 +1,16 @@
+role:
+  cluster: "DOMAIN"
+  nodeType: "entity"
+  compileTargets:
+    - "code"
+    - "blueprint"
+localContext:
+  summary: "Something bookable, with a duration and a price."
+  whyItMatters: "Duration drives scheduling; price drives the ledger."
+  failureIfMissing: "Bookings have no canonical duration, so overlap and capacity cannot be computed."
+epistemics:
+  claimClass: "entity"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

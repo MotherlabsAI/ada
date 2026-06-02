@@ -1,0 +1,38 @@
+# ◇ ● ∴ κ ⇒ ATT.007 — Attention Leak
+
+## ⟡ Summary
+An attention leak is any above-the-fold element that opens a path AWAY from booking before the visitor commits — and the leaks that hurt most are the ones service-business owners install on purpose. The reframe that earns the node: a leak is not a bounce, it's a DELAYED-DECISION machine. Every nav link, every header social icon, every chat bubble adds a choice (Hick's law selection cost) and an off-ramp where the buyer's urgency cools before it converts. The four costliest leaks, ranked by damage: (1) header social icons — a one-way door to Instagram from which no one returns to book; (2) a fat 8-link top-nav where every item is an exit into low-intent pages; (3) an auto-play hero video that eats the fold and the patience; (4) a live-chat bubble that lets the visitor defer ("I'll ask later") instead of closing now. The non-obvious lever: plugging leaks usually beats improving the CTA, because a leak bleeds attention you already WON — the visitor arrived ready and you handed them an exit. So a high-converting local-service homepage is closer to a landing page than a "website": minimal header (logo + phone + one booking CTA), social and secondary links demoted to the footer, the same booking action repeated down the page rather than competing CTAs, and zero outbound links on the conversion path until the lead is captured. The counterintuitive move — REMOVING navigation — typically raises bookings. The one carve-out: a leak can be load-bearing (a strong third-party review profile may be worth the exit because it closes trust the page can't), so the rule is "no exit until captured," not "no links ever."
+
+## ∴ Why it matters
+Plugging leaks is often a bigger conversion lever than improving the CTA itself, because a leak diverts attention that was already won. Owners systematically add leaks (more links, more widgets, social icons up top) believing they help.
+
+## ! Failure if missing
+Header social icons and an 8-item nav send won attention off to Instagram or deep into low-intent pages; urgency cools; the booking action is never reached even though the visitor arrived ready.
+
+## ∵ Evidence
+- Truth class: ∴ inference
+- Source status: excavated_from_intent
+
+## ⊢ Compiles to
+- graph
+- wiki
+- c
+- claude
+- blueprint
+
+## κ Checkability
+Class **C3** — deterministic. Has deterministic check candidates.
+
+Candidate checks:
+- `Deterministic count of outbound/exit links above the fold (threshold check)`
+- `Presence of autoplay video attribute in hero markup`
+- `Count of distinct competing CTAs above the fold`
+- `Social-icon placement check (header vs footer)`
+
+## Ω Residue / Unknowns
+- Whether any 'leak' is actually load-bearing for this business (e.g., a thriving review profile link may be worth the exit)
+- Mobile sticky-CTA behavior interaction with leaks
+
+## ↔ Links
+- **Parents:** ATT.004, ATT.006
+- **Exports to:** CLAUDE.md, CONTEXT.md

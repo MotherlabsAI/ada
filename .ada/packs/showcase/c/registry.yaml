@@ -1,0 +1,21 @@
+version: "1"
+note: "C is the deterministic trust layer. No model lives inside a check (AXIOM A3)."
+checks:
+  -
+    name: "no_double_booking"
+    invariant: "No live booking may overlap another live booking for the same staff member; bookings with unparseable times are flagged, not skipped."
+    checkClass: "C4"
+    file: "checks/no-double-booking.mjs"
+    lineage: "WORKFLOW.005 Booking Flow ; L2C.016 Failure Language -> C Candidate"
+  -
+    name: "non_negative_payment"
+    invariant: "Every payment amount is a finite, non-negative integer in minor units; a refund must use kind 'refund' with a strictly positive amount."
+    checkClass: "C5"
+    file: "checks/non-negative-payment.mjs"
+    lineage: "DOMAIN.010 Payment ; L2C.007 Money Terms -> Ledger Objects"
+  -
+    name: "booking_well_formed"
+    invariant: "Every live booking references a staff member, a client, a service, and a parseable start and end, and starts strictly before it ends."
+    checkClass: "C5"
+    file: "checks/booking-well-formed.mjs"
+    lineage: "DOMAIN.007 Appointment ; L2C.015 Relationship Language -> Foreign Keys"

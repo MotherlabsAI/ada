@@ -1,0 +1,5 @@
+-
+  from: "CHECK.001"
+  to: "WORKFLOW.005"
+  type: "verified_by"
+  note: "booking flow is guarded by no_double_booking"

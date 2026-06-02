@@ -1,0 +1,4 @@
+class: "C5"
+explanation: "Static, type, or database-level constraint is possible."
+candidates:
+  - "schema.booking_references_existing_staff_and_client"

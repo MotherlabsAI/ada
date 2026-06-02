@@ -1,0 +1,15 @@
+role:
+  cluster: "CLAUDE"
+  nodeType: "claude_export"
+  compileTargets:
+    - "claude"
+localContext:
+  summary: "Project instructions telling Claude Code which pack to load, what matters, what not to touch, and when to ask."
+  whyItMatters: "The executor's entry point into the compiled world."
+  failureIfMissing: "Claude builds from a raw prompt with no governed context."
+epistemics:
+  claimClass: "claude_export"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

@@ -1,0 +1,17 @@
+role:
+  cluster: "DOMAIN"
+  nodeType: "entity"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "Money moving in or out, recorded in the ledger in integer minor units."
+  whyItMatters: "Financial correctness is non-negotiable; this is where money math is checked."
+  failureIfMissing: "Negative amounts, float drift, or refunds exceeding payments."
+epistemics:
+  claimClass: "entity"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

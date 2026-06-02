@@ -1,0 +1,17 @@
+role:
+  cluster: "DATA"
+  nodeType: "table"
+  compileTargets:
+    - "code"
+    - "blueprint"
+    - "c"
+localContext:
+  summary: "clients(id, name, contact, created_at)."
+  whyItMatters: "Durable customer identity for history and payments."
+  failureIfMissing: "Duplicate or anonymous clients break reporting and follow-up."
+epistemics:
+  claimClass: "table"
+  confidence: "high"
+  sourceStatus: "derived_from_intent"
+  assumptions: []
+  unknowns: []

@@ -1,0 +1,2921 @@
+{
+  "id": "graph-showcase",
+  "version": "0.1.0",
+  "packSlug": "showcase",
+  "nodes": [
+    {
+      "id": "ROOT.007",
+      "label": "Language-to-Code Spine",
+      "glyph": "⟡",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "ROOT",
+        "nodeType": "spine",
+        "compileTargets": [
+          "graph",
+          "wiki",
+          "blueprint",
+          "claude",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "The translation layer that turns human language into software primitives: nouns into entities, verbs into actions, rules into checks.",
+        "whyItMatters": "Without it, the executor builds around vague prose instead of stable domain objects.",
+        "failureIfMissing": "Inconsistent names, duplicate models, weak schemas, UI that does not match the domain."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [
+          "L2C.001",
+          "L2C.002",
+          "L2C.003"
+        ],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [
+          "CLAUDE.md",
+          "BLUEPRINT.md"
+        ],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "spine",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C3",
+        "explanation": "Deterministic predicate is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C3",
+          "exportable"
+        ],
+        "graphSymbol": "⟡ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "ROOT.008",
+      "label": "C Verification Engine",
+      "glyph": "κ",
+      "colour": "green",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "ROOT",
+        "nodeType": "verification",
+        "compileTargets": [
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "The deterministic trust layer. Runnable pass/fail predicates that survive model changes because they check outputs directly.",
+        "whyItMatters": "Generated code is disposable and prompts go stale; executable invariants are the compounding trust asset.",
+        "failureIfMissing": "Wrong output looks coherent and ships, because nothing checked it."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [
+          "CHECK.001",
+          "CHECK.002",
+          "CHECK.003"
+        ],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "verification",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C5"
+        ],
+        "graphSymbol": "κ ● ∴ κ",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "ROOT.011",
+      "label": "Human Governance Layer",
+      "glyph": "!",
+      "colour": "rose",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "source",
+      "role": {
+        "cluster": "ROOT",
+        "nodeType": "governance",
+        "compileTargets": [
+          "gov"
+        ]
+      },
+      "localContext": {
+        "summary": "Humans govern, agents execute. C0-C2 surfaces and high-risk actions are gates.",
+        "whyItMatters": "Users pay real money; one confident wrong build is reputational damage.",
+        "failureIfMissing": "Ada fabricates ground truth where none exists — the exact failure it exists to prevent."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "governance",
+        "confidence": "high",
+        "sourceStatus": "user_or_spec_provided",
+        "assumptions": [
+          "The operator (Alex) defines what 'good' looks like at C0-C2."
+        ],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C1",
+        "explanation": "Human review only; no deterministic predicate.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C1"
+        ],
+        "graphSymbol": "! ● ∵",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.001",
+      "label": "Nouns -> Entities",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "graph",
+          "wiki",
+          "code",
+          "blueprint",
+          "claude",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Nouns in user language become durable software entities: clients, bookings, staff, services, payments.",
+        "whyItMatters": "Entities are the stable spine of the schema; everything else hangs off them.",
+        "failureIfMissing": "Duplicate or vague models the executor cannot build a coherent schema from."
+      },
+      "worldLinks": {
+        "parents": [
+          "ROOT.007"
+        ],
+        "children": [
+          "DATA.001"
+        ],
+        "siblings": [
+          "L2C.002",
+          "L2C.003"
+        ],
+        "dependsOn": [],
+        "exportsTo": [
+          "BLUEPRINT.md",
+          "CONTEXT.md"
+        ],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": [
+          "Exact persistence engine not yet selected."
+        ]
+      },
+      "checkability": {
+        "class": "C3",
+        "explanation": "Deterministic predicate is possible.",
+        "candidates": [
+          "schema.no_duplicate_entity_names",
+          "schema.entity_names_match_context_pack"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C3",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.002",
+      "label": "Verbs -> Actions",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Verbs become services, jobs, and API actions: book, reschedule, cancel, charge, refund.",
+        "whyItMatters": "Actions define the executable surface area and the permission boundaries around it.",
+        "failureIfMissing": "Behaviour scattered across UI handlers with no service layer to test or guard."
+      },
+      "worldLinks": {
+        "parents": [
+          "ROOT.007"
+        ],
+        "children": [],
+        "siblings": [
+          "L2C.001",
+          "L2C.003"
+        ],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C3",
+        "explanation": "Deterministic predicate is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C3",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.003",
+      "label": "Roles -> Permissions",
+      "glyph": "!",
+      "colour": "rose",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c",
+          "gov"
+        ]
+      },
+      "localContext": {
+        "summary": "Roles become permissions and policies: owner, staff, front-desk, client.",
+        "whyItMatters": "Who-can-do-what is a security invariant, not a UI detail.",
+        "failureIfMissing": "Privilege bugs: a client cancels another client's booking; staff sees the full ledger."
+      },
+      "worldLinks": {
+        "parents": [
+          "ROOT.007"
+        ],
+        "children": [],
+        "siblings": [
+          "L2C.001",
+          "L2C.002"
+        ],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": [
+          "GOV.005"
+        ]
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": [
+          "authz.every_action_has_required_role"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "! ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.004",
+      "label": "States -> State Machines",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Lifecycle words become state machines: lead -> booked -> deposit-paid -> completed | cancelled | no-show.",
+        "whyItMatters": "Illegal transitions are a major source of silent data corruption.",
+        "failureIfMissing": "A cancelled booking gets charged; a completed booking is rebooked."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": [
+          "state.no_illegal_transition"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.005",
+      "label": "Events -> Event Log",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Things that happen become an append-only event log: booking.created, payment.captured.",
+        "whyItMatters": "Auditability and recovery depend on an immutable record of what occurred.",
+        "failureIfMissing": "No way to reconstruct how the system reached a bad state."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.006",
+      "label": "Time Phrases -> Schedules",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Time language becomes schedules and reminders: '24h before', 'every Monday', 'within 2 business days'.",
+        "whyItMatters": "Timezones, business hours, and DST are quietly hard and easy to get wrong.",
+        "failureIfMissing": "Reminders fire at 3am; 'next day' crosses a timezone and slips."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.007",
+      "label": "Money Terms -> Ledger Objects",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Money words become ledger objects in integer minor units: deposits, balances, refunds.",
+        "whyItMatters": "Floats and ad-hoc money math cause real financial errors.",
+        "failureIfMissing": "Rounding drift; negative balances; a refund that exceeds the payment."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": [
+          "ledger.amounts_are_integer_minor_units",
+          "ledger.non_negative_payment"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.008",
+      "label": "Locations -> Branch Objects",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L4",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "code",
+          "blueprint"
+        ]
+      },
+      "localContext": {
+        "summary": "Place language becomes branch/location objects with their own hours and staff.",
+        "whyItMatters": "Multi-location businesses need scoping or data leaks across branches.",
+        "failureIfMissing": "A booking lands at the wrong location; staff appear available where they are not."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C3",
+        "explanation": "Deterministic predicate is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L4",
+          "code",
+          "C3",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "medium"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.009",
+      "label": "Documents -> Templates",
+      "glyph": "◇",
+      "colour": "sage",
+      "status": "finished",
+      "depth": "L4",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "code",
+          "blueprint"
+        ]
+      },
+      "localContext": {
+        "summary": "Recurring documents become templates: consent forms, quotes, receipts.",
+        "whyItMatters": "Templated documents are auditable and consistent; ad-hoc ones are not.",
+        "failureIfMissing": "Missing consent on file; inconsistent quote wording."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C3",
+        "explanation": "Deterministic predicate is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L4",
+          "code",
+          "C3",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "medium"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.010",
+      "label": "Rules -> Validations",
+      "glyph": "κ",
+      "colour": "green",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Hard rules become validations: minimum deposit, cancellation window, max party size.",
+        "whyItMatters": "Rules stated in prose are not enforced; rules as validations are.",
+        "failureIfMissing": "Policy exists on paper but the system happily violates it."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C4"
+        ],
+        "graphSymbol": "κ ● ∴ κ",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.011",
+      "label": "Must-Language -> Acceptance Criteria",
+      "glyph": "◇",
+      "colour": "green",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "'Must' / 'never' phrases become acceptance criteria the executor builds against.",
+        "whyItMatters": "Acceptance criteria turn intent into a testable definition of done.",
+        "failureIfMissing": "The build is 'finished' but nobody can say whether it meets intent."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C3",
+        "explanation": "Deterministic predicate is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C3",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.012",
+      "label": "Unknowns -> Residue",
+      "glyph": "◌",
+      "colour": "amber",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "residue",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "residue",
+        "compileTargets": [
+          "wiki"
+        ]
+      },
+      "localContext": {
+        "summary": "What cannot be answered yet becomes visible residue instead of a fabricated answer.",
+        "whyItMatters": "A hole is better than a lie (AXIOM A4).",
+        "failureIfMissing": "The system invents a constraint the user never set and builds on it."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "residue",
+        "confidence": "low",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": [
+          "Deposit amount policy",
+          "Refund window",
+          "Whether multi-location is in scope"
+        ]
+      },
+      "checkability": {
+        "class": "C1",
+        "explanation": "Human review only; no deterministic predicate.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C1"
+        ],
+        "graphSymbol": "◌ ● Ω",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.013",
+      "label": "Repeated Procedures -> Skills",
+      "glyph": "λ",
+      "colour": "cyan",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "claude"
+        ]
+      },
+      "localContext": {
+        "summary": "Procedures the operator repeats become Claude Code skills the executor can invoke.",
+        "whyItMatters": "Repeated work belongs in a named, reusable procedure, not re-explained each time.",
+        "failureIfMissing": "The same instructions get re-typed and drift."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [
+          "SKILL.md"
+        ],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C2",
+        "explanation": "Rubric or LLM-assisted; not a guarantee.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C2",
+          "exportable"
+        ],
+        "graphSymbol": "λ ● ∴ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.014",
+      "label": "Desired UX -> Routes / Components",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "code",
+          "blueprint"
+        ]
+      },
+      "localContext": {
+        "summary": "Experience language becomes routes and components: a calendar, a lead inbox, a payments view.",
+        "whyItMatters": "UX intent must map to concrete screens or it stays a vibe.",
+        "failureIfMissing": "The executor guesses the screens and builds the wrong workflow."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C2",
+        "explanation": "Rubric or LLM-assisted; not a guarantee.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C2",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.015",
+      "label": "Relationship Language -> Foreign Keys",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "'Belongs to' / 'has many' becomes foreign keys and referential integrity.",
+        "whyItMatters": "Relationships expressed in prose do not enforce integrity; keys do.",
+        "failureIfMissing": "Orphaned bookings; payments pointing at deleted clients."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": [
+          "schema.booking_references_existing_staff_and_client"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "L2C.016",
+      "label": "Failure Language -> C Candidate",
+      "glyph": "κ",
+      "colour": "green",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "L2C",
+        "nodeType": "translation_primitive",
+        "compileTargets": [
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "'It must never X' becomes a candidate deterministic check.",
+        "whyItMatters": "Stated failure modes are the richest source of durable invariants.",
+        "failureIfMissing": "Known failure modes recur because nothing was written to catch them."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "translation_primitive",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": [
+          "c.no_double_booking"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C4"
+        ],
+        "graphSymbol": "κ ● ∴ κ",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DOMAIN.003",
+      "label": "Staff Member",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DOMAIN",
+        "nodeType": "entity",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "A person who delivers services and owns a calendar of bookings.",
+        "whyItMatters": "Bookings, availability, and the double-booking invariant all hang off staff identity.",
+        "failureIfMissing": "Bookings cannot be scoped to who actually performs them."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [
+          "DATA.004"
+        ],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "entity",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DOMAIN.004",
+      "label": "Client / Customer",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DOMAIN",
+        "nodeType": "entity",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "A person who books and pays for services.",
+        "whyItMatters": "The core relationship the whole command center revolves around.",
+        "failureIfMissing": "No durable customer record; history and payments cannot be tied together."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [
+          "DATA.003"
+        ],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "entity",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DOMAIN.006",
+      "label": "Service Offering",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DOMAIN",
+        "nodeType": "entity",
+        "compileTargets": [
+          "code",
+          "blueprint"
+        ]
+      },
+      "localContext": {
+        "summary": "Something bookable, with a duration and a price.",
+        "whyItMatters": "Duration drives scheduling; price drives the ledger.",
+        "failureIfMissing": "Bookings have no canonical duration, so overlap and capacity cannot be computed."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [
+          "DATA.005"
+        ],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "entity",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C3",
+        "explanation": "Deterministic predicate is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C3",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DOMAIN.007",
+      "label": "Appointment",
+      "glyph": "κ",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DOMAIN",
+        "nodeType": "entity",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "A booked slot: a client, a staff member, a service, a start and end time, and a lifecycle state.",
+        "whyItMatters": "The central transactional object; the double-booking invariant lives here.",
+        "failureIfMissing": "Overlapping or malformed bookings corrupt the calendar and the day-of-service flow."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [
+          "DATA.006"
+        ],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": [
+          "CHECK.001",
+          "CHECK.003"
+        ]
+      },
+      "epistemics": {
+        "claimClass": "entity",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": [
+          "c.no_double_booking",
+          "c.booking_well_formed"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "κ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DOMAIN.009",
+      "label": "Deposit",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DOMAIN",
+        "nodeType": "entity",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "An up-front partial payment that holds a booking.",
+        "whyItMatters": "Deposits reduce no-shows and must reconcile against the final balance.",
+        "failureIfMissing": "A deposit exceeds the total, or is lost on reschedule."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": [
+          "CHECK.002"
+        ]
+      },
+      "epistemics": {
+        "claimClass": "entity",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DOMAIN.010",
+      "label": "Payment",
+      "glyph": "κ",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DOMAIN",
+        "nodeType": "entity",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Money moving in or out, recorded in the ledger in integer minor units.",
+        "whyItMatters": "Financial correctness is non-negotiable; this is where money math is checked.",
+        "failureIfMissing": "Negative amounts, float drift, or refunds exceeding payments."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [
+          "DATA.007"
+        ],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": [
+          "CHECK.002"
+        ]
+      },
+      "epistemics": {
+        "claimClass": "entity",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": [
+          "c.non_negative_payment"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "κ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "WORKFLOW.005",
+      "label": "Booking Flow",
+      "glyph": "κ",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "WORKFLOW",
+        "nodeType": "workflow",
+        "compileTargets": [
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Select service -> choose staff and slot -> confirm -> hold with deposit. The flow the double-booking check guards.",
+        "whyItMatters": "The highest-traffic, highest-stakes workflow in the command center.",
+        "failureIfMissing": "Two clients hold the same staff slot; the day falls apart at the desk."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "DOMAIN.007",
+          "DOMAIN.003"
+        ],
+        "exportsTo": [],
+        "guardedBy": [
+          "CHECK.001"
+        ]
+      },
+      "epistemics": {
+        "claimClass": "workflow",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "κ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "WORKFLOW.006",
+      "label": "Deposit Flow",
+      "glyph": "κ",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "WORKFLOW",
+        "nodeType": "workflow",
+        "compileTargets": [
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Capture a deposit at booking time and reconcile it at checkout.",
+        "whyItMatters": "Deposits are money; they must reconcile exactly.",
+        "failureIfMissing": "Deposit double-counted or dropped on reschedule."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "DOMAIN.009",
+          "DOMAIN.010"
+        ],
+        "exportsTo": [],
+        "guardedBy": [
+          "CHECK.002"
+        ]
+      },
+      "epistemics": {
+        "claimClass": "workflow",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "κ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "WORKFLOW.007",
+      "label": "Reschedule Flow",
+      "glyph": "κ",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L4",
+      "truth": "inference",
+      "role": {
+        "cluster": "WORKFLOW",
+        "nodeType": "workflow",
+        "compileTargets": [
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Move a booking to a new slot without losing the deposit or creating an overlap.",
+        "whyItMatters": "Reschedules are where double-bookings and lost deposits sneak in.",
+        "failureIfMissing": "The old slot stays held, or the new slot overlaps another booking."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "DOMAIN.007"
+        ],
+        "exportsTo": [],
+        "guardedBy": [
+          "CHECK.001"
+        ]
+      },
+      "epistemics": {
+        "claimClass": "workflow",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L4",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "κ ● ∴ κ ⇒",
+        "openPriority": "medium"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "WORKFLOW.008",
+      "label": "Cancellation Flow",
+      "glyph": "κ",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L4",
+      "truth": "inference",
+      "role": {
+        "cluster": "WORKFLOW",
+        "nodeType": "workflow",
+        "compileTargets": [
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Release a slot and apply the cancellation policy to the deposit.",
+        "whyItMatters": "Cancellation policy is real money and must be enforced, not implied.",
+        "failureIfMissing": "A cancelled booking still blocks the slot or is still charged."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "DOMAIN.007"
+        ],
+        "exportsTo": [],
+        "guardedBy": [
+          "CHECK.001"
+        ]
+      },
+      "epistemics": {
+        "claimClass": "workflow",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L4",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "κ ● ∴ κ ⇒",
+        "openPriority": "medium"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DATA.001",
+      "label": "Canonical Entity Registry",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DATA",
+        "nodeType": "registry",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "The de-duplicated list of domain entities and their canonical names.",
+        "whyItMatters": "One agreed name per entity prevents duplicate models and naming drift.",
+        "failureIfMissing": "The executor invents three names for the same thing."
+      },
+      "worldLinks": {
+        "parents": [
+          "L2C.001"
+        ],
+        "children": [
+          "DATA.002"
+        ],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "registry",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": [
+          "schema.no_duplicate_entity_names"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DATA.002",
+      "label": "Database Schema",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DATA",
+        "nodeType": "schema",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "The canonical relational schema the executor builds and migrates against.",
+        "whyItMatters": "One source of truth for shape; constraints live closest to the data.",
+        "failureIfMissing": "Drifting ad-hoc tables that no constraint protects."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [
+          "DATA.003",
+          "DATA.004",
+          "DATA.005",
+          "DATA.006",
+          "DATA.007"
+        ],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "schema",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DATA.003",
+      "label": "Client Table",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DATA",
+        "nodeType": "table",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "clients(id, name, contact, created_at).",
+        "whyItMatters": "Durable customer identity for history and payments.",
+        "failureIfMissing": "Duplicate or anonymous clients break reporting and follow-up."
+      },
+      "worldLinks": {
+        "parents": [
+          "DATA.002"
+        ],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "table",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DATA.004",
+      "label": "Staff Table",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DATA",
+        "nodeType": "table",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "staff(id, name, role, active).",
+        "whyItMatters": "Scopes bookings and availability to a real person.",
+        "failureIfMissing": "Bookings cannot be attributed; availability is meaningless."
+      },
+      "worldLinks": {
+        "parents": [
+          "DATA.002"
+        ],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "table",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DATA.005",
+      "label": "Service Table",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L4",
+      "truth": "inference",
+      "role": {
+        "cluster": "DATA",
+        "nodeType": "table",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "services(id, name, minutes, price_cents).",
+        "whyItMatters": "Duration and price drive scheduling and the ledger.",
+        "failureIfMissing": "No canonical duration; overlap and pricing cannot be computed."
+      },
+      "worldLinks": {
+        "parents": [
+          "DATA.002"
+        ],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "table",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L4",
+          "code",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "medium"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DATA.006",
+      "label": "Appointment Table",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DATA",
+        "nodeType": "table",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "bookings(id, staff_id, client_id, service_id, starts_at, ends_at, status).",
+        "whyItMatters": "The transactional heart; the overlap and well-formedness checks run against this.",
+        "failureIfMissing": "Overlapping or orphaned bookings."
+      },
+      "worldLinks": {
+        "parents": [
+          "DATA.002"
+        ],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": [
+          "CHECK.001",
+          "CHECK.003"
+        ]
+      },
+      "epistemics": {
+        "claimClass": "table",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "DATA.007",
+      "label": "Payment Table",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "DATA",
+        "nodeType": "table",
+        "compileTargets": [
+          "code",
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "payments(id, booking_id, amount_cents, kind).",
+        "whyItMatters": "The ledger; amounts are integer minor units.",
+        "failureIfMissing": "Negative amounts or floats produce financial errors."
+      },
+      "worldLinks": {
+        "parents": [
+          "DATA.002"
+        ],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": [
+          "CHECK.002"
+        ]
+      },
+      "epistemics": {
+        "claimClass": "table",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "code",
+          "C5",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "CHECK.001",
+      "label": "no_double_booking",
+      "glyph": "κ",
+      "colour": "green",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "source",
+      "role": {
+        "cluster": "CHECK",
+        "nodeType": "deterministic_check",
+        "compileTargets": [
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "No active booking may overlap another active booking for the same staff member.",
+        "whyItMatters": "The signature trust invariant of the showcase; the spec's 'first trust moment'.",
+        "failureIfMissing": "Double-booked staff — the failure Ada exists to catch before the executor ships it."
+      },
+      "worldLinks": {
+        "parents": [
+          "ROOT.008"
+        ],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "DATA.006"
+        ],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "deterministic_check",
+        "confidence": "high",
+        "sourceStatus": "user_or_spec_provided",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": [
+          "c.no_double_booking"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C4"
+        ],
+        "graphSymbol": "κ ● ∵ κ",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "CHECK.002",
+      "label": "non_negative_payment",
+      "glyph": "κ",
+      "colour": "green",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "source",
+      "role": {
+        "cluster": "CHECK",
+        "nodeType": "deterministic_check",
+        "compileTargets": [
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Every payment amount is non-negative; refunds are a refund kind with a positive amount.",
+        "whyItMatters": "Financial correctness, enforced at the data edge.",
+        "failureIfMissing": "Negative or malformed money."
+      },
+      "worldLinks": {
+        "parents": [
+          "ROOT.008"
+        ],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "DATA.007"
+        ],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "deterministic_check",
+        "confidence": "high",
+        "sourceStatus": "user_or_spec_provided",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": [
+          "c.non_negative_payment"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C5"
+        ],
+        "graphSymbol": "κ ● ∵ κ",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "CHECK.003",
+      "label": "booking_well_formed",
+      "glyph": "κ",
+      "colour": "green",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "source",
+      "role": {
+        "cluster": "CHECK",
+        "nodeType": "deterministic_check",
+        "compileTargets": [
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "Every active booking references a staff, client, and service, and starts before it ends.",
+        "whyItMatters": "Referential and temporal integrity for the core object.",
+        "failureIfMissing": "Orphaned or inverted-interval bookings."
+      },
+      "worldLinks": {
+        "parents": [
+          "ROOT.008"
+        ],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "DATA.006"
+        ],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "deterministic_check",
+        "confidence": "high",
+        "sourceStatus": "user_or_spec_provided",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C5",
+        "explanation": "Static, type, or database-level constraint is possible.",
+        "candidates": [
+          "c.booking_well_formed"
+        ]
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C5"
+        ],
+        "graphSymbol": "κ ● ∵ κ",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "BLUEPRINT.001",
+      "label": "Blueprint Object",
+      "glyph": "π",
+      "colour": "slate",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "BLUEPRINT",
+        "nodeType": "blueprint",
+        "compileTargets": [
+          "blueprint"
+        ]
+      },
+      "localContext": {
+        "summary": "The deterministic build contract: scope, stack, data model, routes, tasks, tests, acceptance, done.",
+        "whyItMatters": "The execution boundary; where exploration stops and constraint begins (AXIOM A1).",
+        "failureIfMissing": "The executor over-engineers or under-specifies without a contract."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [
+          "BLUEPRINT.006",
+          "BLUEPRINT.015"
+        ],
+        "siblings": [],
+        "dependsOn": [],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "blueprint",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C3",
+        "explanation": "Deterministic predicate is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C3",
+          "exportable"
+        ],
+        "graphSymbol": "π ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "BLUEPRINT.006",
+      "label": "Data Model Plan",
+      "glyph": "◇",
+      "colour": "deep_blue",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "BLUEPRINT",
+        "nodeType": "blueprint",
+        "compileTargets": [
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "The tables, columns, and constraints the executor must create.",
+        "whyItMatters": "Pins the schema so checks and code agree.",
+        "failureIfMissing": "Schema drift between code and checks."
+      },
+      "worldLinks": {
+        "parents": [
+          "BLUEPRINT.001"
+        ],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "DATA.002"
+        ],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "blueprint",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C4",
+        "explanation": "Property-based / generative check is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C4",
+          "exportable"
+        ],
+        "graphSymbol": "◇ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "BLUEPRINT.015",
+      "label": "Acceptance Criteria",
+      "glyph": "κ",
+      "colour": "green",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "BLUEPRINT",
+        "nodeType": "blueprint",
+        "compileTargets": [
+          "blueprint",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "The must-pass conditions for the booking feature, including 'no double-booking'.",
+        "whyItMatters": "Turns intent into a testable definition of done.",
+        "failureIfMissing": "'Done' is a matter of opinion."
+      },
+      "worldLinks": {
+        "parents": [
+          "BLUEPRINT.001"
+        ],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "L2C.011",
+          "CHECK.001"
+        ],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "blueprint",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C3",
+        "explanation": "Deterministic predicate is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C3",
+          "exportable"
+        ],
+        "graphSymbol": "κ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "CLAUDE.002",
+      "label": "CLAUDE.md Export",
+      "glyph": "λ",
+      "colour": "cyan",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "CLAUDE",
+        "nodeType": "claude_export",
+        "compileTargets": [
+          "claude"
+        ]
+      },
+      "localContext": {
+        "summary": "Project instructions telling Claude Code which pack to load, what matters, what not to touch, and when to ask.",
+        "whyItMatters": "The executor's entry point into the compiled world.",
+        "failureIfMissing": "Claude builds from a raw prompt with no governed context."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "ROOT.007",
+          "ROOT.011"
+        ],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "claude_export",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C2",
+        "explanation": "Rubric or LLM-assisted; not a guarantee.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C2",
+          "exportable"
+        ],
+        "graphSymbol": "λ ● ∴ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "CLAUDE.003",
+      "label": "SKILL.md Export",
+      "glyph": "λ",
+      "colour": "cyan",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "CLAUDE",
+        "nodeType": "claude_export",
+        "compileTargets": [
+          "claude"
+        ]
+      },
+      "localContext": {
+        "summary": "A loadable skill that teaches Claude Code how to use the Ada pack and run its C checks.",
+        "whyItMatters": "Packages the procedure so it is invoked, not re-explained.",
+        "failureIfMissing": "Pack sits unused; benefit unrealized."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "L2C.013"
+        ],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "claude_export",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C2",
+        "explanation": "Rubric or LLM-assisted; not a guarantee.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C2",
+          "exportable"
+        ],
+        "graphSymbol": "λ ● ∴ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    },
+    {
+      "id": "CLAUDE.008",
+      "label": "C Verifier Subagent",
+      "glyph": "λ",
+      "colour": "cyan",
+      "status": "finished",
+      "depth": "L5",
+      "truth": "inference",
+      "role": {
+        "cluster": "CLAUDE",
+        "nodeType": "claude_subagent",
+        "compileTargets": [
+          "claude",
+          "c"
+        ]
+      },
+      "localContext": {
+        "summary": "A subagent that runs the pack's verify.mjs and reports pass/fail before code is accepted.",
+        "whyItMatters": "Wires the trust layer into the executor's loop.",
+        "failureIfMissing": "Code ships without the checks ever running."
+      },
+      "worldLinks": {
+        "parents": [],
+        "children": [],
+        "siblings": [],
+        "dependsOn": [
+          "ROOT.008",
+          "CHECK.001"
+        ],
+        "exportsTo": [],
+        "guardedBy": []
+      },
+      "epistemics": {
+        "claimClass": "claude_subagent",
+        "confidence": "high",
+        "sourceStatus": "derived_from_intent",
+        "assumptions": [],
+        "unknowns": []
+      },
+      "checkability": {
+        "class": "C3",
+        "explanation": "Deterministic predicate is possible.",
+        "candidates": []
+      },
+      "ui": {
+        "visibleBadges": [
+          "L5",
+          "C3",
+          "exportable"
+        ],
+        "graphSymbol": "λ ● ∴ κ ⇒",
+        "openPriority": "high"
+      },
+      "quality": {
+        "gateStatus": "passed",
+        "genericnessScore": "low",
+        "actionEnablementScore": "high"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "L2C.001",
+      "to": "DATA.001",
+      "type": "compiles_to",
+      "note": "nouns become the entity registry"
+    },
+    {
+      "from": "L2C.001",
+      "to": "DATA.003",
+      "type": "compiles_to"
+    },
+    {
+      "from": "L2C.007",
+      "to": "DATA.007",
+      "type": "compiles_to"
+    },
+    {
+      "from": "L2C.015",
+      "to": "DATA.006",
+      "type": "compiles_to"
+    },
+    {
+      "from": "L2C.016",
+      "to": "CHECK.001",
+      "type": "generalizes_to",
+      "note": "failure language became the overlap check"
+    },
+    {
+      "from": "DOMAIN.004",
+      "to": "DATA.003",
+      "type": "compiles_to"
+    },
+    {
+      "from": "DOMAIN.003",
+      "to": "DATA.004",
+      "type": "compiles_to"
+    },
+    {
+      "from": "DOMAIN.006",
+      "to": "DATA.005",
+      "type": "compiles_to"
+    },
+    {
+      "from": "DOMAIN.007",
+      "to": "DATA.006",
+      "type": "compiles_to"
+    },
+    {
+      "from": "DOMAIN.010",
+      "to": "DATA.007",
+      "type": "compiles_to"
+    },
+    {
+      "from": "CHECK.001",
+      "to": "WORKFLOW.005",
+      "type": "verified_by",
+      "note": "booking flow is guarded by no_double_booking"
+    },
+    {
+      "from": "CHECK.001",
+      "to": "DATA.006",
+      "type": "verified_by"
+    },
+    {
+      "from": "CHECK.002",
+      "to": "DATA.007",
+      "type": "verified_by"
+    },
+    {
+      "from": "CHECK.003",
+      "to": "DATA.006",
+      "type": "verified_by"
+    },
+    {
+      "from": "BLUEPRINT.006",
+      "to": "DATA.002",
+      "type": "depends_on"
+    },
+    {
+      "from": "BLUEPRINT.015",
+      "to": "CHECK.001",
+      "type": "depends_on",
+      "note": "acceptance includes no double-booking"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "CLAUDE.002",
+      "type": "exports_to"
+    },
+    {
+      "from": "L2C.013",
+      "to": "CLAUDE.003",
+      "type": "exports_to"
+    },
+    {
+      "from": "CHECK.001",
+      "to": "CLAUDE.008",
+      "type": "exports_to"
+    },
+    {
+      "from": "L2C.003",
+      "to": "ROOT.011",
+      "type": "guarded_by"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.001",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.002",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.003",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.004",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.005",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.006",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.007",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.008",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.009",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.010",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.011",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.012",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.013",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.014",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.015",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.007",
+      "to": "L2C.016",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.008",
+      "to": "CHECK.001",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.008",
+      "to": "CHECK.002",
+      "type": "contains"
+    },
+    {
+      "from": "ROOT.008",
+      "to": "CHECK.003",
+      "type": "contains"
+    }
+  ]
+}

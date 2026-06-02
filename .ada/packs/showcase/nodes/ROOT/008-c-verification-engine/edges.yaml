@@ -1,0 +1,12 @@
+-
+  from: "ROOT.008"
+  to: "CHECK.001"
+  type: "contains"
+-
+  from: "ROOT.008"
+  to: "CHECK.002"
+  type: "contains"
+-
+  from: "ROOT.008"
+  to: "CHECK.003"
+  type: "contains"

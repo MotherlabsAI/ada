@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+# Generated packs are inspectable artifacts; keep the showcase one tracked
+# but ignore ad-hoc local compiles:
+.ada/packs/tmp-*/

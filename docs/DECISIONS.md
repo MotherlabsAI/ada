@@ -1,0 +1,21 @@
+# DECISIONS — autonomous technical choices
+
+These are inferred from the spec and Motherlabs conventions, not asked of the user
+(per the working principle: infer technical choices from conceptual descriptions).
+Each is reversible; recorded here for provenance.
+
+| #   | Decision                                                        | Rationale                                                                                                                                                                                                                                                                                                                             |
+| --- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | **TypeScript, ESM, Node 22**                                    | Motherlabs convention (TS strict everywhere). Node 22 LTS present.                                                                                                                                                                                                                                                                    |
+| D2  | **Zero runtime dependencies**                                   | Spec values inspectable, portable artifacts (`A5`, `A6`). Only dev dep: `typescript` + `@types/node`. The whole tool builds with one install and runs with plain `node`. No supply-chain surface in P0.                                                                                                                               |
+| D3  | **Hand-rolled CLI arg router**                                  | ~6 subcommands. A dep (commander) would add weight for no real gain at P0 scope.                                                                                                                                                                                                                                                      |
+| D4  | **Minimal controlled YAML emitter**                             | We only serialize our own typed graph (scalars + arrays of flat objects). A general YAML lib is unnecessary; JSON is the source of truth, YAML is a config-readable mirror.                                                                                                                                                           |
+| D5  | **Readline-based TUI for P0**                                   | Spec wants a "serious workbench," but P0 only requires _navigation_ (open/flag/deeper/resume). Readline + ANSI colour grammar from the spec proves the skeleton with zero deps. Ink can replace it later without changing the pack contract.                                                                                          |
+| D6  | **`ada compile` is deterministic at the skeleton layer**        | The skeleton seeds the showcase graph from spec-derived data (fully provenance-traceable, not hallucinated). The LLM-driven intent→graph intelligence is a later layer that slots into the _same_ filesystem contract. This honours `A1`/`A2`: the mechanical, checkable parts ship now; the C0–C2 intelligence is gated behind Alex. |
+| D7  | **Showcase domain = AI-Native Service Business Command Center** | Per spec §15. Generates entities, workflows, schema, the 3 C checks, and the trust demo.                                                                                                                                                                                                                                              |
+
+## Target stack the _blueprint_ emits (for the executor, not for Ada itself)
+
+The compiled blueprint targets a conventional web stack so the A8 experiment is
+realistic: TypeScript + a Node API + a SQL database + a typed ORM. This is what
+Claude Code would build _from_ the pack; it is independent of D1–D5 (how Ada is built).
