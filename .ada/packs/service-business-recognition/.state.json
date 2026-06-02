@@ -1,0 +1,13 @@
+{
+  "flagged": [
+    "COPY.055",
+    "COPY.057",
+    "COPY.060",
+    "SEO.118",
+    "SEO.121",
+    "SEO.124",
+    "UNK.003"
+  ],
+  "rejected": [],
+  "lastNode": "UNK.003"
+}

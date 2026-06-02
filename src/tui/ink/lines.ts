@@ -87,38 +87,82 @@ export function breadcrumb(trail: string[]): string {
   return (trail.length > 4 ? "… ▸ " : "") + tail.join(" ▸ ");
 }
 
-/** The (already-filtered) node list as a windowable cluster→node tree. */
-export function graphLines(
+/** Colour = which area: each cluster gets its own stable colour from the palette. */
+const CLUSTER_PALETTE: Colour[] = [
+  "plum",
+  "terracotta",
+  "cyan",
+  "sage",
+  "amber",
+  "green",
+  "slate",
+  "clay",
+  "deep_blue",
+  "rose",
+];
+export function clusterColour(clusters: string[], cluster: string): Colour {
+  const i = clusters.indexOf(cluster);
+  return CLUSTER_PALETTE[(i < 0 ? 0 : i) % CLUSTER_PALETTE.length]!;
+}
+
+/** A selectable row in the folder-tree: a cluster header or a node under an open cluster. */
+export interface TreeRow extends Line {
+  kind: "cluster" | "node";
+  ref: string; // cluster name or node id
+}
+
+/**
+ * The graph as a folder-tree with connector lines. Areas (clusters) carry a filled
+ * dot in their own colour; open areas show their nodes with `├─ / └─` connectors and a
+ * hollow dot in the same colour. `selectedRef` (a cluster name or node id) is the cursor.
+ */
+export function graphTree(
   nodes: NodeCapsule[],
-  opts: { selectedId?: string; flagged: Set<string>; rejected?: Set<string> },
-): { lines: Line[]; selectedLine: number } {
+  opts: {
+    selectedRef?: string;
+    open: Set<string>;
+    flagged: Set<string>;
+    rejected?: Set<string>;
+  },
+): { rows: TreeRow[]; selectedLine: number } {
   const rejected = opts.rejected ?? new Set<string>();
   const clusters = [...new Set(nodes.map((n) => clusterOf(n.id)))];
-  const idW = Math.max(4, ...nodes.map((n) => n.id.length), 4) + 2;
-  const lines: Line[] = [];
+  const idW = Math.max(4, ...nodes.map((n) => n.id.length), 4) + 1;
+  const rows: TreeRow[] = [];
   let selectedLine = 0;
   for (const cluster of clusters) {
     const inCluster = nodes.filter((n) => clusterOf(n.id) === cluster);
-    lines.push({
-      text: `◆ ${cluster}  (${inCluster.length})`,
-      colour: "deep_blue",
+    const colour = clusterColour(clusters, cluster);
+    const isOpen = opts.open.has(cluster);
+    const sel = opts.selectedRef === cluster;
+    if (sel) selectedLine = rows.length;
+    rows.push({
+      kind: "cluster",
+      ref: cluster,
+      text: `${sel ? "›" : " "} ${isOpen ? "▾" : "▸"} ● ${cluster}  (${inCluster.length})`,
+      colour,
       bold: true,
     });
-    for (const n of inCluster) {
-      const sel = n.id === opts.selectedId;
-      if (sel) selectedLine = lines.length;
-      const mark = sel ? "›" : " ";
-      const flag = opts.flagged.has(n.id) ? " ⊙" : "";
-      const rej = rejected.has(n.id) ? " ✗" : "";
-      lines.push({
-        text: `${mark} ${n.glyph}  ${n.id.padEnd(idW)}${n.label}${flag}${rej}`,
-        colour: n.colour,
-        bold: sel,
-        dim: rejected.has(n.id),
+    if (isOpen) {
+      inCluster.forEach((n, i) => {
+        const last = i === inCluster.length - 1;
+        const nsel = opts.selectedRef === n.id;
+        if (nsel) selectedLine = rows.length;
+        const conn = last ? "└─" : "├─";
+        const flag = opts.flagged.has(n.id) ? " ⊙" : "";
+        const rej = rejected.has(n.id) ? " ✗" : "";
+        rows.push({
+          kind: "node",
+          ref: n.id,
+          text: `${nsel ? "›" : " "}  ${conn} ◦ ${n.id.padEnd(idW)}${n.label}${flag}${rej}`,
+          colour,
+          bold: nsel,
+          dim: rejected.has(n.id),
+        });
       });
     }
   }
-  return { lines, selectedLine };
+  return { rows, selectedLine };
 }
 
 export interface ReaderOpts {

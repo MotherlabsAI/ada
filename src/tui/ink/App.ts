@@ -1,9 +1,10 @@
 /**
- * App — the Ink workbench. Renders ONE pane at a time (graph OR reader), windowed to the
- * terminal viewport so output never exceeds the screen (Ink updates in place).
+ * App — the Ink workbench. A folder-tree of the schema graph: areas (clusters) open and
+ * close; opening a node fills the screen with its capsule. One pane at a time, windowed to
+ * the terminal so output never exceeds the screen (Ink updates in place).
  *
- * Graph mode:   type to filter · ↑/↓ move · ⏎ read · Tab flag · / cmd · Esc clear/quit
- * Reading mode: Tab cycle links · ⏎ follow · ⌫ back-stack · ↑/↓ scroll · b graph · q quit
+ * Tree:   ↑/↓ move · → open area · ← close · ⏎ open/read · space flag · x reject · / cmd · q quit
+ * Reader: Tab cycle links · ⏎ follow · ⌫ back · ↑/↓ scroll · b tree · q quit
  */
 import {
   createElement as h,
@@ -19,10 +20,9 @@ import { theme } from "./theme.js";
 import { StatusBar } from "./StatusBar.js";
 import { SlashLine, type Command } from "./SlashLine.js";
 import {
-  graphLines,
+  graphTree,
   readerLines,
   windowSlice,
-  matchNode,
   resolvableLinks,
   breadcrumb,
   type Line,
@@ -37,8 +37,6 @@ export interface AppProps {
   manifest?: PackManifest;
   onExport?: (slug: string) => void;
 }
-
-type Mode = "graph" | "reading";
 
 function statusCounts(graph: Graph, manifest?: PackManifest) {
   if (manifest) {
@@ -82,9 +80,13 @@ export function App(props: AppProps) {
   const cols = stdout?.columns ?? 80;
   const bodyHeight = Math.max(6, rows - 4);
 
-  const [filter, setFilter] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [mode, setMode] = useState<Mode>("graph");
+  const clusters = useMemo(
+    () => [...new Set(nodes.map((n) => clusterOf(n.id)))],
+    [nodes],
+  );
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const [cursor, setCursor] = useState<string>(clusters[0] ?? "");
+  const [reading, setReading] = useState<string | null>(null);
   const [scroll, setScroll] = useState(0);
   const [linkIndex, setLinkIndex] = useState(-1);
   const [backStack, setBackStack] = useState<string[]>([]);
@@ -101,39 +103,36 @@ export function App(props: AppProps) {
     [graph, props.manifest],
   );
 
-  const visible = useMemo(
-    () => (filter.trim() ? nodes.filter((n) => matchNode(n, filter)) : nodes),
-    [nodes, filter],
+  const tree = useMemo(
+    () => graphTree(nodes, { selectedRef: cursor, open, flagged, rejected }),
+    [nodes, cursor, open, flagged, rejected],
   );
-  const selIdx = Math.min(selectedIndex, Math.max(0, visible.length - 1));
-  const selected: NodeCapsule | undefined = visible[selIdx];
 
-  const graphData = useMemo(
-    () => graphLines(visible, { selectedId: selected?.id, flagged, rejected }),
-    [visible, selected?.id, flagged, rejected],
+  const readingNode: NodeCapsule | undefined = useMemo(
+    () => (reading ? nodes.find((n) => n.id === reading) : undefined),
+    [reading, nodes],
   );
   const links = useMemo(
-    () => (selected ? resolvableLinks(selected, graph) : []),
-    [selected, graph],
+    () => (readingNode ? resolvableLinks(readingNode, graph) : []),
+    [readingNode, graph],
   );
   const readerData = useMemo(
     () =>
-      selected
-        ? readerLines(selected, cols - 2, {
+      readingNode
+        ? readerLines(readingNode, cols - 2, {
             crumb: breadcrumb(backStack),
             links,
             linkIndex,
           })
         : [],
-    [selected, cols, backStack, links, linkIndex],
+    [readingNode, cols, backStack, links, linkIndex],
   );
   const maxScroll = Math.max(0, readerData.length - bodyHeight);
 
-  // Fresh node or mode → reset scroll + link highlight.
   useEffect(() => {
     setScroll(0);
     setLinkIndex(-1);
-  }, [mode, selected?.id]);
+  }, [reading]);
 
   const persist = useCallback(
     (f: Set<string>, r: Set<string>, last?: string) => {
@@ -145,33 +144,33 @@ export function App(props: AppProps) {
     },
     [props],
   );
+  // The node the action targets: the one being read, else the cursor (if it's a node).
+  const targetId =
+    reading ?? (nodes.some((n) => n.id === cursor) ? cursor : undefined);
   const flagCurrent = useCallback(() => {
-    if (!selected) return;
+    if (!targetId) return;
     setFlagged((prev) => {
-      const next = new Set(prev).add(selected.id);
-      persist(next, rejected, selected.id);
+      const next = new Set(prev).add(targetId);
+      persist(next, rejected, targetId);
       return next;
     });
-  }, [selected, rejected, persist]);
+  }, [targetId, rejected, persist]);
   const rejectCurrent = useCallback(() => {
-    if (!selected) return;
+    if (!targetId) return;
     setRejected((prev) => {
-      const next = new Set(prev).add(selected.id);
-      persist(flagged, next, selected.id);
+      const next = new Set(prev).add(targetId);
+      persist(flagged, next, targetId);
       return next;
     });
-  }, [selected, flagged, persist]);
+  }, [targetId, flagged, persist]);
 
   const openInReader = useCallback(
     (id: string) => {
-      const idx = nodes.findIndex((n) => n.id === id);
-      if (idx < 0) return;
-      setFilter("");
-      setSelectedIndex(idx);
-      setMode("reading");
-      setBackStack((s) =>
-        s.length && s[s.length - 1] === id ? s : [...s, id],
-      );
+      if (!nodes.some((n) => n.id === id)) return;
+      setOpen((prev) => new Set(prev).add(clusterOf(id)));
+      setCursor(id);
+      setReading(id);
+      setBackStack([id]);
     },
     [nodes],
   );
@@ -181,7 +180,7 @@ export function App(props: AppProps) {
       switch (c.cmd) {
         case "deeper":
         case "wiki":
-          openInReader(c.arg ?? selected?.id ?? "");
+          openInReader(c.arg ?? targetId ?? "");
           break;
         case "flag":
           flagCurrent();
@@ -189,11 +188,21 @@ export function App(props: AppProps) {
         case "reject":
           rejectCurrent();
           break;
-        case "search":
-          setFilter(c.arg ?? "");
-          setSelectedIndex(0);
-          setMode("graph");
+        case "search": {
+          const q = (c.arg ?? "").trim().toLowerCase();
+          if (q) {
+            const m = nodes.find((n) =>
+              `${n.id} ${n.label} ${n.localContext.summary}`
+                .toLowerCase()
+                .includes(q),
+            );
+            if (m) {
+              setOpen((prev) => new Set(prev).add(clusterOf(m.id)));
+              setCursor(m.id);
+            }
+          }
           break;
+        }
         case "export":
           props.onExport?.(props.slug);
           break;
@@ -205,7 +214,7 @@ export function App(props: AppProps) {
       }
       setCommandMode(false);
     },
-    [openInReader, selected, flagCurrent, rejectCurrent, props, app],
+    [openInReader, targetId, flagCurrent, rejectCurrent, nodes, props, app],
   );
 
   useInput((input, key) => {
@@ -214,7 +223,7 @@ export function App(props: AppProps) {
       return;
     }
 
-    if (mode === "reading") {
+    if (reading !== null) {
       if (key.tab) {
         if (links.length) setLinkIndex((i) => (i + 1) % links.length);
         return;
@@ -223,79 +232,82 @@ export function App(props: AppProps) {
         const t = linkIndex >= 0 ? links[linkIndex] : undefined;
         if (t) {
           setBackStack((s) => [...s, t.id]);
-          setFilter("");
-          setSelectedIndex(nodes.findIndex((n) => n.id === t.id));
+          setReading(t.id);
         }
         return;
       }
       if (key.backspace || key.delete) {
         if (backStack.length > 1) {
-          const prevId = backStack[backStack.length - 2]!;
-          const idx = nodes.findIndex((n) => n.id === prevId);
-          if (idx >= 0) {
-            setFilter("");
-            setSelectedIndex(idx);
-            setBackStack(backStack.slice(0, -1));
-          }
+          const prev = backStack[backStack.length - 2]!;
+          setBackStack(backStack.slice(0, -1));
+          setReading(prev);
+        } else {
+          setReading(null);
         }
         return;
       }
       if (key.downArrow) return setScroll((s) => Math.min(s + 1, maxScroll));
       if (key.upArrow) return setScroll((s) => Math.max(0, s - 1));
-      if (key.escape || input === "b") return setMode("graph");
+      if (key.escape || input === "b") return setReading(null);
       if (input === "q") return app.exit();
       return;
     }
 
-    // graph mode — type to filter
+    // folder-tree mode
     if (input === "/") return setCommandMode(true);
-    if (key.tab) return flagCurrent();
-    if (key.return) {
-      if (selected) {
-        setMode("reading");
-        setBackStack([selected.id]);
+    const treeRows = tree.rows;
+    const move = (d: number) => {
+      const i = treeRows.findIndex((r) => r.ref === cursor);
+      const next =
+        treeRows[
+          Math.max(0, Math.min(treeRows.length - 1, (i < 0 ? 0 : i) + d))
+        ];
+      if (next) setCursor(next.ref);
+    };
+    if (key.downArrow) return move(1);
+    if (key.upArrow) return move(-1);
+
+    const row = treeRows.find((r) => r.ref === cursor);
+    if (key.rightArrow || key.return) {
+      if (row?.kind === "cluster") {
+        setOpen((prev) => {
+          const s = new Set(prev);
+          if (key.return && s.has(cursor)) s.delete(cursor);
+          else s.add(cursor);
+          return s;
+        });
+      } else if (row?.kind === "node") {
+        setReading(cursor);
+        setBackStack([cursor]);
       }
       return;
     }
-    if (key.upArrow) return setSelectedIndex((i) => Math.max(0, i - 1));
-    if (key.downArrow)
-      return setSelectedIndex((i) => Math.min(visible.length - 1, i + 1));
-    if (key.backspace || key.delete) {
-      setFilter((f) => f.slice(0, -1));
-      setSelectedIndex(0);
+    if (key.leftArrow || key.backspace || key.delete) {
+      if (row?.kind === "cluster" && open.has(cursor)) {
+        setOpen((prev) => {
+          const s = new Set(prev);
+          s.delete(cursor);
+          return s;
+        });
+      } else if (row?.kind === "node") {
+        setCursor(clusterOf(cursor));
+      }
       return;
     }
-    if (key.escape) {
-      if (filter) {
-        setFilter("");
-        setSelectedIndex(0);
-      } else app.exit();
-      return;
-    }
-    if (input && input.length === 1 && !key.ctrl && !key.meta) {
-      setFilter((f) => f + input);
-      setSelectedIndex(0);
-    }
+    if (input === " ") return flagCurrent();
+    if (input === "x") return rejectCurrent();
+    if (input === "q" || key.escape) return app.exit();
   });
 
   let body: Line[];
   let hint: string;
-  if (mode === "reading") {
+  if (reading !== null && readingNode) {
     body = readerData.slice(scroll, scroll + bodyHeight);
     const more = maxScroll > 0 ? ` · ${scroll}/${maxScroll}` : "";
-    hint = `Tab cycle · ⏎ follow · ⌫ back · ↑/↓ scroll · b graph · q quit${more}`;
-  } else if (visible.length === 0) {
-    body = [{ text: `  no matches for "${filter}"`, dim: true }];
-    hint = "⌫ edit · Esc clear";
+    hint = `Tab cycle · ⏎ follow · ⌫ back · ↑/↓ scroll · b tree · q quit${more}`;
   } else {
-    body = windowSlice(
-      graphData.lines,
-      graphData.selectedLine,
-      bodyHeight,
-    ).slice;
-    hint = filter
-      ? `filter: ${filter}▌ · ↑/↓ move · ⏎ open · Tab flag · Esc clear`
-      : "type to filter · ↑/↓ move · ⏎ read · Tab flag · / cmd · Esc quit";
+    body = windowSlice(tree.rows, tree.selectedLine, bodyHeight).slice;
+    hint = "↑/↓ move · → open · ← close · ⏎ read · space flag · / cmd · q quit";
   }
 
   return h(

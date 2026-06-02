@@ -3,11 +3,12 @@ import assert from "node:assert/strict";
 import {
   wrap,
   windowSlice,
-  graphLines,
+  graphTree,
   matchNode,
   resolvableLinks,
   breadcrumb,
 } from "./lines.js";
+import { clusterOf } from "../../core/ids.js";
 import { fixtureGraph } from "./fixtures.js";
 
 test("wrap never exceeds width and never drops words", () => {
@@ -24,16 +25,35 @@ test("windowSlice keeps focus visible and never exceeds height", () => {
   assert.ok(80 >= start && 80 < start + 10, "focus must be inside the window");
 });
 
-test("graphLines marks the selected node's line", () => {
+test("graphTree: areas closed by default, open to reveal nodes with connectors", () => {
   const g = fixtureGraph();
-  const first = g.nodes[0]!;
-  const { lines, selectedLine } = graphLines(g.nodes, {
-    selectedId: first.id,
+  const cluster = clusterOf(g.nodes[0]!.id);
+
+  const closed = graphTree(g.nodes, {
+    selectedRef: cluster,
+    open: new Set(),
     flagged: new Set(),
   });
-  const line = lines[selectedLine]!;
-  assert.ok(line.text.includes(first.id));
-  assert.ok(line.text.startsWith("› "));
+  assert.ok(
+    closed.rows.some((r) => r.kind === "cluster" && r.ref === cluster),
+    "cluster header shows",
+  );
+  assert.ok(
+    !closed.rows.some((r) => r.kind === "node"),
+    "no nodes while closed",
+  );
+
+  const opened = graphTree(g.nodes, {
+    selectedRef: cluster,
+    open: new Set([cluster]),
+    flagged: new Set(),
+  });
+  const nodeRows = opened.rows.filter((r) => r.kind === "node");
+  assert.ok(nodeRows.length > 0, "nodes appear when open");
+  assert.ok(
+    nodeRows.some((r) => /├─|└─/.test(r.text)),
+    "connector lines present",
+  );
 });
 
 test("matchNode: substring over id/label/summary; empty query matches all", () => {
