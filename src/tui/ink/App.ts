@@ -1,32 +1,26 @@
 /**
- * App — the Ink workbench. Owns navigation + flag/reject state and persists it
- * back to the pack's `.state.json` (via `onPersist`). The TUI is a projection:
- * it never mutates the pack, only the user-state file.
+ * App — the Ink workbench. Renders ONE pane at a time (graph OR reader), windowed to
+ * the terminal viewport so total output never exceeds the screen — which is what lets
+ * Ink update in place instead of stacking frames on a small terminal.
  *
  * Key bindings:
- *   ↑/↓     move selection (flat node order)
- *   enter   open the selected node in the reader (reading mode)
- *   space   flag the selected node
- *   x       reject the selected node
- *   b/esc   back to graph mode
- *   g       jump to the first flagged node
- *
- * Slash commands route through SlashLine.onCommand:
- *   deeper [id]  open the reader (id optional → current selection)
- *   flag/reject  same as space/x
- *   search <q>   select the first matching node
- *   export       fire onExport (cli shells `ada export`)
- *   quit         exit Ink
+ *   graph mode:   ↑/↓ move · ⏎ read · space flag · x reject · g flagged · / cmd · q quit
+ *   reading mode: ↑/↓ scroll · b/esc back · q quit
  */
-import { createElement as h, useState, useMemo, useCallback } from "react";
-import { Box, Text, useApp, useInput } from "ink";
+import {
+  createElement as h,
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
+import { Box, Text, useApp, useInput, useStdout } from "ink";
 import type { Graph, NodeCapsule, PackManifest } from "../../core/types.js";
 import { clusterOf } from "../../core/ids.js";
 import { theme } from "./theme.js";
 import { StatusBar } from "./StatusBar.js";
-import { GraphPanel } from "./GraphPanel.js";
-import { NodeReader } from "./NodeReader.js";
 import { SlashLine, type Command } from "./SlashLine.js";
+import { graphLines, readerLines, windowSlice, type Line } from "./lines.js";
 import type { PackState } from "./usePack.js";
 
 export interface AppProps {
@@ -34,9 +28,7 @@ export interface AppProps {
   graph: Graph;
   initialState: PackState;
   onPersist: (state: PackState) => void;
-  /** Optional, for accurate status counts; falls back to graph-derived values. */
   manifest?: PackManifest;
-  /** Optional side-effects wired by the CLI (kept out of the pure App core). */
   onExport?: (slug: string) => void;
 }
 
@@ -51,23 +43,43 @@ function statusCounts(graph: Graph, manifest?: PackManifest) {
       clusters: manifest.clusters.length,
     };
   }
-  const nodes = graph.nodes.length;
-  const checks = graph.nodes.filter(
-    (n) => n.checkability.candidates.length > 0,
-  ).length;
-  const residue = graph.nodes.filter((n) => n.truth === "residue").length;
-  const clusters = new Set(graph.nodes.map((n) => clusterOf(n.id))).size;
-  return { nodes, checks, residue, clusters };
+  return {
+    nodes: graph.nodes.length,
+    checks: graph.nodes.filter((n) => n.checkability.candidates.length > 0)
+      .length,
+    residue: graph.nodes.filter((n) => n.truth === "residue").length,
+    clusters: new Set(graph.nodes.map((n) => clusterOf(n.id))).size,
+  };
+}
+
+function renderLine(l: Line, key: number) {
+  return h(
+    Text,
+    {
+      key,
+      color: l.colour ? theme[l.colour] : undefined,
+      bold: l.bold,
+      dimColor: l.dim,
+      wrap: "truncate-end",
+    },
+    l.text === "" ? " " : l.text,
+  );
 }
 
 export function App(props: AppProps) {
   const { graph } = props;
   const app = useApp();
+  const { stdout } = useStdout();
   const nodes = graph.nodes;
+
+  const rows = stdout?.rows ?? 24;
+  const cols = stdout?.columns ?? 80;
+  // status(1) + hint(1) + slashline(1) + safety(1)
+  const bodyHeight = Math.max(6, rows - 4);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mode, setMode] = useState<Mode>("graph");
-  // When true, keystrokes compose a slash command instead of driving navigation.
+  const [scroll, setScroll] = useState(0);
   const [commandMode, setCommandMode] = useState(false);
   const [flagged, setFlagged] = useState<Set<string>>(
     new Set(props.initialState.flagged),
@@ -80,8 +92,20 @@ export function App(props: AppProps) {
     () => statusCounts(graph, props.manifest),
     [graph, props.manifest],
   );
-
   const selected: NodeCapsule | undefined = nodes[selectedIndex];
+
+  const graphData = useMemo(
+    () => graphLines(graph, { selectedId: selected?.id, flagged, rejected }),
+    [graph, selected?.id, flagged, rejected],
+  );
+  const readerData = useMemo(
+    () => (selected ? readerLines(selected, cols - 2) : []),
+    [selected, cols],
+  );
+  const maxScroll = Math.max(0, readerData.length - bodyHeight);
+
+  // Reset reader scroll whenever the reader opens or the node changes.
+  useEffect(() => setScroll(0), [mode, selected?.id]);
 
   const persist = useCallback(
     (f: Set<string>, r: Set<string>, last?: string) => {
@@ -97,8 +121,7 @@ export function App(props: AppProps) {
   const flagCurrent = useCallback(() => {
     if (!selected) return;
     setFlagged((prev) => {
-      const next = new Set(prev);
-      next.add(selected.id);
+      const next = new Set(prev).add(selected.id);
       persist(next, rejected, selected.id);
       return next;
     });
@@ -107,8 +130,7 @@ export function App(props: AppProps) {
   const rejectCurrent = useCallback(() => {
     if (!selected) return;
     setRejected((prev) => {
-      const next = new Set(prev);
-      next.add(selected.id);
+      const next = new Set(prev).add(selected.id);
       persist(flagged, next, selected.id);
       return next;
     });
@@ -152,83 +174,60 @@ export function App(props: AppProps) {
           props.onExport?.(props.slug);
           break;
         case "branch":
-          // Reserved for the branch-creation flow (deferred slice).
-          break;
+          break; // reserved
         case "quit":
           app.exit();
           break;
       }
-      // A dispatched command always returns control to navigation.
       setCommandMode(false);
     },
     [nodes, flagCurrent, rejectCurrent, props, app],
   );
 
   useInput((input, key) => {
-    // While composing a command, SlashLine owns the keystrokes — App only
-    // listens for Esc to abort back to navigation.
     if (commandMode) {
       if (key.escape) setCommandMode(false);
       return;
     }
-    if (input === "/") {
-      setCommandMode(true);
+    if (input === "/") return setCommandMode(true);
+    if (input === "q") return app.exit();
+
+    if (mode === "reading") {
+      if (key.downArrow) return setScroll((s) => Math.min(s + 1, maxScroll));
+      if (key.upArrow) return setScroll((s) => Math.max(0, s - 1));
+      if (key.escape || input === "b") return setMode("graph");
       return;
     }
-    if (key.downArrow) {
-      setSelectedIndex((i) => Math.min(i + 1, nodes.length - 1));
-      return;
-    }
-    if (key.upArrow) {
-      setSelectedIndex((i) => Math.max(i - 1, 0));
-      return;
-    }
-    if (key.return) {
-      setMode("reading");
-      return;
-    }
-    if (key.escape) {
-      setMode("graph");
-      return;
-    }
-    if (input === " ") {
-      flagCurrent();
-      return;
-    }
-    if (input === "x") {
-      rejectCurrent();
-      return;
-    }
-    if (input === "b") {
-      setMode("graph");
-      return;
-    }
+    // graph mode
+    if (key.downArrow)
+      return setSelectedIndex((i) => Math.min(i + 1, nodes.length - 1));
+    if (key.upArrow) return setSelectedIndex((i) => Math.max(i - 1, 0));
+    if (key.return) return setMode("reading");
+    if (input === " ") return flagCurrent();
+    if (input === "x") return rejectCurrent();
     if (input === "g") {
-      const firstFlagged = nodes.findIndex((n) => flagged.has(n.id));
-      if (firstFlagged >= 0) setSelectedIndex(firstFlagged);
-      return;
-    }
-    if (input === "q") {
-      app.exit();
+      const f = nodes.findIndex((n) => flagged.has(n.id));
+      if (f >= 0) setSelectedIndex(f);
       return;
     }
   });
 
-  const right =
-    mode === "reading" && selected
-      ? h(NodeReader, { node: selected })
-      : h(
-          Box,
-          { flexDirection: "column" },
-          h(Text, { color: theme.ink }, "  select a node and press ⏎ to read"),
-          selected
-            ? h(
-                Text,
-                { color: theme.ink },
-                `  ⟡ ${selected.localContext.summary}`,
-              )
-            : null,
-        );
+  // Build the bounded body for the active pane.
+  let body: Line[];
+  let hint: string;
+  if (mode === "reading") {
+    body = readerData.slice(scroll, scroll + bodyHeight);
+    const more = maxScroll > 0 ? `  (${scroll}/${maxScroll} ↑/↓ scroll)` : "";
+    hint = `b back · q quit${more}`;
+  } else {
+    body = windowSlice(
+      graphData.lines,
+      graphData.selectedLine,
+      bodyHeight,
+    ).slice;
+    hint =
+      "↑/↓ move · ⏎ read · space flag · x reject · g flagged · / cmd · q quit";
+  }
 
   return h(
     Box,
@@ -236,19 +235,11 @@ export function App(props: AppProps) {
     h(StatusBar, { slug: props.slug, ...counts }),
     h(
       Box,
-      { flexDirection: "row" },
-      h(
-        Box,
-        { flexDirection: "column", marginRight: 2 },
-        h(GraphPanel, {
-          graph,
-          selectedId: selected?.id,
-          flagged,
-          rejected,
-        }),
-      ),
-      h(Box, { flexDirection: "column" }, right),
+      { flexDirection: "column" },
+      ...body.map((l, i) => renderLine(l, i)),
     ),
-    h(SlashLine, { onCommand, active: commandMode }),
+    commandMode
+      ? h(SlashLine, { onCommand, active: true })
+      : h(Text, { color: theme.ink }, hint),
   );
 }
