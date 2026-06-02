@@ -3,7 +3,13 @@
 const BANNED = [
   /\bquality you can trust\b/i,
   /\bbest practices\b/i,
-  /\bleverage(s|d|ing)?\b/i,
+  // Buzzword VERB forms of "leverage" only. The noun (as in "high-leverage",
+  // "highest-leverage decision") is legitimate domain language; the filler is the
+  // verb ("leveraging best practices", "leverage our synergies").
+  /\bleverages\b/i,
+  /\bleveraged\b/i,
+  /\bleveraging\b/i,
+  /(?<![-\w])leverage\s+(?:the|a|an|our|your|its|their|on)\b/i,
   /\bworld[- ]class\b/i,
   /\bseamless(ly)?\b/i,
   /\bcutting[- ]edge\b/i,
@@ -13,8 +19,19 @@ const BANNED = [
   /\bis (very )?important\b/i,
 ];
 
+/**
+ * Quoted spans are the node CITING an example (often an anti-pattern it is
+ * teaching against, e.g. "...not 'Quality You Can Trust Since 1998'"), not the
+ * author asserting filler. Strip double-quoted material before linting so a good
+ * node that names a banned slogan as a negative example is not itself rejected.
+ */
+function stripQuoted(text: string): string {
+  return text.replace(/"[^"]*"/g, " ");
+}
+
 export function hasBannedGenericPhrase(text: string): boolean {
-  return BANNED.some((re) => re.test(text));
+  const authorial = stripQuoted(text);
+  return BANNED.some((re) => re.test(authorial));
 }
 
 /** Counts concrete specificity signals: numbers/units, named mechanisms, proper-ish nouns. */
