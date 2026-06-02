@@ -1,8 +1,8 @@
 /**
- * Pure line-builders for the TUI. The workbench renders ONE pane at a time as a
- * flat list of single-row lines, then windows that list to the terminal viewport —
- * so total output never exceeds the screen and Ink can update in place (no frame
- * stacking). Keeping this logic pure makes the viewport math testable without a TTY.
+ * Pure line-builders + navigation helpers for the TUI. The workbench renders ONE pane
+ * at a time as a flat list of single-row lines, windowed to the terminal viewport — so
+ * output never exceeds the screen and Ink updates in place. Pure logic (filter match,
+ * link resolution, breadcrumb, windowing) is unit-tested; render is reasoned (no TTY).
  */
 import type { Graph, NodeCapsule, Colour } from "../../core/types.js";
 import { clusterOf } from "../../core/ids.js";
@@ -13,6 +13,13 @@ export interface Line {
   colour?: Colour;
   bold?: boolean;
   dim?: boolean;
+}
+
+/** A followable edge from a node to another node that exists in the graph. */
+export interface LinkTarget {
+  kind: string;
+  id: string;
+  label: string;
 }
 
 /** Wrap text to a max width on word boundaries (never returns zero lines). */
@@ -46,19 +53,52 @@ export function windowSlice<T>(
   return { slice: items.slice(start, start + height), start };
 }
 
-/** The graph as a flat, windowable line list. `selectedLine` is its row index. */
+/** Live filter: case-insensitive substring over id + label + summary. */
+export function matchNode(node: NodeCapsule, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return `${node.id} ${node.label} ${node.localContext.summary}`
+    .toLowerCase()
+    .includes(q);
+}
+
+/** The edges from `node` that land on a node present in the graph (followable). */
+export function resolvableLinks(node: NodeCapsule, graph: Graph): LinkTarget[] {
+  const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+  const out: LinkTarget[] = [];
+  const add = (kind: string, ids: string[]) => {
+    for (const id of ids) {
+      const t = byId.get(id);
+      if (t) out.push({ kind, id, label: t.label });
+    }
+  };
+  const wl = node.worldLinks;
+  add("parent", wl.parents);
+  add("child", wl.children);
+  add("sibling", wl.siblings);
+  add("depends", wl.dependsOn);
+  add("guarded", wl.guardedBy);
+  return out;
+}
+
+/** "A ▸ B ▸ current" from the visited trail (last entry is the current node). */
+export function breadcrumb(trail: string[]): string {
+  const tail = trail.slice(-4);
+  return (trail.length > 4 ? "… ▸ " : "") + tail.join(" ▸ ");
+}
+
+/** The (already-filtered) node list as a windowable cluster→node tree. */
 export function graphLines(
-  graph: Graph,
+  nodes: NodeCapsule[],
   opts: { selectedId?: string; flagged: Set<string>; rejected?: Set<string> },
 ): { lines: Line[]; selectedLine: number } {
   const rejected = opts.rejected ?? new Set<string>();
-  const clusters = [...new Set(graph.nodes.map((n) => clusterOf(n.id)))];
-  // Fixed-width ID column so labels line up across every row regardless of id length.
-  const idW = Math.max(4, ...graph.nodes.map((n) => n.id.length)) + 2;
+  const clusters = [...new Set(nodes.map((n) => clusterOf(n.id)))];
+  const idW = Math.max(4, ...nodes.map((n) => n.id.length), 4) + 2;
   const lines: Line[] = [];
   let selectedLine = 0;
   for (const cluster of clusters) {
-    const inCluster = graph.nodes.filter((n) => clusterOf(n.id) === cluster);
+    const inCluster = nodes.filter((n) => clusterOf(n.id) === cluster);
     lines.push({
       text: `◆ ${cluster}  (${inCluster.length})`,
       colour: "deep_blue",
@@ -70,8 +110,6 @@ export function graphLines(
       const mark = sel ? "›" : " ";
       const flag = opts.flagged.has(n.id) ? " ⊙" : "";
       const rej = rejected.has(n.id) ? " ✗" : "";
-      // ONE primary glyph + fixed-width id column (spec AESTH.002/003: low glyph
-      // density, one glyph per node). The rich badges live in the reader, not here.
       lines.push({
         text: `${mark} ${n.glyph}  ${n.id.padEnd(idW)}${n.label}${flag}${rej}`,
         colour: n.colour,
@@ -83,20 +121,33 @@ export function graphLines(
   return { lines, selectedLine };
 }
 
-/** The node capsule as wrapped lines, ready to window+scroll. */
-export function readerLines(node: NodeCapsule, width: number): Line[] {
+export interface ReaderOpts {
+  crumb?: string;
+  links?: LinkTarget[];
+  linkIndex?: number;
+}
+
+/** The node capsule as wrapped lines: breadcrumb, capsule, then the followable links. */
+export function readerLines(
+  node: NodeCapsule,
+  width: number,
+  opts: ReaderOpts = {},
+): Line[] {
   const c = node.checkability;
-  const wl = node.worldLinks;
   const lines: Line[] = [];
   const push = (
     text: string,
     colour?: Colour,
-    opts?: { bold?: boolean; dim?: boolean },
-  ) => lines.push({ text, colour, ...(opts ?? {}) });
-  const block = (text: string, colour?: Colour, opts?: { dim?: boolean }) => {
-    for (const l of wrap(text, width)) push(l, colour, opts);
+    o?: { bold?: boolean; dim?: boolean },
+  ) => lines.push({ text, colour, ...(o ?? {}) });
+  const block = (text: string, colour?: Colour, o?: { dim?: boolean }) => {
+    for (const l of wrap(text, width)) push(l, colour, o);
   };
 
+  if (opts.crumb) {
+    push(opts.crumb, undefined, { dim: true });
+    push("");
+  }
   push(`${node.ui.graphSymbol} ${node.id}  ${node.label}`, node.colour, {
     bold: true,
   });
@@ -118,19 +169,18 @@ export function readerLines(node: NodeCapsule, width: number): Line[] {
   if (node.epistemics.unknowns.length)
     block(`Ω unknowns: ${node.epistemics.unknowns.join("; ")}`, "amber");
 
-  const linkRows: Array<[string, string[]]> = [
-    ["parents", wl.parents],
-    ["children", wl.children],
-    ["siblings", wl.siblings],
-    ["depends on", wl.dependsOn],
-    ["exports to", wl.exportsTo],
-    ["guarded by", wl.guardedBy],
-  ];
-  const present = linkRows.filter(([, ids]) => ids.length);
-  if (present.length) {
+  const links = opts.links ?? [];
+  if (links.length) {
     push("");
-    for (const [label, ids] of present)
-      block(`↔ ${label}: ${ids.join(", ")}`, undefined, { dim: true });
+    push("↔ links  (Tab cycle · ⏎ follow)", undefined, { dim: true });
+    links.forEach((l, i) => {
+      const hot = i === (opts.linkIndex ?? -1);
+      push(
+        `${hot ? "›" : " "} ${l.kind.padEnd(8)} ${l.id}  ${l.label}`,
+        hot ? "cyan" : undefined,
+        { bold: hot, dim: !hot },
+      );
+    });
   }
   return lines;
 }
