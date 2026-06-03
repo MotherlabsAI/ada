@@ -5,3 +5,6 @@ dist/
 # Generated packs are inspectable artifacts; keep the showcase one tracked
 # but ignore ad-hoc local compiles:
 .ada/packs/tmp-*/
+
+# scratch / preview artifacts
+._*
