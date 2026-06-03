@@ -22,7 +22,7 @@ Default: a quantitative claim is **unverified** unless traced to a primary sourc
 
 |                  |            |
 | ---------------- | ---------- |
-| Drops ingested   | 4          |
+| Drops ingested   | 5          |
 | Frozen decisions | 0          |
 | Open questions   | 6          |
 | Last updated     | 2026-06-02 |
@@ -351,3 +351,65 @@ nothing (**✅**); defeasible = an A3 caution, not a breakage (**✅**); self-ev
 domain, numbers = noise (**✅**). **The one thing I'd have missed solo:** the **authority-confusion /
 provenance-laundering** risk (4-d) — ingested spec text masquerading as an Ada-authored hard rule. Sharp,
 non-obvious, and genuinely the compiler's. The critic surfaced it; I'd not have.
+
+---
+
+## Drop 5 — "Harness architecture + product/M&A strategy" (1 doc)
+
+**Source.** Alex-supplied research consolidating the harness (execution/governance/feedback), the
+elicitation engine, AEO/marketing, DACL, and the M&A thesis.
+
+**Method — filtered SOLO (no workflow), deliberately.** ~85% of this drop is a **recap of Drops 1–4** and
+was already adjudicated. Spending a 4-agent workflow on already-decided content would be ritual, not
+rigor. I scanned for genuinely new signal, verified the one codebase-relevant claim, and recorded only
+the delta. (If the recap ratio keeps rising, that's a signal the research is converging — see below.)
+
+### Verified codebase facts (corroborates prior steals)
+
+- **`openPriority` (high/medium/low) exists on every node**, and **`rubric.ts scoreNode` already scores
+  nodes 0–6** (`impress`/`pass`/`reject`). So **Steal 4-a (the dilution budget) is buildable on signals
+  that already exist** — top-K can rank by `rubric total × openPriority`. Good news for that build.
+
+### Steal — the one genuinely new item
+
+- **3-a.4 · Kano-model prioritization** (a new pathway for the U2F engine). Classify each surfaced
+  requirement as a **must-have** (basic expectation; severe rejection if missing) vs a **delighter**
+  (drives adoption). It's a compile-time signal that maps directly onto the existing `openPriority` field
+  **and feeds 4-a** (must-haves rank above delighters in the salience budget). Zero-dep, compile-time,
+  on-thesis. Folds into the OQ-6 engine build.
+
+### Reinforces (not new — strengthens existing items)
+
+- **`ctx init` branching interview (20–100 Qs, path-skipping)** = more detail on the bounded Socratic
+  interview (3-a.3). **Progressive disclosure / "map up front, AST on demand"** = the load-on-demand
+  structure 4-a already implies. **"Productize elicitation; don't launch into code-gen"** = confirms Ada's
+  pre-code positioning.
+
+### Adjacent (thin)
+
+- **BoW / Rules F1 metrics** for grading extraction accuracy — a possible measurement methodology for
+  **A8** (proving a pack is "measurably better"). Worth remembering when we build A8 evidence; not a build
+  item now.
+
+### Quarantine — repeats of already-out-of-scope items
+
+- 5-layer harness, OpenShell/Kubernetes/seccomp/Landlock sandbox, Context-Mode + SQLite/FTS5
+  virtualization, PreCompact/Session-Guide continuity, the Hashimoto PostToolUse loop, DACL runtime VM,
+  AEO/@graph/SDR — **all already filed executor / infra / domain** (Drops 1–4). No change.
+- **All numbers** (77.5%, 98–100%, >95%, "30 min → 3 hr", 56.2KB→299B) — fabricated.
+
+### Sharp catch — the M&A "intent flywheel" contradicts Ada's own sovereignty pitch
+
+The M&A thesis (Driver 2) says the real prize is **harvesting the user's elicitation telemetry as a
+training corpus** for the acquiring lab. That **directly contradicts** the same research's data-sovereignty
+selling point (local SLMs, "raw requirements analyzed inside a local sandbox", "complete data
+sovereignty"). The doc sells _privacy_ to the user and _the user's intent-data_ to the acquirer — those
+can't both be true. For a founder this is a **values fork, not a feature**: Ada's local-first posture and a
+telemetry-harvest exit are opposed. Recorded as a conflict to be aware of; **not** a build item, and not a
+reason to instrument the compiler to phone home.
+
+### Note on method (no prediction to score)
+
+No workflow ran, so there's no blind prediction to grade. The honest discipline here was the _opposite_ of
+the last four drops: recognizing when the marginal value of the multi-agent filter had dropped to zero and
+saying so, rather than running it for appearances.
