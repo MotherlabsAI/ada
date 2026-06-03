@@ -22,9 +22,9 @@ Default: a quantitative claim is **unverified** unless traced to a primary sourc
 
 |                  |            |
 | ---------------- | ---------- |
-| Drops ingested   | 2          |
+| Drops ingested   | 3          |
 | Frozen decisions | 0          |
-| Open questions   | 4          |
+| Open questions   | 5          |
 | Last updated     | 2026-06-02 |
 
 ---
@@ -50,6 +50,11 @@ _Empty. Nothing has graduated yet._
   - hook emission **into** scope now, or keep them post-P0? → see Steal 2-c / 2-e.
 - **OQ-5.** Adopt the **single typed-IR blueprint** (Steal 2-a) as the canonical form the other
   emitters derive from? This is the big one — it replaces today's hardcoded-prose blueprint.
+- **OQ-6.** Build the **generic U2F excavation engine** (Steal 3-a) — the model-at-compile-time
+  layer that DRIVES the existing `excavator.md`/`anti-generic-critic.md` prompts to _produce_ the
+  graph + unknown-unknowns, instead of `showcase.ts` hand-authoring them? This is **the product
+  bet itself**, and `showcase.ts`'s own header (DECISION D6) marks it as the planned next layer.
+  Note: 2-a (typed IR) and 3-a (the engine that fills it) are the same build, two halves.
 
 ---
 
@@ -186,3 +191,71 @@ Before the run I wrote: _substrate + harness land out of scope_ (**✅ correct**
 will be small."_ **That second half was wrong.** Steal 2-a (the typed IR) is a **homerun, not small** —
 because it patches a real existing defect (the blueprint is hardcoded prose, not graph-derived). I take
 the correction rather than defend the prediction.
+
+---
+
+## Drop 3 — "U2F unknown-unknowns engine + the success pyramid" (1 doc)
+
+**Source.** Alex-supplied research on surfacing **unknown-unknowns** (U2F: Unknown-Unknowns to
+Functional solutions) and a 4-layer definition of success.
+
+**Method.** 3 classifiers + 1 adversarial critic (`wf_6139e5c5`), tuned to guard **over-acceptance**
+(this drop describes Ada's own heartland, so it's tempting to wave things through as "already built").
+Every codebase claim verified by hand first.
+
+### Verified codebase facts (ground truth — checked)
+
+- The unknown-unknowns **data model exists** (`unknowns` field, `residue` truth-class, UNK cluster, a
+  `recompiles` edge), the **gate exists** (`rubric.ts` `scoreNode`), and the **prompts exist**
+  (`prompts/excavator.md`, `anti-generic-critic.md`) — but **no engine drives them.**
+- **`showcase.ts`'s header documents this as intentional:** _"a DETERMINISTIC seed (DECISION D6)…
+  not model-generated. The LLM-driven intent→graph layer slots into this same contract later, behind
+  the human gate (A2/A4)."_ So the engine is a **deliberately-deferred layer**, not an oversight.
+- **No** analogical / reverse-thinking / Socratic logic, and **no** PostToolUse / drift / feedback
+  loop, exist anywhere in `src/`.
+
+### Steal — verified, in-scope, on-thesis
+
+- **3-a · The generic U2F excavation engine (the product bet, made buildable).** A compile-time,
+  single-invocation, zero-dep module that drives the existing prompts against a seed and emits **scored
+  NodeSpecs** (incl. `residue`/UNK) through the `rubric.ts` gate into the existing contract — replacing
+  the hand-authored `showcase.ts` capsules. Model **at compile time only** (A1); output traces to intent
+  or lands as honest residue (A2); runs-and-exits. **This is the same build as 2-a** (the typed IR is the
+  contract; the engine is what fills it). → OQ-6.
+  - **3-a.1 · Cross-domain analogical reasoning** — a prompt pathway that surfaces non-obvious nodes by
+    transfer from unrelated domains. Distinct from 2-f (debate _adjudicates_; analogy _generates_).
+  - **3-a.2 · Reverse-thinking-from-failure** — back-chain from failure/attack states to missing
+    constraints; lands in the existing `failureIfMissing` field. Pure compile-time reasoning — **not** a
+    runtime scanner.
+  - **3-a.3 · Bounded Socratic elicitation** — a **finite** branching ink-TUI interview _before_ pack
+    assembly that captures the user's implicit expectations into the seed, then **exits.** The critic
+    overruled a classifier who wanted to quarantine this: it's a steal **with a hard turn-cap** (finite,
+    write-to-seed, exit; never a session/chat server). It's the richest source of _user-side_ unknowns —
+    and it dovetails with the CLI/TUI work already in flight.
+
+### Bank — confirmed already built (no new work)
+
+- **Q · the "UUs Playbook" = the wiki.** Filesystem-backed, git-committable Markdown that binds the
+  downstream agent — already Ada's emitter layer (`pack/writer.ts`, `pack/wiki.ts`, `export/claude.ts`).
+  Only its _content source_ (the 3-a engine) is the gap.
+- **T-L3 (verification rigor) = the C subsystem** (`src/c/run.ts`, pure predicate, A3). **T-L4
+  (referential transparency) = axioms A1/A2/A3 + the typed graph.** Both already shipped supporting infra
+  — explicitly _not_ the product bet. Don't mislabel them as new.
+
+### Noise / Out of scope — quarantined
+
+- **R · drift capture (the costume trap).** Sounds like our heartland ("turn a lesson into a reusable
+  constraint"), but the load-bearing verb is **runtime**: a PostToolUse loop intercepting live tool-call
+  failures and mutating the graph online = the executor layer (A6). Ada may _emit_ a static PostToolUse
+  hook file; it must **never host the loop.** Keep the `recompiles` edge a **human-initiated** re-compile,
+  never a live-trace channel.
+- **S · dual-benefit framing** and **T (the pyramid)** as a whole — a positioning lens, not a build.
+- **T-L2 numbers** ("98% savings", "315KB→5.4KB") — fabricated; the measurable-improvement _principle_ is
+  already A8. **T-L1's C4/Mermaid** is already Drop-2 Steal 2-d — don't re-bank.
+
+### Pre-registered prediction vs. outcome (honesty check)
+
+I predicted: P/P1–P3 = the real steal, unbuilt (**✅**); R = executor (**✅**); S + T = framing (**✅**).
+**Right this time.** The one thing I'd have gotten wrong solo: I'd have quarantined the Socratic
+interview as too runtime-y — the critic correctly kept it as a steal _with a turn-cap_. Scored honestly:
+the discipline is the score, not the streak.
