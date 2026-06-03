@@ -7,9 +7,12 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { excavateNode } from "./excavate.js";
+import { pathToFileURL } from "node:url";
+import { excavateNode, resolvePromptDir } from "./excavate.js";
 import type { ModelClient } from "./model.js";
 import type { Seed } from "../../core/types.js";
 
@@ -117,6 +120,56 @@ test("the gate is real: a generic candidate is rejected, not kept", async () => 
   const r = await excavateNode(seed(), "ATT", stub(GENERIC_JSON));
   assert.equal(r.rejected, true);
   assert.equal(r.node, null);
+});
+
+test("resolvePromptDir resolves relative to the MODULE, not process.cwd() — finds excavator.md", () => {
+  const dir = resolvePromptDir();
+  assert.ok(
+    existsSync(join(dir, "excavator.md")),
+    `excavator.md not found under resolved prompt dir: ${dir}`,
+  );
+});
+
+test("the prompt path does NOT depend on the current working directory (runnable anywhere)", () => {
+  // Resolve from the same module url while pretending the process is in an unrelated cwd.
+  // The result must be byte-identical, proving cwd plays no part in resolution.
+  const moduleUrl = import.meta.url;
+  const real = resolvePromptDir(moduleUrl);
+  const saved = process.cwd();
+  try {
+    process.chdir(tmpdir());
+    const fromElsewhere = resolvePromptDir(moduleUrl);
+    assert.equal(fromElsewhere, real);
+    assert.ok(existsSync(join(fromElsewhere, "excavator.md")));
+  } finally {
+    process.chdir(saved);
+  }
+});
+
+test("resolvePromptDir works for an ARBITRARY module url passed explicitly (not the test's own)", () => {
+  // The engine's own compiled module, addressed by url — same answer regardless of caller cwd.
+  const engineModule = pathToFileURL(
+    join(process.cwd(), "dist/compile/engine/excavate.js"),
+  ).href;
+  const dir = resolvePromptDir(engineModule);
+  assert.ok(
+    existsSync(join(dir, "excavator.md")),
+    `excavator.md not found for engine module url: ${dir}`,
+  );
+});
+
+test("the built CLI runs from an unrelated cwd (loads modules without depending on cwd)", () => {
+  // `ada --help` imports the whole CLI graph (incl. the engine) and prints help. Running it
+  // from a temp dir proves nothing in the import path reaches for process.cwd() to find
+  // prompts/assets. This is the spawn-level proof of cwd-independence.
+  const cli = join(process.cwd(), "dist/cli.js");
+  if (!existsSync(cli)) return; // dist not built in this run; the unit tests above suffice.
+  const out = execFileSync(process.execPath, [cli, "--help"], {
+    cwd: tmpdir(),
+    encoding: "utf8",
+  });
+  assert.ok(out.includes("ada"), "expected help output to mention ada");
+  assert.ok(out.includes("compile"), "expected help output to list compile");
 });
 
 test("no model/network token lives outside model.ts (A1/A3 boundary is structural)", () => {

@@ -8,19 +8,38 @@
  * node with extracting one, and proves the product bet (quality of extracted semantics)
  * on the smallest surface — one node clearing the same gate the calibration exemplars clear.
  */
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Seed, CheckClass, Depth, TruthClass } from "../../core/types.js";
 import type { NodeSpec } from "../assemble.js";
 import { scoreNode, type RubricScore } from "../rubric.js";
 import type { ModelClient } from "./model.js";
 
-// The versioned excavator prompt lives in source. Read from the repo at compile time;
-// bundling prompts for distribution is a later concern, not this slice.
-const PROMPT_DIR = join(process.cwd(), "src", "compile", "prompts");
+/**
+ * Resolve the versioned-prompt directory RELATIVE TO THIS MODULE — never `process.cwd()`,
+ * so the built CLI works from ANY working directory (forkable/runnable). The built layout
+ * is `dist/compile/engine/excavate.js` with prompts copied to `dist/compile/prompts/`
+ * (see scripts/copy-prompts.mjs, wired into `pnpm build`). From this module that is the
+ * sibling `../prompts`. When running un-built (e.g. `node --test` against `dist/` before the
+ * copy step, or any layout where the sibling dir is absent) we fall back to the canonical
+ * source tree, located by walking up to the repo root. Zero deps: node:url + node:path only.
+ */
+export function resolvePromptDir(moduleUrl: string = import.meta.url): string {
+  const here = dirname(fileURLToPath(moduleUrl));
+  // Primary: prompts copied alongside the build, sibling to engine/ (dist or src layout).
+  const sibling = join(here, "..", "prompts");
+  if (existsSync(join(sibling, "excavator.md"))) return sibling;
+  // Fallback: the canonical source tree. `here` is .../<root>/{dist|src}/compile/engine,
+  // so the source prompts live at <root>/src/compile/prompts.
+  const fromSource = join(here, "..", "..", "..", "src", "compile", "prompts");
+  if (existsSync(join(fromSource, "excavator.md"))) return fromSource;
+  // Last resort: return the sibling path so the failure names the expected build location.
+  return sibling;
+}
 
 function loadExcavator(): string {
-  return readFileSync(join(PROMPT_DIR, "excavator.md"), "utf8");
+  return readFileSync(join(resolvePromptDir(), "excavator.md"), "utf8");
 }
 
 export interface ExcavateResult {

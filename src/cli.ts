@@ -54,12 +54,53 @@ function parseFlags(args: string[]): {
   return { positional, flags };
 }
 
+/**
+ * Cost-control options for the engine compile path. Threaded into `excavatePack`
+ * (`perCluster` caps nodes/cluster → caps model calls) and `anthropicClient` (`model`).
+ * Kept as a separate pure shape so the flag→options mapping is testable without a live call.
+ */
+export interface EngineOptions {
+  /** Target kept nodes per cluster; undefined → engine default. Always a positive integer. */
+  perCluster?: number;
+  /** Model id override; undefined → anthropicClient falls back to ADA_MODEL, then default. */
+  model?: string;
+}
+
+/**
+ * Pure flag→options mapping for `ada compile --engine`. No model call, no I/O — so it can be
+ * asserted directly in tests.
+ *   --depth=N    → { perCluster: N }, only when N parses to a positive integer; junk ignored.
+ *   --model=<id> → { model: <id> }, only when a non-empty string; bare `--model` is ignored.
+ * Precedence for the model is enforced downstream (flag > ADA_MODEL env > built-in default):
+ * we only emit `model` when the flag carries a real value, leaving the env/default path intact.
+ */
+export function buildEngineOptions(
+  flags: Record<string, string | boolean>,
+): EngineOptions {
+  const opts: EngineOptions = {};
+  const depthRaw = flags["depth"];
+  if (typeof depthRaw === "string") {
+    const trimmed = depthRaw.trim();
+    // Positive integer only (no leading zeros, no sign, no decimals, no junk).
+    if (/^[1-9][0-9]*$/.test(trimmed)) {
+      opts.perCluster = Number(trimmed);
+    }
+  }
+  const modelRaw = flags["model"];
+  if (typeof modelRaw === "string" && modelRaw.trim()) {
+    opts.model = modelRaw.trim();
+  }
+  return opts;
+}
+
 const HELP = [
   bold("ada") + dim(" — semantic context compiler (Ada by Motherlabs)"),
   "",
   "  ada init                          scaffold .ada/ here",
   '  ada compile "<intent>" [--slug=x] compile intent into a pack',
-  '  ada compile --engine "<intent>"  compile via the U2F engine (real model call)',
+  '  ada compile --engine "<intent>" [--depth=N] [--model=<id>]',
+  "                                    compile via the U2F engine (real model call);",
+  "                                    --depth caps nodes/cluster (cost), --model picks the model",
   "  ada open [slug] [nodeId]          navigate the pack",
   "  ada tui [slug]                    launch the Ink workbench (TTY)",
   "  ada deeper <slug> <nodeId>        full wiki article for a node",
@@ -143,7 +184,7 @@ async function cmdCompile(args: string[]): Promise<void> {
   await mkdir(packsRoot(cwd), { recursive: true });
 
   if (useEngine) {
-    await compileWithEngine(slug, intent);
+    await compileWithEngine(slug, intent, buildEngineOptions(flags));
     return;
   }
 
@@ -186,11 +227,23 @@ async function cmdCompile(args: string[]): Promise<void> {
  * The live network call lives solely in `anthropicClient()` (engine/model.ts); the key is
  * read from ANTHROPIC_API_KEY there and never logged/hardcoded.
  */
-async function compileWithEngine(slug: string, intent: string): Promise<void> {
+async function compileWithEngine(
+  slug: string,
+  intent: string,
+  options: EngineOptions = {},
+): Promise<void> {
+  // --depth caps kept nodes/cluster (≈ caps model calls → caps cost); --model picks the
+  // model (flag > ADA_MODEL env > built-in default, enforced by anthropicClient reading env
+  // only when no `model` is passed). Both default cleanly when the flag is absent/junk.
+  const depthOpts = options.perCluster
+    ? { perCluster: options.perCluster }
+    : {};
+  const clientOpts = options.model ? { model: options.model } : {};
   const { kept, rejected } = await excavatePack(
     engineSeed(intent),
     DEFAULT_ENGINE_CLUSTERS,
-    anthropicClient(),
+    anthropicClient(clientOpts),
+    depthOpts,
   );
   if (kept.length === 0) {
     throw new Error(
