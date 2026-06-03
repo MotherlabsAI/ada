@@ -40,6 +40,17 @@ You cannot dogfood an engine that does not exist. So:
 ## State
 
 - **frozen-v2 ratified** (2026-06-03): A3 D1/D2, A1/A2 D3, A7 amended (any knowledge), new A9.
-- **Now:** building the **first slice** — one impressive, provenance-traced node from a real
-  non-booking intent through the model-free rubric gate.
-- **Next gate → Alex:** the first impressive node (his C0–C2 taste call).
+- **Done (on `main`, suite 50/50):** first-slice engine spine (`engine/excavate.ts`); P0 (emitters
+  DERIVE from the typed IR, Seed de-hardcoded, 4-d provenance guard); P1 wiring (the live model
+  boundary `engine/model.ts` + pack orchestration `engine/orchestrate.ts` + `ada compile --engine`).
+- **ARMED → the real-node taste gate.** From the repo root:
+  ```bash
+  pnpm build
+  export ANTHROPIC_API_KEY=sk-ant-...        # your key; read from env only, never stored
+  node dist/cli.js compile --engine "<your intent>"
+  node dist/cli.js open <slug> <nodeId>      # or: node dist/cli.js tui <slug>
+  ```
+  Default model `claude-opus-4-8` (set `ADA_MODEL=claude-sonnet-4-6` for cheaper runs).
+  **Caveat:** the live Anthropic request shape is built from docs + unit-tested with a stub, but no
+  live call has run yet — the first real compile is the first live call; expect a possible fix pass.
+- **Next → Alex:** drop a key, run one real compile, judge the first node (his C0–C2 taste call).
