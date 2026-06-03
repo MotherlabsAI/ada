@@ -34,7 +34,10 @@ export interface AnthropicOptions {
 const ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
 // The dated Messages API version header (stable contract, not a secret).
 const ANTHROPIC_VERSION = "2023-06-01";
-const DEFAULT_MODEL = "claude-sonnet-4-5-20250929";
+// Default to the most capable current Claude — the "first node must impress" bet (A8)
+// rides on excavation quality. Override with ADA_MODEL (e.g. claude-sonnet-4-6) for
+// faster/cheaper runs.
+const DEFAULT_MODEL = "claude-opus-4-8";
 const DEFAULT_MAX_TOKENS = 4096;
 
 /** Narrow shape of the bits of the Messages response we read. */
