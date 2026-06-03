@@ -40,17 +40,20 @@ You cannot dogfood an engine that does not exist. So:
 ## State
 
 - **frozen-v2 ratified** (2026-06-03): A3 D1/D2, A1/A2 D3, A7 amended (any knowledge), new A9.
-- **Done (on `main`, suite 50/50):** first-slice engine spine (`engine/excavate.ts`); P0 (emitters
-  DERIVE from the typed IR, Seed de-hardcoded, 4-d provenance guard); P1 wiring (the live model
-  boundary `engine/model.ts` + pack orchestration `engine/orchestrate.ts` + `ada compile --engine`).
-- **ARMED → the real-node taste gate.** From the repo root:
+- **Mechanical spine COMPLETE on `main`, suite 89/89:** engine spine (`engine/excavate.ts`) · P0
+  derive-from-IR (Seed de-hardcoded, 4-d provenance) · P1 live wiring (`engine/model.ts`,
+  `engine/orchestrate.ts`, `ada compile --engine`) · depth (many nodes/cluster, global dedup) · P3
+  guardrails (salience budget + model-free density C, defeasible edge, compaction shape) · P5 Obsidian
+  `[[wikilinks]]` portability · P6 runnable-from-any-cwd + `--depth`/`--model`.
+- **Real compiles work, from any directory** (after `pnpm build`):
   ```bash
-  pnpm build
-  export ANTHROPIC_API_KEY=sk-ant-...        # your key; read from env only, never stored
-  node dist/cli.js compile --engine "<your intent>"
-  node dist/cli.js open <slug> <nodeId>      # or: node dist/cli.js tui <slug>
+  ANTHROPIC_API_KEY=sk-ant-... node <repo>/dist/cli.js compile --engine "<intent>" [--depth=N] [--model=…]
+  node <repo>/dist/cli.js tui <slug>     # explore the pack; or open it as an Obsidian vault
   ```
-  Default model `claude-opus-4-8` (set `ADA_MODEL=claude-sonnet-4-6` for cheaper runs).
-  **Caveat:** the live Anthropic request shape is built from docs + unit-tested with a stub, but no
-  live call has run yet — the first real compile is the first live call; expect a possible fix pass.
-- **Next → Alex:** drop a key, run one real compile, judge the first node (his C0–C2 taste call).
+  Default model `claude-opus-4-8`; `--depth`/`--model` (or `ADA_MODEL`) control cost. Verified live:
+  the `ada-website` intent → a 21-node, deduped, gate-verified, Obsidian-openable pack.
+- **In progress (autonomous, non-taste):** domain-adaptive clustering (derive areas from the intent,
+  not the fixed marketing set — the unlock for "compile any knowledge") → A8 experiment harness →
+  self-dogfood (Ada-on-Ada).
+- **PARKED for Alex (C0–C2 taste):** P2 `ctx init` interview _feel_ (picture-questions ready) · P4
+  editable graph playground · the **A8 verdict** (does the pack make Claude Code measurably better).
