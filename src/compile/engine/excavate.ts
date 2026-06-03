@@ -34,8 +34,13 @@ export interface ExcavateResult {
   rejected: boolean;
 }
 
-function buildPrompt(seed: Seed, cluster: string, template: string): string {
-  return [
+function buildPrompt(
+  seed: Seed,
+  cluster: string,
+  template: string,
+  avoid: string[],
+): string {
+  const lines = [
     template,
     "",
     "## SEED",
@@ -43,13 +48,23 @@ function buildPrompt(seed: Seed, cluster: string, template: string): string {
     `domain: ${seed.domain}`,
     `objective: ${seed.buildObjective}`,
     `cluster to excavate: ${cluster}`,
+  ];
+  if (avoid.length) {
+    lines.push(
+      "",
+      "## ALREADY EXCAVATED — do NOT repeat or restate these; surface a DIFFERENT, non-overlapping capsule (a distinct mechanism, not the same insight from another angle):",
+      ...avoid.map((l) => `- ${l}`),
+    );
+  }
+  lines.push(
     "",
     "## OUTPUT",
     "Return exactly ONE NodeSpec as strict JSON (no prose, no code fences) with keys:",
     "id, label, cluster, depth, summary, whyItMatters, failureIfMissing,",
     "fromPrompt (string[]), compilesTo (string[]), checkClass, cCandidates (string[]),",
     "unknowns (string[]), truth, parents (string[]).",
-  ].join("\n");
+  );
+  return lines.join("\n");
 }
 
 function arr(v: unknown): string[] {
@@ -92,8 +107,9 @@ export async function excavateNode(
   seed: Seed,
   cluster: string,
   model: ModelClient,
+  avoid: string[] = [],
 ): Promise<ExcavateResult> {
-  const prompt = buildPrompt(seed, cluster, loadExcavator());
+  const prompt = buildPrompt(seed, cluster, loadExcavator(), avoid);
   const raw = await model.complete(prompt); // the ONE model call (A1/A9)
   const spec = parseNodeSpec(raw);
   const score = scoreNode(spec);

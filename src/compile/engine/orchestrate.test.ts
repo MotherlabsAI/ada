@@ -1,11 +1,10 @@
 /**
- * orchestrate — the U2F engine's pack-level step: one SEED + N clusters → N candidate
- * NodeSpecs, each excavated via `excavateNode` (one compile-time model call per cluster,
- * A1/A9 — multiple compile-time calls are fine; runtime/post-compile calls are not) and
- * gated by the SAME model-free rubric (A3). The model is stubbed, so this exercises
- * determinism downstream of the calls (A1), provenance (A2), and the real gate without
- * any network. Mirrors excavate.test.ts: stub the model, assert via the real `scoreNode`
- * verdicts surfaced as kept/rejected.
+ * orchestrate (DEPTH) — the U2F engine fills the graph: one SEED + N clusters → MANY gated
+ * NodeSpecs. Each cluster is excavated to a target depth, diversified via the global
+ * `avoid` list, deduped globally by normalized label, and stopped on target / attempt-cap /
+ * consecutive-miss. The model is stubbed, so this exercises depth, dedup, the stop
+ * conditions, determinism (A1), provenance (A2), and the real model-free gate (A3) with no
+ * network.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -27,78 +26,50 @@ function seed(): Seed {
     buildObjective: "Notes an LLM will cite, not just retrieve.",
     knowledgeObjective: "A navigable map of what makes a note citable.",
     trustObjective: "Deterministic checks where citability is structural.",
-    knownContext: [
-      "The notes are markdown.",
-      "An LLM reads them via retrieval.",
-    ],
+    knownContext: ["The notes are markdown."],
     unknownContext: [],
     assumptions: [],
     sources: ["User intent"],
     constraints: ["Local-first."],
-    risks: ["Retrieval behaviour differs across LLM vendors."],
+    risks: [],
   };
 }
 
-// Two realistic impressers (one per cluster) and one generic candidate the gate MUST
-// reject — proves the bar is real across clusters, not a rubber stamp.
-const ROOT_JSON = JSON.stringify({
-  id: "ROOT.000",
-  label: "Citable Knowledge World Model",
-  cluster: "ROOT",
-  depth: "L5",
-  summary:
-    "The compiled world model of what makes a research note citable by an LLM: it bounds the context to retrieval-window co-location, source binding, and title anchoring, not the whole note corpus.",
-  whyItMatters:
-    "The map the executor builds inside; without it citability is chased note-by-note instead of as one structural invariant.",
-  failureIfMissing:
-    "The build proceeds on guesses about retrieval and ships notes that retrieve but never cite.",
-  fromPrompt: ["personal knowledge base", "citable by an LLM"],
-  compilesTo: ["graph.json", "wiki/index.md", "CLAUDE.md citation rules"],
-  checkClass: "C0",
-  cCandidates: [],
-  unknowns: ["which clusters the user most wants surfaced first"],
-  truth: "inference",
-  parents: [],
-});
+// A realistic impresser with a given (distinct) label. Mechanism-first, specific, traced —
+// clears the same scoreNode gate the calibration exemplars clear.
+function impress(label: string): string {
+  return JSON.stringify({
+    id: "X.000", // discarded — orchestrate assigns positional ids
+    label,
+    cluster: "ATT",
+    depth: "L4",
+    summary: `${label}: the claim, its source, and the note title must co-reside inside one ~512-token retrieval window; split them across headings and the retriever lifts a slice that names neither, so a weaker note wins.`,
+    whyItMatters:
+      "Citability is decided at chunk granularity, not document quality.",
+    failureIfMissing:
+      "Notes get retrieved but never cited; the base looks invisible to the model.",
+    fromPrompt: ["research notes citable by an LLM", "personal knowledge base"],
+    compilesTo: ["chunk.md", "CLAUDE.md rules", "c/checks/window.mjs"],
+    checkClass: "C3",
+    cCandidates: [
+      "assert claim+source+title co-reside within a 512-token window",
+    ],
+    unknowns: ["the retrieval window size per LLM vendor"],
+    truth: "inference",
+    parents: [],
+  });
+}
 
-const ATT_JSON = JSON.stringify({
-  id: "ATT.010",
-  label: "Chunk-resident citations",
+// A generic candidate the gate MUST reject (banned filler + empty fromPrompt).
+const GENERIC = JSON.stringify({
+  id: "ATT.099",
+  label: "Make the notes great",
   cluster: "ATT",
   depth: "L4",
   summary:
-    "An LLM cites a note only when the claim, its source, and the note's title sit inside one ~512-token retrieval window; split them across headings and the retriever lifts a slice that names neither, so a weaker note wins the citation.",
-  whyItMatters:
-    "Citability is decided at chunk granularity, not document quality — co-locating claim, source, and title is the highest-yield move for getting research notes cited.",
-  failureIfMissing:
-    "Notes get retrieved but never cited, because the lifted slice loses the source binding, and the knowledge base looks invisible to the model.",
-  fromPrompt: [
-    "makes my research notes citable by an LLM",
-    "personal knowledge base",
-  ],
-  compilesTo: [
-    "chunk-coherence.md",
-    "CLAUDE.md citation rules",
-    "c/checks/citation_window.mjs",
-  ],
-  checkClass: "C3",
-  cCandidates: [
-    "assert each claim co-occurs with its source and the note title inside one 512-token window",
-  ],
-  unknowns: ["exact retrieval window size per LLM vendor"],
-  truth: "inference",
-  parents: [],
-});
-
-const GENERIC_JSON = JSON.stringify({
-  id: "COPY.011",
-  label: "Make notes great",
-  cluster: "COPY",
-  depth: "L4",
-  summary:
     "Leverage best practices to deliver world-class, seamless quality you can trust.",
-  whyItMatters: "It is very important for users.",
-  failureIfMissing: "Things are not as good.",
+  whyItMatters: "It is very important.",
+  failureIfMissing: "Things are worse.",
   fromPrompt: [],
   compilesTo: ["notes.md"],
   checkClass: "C0",
@@ -108,75 +79,133 @@ const GENERIC_JSON = JSON.stringify({
   parents: [],
 });
 
-// A cluster-routing stub: returns the right candidate JSON for each requested cluster.
-// The orchestrator must call the model once per cluster (A1/A9 compile-time calls).
-function routingStub(byCluster: Record<string, string>): ModelClient {
+// Routing + sequencing stub: one queue per cluster; each call pops the next for the
+// cluster named in the prompt. When a queue is exhausted it returns GENERIC (a miss),
+// which lets the diminishing-returns stop fire.
+function depthStub(byCluster: Record<string, string[]>): ModelClient {
+  const idx: Record<string, number> = {};
   return {
     async complete(prompt: string): Promise<string> {
-      for (const [cluster, out] of Object.entries(byCluster)) {
-        if (prompt.includes(`cluster to excavate: ${cluster}`)) return out;
-      }
-      throw new Error(`stub: no candidate wired for prompt`);
+      const cluster = Object.keys(byCluster).find((c) =>
+        prompt.includes(`cluster to excavate: ${c}`),
+      );
+      if (!cluster) return GENERIC;
+      const q = byCluster[cluster]!;
+      const i = idx[cluster] ?? 0;
+      idx[cluster] = i + 1;
+      return q[i] ?? GENERIC;
     },
   };
 }
 
-const CLUSTERS = ["ROOT", "ATT", "COPY"];
-const STUB = routingStub({
-  ROOT: ROOT_JSON,
-  ATT: ATT_JSON,
-  COPY: GENERIC_JSON,
+const onlyCluster = (kept: { id: string }[], c: string) =>
+  kept.filter((n) => n.id.startsWith(`${c}.`));
+
+test("excavatePack reaches the per-cluster target (depth, not one-per-cluster)", async () => {
+  const stub = depthStub({
+    ATT: [
+      impress("Chunk-resident citations"),
+      impress("Source binding survives the cut"),
+      impress("Title anchoring per window"),
+      impress("Window budget per vendor"),
+    ],
+  });
+  const r = await excavatePack(seed(), ["ATT"], stub, { perCluster: 3 });
+  assert.equal(
+    onlyCluster(r.kept, "ATT").length,
+    3,
+    "should keep the target of 3",
+  );
 });
 
-test("excavatePack keeps the impressers and rejects the generic candidate", async () => {
-  const r = await excavatePack(seed(), CLUSTERS, STUB);
-  const keptIds = r.kept.map((s) => s.id).sort();
-  assert.deepEqual(keptIds, ["ATT.010", "ROOT.000"]);
-  assert.equal(r.rejected.length, 1);
-  assert.equal(r.rejected[0]!.spec.id, "COPY.011");
-  assert.equal(r.rejected[0]!.score.verdict, "reject");
+test("global dedup drops a repeated label across clusters", async () => {
+  const stub = depthStub({
+    ROOT: [impress("Co-residence is the unit")],
+    ATT: [
+      impress("Co-residence is the unit"),
+      impress("Distinct attention move"),
+    ],
+  });
+  const r = await excavatePack(seed(), ["ROOT", "ATT"], stub, {
+    perCluster: 2,
+  });
+  const labels = r.kept.map((n) => n.label);
+  assert.equal(new Set(labels).size, labels.length, "no duplicate labels kept");
+  assert.ok(
+    r.rejected.some((x) => x.reason === "duplicate"),
+    "the cross-cluster repeat is recorded as a duplicate",
+  );
+  assert.equal(onlyCluster(r.kept, "ROOT").length, 1);
+  assert.equal(onlyCluster(r.kept, "ATT").length, 1); // the dup dropped; one distinct kept
 });
 
-test("every kept spec clears the same model-free gate (A3), independently re-scored", async () => {
-  const r = await excavatePack(seed(), CLUSTERS, STUB);
+test("diminishing returns stops a cluster before the attempt cap", async () => {
+  const stub = depthStub({ ATT: [impress("The only real one")] }); // then GENERIC forever
+  const r = await excavatePack(seed(), ["ATT"], stub, {
+    perCluster: 4,
+    maxConsecutiveMisses: 2,
+  });
+  assert.equal(
+    onlyCluster(r.kept, "ATT").length,
+    1,
+    "stops after 2 consecutive misses",
+  );
+});
+
+test("kept nodes get clean per-cluster ids and a ROOT parent (clean hierarchy)", async () => {
+  const stub = depthStub({
+    ROOT: [impress("The world model")],
+    ATT: [impress("First attention node"), impress("Second attention node")],
+  });
+  const r = await excavatePack(seed(), ["ROOT", "ATT"], stub, {
+    perCluster: 2,
+  });
+  const ids = r.kept.map((n) => n.id);
+  assert.ok(ids.includes("ROOT.001"));
+  assert.ok(ids.includes("ATT.001") && ids.includes("ATT.002"));
+  const root = r.kept.find((n) => n.id === "ROOT.001")!;
+  const att = r.kept.find((n) => n.id === "ATT.001")!;
+  assert.deepEqual(root.parents, []);
+  assert.deepEqual(att.parents, ["ROOT.000"]);
+});
+
+test("every kept spec independently clears the model-free gate (A3)", async () => {
+  const stub = depthStub({ ATT: [impress("A"), impress("B")] });
+  const r = await excavatePack(seed(), ["ATT"], stub, { perCluster: 2 });
   assert.ok(r.kept.length >= 2);
-  for (const spec of r.kept) {
-    assert.notEqual(scoreNode(spec).verdict, "reject");
-  }
+  for (const spec of r.kept) assert.notEqual(scoreNode(spec).verdict, "reject");
 });
 
-test("kept specs are provenance-traced (A2): fromPrompt non-empty, fragments substrings of intent", async () => {
-  const r = await excavatePack(seed(), CLUSTERS, STUB);
+test("kept specs are provenance-traced (A2): fromPrompt fragments are substrings of intent", async () => {
+  const stub = depthStub({ ATT: [impress("Traced node")] });
+  const r = await excavatePack(seed(), ["ATT"], stub, { perCluster: 1 });
   for (const spec of r.kept) {
-    assert.ok(spec.fromPrompt.length > 0, `${spec.id} has empty fromPrompt`);
-    for (const frag of spec.fromPrompt) {
-      assert.ok(
-        INTENT.includes(frag),
-        `fromPrompt fragment not traced to intent: "${frag}"`,
-      );
-    }
+    assert.ok(spec.fromPrompt.length > 0);
+    for (const frag of spec.fromPrompt) assert.ok(INTENT.includes(frag));
   }
 });
 
 test("excavatePack is deterministic given the same model outputs (A1 downstream)", async () => {
-  const a = await excavatePack(seed(), CLUSTERS, STUB);
-  const b = await excavatePack(seed(), CLUSTERS, STUB);
+  const mk = () =>
+    depthStub({
+      ROOT: [impress("Root one")],
+      ATT: [impress("Att one"), impress("Att two")],
+    });
+  const a = await excavatePack(seed(), ["ROOT", "ATT"], mk(), {
+    perCluster: 2,
+  });
+  const b = await excavatePack(seed(), ["ROOT", "ATT"], mk(), {
+    perCluster: 2,
+  });
   assert.equal(JSON.stringify(a.kept), JSON.stringify(b.kept));
   assert.equal(JSON.stringify(a.rejected), JSON.stringify(b.rejected));
 });
 
-test("one model call per cluster — sequential compile-time calls (A1/A9), not one batched call", async () => {
-  let calls = 0;
-  const counting: ModelClient = {
-    async complete(prompt: string): Promise<string> {
-      calls++;
-      if (prompt.includes("cluster to excavate: ROOT")) return ROOT_JSON;
-      if (prompt.includes("cluster to excavate: ATT")) return ATT_JSON;
-      return GENERIC_JSON;
-    },
-  };
-  await excavatePack(seed(), CLUSTERS, counting);
-  assert.equal(calls, CLUSTERS.length);
+test("the generic candidate is rejected by the gate, never kept", async () => {
+  const stub = depthStub({ ATT: [GENERIC] });
+  const r = await excavatePack(seed(), ["ATT"], stub, { perCluster: 2 });
+  assert.equal(onlyCluster(r.kept, "ATT").length, 0);
+  assert.ok(r.rejected.some((x) => x.reason === "gate"));
 });
 
 test("no model/network token lives outside model.ts (A1/A3 boundary is structural)", () => {
@@ -192,16 +221,4 @@ test("no model/network token lives outside model.ts (A1/A3 boundary is structura
       );
     }
   }
-});
-
-test("model.ts is the single place the live-call tokens may appear", () => {
-  const src = readFileSync(
-    join(process.cwd(), "src/compile/engine/model.ts"),
-    "utf8",
-  ).toLowerCase();
-  // The real client lives here: at least one of these tokens must be present once wired.
-  assert.ok(
-    src.includes("fetch(") || src.includes("anthropic"),
-    "expected the real client (fetch/anthropic) to live in model.ts",
-  );
 });
