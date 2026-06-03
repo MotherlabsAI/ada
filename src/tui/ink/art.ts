@@ -52,8 +52,24 @@ export const MASCOTS: Record<string, string[]> = {
   eye: ["╭─────╮", "│  ◉  │", "╰─────╯"],
 };
 
-export const DEFAULT_MASCOT = "owl";
+export const DEFAULT_MASCOT = "eye";
+
+/** The eye with its lid shut — the blink frame. Same 7×3 footprint as the open eye. */
+const EYE_BLINK: string[] = ["╭─────╮", "│  ═  │", "╰─────╯"];
 
 export function mascot(name?: string): string[] {
   return MASCOTS[name ?? DEFAULT_MASCOT] ?? MASCOTS[DEFAULT_MASCOT]!;
+}
+
+/**
+ * A single animation frame for the mascot. The eye blinks (◉ → ═) when `blink` is
+ * true; every other mascot is static, so this collapses to `mascot()` for them.
+ */
+export function mascotFrame(
+  name: string | undefined,
+  blink: boolean,
+): string[] {
+  const key = name ?? DEFAULT_MASCOT;
+  if (key === "eye" && blink) return EYE_BLINK;
+  return MASCOTS[key] ?? MASCOTS[DEFAULT_MASCOT]!;
 }
