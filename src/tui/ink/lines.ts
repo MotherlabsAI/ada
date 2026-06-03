@@ -6,15 +6,36 @@
  */
 import type { Graph, NodeCapsule, Colour } from "../../core/types.js";
 import { clusterOf } from "../../core/ids.js";
-import { TRUTH_GLYPH, CHECK_LABEL } from "../../core/grammar.js";
+import { TRUTH_GLYPH, CHECK_LABEL, COLOUR_HEX } from "../../core/grammar.js";
 
-export interface Line {
+/** A coloured span within a row (so colour can land on just the dot/name, not the whole row). */
+export interface Seg {
   text: string;
   colour?: Colour;
   bold?: boolean;
   dim?: boolean;
-  /** The cursor row — rendered as a highlight bar so it's unmissable. */
-  selected?: boolean;
+}
+
+export interface Line {
+  /** Concatenated text — used for tests + the single-colour fallback. */
+  text: string;
+  colour?: Colour;
+  bold?: boolean;
+  dim?: boolean;
+  /** Multi-colour spans; when present, the renderer draws these instead of `text`. */
+  segments?: Seg[];
+  /** Background hex for the cursor row → a dark area-tinted bar (no full inverse). */
+  bgHex?: string;
+}
+
+/** Darken a hex colour toward black by `f` (0..1) — for the cursor's area-tinted bar. */
+export function darken(hex: string, f: number): string {
+  const m = hex.replace("#", "");
+  const r = Math.round(parseInt(m.slice(0, 2), 16) * f);
+  const g = Math.round(parseInt(m.slice(2, 4), 16) * f);
+  const b = Math.round(parseInt(m.slice(4, 6), 16) * f);
+  const hx = (n: number) => n.toString(16).padStart(2, "0");
+  return `#${hx(r)}${hx(g)}${hx(b)}`;
 }
 
 /** A followable edge from a node to another node that exists in the graph. */
@@ -144,44 +165,82 @@ export function graphTree(
     open: Set<string>;
     flagged: Set<string>;
     rejected?: Set<string>;
+    width?: number;
   },
 ): { rows: TreeRow[]; selectedLine: number } {
   const rejected = opts.rejected ?? new Set<string>();
+  const width = opts.width ?? 80;
   const clusters = [...new Set(nodes.map((n) => clusterOf(n.id)))];
   const idW = Math.max(4, ...nodes.map((n) => n.id.length), 4) + 1;
   const rows: TreeRow[] = [];
   let selectedLine = 0;
+
+  // Compose a row from coloured spans. `text` is the concatenation (tests + fallback);
+  // the cursor row gets a dark area-tinted bar (bgHex), padded to width so it spans.
+  const makeRow = (
+    kind: "cluster" | "node",
+    ref: string,
+    segs: Seg[],
+    sel: boolean,
+    areaHex: string,
+  ): TreeRow => {
+    let text = segs.map((s) => s.text).join("");
+    const segments = [...segs];
+    if (sel) {
+      const pad = Math.max(0, width - text.length);
+      if (pad > 0) {
+        segments.push({ text: " ".repeat(pad) });
+        text += " ".repeat(pad);
+      }
+    }
+    return {
+      kind,
+      ref,
+      text,
+      segments,
+      ...(sel ? { bgHex: darken(areaHex, 0.28) } : {}),
+    };
+  };
+
   for (const cluster of clusters) {
     const inCluster = nodes.filter((n) => clusterOf(n.id) === cluster);
     const colour = clusterColour(clusters, cluster);
+    const areaHex = COLOUR_HEX[colour];
     const isOpen = opts.open.has(cluster);
     const sel = opts.selectedRef === cluster;
     if (sel) selectedLine = rows.length;
-    rows.push({
-      kind: "cluster",
-      ref: cluster,
-      text: `${sel ? "❯" : " "} ${isOpen ? "▾" : "▸"} ● ${clusterLabel(cluster)}  (${inCluster.length})`,
-      colour,
-      bold: true,
-      selected: sel,
-    });
+    rows.push(
+      makeRow(
+        "cluster",
+        cluster,
+        [
+          { text: sel ? "❯ " : "  ", bold: true },
+          { text: isOpen ? "▾ " : "▸ ", dim: true },
+          { text: "● ", colour },
+          { text: clusterLabel(cluster), colour, bold: true },
+          { text: `  (${inCluster.length})`, dim: true },
+        ],
+        sel,
+        areaHex,
+      ),
+    );
     if (isOpen) {
       inCluster.forEach((n, i) => {
         const last = i === inCluster.length - 1;
         const nsel = opts.selectedRef === n.id;
         if (nsel) selectedLine = rows.length;
-        const conn = last ? "└─" : "├─";
-        const flag = opts.flagged.has(n.id) ? " ⊙" : "";
-        const rej = rejected.has(n.id) ? " ✗" : "";
-        rows.push({
-          kind: "node",
-          ref: n.id,
-          text: `${nsel ? "❯" : " "}  ${conn} ◦ ${n.id.padEnd(idW)}${n.label}${flag}${rej}`,
-          colour,
-          bold: nsel,
-          dim: rejected.has(n.id),
-          selected: nsel,
-        });
+        const isRej = rejected.has(n.id);
+        // Calm: colour only the ◦ dot; id is faint, label is plain cream.
+        const segs: Seg[] = [
+          { text: nsel ? "❯ " : "  ", bold: true },
+          { text: `  ${last ? "└─" : "├─"} `, dim: true },
+          { text: "◦ ", colour },
+          { text: n.id.padEnd(idW), dim: true },
+          { text: n.label, dim: isRej },
+        ];
+        if (opts.flagged.has(n.id)) segs.push({ text: " ⊙", colour: "slate" });
+        if (isRej) segs.push({ text: " ✗", colour: "rose" });
+        rows.push(makeRow("node", n.id, segs, nsel, areaHex));
       });
     }
   }

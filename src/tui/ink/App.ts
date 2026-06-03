@@ -58,6 +58,25 @@ function statusCounts(graph: Graph, manifest?: PackManifest) {
 }
 
 function renderLine(l: Line, key: number) {
+  // Multi-colour row: colour lives on individual spans; bgHex paints the cursor bar.
+  if (l.segments) {
+    return h(
+      Text,
+      { key, backgroundColor: l.bgHex, wrap: "truncate-end" },
+      ...l.segments.map((s, i) =>
+        h(
+          Text,
+          {
+            key: i,
+            color: s.colour ? theme[s.colour] : undefined,
+            bold: s.bold,
+            dimColor: s.dim,
+          },
+          s.text === "" ? " " : s.text,
+        ),
+      ),
+    );
+  }
   return h(
     Text,
     {
@@ -65,7 +84,6 @@ function renderLine(l: Line, key: number) {
       color: l.colour ? theme[l.colour] : undefined,
       bold: l.bold,
       dimColor: l.dim,
-      inverse: l.selected, // cursor row → highlight bar (unmissable)
       wrap: "truncate-end",
     },
     l.text === "" ? " " : l.text,
@@ -105,8 +123,15 @@ export function App(props: AppProps) {
   );
 
   const tree = useMemo(
-    () => graphTree(nodes, { selectedRef: cursor, open, flagged, rejected }),
-    [nodes, cursor, open, flagged, rejected],
+    () =>
+      graphTree(nodes, {
+        selectedRef: cursor,
+        open,
+        flagged,
+        rejected,
+        width: cols,
+      }),
+    [nodes, cursor, open, flagged, rejected, cols],
   );
 
   const readingNode: NodeCapsule | undefined = useMemo(
