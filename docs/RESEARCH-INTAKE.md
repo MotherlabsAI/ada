@@ -22,9 +22,9 @@ Default: a quantitative claim is **unverified** unless traced to a primary sourc
 
 |                  |            |
 | ---------------- | ---------- |
-| Drops ingested   | 3          |
+| Drops ingested   | 4          |
 | Frozen decisions | 0          |
-| Open questions   | 5          |
+| Open questions   | 6          |
 | Last updated     | 2026-06-02 |
 
 ---
@@ -55,6 +55,10 @@ _Empty. Nothing has graduated yet._
   graph + unknown-unknowns, instead of `showcase.ts` hand-authoring them? This is **the product
   bet itself**, and `showcase.ts`'s own header (DECISION D6) marks it as the planned next layer.
   Note: 2-a (typed IR) and 3-a (the engine that fills it) are the same build, two halves.
+- **OQ-7.** The emitted `CLAUDE.md` is **unbounded** (verified: no byte/density/node cap in `claude.ts`).
+  As the 3-a engine scales to 100+ nodes this **inverts A8** — the pack starts making Claude Code
+  _worse_. Fix = a deterministic salience budget + top-K + a pure density C-check (Steal 4-a). Build it
+  **as part of** the engine, or sooner? (It's a guardrail the engine needs, not a separate feature.)
 
 ---
 
@@ -259,3 +263,91 @@ I predicted: P/P1–P3 = the real steal, unbuilt (**✅**); R = executor (**✅*
 **Right this time.** The one thing I'd have gotten wrong solo: I'd have quarantined the Socratic
 interview as too runtime-y — the critic correctly kept it as a steal _with a turn-cap_. Scored honestly:
 the discipline is the score, not the streak.
+
+---
+
+## Drop 4 — "Latent fragilities of semantic compilers" (1 doc)
+
+**Source.** Alex-supplied research cataloguing the **failure modes / unknown-unknowns of the compiler
+itself** (not features): instruction dilution, VROP/prompt-injection, defeasible logic, context anxiety,
+self-evaluation bias.
+
+**Method.** 3 classifiers + 1 adversarial critic (`wf_ec66d49e`), tuned to guard **both** over-scoping
+(don't make Ada own executor threats) and under-scoping (don't dismiss real compile-time risks). Every
+codebase claim verified by hand.
+
+**Shape note.** This is the first drop that's about **hardening**, not new capability. Its in-scope items
+are the **guardrails the 2-a/3-a engine needs** — not a separate workstream.
+
+### Verified codebase facts (ground truth — checked)
+
+- **`claude.ts` emits `CLAUDE.md` with no byte/density/node cap** — `entities()` returns the _whole_
+  DOMAIN cluster, concatenated; the "Hard rules" are _also_ hardcoded booking prose. (Same hand-authored
+  defect family as `blueprint.ts`.)
+- **`EdgeKind`** = `depends_on / blocks / contradicts / recompiles` (+ a few) — **no
+  `defeasible`/`exception`/`override` kind.**
+- **`CheckClass` C0–C5 ladder exists** ("C0 uncheckable … C5 static/db constraint") — the routing
+  hatch for soft rules is already present.
+- **`c/emit.ts` documents A3 in the code:** _"No model lives inside a check (AXIOM A3)… a runnable
+  pass/fail predicate, not a prompt, not a model, not subjective judgment."_
+- **Ada fetches/scrapes/indexes nothing** (re-confirmed) — so the VROP + FTS5-injection chains can't
+  exist here.
+
+### Steal — verified compile-time risks Ada must design against
+
+- **4-a · CLAUDE.md salience budget (W) — top priority, currently UNMITIGATED.** This is the one risk
+  produced _entirely inside Ada's own emitter_. As 3-a scales to 100+ nodes, an unbounded CLAUDE.md
+  crosses the density threshold where the agent falls back to pattern-matching — **inverting A8** (the
+  pack makes Claude Code _worse_). Fix: rank nodes by rubric quality / open-priority, inline only top-K
+  frozen Hard-rules + the C list, demote the tail to load-on-demand `wiki/`+`nodes/`, hard-cap bytes, and
+  add a **pure (byte/rule-count, model-free) C predicate that FAILS an over-budget pack.** Set the budget
+  from a _measurement_, never the brief's fabricated numbers. → OQ-7.
+- **4-b · Compaction-resistant emit shape (X).** Emit immutable constraints in a clearly-fenced
+  "Hard rules (immutable)" block backed by **re-runnable C files** (a summarizer can't dilute a predicate
+  that gets _executed_), with an explicit "do-not-summarize / re-load-from-file" marker. Ada owns the
+  artifact _shape_; the compaction _event_ is the executor's. (Partly built — the C-as-file design.)
+- **4-c · Honest defeasibility (BB compile-time half).** Add a first-class
+  `defeasible`/`exception`/`override` **EdgeKind** (verified absent), compile exception scopes into more
+  pure sub-predicates, mark the un-modeled tail as **residue**, and route genuinely non-binary rules to
+  **C0–C2** (human-gated / rubric) — _never_ forge a brittle deterministic C that hard-crashes on an
+  exception. Protects A3's integrity.
+- **4-d · Provenance against authority-confusion (the only compiler-owned injection risk).** The flashy
+  attack chains (VROP, FTS5) **can't exist** (Ada fetches nothing). But the intent string + spec files are
+  attacker-influenceable DATA that Ada copies into emitted artifacts. **Never let ingested text masquerade
+  as an Ada-authored MUST/Hard-rule** — keep it provenance-tagged (TruthClass: source vs inference vs
+  residue). Low-severity, bounded, real, and ours.
+
+### Bank — confirmed already built (and an anti-pattern to reject)
+
+- **DD · model-free C checks = Ada's core trust delta.** Already built and A3-documented (`c/emit.ts`,
+  `ada-c-verifier` agent forbidden from weakening a check). This is the entire anti-self-evaluation-bias
+  mechanism — foreground it. **Reject the drop's "LLM-as-judge / ROPE" half outright: a model in the
+  verification path VIOLATES A3.**
+
+### Out of scope — quarantined (verified not Ada's)
+
+- **Y · VROP** and **Z · stored injection / FTS5 / sandbox-exec** — executor/infra; their ingestion
+  premise doesn't exist in Ada. Building a scanner/index would mean _constructing_ the forbidden surface.
+- **CC · context anxiety** — a live-session runtime perception; Ada runs-and-exits, hosts no session.
+- **AA · AEO authority / @graph** — per-product **domain content** (becomes a domain node _if_ a user's
+  intent asks for it), not a compiler failure mode. Live "did we get cited" checks would require fetching
+  the web — which Ada must never do.
+- **The DACL runtime + LLM-as-judge** — executor.
+- **All numbers** (99%, 90% viewport, 0.8/0.3 confidence, 315KB→5.4KB, 5KB) — fabricated.
+
+### Key ruling — does defeasible logic break A3? **No.**
+
+A3 forbids a _model in the checker_, not _exceptions in the data_. The real failure is forging a
+non-binary rule into a brittle deterministic predicate, or "softening" a check by letting a model
+adjudicate the edge case (that second one is the actual A3 violation). The discipline: **hard invariants →
+pure C (C4/C5); soft/defeasible rules → C0–C2 + residue + blueprint guidance + A4 human-gating; any
+stochastic resolution lives in the executor, never in C.** The C0–C5 ladder + residue are the escape
+hatch; the missing piece is the `defeasible` EdgeKind (4-c). _A3 wins._
+
+### Pre-registered prediction vs. outcome (honesty check)
+
+I predicted: dilution = real in-scope & unmitigated (**✅**); VROP/injection = executor since Ada fetches
+nothing (**✅**); defeasible = an A3 caution, not a breakage (**✅**); self-eval = A3 confirm (**✅**); AA =
+domain, numbers = noise (**✅**). **The one thing I'd have missed solo:** the **authority-confusion /
+provenance-laundering** risk (4-d) — ingested spec text masquerading as an Ada-authored hard rule. Sharp,
+non-obvious, and genuinely the compiler's. The critic surfaced it; I'd not have.
