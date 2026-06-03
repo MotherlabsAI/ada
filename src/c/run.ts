@@ -1,8 +1,9 @@
 /** Runs a pack's own verify.mjs and renders the report (AXIOM A5: dogfood the artifact). */
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { paint, bold, dim } from "../core/grammar.js";
+import { densityVerdict } from "../export/salience.js";
 
 export interface CheckResult {
   name: string;
@@ -49,6 +50,49 @@ export function runChecks(
         `stdout: ${out.slice(0, 500)}\nstderr: ${res.stderr || "(none)"}\nparse error: ${String(e)}`,
     );
   }
+}
+
+/**
+ * The salience-budget density gate (FREEZE.md §4, 4-a; AXIOM A3). PURE + MODEL-FREE: it
+ * reads the emitted CLAUDE.md off disk and runs the deterministic `densityVerdict`
+ * predicate (no LLM, no network, identical input → identical verdict). An over-budget
+ * pack FAILS here, exactly as the freeze requires ("an over-budget pack FAILS `ada c run`
+ * on a pure predicate"). Returns a CheckResult so it slots into the same report as the
+ * data-fixture checks. Returns null when there is no emitted CLAUDE.md to gate.
+ */
+export function densityCheck(packRoot: string): CheckResult | null {
+  const claudeMd = join(packRoot, "exports", "claude", "CLAUDE.md");
+  if (!existsSync(claudeMd)) return null;
+  const v = densityVerdict(readFileSync(claudeMd, "utf8"));
+  return {
+    name: "claude_md_within_salience_budget",
+    pass: v.pass,
+    violations: v.violations,
+    invariant: `CLAUDE.md ≤ ${v.byteBudget} bytes and ≤ ${v.ruleBudget} inlined MUST rules (provisional budget; ${v.bytes} bytes / ${v.rules} rules emitted).`,
+    checkClass: "C5",
+  };
+}
+
+/**
+ * Runs the data-fixture checks AND the model-free density gate, folded into one report.
+ * The CLI uses this so `ada c run` fails an over-budget pack on a pure predicate.
+ */
+export function runChecksWithDensity(
+  packRoot: string,
+  opts: { defect?: boolean } = {},
+): CReport {
+  const base = runChecks(packRoot, opts);
+  const density = densityCheck(packRoot);
+  if (!density) return base;
+  const results = [...base.results, density];
+  const passed = results.filter((r) => r.pass).length;
+  return {
+    fixture: base.fixture,
+    total: results.length,
+    passed,
+    failed: results.length - passed,
+    results,
+  };
 }
 
 export function renderReport(report: CReport): string {

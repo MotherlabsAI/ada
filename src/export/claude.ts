@@ -8,11 +8,28 @@
  * deterministic check candidates; a truth="source" node (ingested,
  * attacker-influenceable) is never promoted into a MUST. Each rule carries its node id.
  *
- * The salience budget / top-K density cap is Phase P3, out of scope here — P0 derives
- * honestly and emits every entity.
+ * P3 (FREEZE.md §4, Steals 4-a/4-b/4-c):
+ *   4-a — salience budget: rank candidate Hard-rules / entities by the deterministic
+ *         salience signal (quality × openPriority, see export/salience.ts), inline only
+ *         the top-K, demote the tail to a load-on-demand pointer into `wiki/`. The
+ *         emitted CLAUDE.md is hard-capped; `densityVerdict` is the pure model-free
+ *         pass/fail the C-run path uses to FAIL an over-budget pack (AXIOM A3).
+ *   4-b — compaction-resistant shape: the immutable Hard-rules live under a clearly-fenced
+ *         "do not summarize; re-read from this file" block, backed by the re-runnable C
+ *         files, so a downstream compactor cannot dilute them.
+ *   4-c — honest defeasibility: only a node whose checkClass is DETERMINISTIC (C3–C5)
+ *         may contribute a MUST. A soft / non-binary node (C0–C2) NEVER becomes a hard
+ *         rule — it routes to the human-gated lane + residue (AXIOM A3 D2). Enforced by
+ *         `isDeterministic` + an assertion in `hardRuleItems`.
  */
 import type { PackModel, NodeCapsule } from "../core/types.js";
 import { clusterOf } from "../core/ids.js";
+import {
+  rankBySalience,
+  splitByCount,
+  HARD_RULES_BUDGET,
+  ENTITY_BUDGET,
+} from "./salience.js";
 
 export interface ExportFile {
   /** Path relative to exports/claude/. */
@@ -25,36 +42,109 @@ function authored(nodes: NodeCapsule[]): NodeCapsule[] {
   return nodes.filter((n) => n.truth !== "source");
 }
 
+/**
+ * A node's checkClass is DETERMINISTIC (C3–C5) — the only classes A3/D2 lets compile to
+ * a hard MUST. C0–C2 are soft / non-binary / human-gated and are NEVER a MUST (4-c).
+ */
+function isDeterministic(n: NodeCapsule): boolean {
+  const c = n.checkability.class;
+  return c === "C3" || c === "C4" || c === "C5";
+}
+
 function isCheckable(n: NodeCapsule): boolean {
-  const c = n.checkability;
-  return (
-    (c.class === "C3" || c.class === "C4" || c.class === "C5") &&
-    c.candidates.length > 0
-  );
+  return isDeterministic(n) && n.checkability.candidates.length > 0;
 }
 
 function entities(model: PackModel): NodeCapsule[] {
   return model.graph.nodes.filter((n) => clusterOf(n.id) === "DOMAIN");
 }
 
+/** A candidate hard rule: the emitted MUST line + the node it traces to (for ranking). */
+interface RuleItem {
+  rule: string;
+  node: NodeCapsule;
+}
+
 /**
- * The Hard-rules MUST list, derived from Ada-authored checkable nodes (AXIOM A2/A3,
- * 4-d). Each line is a runnable check candidate tagged with the node id it traces to.
- * A truth="source" node never contributes a MUST.
+ * Every candidate Hard-rule, derived from Ada-authored DETERMINISTIC checkable nodes
+ * (AXIOM A2/A3, 4-c/4-d). Each line is a runnable check candidate tagged with the node id
+ * it traces to. Guard (4-c): a node with a non-deterministic checkClass (C0–C2) can never
+ * reach here, and a truth="source" node never contributes a MUST. The assertion makes the
+ * invariant load-bearing rather than implicit.
  */
-function hardRules(model: PackModel): string[] {
-  const rules = authored(model.graph.nodes)
+function hardRuleItems(model: PackModel): RuleItem[] {
+  const items = authored(model.graph.nodes)
     .filter(isCheckable)
     .flatMap((n) =>
-      n.checkability.candidates.map(
-        (cand) => `- MUST: ${cand} (\`${n.id}\` — ${n.label})`,
-      ),
+      n.checkability.candidates.map((cand) => ({
+        rule: `- MUST: ${cand} (\`${n.id}\` — ${n.label})`,
+        node: n,
+      })),
     );
-  return rules.length
-    ? rules
-    : [
-        "- (no deterministically checkable invariants in this pack; see the wiki for residue and human-gated context)",
-      ];
+  // 4-c invariant: no soft / non-binary (C0–C2) rule may be emitted as a hard MUST.
+  for (const { node } of items) {
+    if (!isDeterministic(node)) {
+      throw new Error(
+        `defeasibility violation (4-c): node ${node.id} (${node.checkability.class}) ` +
+          `is non-deterministic and must not emit a MUST.`,
+      );
+    }
+  }
+  return items;
+}
+
+/**
+ * Applies the salience budget (4-a): rank candidate hard-rules by quality × openPriority,
+ * inline only the top-K within HARD_RULES_BUDGET, and demote the tail to a single
+ * load-on-demand pointer into `wiki/`. Pure / deterministic (no model). When there are no
+ * deterministic invariants at all, emit the honest "none" line instead of an empty block.
+ */
+function hardRuleLines(model: PackModel): string[] {
+  const items = hardRuleItems(model);
+  if (!items.length) {
+    return [
+      "- (no deterministically checkable invariants in this pack; see the wiki for residue and human-gated context)",
+    ];
+  }
+  const ranked = rankBySalience(
+    items,
+    (it) => it.node,
+    (it) => it.node.id,
+  );
+  const { inline, demoted } = splitByCount(ranked, HARD_RULES_BUDGET);
+  const lines = inline.map((it) => it.rule);
+  if (demoted.length) {
+    lines.push(
+      `- …${demoted.length} more lower-salience invariant${demoted.length === 1 ? "" : "s"} demoted to load-on-demand — see \`wiki/index.md\` and \`c/C.md\` (the full set stays runnable via \`c/checks/verify.mjs\`).`,
+    );
+  }
+  return lines;
+}
+
+/**
+ * The entity registry, salience-budgeted (4-a). Ranks DOMAIN entities by quality ×
+ * openPriority, inlines the top-K within ENTITY_BUDGET, demotes the tail to a pointer.
+ * Entities are descriptive context, not MUSTs, so no 4-c/4-d guard applies here.
+ */
+function entityLines(model: PackModel): string[] {
+  const ents = entities(model);
+  if (!ents.length)
+    return ["- (no DOMAIN-cluster entities surfaced in this pack)"];
+  const ranked = rankBySalience(
+    ents,
+    (n) => n,
+    (n) => n.id,
+  );
+  const { inline, demoted } = splitByCount(ranked, ENTITY_BUDGET);
+  const lines = inline.map(
+    (n) => `- **${n.label}** (\`${n.id}\`) — ${n.localContext.summary}`,
+  );
+  if (demoted.length) {
+    lines.push(
+      `- …${demoted.length} more entit${demoted.length === 1 ? "y" : "ies"} in \`wiki/index.md\` (load on demand).`,
+    );
+  }
+  return lines;
 }
 
 /**
@@ -75,7 +165,6 @@ function gateRule(model: PackModel): string[] {
 
 export function claudeExports(model: PackModel): ExportFile[] {
   const { seed } = model;
-  const ents = entities(model);
   const claudeMd: ExportFile = {
     path: "CLAUDE.md",
     content: [
@@ -89,17 +178,22 @@ export function claudeExports(model: PackModel): ExportFile[] {
       "- `exports/blueprint/ACCEPTANCE.md` — the must-pass conditions",
       "- `c/C.md` — the deterministic checks",
       "",
-      "## Hard rules (derived from the pack's checkable nodes — every rule traces to a node id)",
-      ...hardRules(model),
+      // 4-b — compaction-resistant emit shape. The immutable hard-rules sit under an
+      // explicitly fenced "do not summarize; re-read from this file" block so a downstream
+      // compactor won't dilute them. Pure formatting; every rule is backed by a
+      // re-runnable C file under `c/checks/` (the real source of truth).
+      "## Hard rules (immutable — do not summarize; re-read from this file)",
+      "<!-- ADA:HARD-RULES:BEGIN — immutable. Do NOT summarize, compress, or paraphrase this",
+      "     block. If context is compacted, re-read it verbatim from this file. Each rule is",
+      "     backed by a runnable check in `c/checks/` — `node c/checks/verify.mjs`. -->",
+      "Every rule below traces to a checkable node id and is enforced by a deterministic C check.",
+      ...hardRuleLines(model),
       "- Do not invent constraints that are listed as open questions — see `wiki/open-questions.md`.",
       ...gateRule(model),
+      "<!-- ADA:HARD-RULES:END -->",
       "",
       "## Entities in this pack",
-      ...(ents.length
-        ? ents.map(
-            (n) => `- **${n.label}** (\`${n.id}\`) — ${n.localContext.summary}`,
-          )
-        : ["- (no DOMAIN-cluster entities surfaced in this pack)"]),
+      ...entityLines(model),
       "",
       "## Definition of done",
       "Run the pack's own verification before claiming done:",
@@ -137,7 +231,7 @@ export function claudeExports(model: PackModel): ExportFile[] {
       "   for `c/registry.yaml` rather than patching silently (the C growth loop).",
       "",
       "## The invariants you must preserve (derived from the pack's checkable nodes)",
-      ...hardRules(model),
+      ...hardRuleLines(model),
       "",
     ].join("\n"),
   };

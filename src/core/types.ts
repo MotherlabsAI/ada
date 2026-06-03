@@ -65,7 +65,15 @@ export type Projection =
   | "gov"
   | "source";
 
-/** Semantic edge types (spec cluster EDGESEM). */
+/**
+ * Semantic edge types (spec cluster EDGESEM).
+ *
+ * `defeasible` / `exception` (4-c, AXIOM A3 D2): honest defeasibility. A `defeasible`
+ * edge marks a soft / non-binary rule — one that holds by default but yields to context —
+ * and an `exception` edge names the case that overrides it. These are DATA in the
+ * exploratory layer (A1), never a model in the checker (A3): a node a `defeasible` edge
+ * touches routes to C0–C2 + residue, and is never forged into a brittle C3–C5 MUST.
+ */
 export type EdgeType =
   | "contains"
   | "depends_on"
@@ -82,7 +90,9 @@ export type EdgeType =
   | "generalizes_to"
   | "residue_of"
   | "promotes_to_memory"
-  | "recompiles";
+  | "recompiles"
+  | "defeasible"
+  | "exception";
 
 export type Confidence = "low" | "medium" | "high";
 export type GateStatus = "passed" | "pending" | "failed" | "not_applicable";

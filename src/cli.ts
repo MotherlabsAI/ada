@@ -30,7 +30,7 @@ import {
   flagNode,
   resume,
 } from "./tui/navigator.js";
-import { runChecks, renderReport } from "./c/run.js";
+import { runChecksWithDensity, renderReport } from "./c/run.js";
 import { canRunInk } from "./tui/ink/canRunInk.js";
 import { paint, bold, dim } from "./core/grammar.js";
 import type { Seed } from "./core/types.js";
@@ -348,10 +348,13 @@ async function cmdC(args: string[]): Promise<void> {
   const sub = positional[0];
   if (sub !== "run") throw new Error("usage: ada c run [slug] [--defect]");
   const slug = resolveSlug(positional[1]);
-  const report = runChecks(paths(cwd, slug).root, {
+  // Includes the pure model-free salience-density gate (4-a): an over-budget CLAUDE.md
+  // FAILS here. Non-zero exit on any failure so the gate is real for callers/CI.
+  const report = runChecksWithDensity(paths(cwd, slug).root, {
     defect: Boolean(flags["defect"]),
   });
   console.log(renderReport(report));
+  if (report.failed > 0) process.exitCode = 1;
 }
 
 async function cmdExport(args: string[]): Promise<void> {
