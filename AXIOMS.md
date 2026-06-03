@@ -1,7 +1,10 @@
 # AXIOMS — Ada by Motherlabs
 
-VERSION: frozen-v1 (2026-06-02)
+VERSION: frozen-v2 (2026-06-03)
 STATUS: immutable. Downstream work treats these as hard constraints.
+DELTA: frozen-v2 ratifies the FREEZE.md proposal (Alex sign-off, 2026-06-03) —
+A3 +D1/+D2 clarifications, A1/A2 +D3 clarification, A7 scope amendment (any
+knowledge), and new A9 (sovereignty). See `docs/FREEZE.md` §3.
 SOURCE: compiled from the Ada world-model schema graph (`ADA_WORLD_MODEL_SCHEMA_GRAPH.md`)
 and the founder goal brief. Every axiom traces to a spec section.
 
@@ -16,7 +19,15 @@ non-deterministic, because their job is to explore the working world of a reques
 The blueprint and C checks **must be deterministic**: their job is to constrain
 execution. This separation is the product's spine and may not be blurred.
 
-> trace: Product invariant §1; `STREAM.014`; `QUALITY.014`.
+**Clarify (D3, frozen-v2) — editable-playground boundary.** The exploratory layer
+(graph + wiki) is **user-editable**: the user may manipulate edges, spawn nodes, and push
+deeper, co-excavating alongside the compile-time engine. User-authored nodes/edges are
+provenance-tagged `∵ source` (A2); engine output is `∴ inferred` or `Ω residue`. User
+editing of the exploratory layer **never reaches the deterministic layer directly** —
+changes flow into the blueprint + C only by **re-compile**, never by live mutation of a
+frozen artifact.
+
+> trace: Product invariant §1; `STREAM.014`; `QUALITY.014`; frozen-v2 D3 (Drop 6-a).
 
 ## A2 — Excavation over generation (provenance)
 
@@ -35,7 +46,21 @@ disguised as deterministic C — they may be rubric-scored (C2) or human-gated (
 but they do not enter the C registry. Checkable meaning must look different from
 subjective meaning.
 
-> trace: `CHECKCLASS.016`; `C.*`; MVP must-not §16; Semantic decoration Rule 8.
+**Clarify (D1, frozen-v2) — neuro-symbolic boundary.** The model is invoked at **compile
+time only**, to lower intent into the typed graph + blueprint. From that point every C
+check is purely symbolic: a runnable pass/fail predicate, no model, no LLM in the
+evaluation path. Identical compiled inputs yield identical verdicts (referential
+transparency). Compile-time = neural / non-deterministic (A1's exploratory side);
+check-time = symbolic / deterministic. **No model may re-enter after compile** — an
+LLM-as-judge in the verification path is an A3 violation.
+
+**Clarify (D2, frozen-v2) — defeasibility routing.** A3 forbids a model _in the checker_,
+not exceptions _in the data_. Hard invariants compile to pure C (C4/C5); soft, non-binary,
+or defeasible rules route to C0–C2 + honest residue + blueprint guidance + A4 gating; any
+stochastic edge-case resolution lives in the executor, never in a C check. Forging a
+non-binary rule into a brittle deterministic predicate is itself the A3 violation.
+
+> trace: `CHECKCLASS.016`; `C.*`; MVP must-not §16; Semantic decoration Rule 8; frozen-v2 D1/D2 (Drops 1, 4).
 
 ## A4 — Humans govern, agents execute
 
@@ -77,7 +102,13 @@ P0 excludes: SaaS marketplace, account system, cloud sync, enterprise governance
 advanced hooks, fully autonomous execution, complex webapp, background-work promises,
 and subjective taste disguised as deterministic C.
 
-> trace: §16.
+**Amend (frozen-v2) — domain scope opened.** The MVP is **not** restricted to
+software-context. Ada compiles **any knowledge domain** the user brings (Drop 6-c): the
+engine, rubric, gate, and emitters are domain-agnostic by construction. The booking
+showcase remains the proof exemplar and the A8 experiment target, but it is an _example_,
+not the boundary. The P0 excludes above still hold.
+
+> trace: §16; frozen-v2 A7 amendment (Drop 6-c).
 
 ## A8 — The bounded claim (single validation gate)
 
@@ -87,6 +118,17 @@ experiment (pack vs no-pack on the showcase booking feature). All other work is 
 service of this gate.
 
 > trace: MVP boundary §16; Showcase §15 "First trust moment".
+
+## A9 — Sovereignty / no phone-home
+
+Ada is a local CLI/TUI that **runs and exits**. It must not transmit, harvest, or persist
+the user's intent, packs, interview answers, or any derived semantics to an external
+service for any purpose (telemetry, training corpus, analytics, "flywheel"). The **only**
+outbound call permitted is the single compile-time model invocation required by A1;
+everything else stays on the user's filesystem (A5). A pack is the user's property. No
+background process, no session server, no exfiltration.
+
+> trace: frozen-v2 delta D4; hardens A5/A6 + zero-dep; forecloses the Drop 5 telemetry fork.
 
 ---
 

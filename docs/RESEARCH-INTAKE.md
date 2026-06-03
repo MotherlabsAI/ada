@@ -20,12 +20,12 @@ Default: a quantitative claim is **unverified** unless traced to a primary sourc
 
 ## Status
 
-|                  |                        |
-| ---------------- | ---------------------- |
-| Drops ingested   | 5 + vision             |
-| Frozen decisions | proposed → `FREEZE.md` |
-| Open questions   | 7                      |
-| Last updated     | 2026-06-03             |
+|                  |                                           |
+| ---------------- | ----------------------------------------- |
+| Drops ingested   | 5 + vision                                |
+| Frozen decisions | RATIFIED → `FREEZE.md` (AXIOMS frozen-v2) |
+| Open questions   | 7                                         |
+| Last updated     | 2026-06-03                                |
 
 ---
 
