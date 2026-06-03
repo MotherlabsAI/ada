@@ -40,20 +40,23 @@ You cannot dogfood an engine that does not exist. So:
 ## State
 
 - **frozen-v2 ratified** (2026-06-03): A3 D1/D2, A1/A2 D3, A7 amended (any knowledge), new A9.
-- **Mechanical spine COMPLETE on `main`, suite 89/89:** engine spine (`engine/excavate.ts`) · P0
+- **Mechanical spine COMPLETE on `main`, suite 111/111:** engine spine (`engine/excavate.ts`) · P0
   derive-from-IR (Seed de-hardcoded, 4-d provenance) · P1 live wiring (`engine/model.ts`,
   `engine/orchestrate.ts`, `ada compile --engine`) · depth (many nodes/cluster, global dedup) · P3
   guardrails (salience budget + model-free density C, defeasible edge, compaction shape) · P5 Obsidian
-  `[[wikilinks]]` portability · P6 runnable-from-any-cwd + `--depth`/`--model`.
+  `[[wikilinks]]` portability · P6 runnable-from-any-cwd + `--depth`/`--model` · P7 domain-adaptive
+  clustering (areas derived from the intent; the "compile any knowledge" unlock).
 - **Real compiles work, from any directory** (after `pnpm build`):
   ```bash
-  ANTHROPIC_API_KEY=sk-ant-... node <repo>/dist/cli.js compile --engine "<intent>" [--depth=N] [--model=…]
+  ANTHROPIC_API_KEY=sk-ant-... node <repo>/dist/cli.js compile --engine "<intent>" [--depth=N] [--model=…] [--clusters=A,B,C]
   node <repo>/dist/cli.js tui <slug>     # explore the pack; or open it as an Obsidian vault
   ```
-  Default model `claude-opus-4-8`; `--depth`/`--model` (or `ADA_MODEL`) control cost. Verified live:
-  the `ada-website` intent → a 21-node, deduped, gate-verified, Obsidian-openable pack.
-- **In progress (autonomous, non-taste):** domain-adaptive clustering (derive areas from the intent,
-  not the fixed marketing set — the unlock for "compile any knowledge") → A8 experiment harness →
-  self-dogfood (Ada-on-Ada).
-- **PARKED for Alex (C0–C2 taste):** P2 `ctx init` interview _feel_ (picture-questions ready) · P4
-  editable graph playground · the **A8 verdict** (does the pack make Claude Code measurably better).
+  Default model `claude-opus-4-8`; `--depth`/`--model`/`ADA_MODEL` control cost.
+- **Verified-live dogfood artifacts on disk** (`.ada/packs/`, untracked — regenerate on demand):
+  `ada-website` (21 nodes, marketing-domain clusters fit) · **`ada` (Ada-on-Ada, 22 nodes** — the engine
+  chose its own areas `ROOT/EXCAV/GRAPH/EMIT/RUBRIC/RUNTIME/UNK`, almost all with real κ checks; nodes map
+  onto the axioms; `UNK.003` independently named the "needs an external witness" self-model gap).
+- **Autonomous runway spent** — the remaining work is taste-gated or executor-side.
+- **PARKED for Alex (C0–C2 taste / verdict):** P2 `ctx init` interview _feel_ (picture-questions ready) ·
+  P4 editable graph playground · the **A8 verdict** (does the pack make Claude Code measurably better —
+  the experiment runs on an executor, not inside Ada).
