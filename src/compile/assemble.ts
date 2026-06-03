@@ -41,17 +41,90 @@ export interface NodeSpec {
   parents: string[];
 }
 
+// Deterministic, domain-agnostic cluster→colour mapping (AXIOM A1). These are the
+// structural cluster roles every pack shares (root, data, workflow, checks, residue),
+// NOT a domain vocabulary. A non-software pack hits the same buckets; anything unknown
+// falls through to deep_blue. No booking-domain literal lives here.
 const CLUSTER_COLOUR: Record<string, Colour> = {
   ROOT: "terracotta",
-  ATT: "plum",
-  COPY: "terracotta",
-  SEO: "cyan",
-  UNK: "amber",
+  DOMAIN: "deep_blue",
+  DATA: "slate",
+  WORKFLOW: "deep_blue",
+  CHECK: "green",
   C: "green",
+  BLUEPRINT: "slate",
+  CLAUDE: "cyan",
+  UNK: "amber",
 };
 
 function colourFor(cluster: string): Colour {
   return CLUSTER_COLOUR[cluster] ?? "deep_blue";
+}
+
+/**
+ * Derives a Seed from the intent + the kept nodes/clusters (AXIOM A2: every field
+ * traces to input, not to a hardcoded domain literal). The domain is named from the
+ * intent itself; objectives/context/risks are projected from the kept graph. A
+ * caller may inject a Seed (e.g. the Socratic `ctx init` interview output, or the
+ * compile-time engine's seed) which is used verbatim instead — the Seed is engine /
+ * interview INPUT, never an emitter literal (FREEZE.md §4 P0, critic top-fix).
+ */
+function deriveSeed(intent: string, kept: NodeSpec[]): Seed {
+  const clusters = [...new Set(kept.map((s) => clusterOf(s.id)))];
+  const domain = domainFromIntent(intent);
+  const residue = kept.filter((s) => s.truth === "residue");
+  const checkable = kept.filter(
+    (s) => s.cCandidates.length || isCheckable(s.checkClass),
+  );
+  // knownContext: source-backed nodes are the grounded facts the pack starts from.
+  const known = kept
+    .filter((s) => s.truth === "source")
+    .map((s) => `${s.label}: ${s.summary}`)
+    .slice(0, 6);
+  return {
+    rootIntent: intent,
+    domain,
+    userRole: "The person who brought this intent",
+    buildObjective: `Build ${domain} so an executor works from this compiled world model, not a raw prompt.`,
+    knowledgeObjective: `A navigable, compounding world model of ${domain} (${clusters.join(", ")}).`,
+    trustObjective:
+      "Deterministic C checks where the structure is checkable; honest residue where it is not (AXIOM A3/A4).",
+    knownContext: known.length
+      ? known
+      : ["Derived solely from the stated intent; no external facts assumed."],
+    unknownContext: residue
+      .flatMap((s) => [s.label, ...s.unknowns])
+      .slice(0, 8),
+    assumptions: [],
+    sources: ["User intent"],
+    constraints: [
+      "Local-first.",
+      "No subjective claim promoted as deterministic C (AXIOM A3).",
+    ],
+    risks: checkable.length
+      ? []
+      : [
+          "Little of this domain is deterministically checkable; do not fake certainty (AXIOM A3).",
+        ],
+  };
+}
+
+/**
+ * Names the domain from the intent (AXIOM A2: traced, never fabricated). Deterministic:
+ * strips a leading article and the trailing clause after the first " that "/" which ",
+ * trims to a short noun phrase. The result is residue OF the intent, not a new claim.
+ */
+function domainFromIntent(intent: string): string {
+  const trimmed = intent.trim();
+  if (!trimmed) return "the stated intent";
+  let head = (
+    trimmed.split(/\s+(?:that|which|so that|to)\s+/i)[0] ?? trimmed
+  ).trim();
+  head = head.replace(/^(a|an|the)\s+/i, "").trim();
+  if (!head) head = trimmed;
+  // Bound the length so the domain stays a label, not a paragraph.
+  if (head.length > 80) head = head.slice(0, 80).replace(/\s+\S*$/, "") + "…";
+  return head || trimmed;
 }
 
 function isCheckable(c: CheckClass): boolean {
@@ -225,6 +298,12 @@ export function assemblePackGated(
   slug: string,
   intent: string,
   specs: NodeSpec[],
+  /**
+   * Optional injected Seed (AXIOM A2): the engine/interview output. When absent the
+   * Seed is DERIVED from the intent + kept nodes — never a domain literal. A
+   * non-booking intent therefore never emits a booking-domain Seed/wiki index.
+   */
+  seedOverride?: Seed,
 ): GatedPack {
   const scored = specs.map((spec) => ({ spec, score: scoreNode(spec) }));
   const keptScored = scored.filter((s) => s.score.verdict !== "reject");
@@ -233,43 +312,14 @@ export function assemblePackGated(
   );
   const kept = keptScored.map((s) => s.spec);
   const clusters = [...new Set(kept.map((s) => clusterOf(s.id)))];
+  // If the fixture already supplies its own ROOT.000, keep it; otherwise synthesize one.
+  const hasRoot = kept.some((s) => s.id === "ROOT.000");
   const nodes = [
-    rootNode(intent, clusters),
+    ...(hasRoot ? [] : [rootNode(intent, clusters)]),
     ...keptScored.map((s) => toCapsule(s.spec, s.score)),
   ];
   const edges = buildEdges(nodes);
-  const seed: Seed = {
-    rootIntent: intent,
-    domain:
-      "Context engineering for a local service-business recognition system",
-    userRole: "Non-technical builder using Claude Code",
-    buildObjective:
-      "A website/context system that ranks, gets cited by agents, converts attention to bookings, and gives Claude Code a real map.",
-    knowledgeObjective:
-      "A navigable, compounding world model of the attention → decision → trust → discovery stack.",
-    trustObjective:
-      "Deterministic C checks where the structure is checkable; honest residue where it is not.",
-    knownContext: [
-      "The user works in Claude Code.",
-      "The output must feed Claude Code as governed context.",
-    ],
-    unknownContext: kept
-      .filter((s) => s.truth === "residue")
-      .flatMap((s) => [s.label, ...s.unknowns])
-      .slice(0, 8),
-    assumptions: ["A single local service business to start."],
-    sources: [
-      "User intent",
-      "Ada context-engineering domain schema (321-node taxonomy)",
-    ],
-    constraints: [
-      "Local-first.",
-      "No subjective claim promoted as deterministic C (AXIOM A3).",
-    ],
-    risks: [
-      "Marketing/attention is largely non-deterministic; do not fake certainty.",
-    ],
-  };
+  const seed: Seed = seedOverride ?? deriveSeed(intent, kept);
   const graph: Graph = {
     id: `graph-${slug}`,
     version: "0.1.0",
@@ -284,7 +334,7 @@ export function assemblePackGated(
     graph,
     wiki,
     provenance:
-      "Excavated by the Ada compile workforce from one intent, aligned to the context-engineering taxonomy; every node anti-generic-gated. Exploratory layer (AXIOM A1); provenance via truth-class + fromPrompt (AXIOM A2).",
+      "Excavated from one intent by the Ada compile workforce; every node anti-generic-gated. Exploratory layer (AXIOM A1); provenance via truth-class + fromPrompt (AXIOM A2).",
   };
   return { model, kept, rejected };
 }
@@ -294,6 +344,7 @@ export function assemblePack(
   slug: string,
   intent: string,
   specs: NodeSpec[],
+  seedOverride?: Seed,
 ): PackModel {
-  return assemblePackGated(slug, intent, specs).model;
+  return assemblePackGated(slug, intent, specs, seedOverride).model;
 }
