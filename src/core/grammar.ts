@@ -8,12 +8,12 @@ export const COLOUR_HEX: Record<Colour, string> = {
   clay: "#C66A43",
   terracotta: "#B8543C",
   plum: "#6E5ACF",
-  deep_blue: "#25476A",
+  deep_blue: "#4E7FB5",
   sage: "#6F8F72",
   amber: "#D59632",
   green: "#3E8F5A",
   rose: "#B65A6B",
-  slate: "#4E5968",
+  slate: "#8893A6",
   cyan: "#2F8FA3",
   ink: "#9AA3AF", // lightened for legibility on dark terminals
 };

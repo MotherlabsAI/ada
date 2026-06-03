@@ -13,7 +13,7 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import { Box, Text, useApp, useInput, useStdout } from "ink";
+import { Box, Text, useApp, useInput, useWindowSize } from "ink";
 import type { Graph, NodeCapsule, PackManifest } from "../../core/types.js";
 import { clusterOf } from "../../core/ids.js";
 import { theme } from "./theme.js";
@@ -76,10 +76,8 @@ export function App(props: AppProps) {
   const { graph } = props;
   const nodes = graph.nodes;
   const app = useApp();
-  const { stdout } = useStdout();
-
-  const rows = stdout?.rows ?? 24;
-  const cols = stdout?.columns ?? 80;
+  // useWindowSize re-renders on resize (SIGWINCH) — fixes the stale-dimensions bug.
+  const { rows, columns: cols } = useWindowSize();
   const bodyHeight = Math.max(6, rows - 4);
 
   const clusters = useMemo(

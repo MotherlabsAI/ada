@@ -180,6 +180,10 @@ async function cmdTui(args: string[]): Promise<void> {
           );
         },
       }),
+      // alternateScreen: clean buffer (restores scrollback on exit, vim-style);
+      // incrementalRendering: redraw only changed lines (no flicker); cap at 30fps.
+      // All ignored when non-interactive, so the canRunInk fallback stays safe.
+      { alternateScreen: true, incrementalRendering: true, maxFps: 30 },
     );
     await waitUntilExit();
   } catch (err) {
