@@ -13,6 +13,8 @@ export interface Line {
   colour?: Colour;
   bold?: boolean;
   dim?: boolean;
+  /** The cursor row — rendered as a highlight bar so it's unmissable. */
+  selected?: boolean;
 }
 
 /** A followable edge from a node to another node that exists in the graph. */
@@ -158,9 +160,10 @@ export function graphTree(
     rows.push({
       kind: "cluster",
       ref: cluster,
-      text: `${sel ? "›" : " "} ${isOpen ? "▾" : "▸"} ● ${clusterLabel(cluster)}  (${inCluster.length})`,
+      text: `${sel ? "❯" : " "} ${isOpen ? "▾" : "▸"} ● ${clusterLabel(cluster)}  (${inCluster.length})`,
       colour,
       bold: true,
+      selected: sel,
     });
     if (isOpen) {
       inCluster.forEach((n, i) => {
@@ -173,10 +176,11 @@ export function graphTree(
         rows.push({
           kind: "node",
           ref: n.id,
-          text: `${nsel ? "›" : " "}  ${conn} ◦ ${n.id.padEnd(idW)}${n.label}${flag}${rej}`,
+          text: `${nsel ? "❯" : " "}  ${conn} ◦ ${n.id.padEnd(idW)}${n.label}${flag}${rej}`,
           colour,
           bold: nsel,
           dim: rejected.has(n.id),
+          selected: nsel,
         });
       });
     }

@@ -18,6 +18,7 @@ import type { Graph, NodeCapsule, PackManifest } from "../../core/types.js";
 import { clusterOf } from "../../core/ids.js";
 import { theme } from "./theme.js";
 import { StatusBar } from "./StatusBar.js";
+import { Welcome } from "./Welcome.js";
 import { SlashLine, type Command } from "./SlashLine.js";
 import {
   graphTree,
@@ -64,6 +65,7 @@ function renderLine(l: Line, key: number) {
       color: l.colour ? theme[l.colour] : undefined,
       bold: l.bold,
       dimColor: l.dim,
+      inverse: l.selected, // cursor row → highlight bar (unmissable)
       wrap: "truncate-end",
     },
     l.text === "" ? " " : l.text,
@@ -84,6 +86,7 @@ export function App(props: AppProps) {
     () => [...new Set(nodes.map((n) => clusterOf(n.id)))],
     [nodes],
   );
+  const [view, setView] = useState<"welcome" | "graph">("welcome");
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [cursor, setCursor] = useState<string>(clusters[0] ?? "");
   const [reading, setReading] = useState<string | null>(null);
@@ -223,6 +226,14 @@ export function App(props: AppProps) {
       return;
     }
 
+    if (view === "welcome") {
+      if (input === "/") return setCommandMode(true);
+      if (input === "q") return app.exit();
+      // ⏎ or any key opens the graph (the landing's job is to get you in).
+      setView("graph");
+      return;
+    }
+
     if (reading !== null) {
       if (key.tab) {
         if (links.length) setLinkIndex((i) => (i + 1) % links.length);
@@ -296,8 +307,18 @@ export function App(props: AppProps) {
     }
     if (input === " ") return flagCurrent();
     if (input === "x") return rejectCurrent();
-    if (input === "q" || key.escape) return app.exit();
+    if (key.escape) return setView("welcome"); // Esc → home
+    if (input === "q") return app.exit();
   });
+
+  if (view === "welcome") {
+    return h(
+      Box,
+      { flexDirection: "column" },
+      h(Welcome, { slug: props.slug, ...counts, cols }),
+      commandMode ? h(SlashLine, { onCommand, active: true }) : null,
+    );
+  }
 
   let body: Line[];
   let hint: string;

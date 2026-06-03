@@ -6,8 +6,10 @@ import { App } from "./App.js";
 import { fixtureGraph } from "./fixtures.js";
 
 const tick = () => new Promise((r) => setTimeout(r, 50));
-const DOWN = "[B";
-const RIGHT = "[C";
+// Build CSI arrow sequences from an explicit ESC byte so the bytes are unambiguous.
+const ESC = String.fromCharCode(27);
+const DOWN = ESC + "[B";
+const RIGHT = ESC + "[C";
 
 function mount(
   onPersist: (s: { flagged: string[]; rejected: string[] }) => void = () => {},
@@ -22,9 +24,24 @@ function mount(
   );
 }
 
-test("areas are closed by default — headers show, nodes hidden", async () => {
+// The app opens on the welcome page; any key drops into the graph.
+async function enterGraph(stdin: { write: (s: string) => void }) {
+  stdin.write("\r");
+  await tick();
+}
+
+test("opening page shows the ADA wordmark + welcome", async () => {
   const { lastFrame } = mount();
   await tick();
+  const f = lastFrame() ?? "";
+  assert.match(f, /Welcome back, Alex/);
+  assert.match(f, /c o n t e x t/, "the wordmark tag");
+});
+
+test("areas are closed by default — headers show, nodes hidden", async () => {
+  const { stdin, lastFrame } = mount();
+  await tick();
+  await enterGraph(stdin);
   const f = lastFrame() ?? "";
   assert.match(
     f,
@@ -37,6 +54,7 @@ test("areas are closed by default — headers show, nodes hidden", async () => {
 test("right opens an area (connectors appear), enter reads a node", async () => {
   const { stdin, lastFrame } = mount();
   await tick();
+  await enterGraph(stdin);
   stdin.write(RIGHT); // open the first area
   await tick();
   const opened = lastFrame() ?? "";
@@ -58,6 +76,7 @@ test("space flags the selected node and persists it", async () => {
     persisted.push({ flagged: [...s.flagged], rejected: [...s.rejected] }),
   );
   await tick();
+  await enterGraph(stdin);
   stdin.write(RIGHT); // open area
   await tick();
   stdin.write(DOWN); // select first node
