@@ -154,6 +154,11 @@ async function cmdTui(args: string[]): Promise<void> {
     return;
   }
 
+  // Best-effort: ask the terminal for a roomy 100×50 window (CSI 8 ; rows ; cols t).
+  // xterm/iTerm2/kitty honor it; Terminal.app/tmux ignore it — harmless either way,
+  // and useWindowSize() then adapts the layout to whatever size we actually get.
+  process.stdout.write("[8;50;100t");
+
   // Defer the React/Ink import so non-TTY callers never pay for it.
   const { createElement } = await import("react");
   const { render } = await import("ink");

@@ -95,7 +95,9 @@ export function App(props: AppProps) {
   const nodes = graph.nodes;
   const app = useApp();
   // useWindowSize re-renders on resize (SIGWINCH) — fixes the stale-dimensions bug.
-  const { rows, columns: cols } = useWindowSize();
+  const ws = useWindowSize();
+  const rows = ws.rows || 24;
+  const cols = ws.columns || 80;
   const bodyHeight = Math.max(6, rows - 4);
 
   const clusters = useMemo(
@@ -250,9 +252,8 @@ export function App(props: AppProps) {
     }
 
     if (view === "welcome") {
-      if (input === "/") return setCommandMode(true);
       if (input === "q") return app.exit();
-      // ⏎ or any key opens the graph (the landing's job is to get you in).
+      // ⏎ or any key opens the graph (the landing's only job is to get you in).
       setView("graph");
       return;
     }
@@ -335,12 +336,7 @@ export function App(props: AppProps) {
   });
 
   if (view === "welcome") {
-    return h(
-      Box,
-      { flexDirection: "column" },
-      h(Welcome, { slug: props.slug, ...counts, cols }),
-      commandMode ? h(SlashLine, { onCommand, active: true }) : null,
-    );
+    return h(Welcome, { slug: props.slug, ...counts, cols, rows });
   }
 
   let body: Line[];
