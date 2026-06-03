@@ -6,7 +6,7 @@
 import { createElement as h } from "react";
 import { Box, Text } from "ink";
 import { theme } from "./theme.js";
-import { WORDMARK, mascot } from "./art.js";
+import { WORDMARK, WORDMARK_TAG, gradient, mascot } from "./art.js";
 
 export interface WelcomeProps {
   slug: string;
@@ -21,6 +21,7 @@ export interface WelcomeProps {
 
 export function Welcome(p: WelcomeProps) {
   const m = mascot(p.mascotName);
+  const grad = gradient(WORDMARK.length, theme.terracotta, theme.plum);
   const cardW = Math.max(40, Math.min(p.cols - 8, 88));
   const height = Math.max(8, p.rows - 1);
 
@@ -47,8 +48,9 @@ export function Welcome(p: WelcomeProps) {
           width: cardW,
         },
         ...WORDMARK.map((l, i) =>
-          h(Text, { key: "w" + i, color: theme.terracotta, bold: true }, l),
+          h(Text, { key: "w" + i, color: grad[i], bold: true }, l),
         ),
+        h(Text, { key: "tag", color: theme.cyan }, WORDMARK_TAG),
         h(Text, { key: "gap" }, " "),
         h(
           Box,
