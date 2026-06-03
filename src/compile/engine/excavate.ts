@@ -24,6 +24,8 @@ function loadExcavator(): string {
 }
 
 export interface ExcavateResult {
+  /** The parsed candidate, always present (for auditing rejected ones too). */
+  spec: NodeSpec;
   /** The kept node, if it cleared the gate; null when rejected. */
   node: NodeSpec | null;
   /** The deterministic rubric verdict — always present, for auditing. */
@@ -93,10 +95,10 @@ export async function excavateNode(
 ): Promise<ExcavateResult> {
   const prompt = buildPrompt(seed, cluster, loadExcavator());
   const raw = await model.complete(prompt); // the ONE model call (A1/A9)
-  const node = parseNodeSpec(raw);
-  const score = scoreNode(node);
+  const spec = parseNodeSpec(raw);
+  const score = scoreNode(spec);
   if (score.verdict === "reject") {
-    return { node: null, score, rejected: true };
+    return { spec, node: null, score, rejected: true };
   }
-  return { node, score, rejected: false };
+  return { spec, node: spec, score, rejected: false };
 }

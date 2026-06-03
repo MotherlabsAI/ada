@@ -17,6 +17,9 @@ import { mkdir, readdir } from "node:fs/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { buildShowcasePack } from "./compile/showcase.js";
+import { assemblePackGated } from "./compile/assemble.js";
+import { excavatePack } from "./compile/engine/orchestrate.js";
+import { anthropicClient } from "./compile/engine/model.js";
 import { writePack } from "./pack/writer.js";
 import { paths, packsRoot, nodeDir } from "./pack/layout.js";
 import { nodeWiki } from "./pack/wiki.js";
@@ -30,6 +33,7 @@ import {
 import { runChecks, renderReport } from "./c/run.js";
 import { canRunInk } from "./tui/ink/canRunInk.js";
 import { paint, bold, dim } from "./core/grammar.js";
+import type { Seed } from "./core/types.js";
 
 const cwd = process.cwd();
 
@@ -55,6 +59,7 @@ const HELP = [
   "",
   "  ada init                          scaffold .ada/ here",
   '  ada compile "<intent>" [--slug=x] compile intent into a pack',
+  '  ada compile --engine "<intent>"  compile via the U2F engine (real model call)',
   "  ada open [slug] [nodeId]          navigate the pack",
   "  ada tui [slug]                    launch the Ink workbench (TTY)",
   "  ada deeper <slug> <nodeId>        full wiki article for a node",
@@ -87,6 +92,41 @@ function resolveSlug(value: string | undefined): string {
   return v;
 }
 
+/**
+ * A small, domain-agnostic default cluster set for the engine path. ROOT anchors the
+ * world model; ATT/COPY/SEO/UNK are the calibration-exemplar clusters the excavator
+ * prompt is tuned against (rich pathways + Kano ranking are a later goal — keep it
+ * simple). The model excavates one candidate per cluster; the gate keeps the impressers.
+ */
+const DEFAULT_ENGINE_CLUSTERS = ["ROOT", "ATT", "COPY", "SEO", "UNK"];
+
+/**
+ * A minimal engine Seed derived from the intent (AXIOM A2: traced, never a domain
+ * literal). The excavator reads rootIntent/domain/objective + the cluster; the pack's
+ * own richer Seed is DERIVED by `assemblePackGated` from the intent + kept nodes, so the
+ * engine pack never carries the booking-showcase chrome (FREEZE.md §5 critic-fix).
+ */
+function engineSeed(intent: string): Seed {
+  const domain = intent.replace(/^(a|an|the)\s+/i, "").trim() || intent;
+  return {
+    rootIntent: intent,
+    domain,
+    userRole: "The person who brought this intent",
+    buildObjective: `Compile a working world model of ${domain} an executor can build from.`,
+    knowledgeObjective: `A navigable, compounding map of ${domain}.`,
+    trustObjective:
+      "Deterministic checks where the structure is checkable; honest residue where it is not.",
+    knownContext: [
+      "Derived solely from the stated intent; no external facts assumed.",
+    ],
+    unknownContext: [],
+    assumptions: [],
+    sources: ["User intent"],
+    constraints: ["Local-first."],
+    risks: [],
+  };
+}
+
 async function cmdCompile(args: string[]): Promise<void> {
   const { positional, flags } = parseFlags(args);
   const rawIntent = positional.join(" ").trim();
@@ -96,10 +136,17 @@ async function cmdCompile(args: string[]): Promise<void> {
   const slug = resolveSlug(
     typeof flags["slug"] === "string" ? (flags["slug"] as string) : undefined,
   );
-  if (!rawIntent) {
+  const useEngine = Boolean(flags["engine"]);
+  if (!rawIntent && !useEngine) {
     console.log(dim("  (no intent given — compiling the showcase demo)"));
   }
   await mkdir(packsRoot(cwd), { recursive: true });
+
+  if (useEngine) {
+    await compileWithEngine(slug, intent);
+    return;
+  }
+
   const model = buildShowcasePack(slug, intent);
   const manifest = await writePack(cwd, model);
   const p = paths(cwd, slug);
@@ -117,6 +164,74 @@ async function cmdCompile(args: string[]): Promise<void> {
     "  " +
       paint("first graph moment", "deep_blue") +
       dim(`   ada open ${slug} L2C.001`),
+  );
+  console.log(
+    "  " +
+      paint("first trust moment", "green") +
+      dim(`   ada c run ${slug} --defect`),
+  );
+  console.log(
+    "  " +
+      paint("executor export", "cyan") +
+      dim(`      ${relative(cwd, p.claudeDir)}/CLAUDE.md`),
+  );
+}
+
+/**
+ * The REAL compile path (FREEZE.md §4 P1): drive the U2F engine end-to-end.
+ *   engineSeed(intent) + default clusters + anthropicClient()  (the single A1/A9 boundary)
+ *     → excavatePack (one compile-time model call per cluster, model-free gate)
+ *     → assemblePackGated (pack Seed DERIVED from intent + kept nodes, not a literal)
+ *     → writePack (the pack lands on disk).
+ * The live network call lives solely in `anthropicClient()` (engine/model.ts); the key is
+ * read from ANTHROPIC_API_KEY there and never logged/hardcoded.
+ */
+async function compileWithEngine(slug: string, intent: string): Promise<void> {
+  const { kept, rejected } = await excavatePack(
+    engineSeed(intent),
+    DEFAULT_ENGINE_CLUSTERS,
+    anthropicClient(),
+  );
+  if (kept.length === 0) {
+    throw new Error(
+      "The engine produced no node that cleared the gate. Every candidate was rejected " +
+        "as generic or un-traced. Refine the intent and retry.",
+    );
+  }
+  const { model } = assemblePackGated(slug, intent, kept);
+  const manifest = await writePack(cwd, model);
+  const p = paths(cwd, slug);
+  // Point the hints at a REAL kept node (prefer a non-ROOT capsule so "open" lands on an
+  // excavated insight, not the synthesized root).
+  const firstNode =
+    model.graph.nodes.find((n) => n.id !== "ROOT.000")?.id ??
+    model.graph.nodes[0]?.id ??
+    "ROOT.000";
+
+  console.log(
+    paint("◈ compiled", "terracotta") +
+      dim(`  ${relative(cwd, p.root)}`) +
+      paint("  (engine)", "plum"),
+  );
+  console.log("");
+  console.log(
+    `  ${bold(String(manifest.nodeCount))} nodes · ${bold(String(manifest.edgeCount))} edges · ${paint(String(manifest.checkCount) + " checks", "green")} · ${paint(String(manifest.residueCount) + " residue", "amber")}`,
+  );
+  console.log(`  clusters: ${dim(manifest.clusters.join(", "))}`);
+  if (rejected.length) {
+    console.log(
+      dim(
+        `  ${rejected.length} candidate(s) rejected by the gate: ${rejected
+          .map((r) => r.spec.id)
+          .join(", ")}`,
+      ),
+    );
+  }
+  console.log("");
+  console.log(
+    "  " +
+      paint("first graph moment", "deep_blue") +
+      dim(`   ada open ${slug} ${firstNode}`),
   );
   console.log(
     "  " +
