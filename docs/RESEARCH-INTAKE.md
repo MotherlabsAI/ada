@@ -22,10 +22,10 @@ Default: a quantitative claim is **unverified** unless traced to a primary sourc
 
 |                  |            |
 | ---------------- | ---------- |
-| Drops ingested   | 5          |
+| Drops ingested   | 5 + vision |
 | Frozen decisions | 0          |
-| Open questions   | 6          |
-| Last updated     | 2026-06-02 |
+| Open questions   | 7          |
+| Last updated     | 2026-06-03 |
 
 ---
 
@@ -59,6 +59,9 @@ _Empty. Nothing has graduated yet._
   As the 3-a engine scales to 100+ nodes this **inverts A8** — the pack starts making Claude Code
   _worse_. Fix = a deterministic salience budget + top-K + a pure density C-check (Steal 4-a). Build it
   **as part of** the engine, or sooner? (It's a guardrail the engine needs, not a separate feature.)
+- **OQ-8.** Alex's vision wants the interview to _feel_ interactive/fun. The research floats **MCP-UI /
+  MCP Apps** (rendering forms/graphs/sliders inside the terminal). That's a real standard but a real
+  dependency/scope decision. In-scope for the TUI, or keep the experience pure-ink (zero-dep)? → Drop 6.
 
 ---
 
@@ -413,3 +416,63 @@ reason to instrument the compiler to phone home.
 No workflow ran, so there's no blind prediction to grade. The honest discipline here was the _opposite_ of
 the last four drops: recognizing when the marginal value of the multi-agent filter had dropped to zero and
 saying so, rather than running it for appearances.
+
+---
+
+## Drop 6 — Alex's VISION (the experiential anchor, NOT research)
+
+**Source.** Alex's own prompt to Gemini + Gemini's affirming answer. **This is direction (Alex's C0–C2
+taste layer), not external research** — so it's _not_ filtered skeptically; it's the anchor the freeze plan
+must serve. The discipline here is the opposite: separate **Alex's vision** (which largely compiles and is
+on-thesis) from **Gemini's embellishments** (which re-import the already-quarantined fabrications).
+
+**Verdict: it compiles.** Most of it is _already where Ada is heading_; the genuinely new parts are an
+evolution of the CLI, not a contradiction of the architecture.
+
+### Verified gaps the vision fills
+
+- The emitted wiki uses **relative-path links** (`[x](x.md)`), **not `[[wikilinks]]`** → an Obsidian graph
+  view won't populate today.
+- The TUI is **read-only** (no spawn / edge-edit / mutate) → the "manipulate edges, spawn nodes" playground
+  is genuinely new.
+
+### Vision-driven steals (new, on-thesis)
+
+- **6-a · The editable graph playground ("neural net of knowledge").** The TUI evolves from a read-only
+  navigator → a **generative editor**: manipulate edges, spawn nodes, push deeper. The user and the U2F
+  engine (3-a) **co-excavate** the same graph. **Axiom-compatible:** the graph/wiki is the _exploratory_
+  layer (A1); user-spawned nodes are provenance-tagged `truth=source` (A2); determinism stays downstream in
+  the blueprint + C. This is the experiential heart of the product.
+- **6-b · Obsidian / multi-client portability.** Emit **`[[wikilinks]]`** (currently relative-path) so a
+  pack _is_ an Obsidian knowledge-graph vault out of the box — and the same directory is read by Claude
+  Code / Cursor / OpenClaw. Cheap, on-thesis (filesystem markdown is portable by construction).
+- **6-c · "Compile any knowledge" scope.** Ada compiles _any_ knowledge domain the user is obsessed with,
+  not only software-context. Matches the thesis verbatim ("Ada is to meaning what Claude Code is to code" —
+  meaning is general). The compounding, addictive loop is a feature, not a side effect.
+- **6-d · The experiential spec (now explicit, not optional).** Fun / creative / interactive · light
+  animation · earth-tone palette · feels familiar to a Claude-Code/Codex user, **no hard adaptation.**
+  (Already the TUI direction — the blinking eye, terracotta→plum — now a stated requirement.)
+
+### Hold the line — Gemini re-smuggled the quarantine
+
+Gemini's "yes!" is laced with the exact items Drops 1–5 already ruled out. Affirming Alex's _vision_ does
+**not** reopen them:
+
+- "**98–99% context savings**", "**30 min → 3 hr**" — fabricated numbers (Noise).
+- "**Context-Mode as a native moat**" / SQLite + FTS5 — the forbidden datastore; executor/infra (OQ-3,
+  E4). Not the compiler's.
+- The **harness / OpenShell / sandbox** conflation — executor layer (Drop 2 D, Drop 4).
+- **One genuine new question, not a smuggle:** **MCP-UI / MCP Apps** (interactive forms/graphs/sliders in
+  the terminal) could serve 6-d's "fun/interactive" feel — but it's a real dependency/scope call. → OQ-8.
+
+### Why this matters for the freeze
+
+The vision is the **experiential spec** for the engine build — it gives the freeze target a soul:
+
+> The engine (2-a typed IR + 3-a U2F excavator + 3-a.4 Kano ranking) **produces** the graph; the playground
+> (6-a) lets the user **manipulate and extend** it; it ships **earth-toned, animated, familiar** (6-d) and
+> **Obsidian/multi-client portable** (6-b); and it compiles **any knowledge** (6-c). Engine + playground +
+> portability = one product.
+
+This also **reframes the CLI roadmap:** read-only navigation (done) was step 1; the **editable playground is
+the destination** — so the CLI work and the engine build are the same arc, not separate tracks.
