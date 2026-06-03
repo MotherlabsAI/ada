@@ -19,6 +19,11 @@ import { join, relative } from "node:path";
 import { buildShowcasePack } from "./compile/showcase.js";
 import { assemblePackGated } from "./compile/assemble.js";
 import { excavatePack } from "./compile/engine/orchestrate.js";
+import {
+  proposeClusters,
+  DEFAULT_PROPOSED_CLUSTERS,
+  type ClusterDef,
+} from "./compile/engine/clusters.js";
 import { anthropicClient } from "./compile/engine/model.js";
 import { writePack } from "./pack/writer.js";
 import { paths, packsRoot, nodeDir } from "./pack/layout.js";
@@ -64,6 +69,13 @@ export interface EngineOptions {
   perCluster?: number;
   /** Model id override; undefined → anthropicClient falls back to ADA_MODEL, then default. */
   model?: string;
+  /**
+   * Explicit area override from `--clusters=A,B,C` (P7). When present it SKIPS the
+   * model-driven proposal step and uses these codes directly (ROOT+UNK are still ensured by
+   * `withAnchors`). Each becomes `{ code, label: code }` — a human label is unavailable for a
+   * bare code, so the code doubles as its label. Undefined → propose from the intent.
+   */
+  clusters?: ClusterDef[];
 }
 
 /**
@@ -90,6 +102,26 @@ export function buildEngineOptions(
   if (typeof modelRaw === "string" && modelRaw.trim()) {
     opts.model = modelRaw.trim();
   }
+  // --clusters=A,B,C → explicit area codes (skips the model proposal). Each code is
+  // sanitized to a short UPPERCASE token; ROOT/UNK are dropped here (the anchors are added
+  // downstream) and the result is deduped. Junk / empty → ignored, leaving the proposal path.
+  const clustersRaw = flags["clusters"];
+  if (typeof clustersRaw === "string" && clustersRaw.trim()) {
+    const seen = new Set<string>(["ROOT", "UNK"]);
+    const defs: ClusterDef[] = [];
+    for (const part of clustersRaw.split(",")) {
+      const code = part
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "");
+      const m = /^[A-Z][A-Z0-9]*/.exec(code);
+      const clean = m ? m[0].slice(0, 12) : "";
+      if (!clean || seen.has(clean)) continue;
+      seen.add(clean);
+      defs.push({ code: clean, label: clean });
+    }
+    if (defs.length) opts.clusters = defs;
+  }
   return opts;
 }
 
@@ -98,9 +130,10 @@ const HELP = [
   "",
   "  ada init                          scaffold .ada/ here",
   '  ada compile "<intent>" [--slug=x] compile intent into a pack',
-  '  ada compile --engine "<intent>" [--depth=N] [--model=<id>]',
+  '  ada compile --engine "<intent>" [--depth=N] [--model=<id>] [--clusters=A,B,C]',
   "                                    compile via the U2F engine (real model call);",
-  "                                    --depth caps nodes/cluster (cost), --model picks the model",
+  "                                    --depth caps nodes/cluster (cost), --model picks the model,",
+  "                                    --clusters overrides the auto-derived domain areas",
   "  ada open [slug] [nodeId]          navigate the pack",
   "  ada tui [slug]                    launch the Ink workbench (TTY)",
   "  ada deeper <slug> <nodeId>        full wiki article for a node",
@@ -134,12 +167,14 @@ function resolveSlug(value: string | undefined): string {
 }
 
 /**
- * A small, domain-agnostic default cluster set for the engine path. ROOT anchors the
- * world model; ATT/COPY/SEO/UNK are the calibration-exemplar clusters the excavator
- * prompt is tuned against (rich pathways + Kano ranking are a later goal — keep it
- * simple). The model excavates one candidate per cluster; the gate keeps the impressers.
+ * The LAST-RESORT fallback cluster set for the engine path, used only if cluster proposal
+ * AND its own default somehow yield nothing (it never does — `proposeClusters` already falls
+ * back to `DEFAULT_PROPOSED_CLUSTERS`). Kept for back-compat and as a belt-and-braces guard.
+ * ROOT anchors the world model; UNK is the unknown-unknowns area. (Pre-P7 this was the
+ * hardcoded marketing-shaped set `["ROOT","ATT","COPY","SEO","UNK"]`; P7 derives areas from
+ * the intent via `proposeClusters` instead.)
  */
-const DEFAULT_ENGINE_CLUSTERS = ["ROOT", "ATT", "COPY", "SEO", "UNK"];
+const DEFAULT_ENGINE_CLUSTERS = DEFAULT_PROPOSED_CLUSTERS;
 
 /**
  * A minimal engine Seed derived from the intent (AXIOM A2: traced, never a domain
@@ -219,13 +254,31 @@ async function cmdCompile(args: string[]): Promise<void> {
 }
 
 /**
+ * Ensure the structural anchors are present and positioned (P7): ROOT first (world-model
+ * anchor), UNK last (unknown-unknowns), the domain areas between — without duplicating either
+ * if the caller already supplied them. Pure; used for both the proposed set and the
+ * `--clusters` override.
+ */
+export function withAnchors(areas: ClusterDef[]): ClusterDef[] {
+  const middle = areas.filter((c) => c.code !== "ROOT" && c.code !== "UNK");
+  return [
+    { code: "ROOT", label: "Context root" },
+    ...middle,
+    { code: "UNK", label: "Unknown-unknowns" },
+  ];
+}
+
+/**
  * The REAL compile path (FREEZE.md §4 P1): drive the U2F engine end-to-end.
- *   engineSeed(intent) + default clusters + anthropicClient()  (the single A1/A9 boundary)
+ *   engineSeed(intent)
+ *     → proposeClusters (ONE compile-time model call → DOMAIN-appropriate areas; P7)
+ *        (or `--clusters=A,B,C` override, skipping the proposal)
  *     → excavatePack (one compile-time model call per cluster, model-free gate)
- *     → assemblePackGated (pack Seed DERIVED from intent + kept nodes, not a literal)
+ *     → assemblePackGated (pack Seed + cluster label registry DERIVED, not a literal)
  *     → writePack (the pack lands on disk).
- * The live network call lives solely in `anthropicClient()` (engine/model.ts); the key is
- * read from ANTHROPIC_API_KEY there and never logged/hardcoded.
+ * Every network call lives solely in `anthropicClient()` (engine/model.ts); the key is read
+ * from ANTHROPIC_API_KEY there and never logged/hardcoded. Multiple COMPILE-TIME calls are
+ * fine under A1/A9 — what they forbid is a runtime / post-compile call.
  */
 async function compileWithEngine(
   slug: string,
@@ -239,10 +292,26 @@ async function compileWithEngine(
     ? { perCluster: options.perCluster }
     : {};
   const clientOpts = options.model ? { model: options.model } : {};
+  const seed = engineSeed(intent);
+  const client = anthropicClient(clientOpts);
+
+  // Derive DOMAIN-appropriate areas from the intent (P7) instead of forcing the hardcoded
+  // marketing set. An explicit `--clusters=A,B,C` override skips the proposal model call;
+  // otherwise `proposeClusters` makes ONE model call and falls back to a sane default on
+  // garbled/empty output. ROOT/UNK are ensured by `withAnchors` either way.
+  const proposed: ClusterDef[] = options.clusters
+    ? withAnchors(options.clusters)
+    : await proposeClusters(seed, client);
+  // The code→label registry carried as DATA into the pack (manifest), so the TUI/wiki show
+  // domain-appropriate area names without any UI change.
+  const clusterLabels: Record<string, string> = Object.fromEntries(
+    proposed.map((c) => [c.code, c.label]),
+  );
+
   const { kept, rejected } = await excavatePack(
-    engineSeed(intent),
-    DEFAULT_ENGINE_CLUSTERS,
-    anthropicClient(clientOpts),
+    seed,
+    proposed.map((c) => c.code),
+    client,
     depthOpts,
   );
   if (kept.length === 0) {
@@ -251,7 +320,13 @@ async function compileWithEngine(
         "as generic or un-traced. Refine the intent and retry.",
     );
   }
-  const { model } = assemblePackGated(slug, intent, kept);
+  const { model } = assemblePackGated(
+    slug,
+    intent,
+    kept,
+    undefined,
+    clusterLabels,
+  );
   const manifest = await writePack(cwd, model);
   const p = paths(cwd, slug);
   // Point the hints at a REAL kept node (prefer a non-ROOT capsule so "open" lands on an

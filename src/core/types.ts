@@ -220,6 +220,13 @@ export interface PackManifest {
   checkCount: number;
   residueCount: number;
   clusters: string[];
+  /**
+   * Proposed area code→label registry (P7, domain-adaptive clustering). Carried as DATA so
+   * the TUI/wiki resolve dynamic labels (e.g. ARCH→"Architecture") for whatever areas this
+   * intent's domain has, instead of a hardcoded marketing-shaped map. Optional: packs
+   * compiled before P7 (and the showcase) omit it and fall back to the built-in map.
+   */
+  clusterLabels?: Record<string, string>;
 }
 
 export interface PackModel {
@@ -230,4 +237,10 @@ export interface PackModel {
   wiki: WikiPage[];
   /** Provenance note: how this pack was produced. */
   provenance: string;
+  /**
+   * Proposed area code→label registry (P7). When present it is written into the manifest so
+   * downstream projections (TUI/wiki) show domain-appropriate area names. Optional — the
+   * showcase and pre-P7 packs omit it and fall back to the built-in label map.
+   */
+  clusterLabels?: Record<string, string>;
 }

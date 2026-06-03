@@ -7,6 +7,7 @@ import {
   matchNode,
   resolvableLinks,
   breadcrumb,
+  clusterLabel,
 } from "./lines.js";
 import { clusterOf } from "../../core/ids.js";
 import { fixtureGraph } from "./fixtures.js";
@@ -76,4 +77,46 @@ test("resolvableLinks only returns edges that land on a real node", () => {
 test("breadcrumb joins the trail and elides a long one", () => {
   assert.equal(breadcrumb(["A", "B", "C"]), "A ▸ B ▸ C");
   assert.ok(breadcrumb(["a", "b", "c", "d", "e"]).startsWith("… ▸ "));
+});
+
+test("clusterLabel resolves a DYNAMIC code→label from the registry first (domain-adaptive)", () => {
+  // ARCH/PIPE are not in the hardcoded map — they must resolve from the proposed registry.
+  const registry = { ARCH: "Architecture", PIPE: "Compile pipeline" };
+  assert.equal(clusterLabel("ARCH", registry), "Architecture");
+  assert.equal(clusterLabel("PIPE", registry), "Compile pipeline");
+});
+
+test("clusterLabel still resolves known codes from the hardcoded map when no registry entry", () => {
+  // No registry → fall back to the built-in map (back-compat for existing packs).
+  assert.equal(clusterLabel("ROOT"), "Context root");
+  assert.equal(clusterLabel("UNK"), "Unknown-unknowns");
+  assert.equal(clusterLabel("L2C"), "Language → Code");
+  // Registry present but missing this code → fall through to the hardcoded map.
+  assert.equal(clusterLabel("ROOT", { ARCH: "Architecture" }), "Context root");
+});
+
+test("clusterLabel falls back to the raw code when neither registry nor map knows it", () => {
+  assert.equal(clusterLabel("ZZZ"), "ZZZ");
+  assert.equal(clusterLabel("ZZZ", { ARCH: "Architecture" }), "ZZZ");
+});
+
+test("a registry entry OVERRIDES the hardcoded map (proposed labels win)", () => {
+  // If a pack proposes its own label for a code that also exists in the map, the pack's wins.
+  assert.equal(clusterLabel("DATA", { DATA: "Tax records" }), "Tax records");
+});
+
+test("graphTree uses dynamic cluster labels from the registry when provided", () => {
+  const g = fixtureGraph();
+  const cluster = clusterOf(g.nodes[0]!.id);
+  const rows = graphTree(g.nodes, {
+    selectedRef: cluster,
+    open: new Set(),
+    flagged: new Set(),
+    clusterLabels: { [cluster]: "Bespoke Area Name" },
+  }).rows;
+  const header = rows.find((r) => r.kind === "cluster" && r.ref === cluster)!;
+  assert.ok(
+    header.text.includes("Bespoke Area Name"),
+    `header should show the dynamic label, got: ${header.text}`,
+  );
 });

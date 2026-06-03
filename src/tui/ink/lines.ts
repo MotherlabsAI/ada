@@ -143,8 +143,18 @@ const CLUSTER_LABELS: Record<string, string> = {
   BLUEPRINT: "Blueprint",
   CLAUDE: "Claude export",
 };
-export function clusterLabel(code: string): string {
-  return CLUSTER_LABELS[code] ?? code;
+/**
+ * Resolve an area code to a human label. Domain-adaptive (P7): the pack's PROPOSED
+ * `code→label` registry is consulted FIRST (so a non-marketing pack shows its own areas,
+ * e.g. ARCH→"Architecture"), then the built-in map for the known structural codes, then the
+ * raw code. This is the ONLY behaviour change for the TUI — where the label string comes
+ * from; layout, colours, and interaction are untouched (the registry is carried as data).
+ */
+export function clusterLabel(
+  code: string,
+  registry?: Record<string, string>,
+): string {
+  return registry?.[code] ?? CLUSTER_LABELS[code] ?? code;
 }
 
 /** A selectable row in the folder-tree: a cluster header or a node under an open cluster. */
@@ -166,6 +176,8 @@ export function graphTree(
     flagged: Set<string>;
     rejected?: Set<string>;
     width?: number;
+    /** Proposed code→label registry (P7); consulted before the built-in map. */
+    clusterLabels?: Record<string, string>;
   },
 ): { rows: TreeRow[]; selectedLine: number } {
   const rejected = opts.rejected ?? new Set<string>();
@@ -217,7 +229,11 @@ export function graphTree(
           { text: sel ? "❯ " : "  ", bold: true },
           { text: isOpen ? "▾ " : "▸ ", dim: true },
           { text: "● ", colour },
-          { text: clusterLabel(cluster), colour, bold: true },
+          {
+            text: clusterLabel(cluster, opts.clusterLabels),
+            colour,
+            bold: true,
+          },
           { text: `  (${inCluster.length})`, dim: true },
         ],
         sel,

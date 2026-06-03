@@ -124,6 +124,7 @@ export function App(props: AppProps) {
     [graph, props.manifest],
   );
 
+  const clusterLabels = props.manifest?.clusterLabels;
   const tree = useMemo(
     () =>
       graphTree(nodes, {
@@ -132,8 +133,9 @@ export function App(props: AppProps) {
         flagged,
         rejected,
         width: cols,
+        ...(clusterLabels ? { clusterLabels } : {}),
       }),
-    [nodes, cursor, open, flagged, rejected, cols],
+    [nodes, cursor, open, flagged, rejected, cols, clusterLabels],
   );
 
   const readingNode: NodeCapsule | undefined = useMemo(

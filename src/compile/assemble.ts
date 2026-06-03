@@ -304,6 +304,12 @@ export function assemblePackGated(
    * non-booking intent therefore never emits a booking-domain Seed/wiki index.
    */
   seedOverride?: Seed,
+  /**
+   * Optional proposed area code→label registry (P7). Carried onto the PackModel so the
+   * writer can store it in the manifest; the TUI/wiki then resolve domain-appropriate area
+   * names. Absent for the showcase / pre-P7 packs (built-in label map applies).
+   */
+  clusterLabels?: Record<string, string>,
 ): GatedPack {
   const scored = specs.map((spec) => ({ spec, score: scoreNode(spec) }));
   const keptScored = scored.filter((s) => s.score.verdict !== "reject");
@@ -335,6 +341,7 @@ export function assemblePackGated(
     wiki,
     provenance:
       "Excavated from one intent by the Ada compile workforce; every node anti-generic-gated. Exploratory layer (AXIOM A1); provenance via truth-class + fromPrompt (AXIOM A2).",
+    ...(clusterLabels ? { clusterLabels } : {}),
   };
   return { model, kept, rejected };
 }

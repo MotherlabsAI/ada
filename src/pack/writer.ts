@@ -29,6 +29,18 @@ function manifestOf(model: PackModel): PackManifest {
     checkCount: CHECK_FILES.length,
     residueCount: model.seed.unknownContext.length,
     clusters,
+    // Carry the proposed area registry as DATA (P7) when present; restricted to the clusters
+    // actually in this pack, so the manifest stays a faithful projection. Omitted entirely
+    // when the model has none (showcase / pre-P7 packs fall back to the built-in label map).
+    ...(model.clusterLabels
+      ? {
+          clusterLabels: Object.fromEntries(
+            clusters
+              .filter((c) => model.clusterLabels?.[c])
+              .map((c) => [c, model.clusterLabels![c]!]),
+          ),
+        }
+      : {}),
   };
 }
 
