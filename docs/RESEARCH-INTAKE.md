@@ -20,18 +20,22 @@ Default: a quantitative claim is **unverified** unless traced to a primary sourc
 
 ## Status
 
-|                  |            |
-| ---------------- | ---------- |
-| Drops ingested   | 5 + vision |
-| Frozen decisions | 0          |
-| Open questions   | 7          |
-| Last updated     | 2026-06-03 |
+|                  |                        |
+| ---------------- | ---------------------- |
+| Drops ingested   | 5 + vision             |
+| Frozen decisions | proposed → `FREEZE.md` |
+| Open questions   | 7                      |
+| Last updated     | 2026-06-03             |
 
 ---
 
 ## Frozen (build-eligible — requires Alex's sign-off)
 
-_Empty. Nothing has graduated yet._
+**Proposed freeze: [`docs/FREEZE.md`](./FREEZE.md)** (2026-06-03). All 6 inputs synthesized into one build
+(typed-IR engine + guardrails + editable playground + portability), a phased plan, a first slice, and a
+proposed AXIOMS delta (D1–D4 entailed + the 6-c/A7 scope decision held back). Adversarial freeze critic:
+**GO_WITH_FIXES** (all 4 fixes folded in). **Not ratified** until Alex approves the axiom deltas + the A7
+decision + says "go." Nothing in `AXIOMS.md` or `src/` changes until then.
 
 ---
 
