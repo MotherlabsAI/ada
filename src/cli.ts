@@ -17,13 +17,15 @@ import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { buildShowcasePack } from "./compile/showcase.js";
-import { assemblePackGated } from "./compile/assemble.js";
-import { excavatePack } from "./compile/engine/orchestrate.js";
 import {
-  proposeClusters,
   DEFAULT_PROPOSED_CLUSTERS,
   type ClusterDef,
 } from "./compile/engine/clusters.js";
+import {
+  engineCompile,
+  withAnchors as withAnchorsShared,
+} from "./compile/engine/compile.js";
+import { engineSeed } from "./compile/engine/seed.js";
 import { anthropicClient } from "./compile/engine/model.js";
 import {
   nextStep,
@@ -190,33 +192,6 @@ function resolveSlug(value: string | undefined): string {
  */
 const DEFAULT_ENGINE_CLUSTERS = DEFAULT_PROPOSED_CLUSTERS;
 
-/**
- * A minimal engine Seed derived from the intent (AXIOM A2: traced, never a domain
- * literal). The excavator reads rootIntent/domain/objective + the cluster; the pack's
- * own richer Seed is DERIVED by `assemblePackGated` from the intent + kept nodes, so the
- * engine pack never carries the booking-showcase chrome (FREEZE.md §5 critic-fix).
- */
-function engineSeed(intent: string): Seed {
-  const domain = intent.replace(/^(a|an|the)\s+/i, "").trim() || intent;
-  return {
-    rootIntent: intent,
-    domain,
-    userRole: "The person who brought this intent",
-    buildObjective: `Compile a working world model of ${domain} an executor can build from.`,
-    knowledgeObjective: `A navigable, compounding map of ${domain}.`,
-    trustObjective:
-      "Deterministic checks where the structure is checkable; honest residue where it is not.",
-    knownContext: [
-      "Derived solely from the stated intent; no external facts assumed.",
-    ],
-    unknownContext: [],
-    assumptions: [],
-    sources: ["User intent"],
-    constraints: ["Local-first."],
-    risks: [],
-  };
-}
-
 async function cmdCompile(args: string[]): Promise<void> {
   const { positional, flags } = parseFlags(args);
   const rawIntent = positional.join(" ").trim();
@@ -274,12 +249,8 @@ async function cmdCompile(args: string[]): Promise<void> {
  * `--clusters` override.
  */
 export function withAnchors(areas: ClusterDef[]): ClusterDef[] {
-  const middle = areas.filter((c) => c.code !== "ROOT" && c.code !== "UNK");
-  return [
-    { code: "ROOT", label: "Context root" },
-    ...middle,
-    { code: "UNK", label: "Unknown-unknowns" },
-  ];
+  // Delegates to the shared engine seam so the override path is identical across front-ends.
+  return withAnchorsShared(areas);
 }
 
 /**
@@ -306,58 +277,27 @@ async function compileWithEngine(
    */
   seedOverride?: Seed,
 ): Promise<void> {
-  // --depth caps kept nodes/cluster (≈ caps model calls → caps cost); --model picks the
-  // model (flag > ADA_MODEL env > built-in default, enforced by anthropicClient reading env
-  // only when no `model` is passed). Both default cleanly when the flag is absent/junk.
-  const depthOpts = options.perCluster
-    ? { perCluster: options.perCluster }
-    : {};
-  const clientOpts = options.model ? { model: options.model } : {};
+  // The whole pipeline now lives in the SHARED `engineCompile` seam (engine/compile.ts) so the
+  // CLI and the TUI's Compile flow cannot drift. The CLI keeps its own console output below;
+  // behaviour (depth/model/clusters semantics, the seed-override vs derived-seed rule, the
+  // first-node pick, the gate-empty throw) is identical — it was MOVED, not changed.
+  //   • `seed` drives proposal + excavation (bare-intent `engineSeed`, or the interview's Seed).
+  //   • `seedOverride` is the assembly override (interview → SEED.md verbatim; absent → derived).
   const seed = seedOverride ?? engineSeed(intent);
-  const client = anthropicClient(clientOpts);
-
-  // Derive DOMAIN-appropriate areas from the intent (P7) instead of forcing the hardcoded
-  // marketing set. An explicit `--clusters=A,B,C` override skips the proposal model call;
-  // otherwise `proposeClusters` makes ONE model call and falls back to a sane default on
-  // garbled/empty output. ROOT/UNK are ensured by `withAnchors` either way.
-  const proposed: ClusterDef[] = options.clusters
-    ? withAnchors(options.clusters)
-    : await proposeClusters(seed, client);
-  // The code→label registry carried as DATA into the pack (manifest), so the TUI/wiki show
-  // domain-appropriate area names without any UI change.
-  const clusterLabels: Record<string, string> = Object.fromEntries(
-    proposed.map((c) => [c.code, c.label]),
-  );
-
-  const { kept, rejected } = await excavatePack(
-    seed,
-    proposed.map((c) => c.code),
-    client,
-    depthOpts,
-  );
-  if (kept.length === 0) {
-    throw new Error(
-      "The engine produced no node that cleared the gate. Every candidate was rejected " +
-        "as generic or un-traced. Refine the intent and retry.",
-    );
-  }
-  // When the interview captured a Seed, persist IT into the pack (AXIOM A2: the richer,
-  // user-confirmed Seed drives the pack's SEED.md/wiki). A bare compile derives one instead.
-  const { model } = assemblePackGated(
+  const { model, manifest, firstNodeId, rejected } = await engineCompile({
+    cwd,
     slug,
     intent,
-    kept,
-    seedOverride,
-    clusterLabels,
-  );
-  const manifest = await writePack(cwd, model);
+    seed,
+    ...(seedOverride ? { seedOverride } : {}),
+    opts: {
+      ...(options.perCluster ? { perCluster: options.perCluster } : {}),
+      ...(options.model ? { model: options.model } : {}),
+      ...(options.clusters ? { clusters: options.clusters } : {}),
+    },
+  });
   const p = paths(cwd, slug);
-  // Point the hints at a REAL kept node (prefer a non-ROOT capsule so "open" lands on an
-  // excavated insight, not the synthesized root).
-  const firstNode =
-    model.graph.nodes.find((n) => n.id !== "ROOT.000")?.id ??
-    model.graph.nodes[0]?.id ??
-    "ROOT.000";
+  const firstNode = firstNodeId;
 
   console.log(
     paint("◈ compiled", "terracotta") +
