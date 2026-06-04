@@ -13,7 +13,7 @@
  *   ada c run [slug] [--defect]      run the pack's deterministic C checks
  *   ada export [slug]                list the exported Claude + blueprint files
  */
-import { mkdir, readdir } from "node:fs/promises";
+import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { buildShowcasePack } from "./compile/showcase.js";
@@ -25,6 +25,13 @@ import {
   type ClusterDef,
 } from "./compile/engine/clusters.js";
 import { anthropicClient } from "./compile/engine/model.js";
+import {
+  nextStep,
+  applyAnswer,
+  MAX_TURNS,
+  type InterviewStep,
+  type InterviewTurn,
+} from "./compile/engine/interview.js";
 import { writePack } from "./pack/writer.js";
 import { paths, packsRoot, nodeDir } from "./pack/layout.js";
 import { nodeWiki } from "./pack/wiki.js";
@@ -134,6 +141,9 @@ const HELP = [
   "                                    compile via the U2F engine (real model call);",
   "                                    --depth caps nodes/cluster (cost), --model picks the model,",
   "                                    --clusters overrides the auto-derived domain areas",
+  "  ada ctx init [intent] [--slug=x] [--model=id] [--compile]",
+  "                                    chat-style interview BEFORE compile: captures what you",
+  "                                    expect into the Seed, then exits (--compile chains in)",
   "  ada open [slug] [nodeId]          navigate the pack",
   "  ada tui [slug]                    launch the Ink workbench (TTY)",
   "  ada deeper <slug> <nodeId>        full wiki article for a node",
@@ -284,6 +294,13 @@ async function compileWithEngine(
   slug: string,
   intent: string,
   options: EngineOptions = {},
+  /**
+   * Optional richer Seed (AXIOM A2): the `ada ctx init` interview output. When present it
+   * DRIVES the excavation (proposeClusters + excavatePack read it) instead of the bare-intent
+   * `engineSeed`, so the interview's captured expectations shape the world model. Absent for a
+   * plain `ada compile --engine`, which derives a minimal Seed from the intent alone.
+   */
+  seedOverride?: Seed,
 ): Promise<void> {
   // --depth caps kept nodes/cluster (≈ caps model calls → caps cost); --model picks the
   // model (flag > ADA_MODEL env > built-in default, enforced by anthropicClient reading env
@@ -292,7 +309,7 @@ async function compileWithEngine(
     ? { perCluster: options.perCluster }
     : {};
   const clientOpts = options.model ? { model: options.model } : {};
-  const seed = engineSeed(intent);
+  const seed = seedOverride ?? engineSeed(intent);
   const client = anthropicClient(clientOpts);
 
   // Derive DOMAIN-appropriate areas from the intent (P7) instead of forcing the hardcoded
@@ -320,11 +337,13 @@ async function compileWithEngine(
         "as generic or un-traced. Refine the intent and retry.",
     );
   }
+  // When the interview captured a Seed, persist IT into the pack (AXIOM A2: the richer,
+  // user-confirmed Seed drives the pack's SEED.md/wiki). A bare compile derives one instead.
   const { model } = assemblePackGated(
     slug,
     intent,
     kept,
-    undefined,
+    seedOverride,
     clusterLabels,
   );
   const manifest = await writePack(cwd, model);
@@ -509,6 +528,183 @@ async function cmdExport(args: string[]): Promise<void> {
   }
 }
 
+/**
+ * Map a finished interview transcript onto the engine Seed (AXIOM A2: every field traces to an
+ * answer; never a domain literal). Starts from the bare-intent `engineSeed` so any field the
+ * interview did NOT cover keeps an honest, intent-derived default, then folds each answer into
+ * its `field` via the SAME pure `applyAnswer` the headless loop uses (scalars overwrite, lists
+ * accumulate). Pure — no model, no I/O.
+ */
+export function seedFromInterview(
+  intent: string,
+  turns: InterviewTurn[],
+): Seed {
+  // Start from the bare-intent Seed (scalar defaults are honest, intent-derived), but CLEAR
+  // the accumulating list fields the interview owns — so a captured answer is not mixed with a
+  // generic placeholder (e.g. the baseline "Local-first." constraint). `sources` is left as-is
+  // (it is the provenance trail, not an interview field). With no turns this still yields a
+  // clean, honest Seed; the bare `ada compile --engine` keeps its own `engineSeed` untouched.
+  const base = engineSeed(intent);
+  let seed: Seed = {
+    ...base,
+    knownContext: [],
+    unknownContext: [],
+    assumptions: [],
+    constraints: [],
+    risks: [],
+  };
+  for (const t of turns) {
+    seed = applyAnswer(seed, t.step.field, t.answer);
+  }
+  return seed;
+}
+
+/**
+ * `ada ctx init [--slug=x] [--model=id] [--compile]` — the conversational interview that runs
+ * BEFORE compile. It captures the user's implicit expectations into the Seed, writes the Seed
+ * to the pack on disk, then EXITS (never a session/daemon: the finite loop is bounded by
+ * MAX_TURNS, AXIOM A6/A9). One model call per turn via `anthropicClient` (the only network
+ * boundary, A1/A9). With `--compile` it chains straight into the engine using the captured Seed.
+ *
+ * Non-TTY (no raw mode): mirrors `cmdTui` — never hangs. It prints a clear message and falls
+ * back to compiling from the bare intent (so the command is never a dead end in a pipe/CI).
+ */
+async function cmdCtx(args: string[]): Promise<void> {
+  const { positional, flags } = parseFlags(args);
+  const sub = positional[0];
+  if (sub !== "init") {
+    throw new Error("usage: ada ctx init [--slug=x] [--model=id] [--compile]");
+  }
+  const slug = resolveSlug(
+    typeof flags["slug"] === "string" ? (flags["slug"] as string) : undefined,
+  );
+  const intent =
+    positional.slice(1).join(" ").trim() ||
+    "A tool I want to build but haven't fully described yet.";
+  const doCompile = Boolean(flags["compile"]);
+  const clientOpts =
+    typeof flags["model"] === "string" && flags["model"].trim()
+      ? { model: flags["model"].trim() }
+      : {};
+  const engineOptions = buildEngineOptions(flags);
+
+  await mkdir(packsRoot(cwd), { recursive: true });
+  const client = anthropicClient(clientOpts);
+  const baseSeed = engineSeed(intent);
+
+  // Non-TTY fallback (mirror cmdTui): the chat UI needs raw mode. Without it we do NOT hang —
+  // we explain, then either compile from the bare intent (--compile) or instruct the user.
+  if (!canRunInk(process.stdin, process.stdout)) {
+    console.error(
+      paint("⟦ ctx init ⟧ ", "plum") +
+        dim(
+          "needs an interactive terminal for the chat interview (no raw-mode TTY here).",
+        ),
+    );
+    if (doCompile) {
+      console.error(dim("  compiling from the bare intent instead —"));
+      await compileWithEngine(slug, intent, engineOptions);
+    } else {
+      console.error(
+        dim(
+          `  run it in a real terminal, or compile directly:\n    ada compile --engine --slug=${slug} "${intent}"`,
+        ),
+      );
+    }
+    return;
+  }
+
+  // Defer the React/Ink import so non-TTY callers never pay for it (matches cmdTui).
+  const { createElement } = await import("react");
+  const { render } = await import("ink");
+  const { Interview } = await import("./tui/ink/Interview.js");
+
+  // The interview's per-turn fetch: ONE compile-time model call (A1/A9). The finite loop /
+  // hard cap lives HERE in the host (the UI is a thin renderer): once MAX_TURNS turns are
+  // recorded we return null, which ends the interview — it can never become a daemon.
+  let captured: InterviewTurn[] = [];
+  const getNextStep = async (
+    turns: InterviewTurn[],
+  ): Promise<InterviewStep | null> => {
+    if (turns.length >= MAX_TURNS) return null; // termination guarantee (A6/A9)
+    const seedSoFar = seedFromInterview(intent, turns);
+    return nextStep(client, seedSoFar, turns);
+  };
+
+  const { waitUntilExit } = render(
+    createElement(Interview, {
+      rootIntent: intent,
+      getNextStep,
+      onFinish: (turns: InterviewTurn[]) => {
+        captured = turns;
+      },
+      maxTurns: MAX_TURNS,
+    }),
+    { alternateScreen: true, incrementalRendering: true, maxFps: 30 },
+  );
+  await waitUntilExit();
+
+  const seed = seedFromInterview(intent, captured);
+
+  if (doCompile) {
+    // Chain straight into the engine with the captured Seed driving the excavation (A2).
+    await compileWithEngine(slug, intent, engineOptions, seed);
+    return;
+  }
+
+  // Otherwise: persist the Seed into the pack on disk and point at the next step. We assemble a
+  // Seed-only pack via the writer's seed persistence (SEED.md) without a full excavation.
+  await writeSeedOnly(slug, seed);
+  const p = paths(cwd, slug);
+  console.log(
+    paint("⟦ ctx init ⟧ captured", "plum") + dim(`  ${relative(cwd, p.seed)}`),
+  );
+  console.log("");
+  console.log(
+    `  ${bold(String(captured.length))} answers captured into the Seed`,
+  );
+  console.log("");
+  console.log(
+    "  " +
+      paint("next", "deep_blue") +
+      dim(`   ada compile --engine --slug=${slug} "${seed.rootIntent}"`),
+  );
+}
+
+/**
+ * Persist a Seed to the pack on disk WITHOUT a full excavation (the no-`--compile` path of
+ * `ada ctx init`). Reuses the same SEED.md shape the pack writer emits, so a later
+ * `ada compile --engine` can pick up where the interview left off. Pure I/O — no model.
+ */
+async function writeSeedOnly(slug: string, seed: Seed): Promise<void> {
+  const p = paths(cwd, slug);
+  await mkdir(p.root, { recursive: true });
+  const block = (label: string, items: string[]) =>
+    [`## ${label}`, ...items.map((i) => `- ${i}`), ""].join("\n");
+  const md = [
+    "# ⟦ SEED ⟧",
+    "",
+    `**Root intent.** ${seed.rootIntent}`,
+    "",
+    `**Domain.** ${seed.domain}`,
+    `**User role.** ${seed.userRole}`,
+    "",
+    `**Build objective.** ${seed.buildObjective}`,
+    `**Knowledge objective.** ${seed.knowledgeObjective}`,
+    `**Trust objective.** ${seed.trustObjective}`,
+    "",
+    block("Known context", seed.knownContext),
+    block("Unknown context (residue)", seed.unknownContext),
+    block("Assumptions", seed.assumptions),
+    block("Sources", seed.sources),
+    block("Constraints", seed.constraints),
+    block("Risks", seed.risks),
+    "> Provenance: captured by `ada ctx init` (the pre-compile interview); compile with `ada compile --engine`.",
+    "",
+  ].join("\n");
+  await writeFile(p.seed, md, "utf8");
+}
+
 async function main(): Promise<void> {
   const [cmd, ...rest] = process.argv.slice(2);
   switch (cmd) {
@@ -516,6 +712,8 @@ async function main(): Promise<void> {
       return cmdInit();
     case "compile":
       return cmdCompile(rest);
+    case "ctx":
+      return cmdCtx(rest);
     case "open":
       return cmdOpen(rest);
     case "tui":

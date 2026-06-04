@@ -9,7 +9,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildEngineOptions, withAnchors } from "./cli.js";
+import { buildEngineOptions, withAnchors, seedFromInterview } from "./cli.js";
+import type { InterviewTurn } from "./compile/engine/interview.js";
+
+function turn(field: string, answer: string, question = "q?"): InterviewTurn {
+  return {
+    step: { question, options: [], allowOther: true, field, done: false },
+    answer,
+  };
+}
 
 test("--depth=N parses to perCluster as a positive integer", () => {
   assert.deepEqual(buildEngineOptions({ depth: "3" }), { perCluster: 3 });
@@ -114,4 +122,68 @@ test("withAnchors ensures ROOT first and UNK last without duplicating them", () 
 test("the --engine help line documents --clusters", () => {
   const src = readFileSync(join(process.cwd(), "src/cli.ts"), "utf8");
   assert.ok(src.includes("--clusters"), "help should mention --clusters");
+});
+
+// ── ada ctx init: interview → Seed mapping ────────────────────────────────────
+
+test("seedFromInterview folds answers into Seed fields over the intent baseline", () => {
+  const intent = "A booking tool for my dog-grooming shop";
+  const seed = seedFromInterview(intent, [
+    turn("domain", "Dog-grooming bookings"),
+    turn("userRole", "The shop owner"),
+    turn(
+      "buildObjective",
+      "Take and reschedule appointments without phone tag",
+    ),
+    turn("constraints", "Under $50/mo"),
+    turn("constraints", "Works on a phone"),
+    turn("risks", "Double-booking a Saturday slot"),
+    turn("unknownContext", "Whether clients want SMS reminders"),
+  ]);
+  assert.equal(
+    seed.rootIntent,
+    intent,
+    "root intent preserved from the opening",
+  );
+  assert.equal(seed.domain, "Dog-grooming bookings");
+  assert.equal(seed.userRole, "The shop owner");
+  assert.equal(
+    seed.buildObjective,
+    "Take and reschedule appointments without phone tag",
+  );
+  assert.deepEqual(
+    seed.constraints,
+    ["Under $50/mo", "Works on a phone"],
+    "list accumulates",
+  );
+  assert.deepEqual(seed.risks, ["Double-booking a Saturday slot"]);
+  assert.deepEqual(seed.unknownContext, ["Whether clients want SMS reminders"]);
+});
+
+test("seedFromInterview with no turns keeps intent-derived scalars and CLEAN empty lists", () => {
+  const a = seedFromInterview("an intent", []);
+  // Scalar fields keep their intent-derived defaults; nothing invented.
+  assert.equal(a.rootIntent, "an intent");
+  assert.ok(a.buildObjective.length > 0, "scalar default preserved");
+  // The interview owns the list fields, so they start clean (no generic placeholder).
+  assert.deepEqual(a.constraints, []);
+  assert.deepEqual(a.unknownContext, []);
+  assert.deepEqual(a.knownContext, []);
+  assert.deepEqual(a.sources, ["User intent"], "provenance trail untouched");
+});
+
+test("the help documents `ada ctx init` with --compile", () => {
+  const src = readFileSync(join(process.cwd(), "src/cli.ts"), "utf8");
+  assert.ok(src.includes("ada ctx init"), "help should mention `ada ctx init`");
+  assert.ok(src.includes("--compile"), "help should mention --compile");
+});
+
+test("no model/network token lives in the Interview UI (only model.ts may)", () => {
+  const src = readFileSync(
+    join(process.cwd(), "src/tui/ink/Interview.ts"),
+    "utf8",
+  ).toLowerCase();
+  for (const tok of ["anthropic", "openai", "fetch("]) {
+    assert.ok(!src.includes(tok), `forbidden token in Interview.ts: ${tok}`);
+  }
 });
