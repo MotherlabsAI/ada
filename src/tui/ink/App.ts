@@ -28,7 +28,7 @@ import {
   breadcrumb,
   type Line,
 } from "./lines.js";
-import type { PackState } from "./usePack.js";
+import type { PackState, PackSummary } from "./usePack.js";
 
 export interface AppProps {
   slug: string;
@@ -37,6 +37,8 @@ export interface AppProps {
   onPersist: (state: PackState) => void;
   manifest?: PackManifest;
   onExport?: (slug: string) => void;
+  /** Packs on disk, for the welcome's menu sidebar + "your projects" panel. */
+  packs?: PackSummary[];
 }
 
 function statusCounts(graph: Graph, manifest?: PackManifest) {
@@ -105,6 +107,9 @@ export function App(props: AppProps) {
     [nodes],
   );
   const [view, setView] = useState<"welcome" | "graph">("welcome");
+  // A transient one-liner the welcome shows for actions whose deep wiring is
+  // minimal for now (Compile / Interview / Settings → a hint, not a new screen).
+  const [notice, setNotice] = useState<string | null>(null);
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [cursor, setCursor] = useState<string>(clusters[0] ?? "");
   const [reading, setReading] = useState<string | null>(null);
@@ -254,9 +259,8 @@ export function App(props: AppProps) {
     }
 
     if (view === "welcome") {
-      if (input === "q") return app.exit();
-      // ⏎ or any key opens the graph (the landing's only job is to get you in).
-      setView("graph");
+      // The Welcome component owns its own arrow-nav `useInput`; App stays out of
+      // the way here so keys aren't double-handled.
       return;
     }
 
@@ -338,7 +342,26 @@ export function App(props: AppProps) {
   });
 
   if (view === "welcome") {
-    return h(Welcome, { slug: props.slug, ...counts, cols, rows });
+    return h(Welcome, {
+      slug: props.slug,
+      ...counts,
+      cols,
+      rows,
+      ...(props.packs ? { packs: props.packs } : {}),
+      notice,
+      onOpenPack: () => {
+        setNotice(null);
+        setView("graph");
+      },
+      onCompile: () =>
+        setNotice(
+          'compile — run `ada compile "<intent>"`, or ⏎ Open to explore',
+        ),
+      onInterview: () => setNotice("interview — run `ada ctx init` to start"),
+      onSettings: () =>
+        setNotice("settings — press ⏎ on Open a pack to begin; q quits"),
+      onQuit: () => app.exit(),
+    });
   }
 
   let body: Line[];

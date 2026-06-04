@@ -429,11 +429,12 @@ async function cmdTui(args: string[]): Promise<void> {
   const { createElement } = await import("react");
   const { render } = await import("ink");
   const { App } = await import("./tui/ink/App.js");
-  const { loadPackData, readPackState, writePackState } =
+  const { loadPackData, readPackState, writePackState, listPacks } =
     await import("./tui/ink/usePack.js");
 
   const { graph, manifest, stateFile } = loadPackData(cwd, slug);
   const initialState = readPackState(stateFile);
+  const packs = listPacks(cwd);
 
   try {
     const { waitUntilExit } = render(
@@ -442,6 +443,7 @@ async function cmdTui(args: string[]): Promise<void> {
         graph,
         manifest,
         initialState,
+        packs,
         onPersist: (state) => writePackState(stateFile, state),
         onExport: (s) => {
           // Surface the export hint; the deterministic export already lives on disk.

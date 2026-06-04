@@ -6,15 +6,61 @@
  * readline navigator so the two front-ends stay interchangeable, and reads the
  * pack's `.state.json` using the same shape the navigator writes (PackState).
  */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import type { Graph, PackManifest } from "../../core/types.js";
 import { loadPack } from "../navigator.js";
+import { packsRoot } from "../../pack/layout.js";
 
 export interface PackData {
   graph: Graph;
   manifest: PackManifest;
   /** Absolute path to the pack's `.state.json`. */
   stateFile: string;
+}
+
+/** A pack as it appears in the welcome "your projects" list — counts only. */
+export interface PackSummary {
+  slug: string;
+  nodes: number;
+  checks: number;
+  residue: number;
+  clusters: number;
+}
+
+/**
+ * List the packs under `.ada/packs/`, newest-first, reading each `manifest.json`
+ * for its counts. Tolerant of a missing root, non-pack dirs, and corrupt/absent
+ * manifests (those are skipped) — so the welcome's "your projects" panel never
+ * throws and shows a clean empty state when there are none.
+ */
+export function listPacks(cwd: string): PackSummary[] {
+  let entries: string[];
+  try {
+    entries = readdirSync(packsRoot(cwd), { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
+  } catch {
+    return [];
+  }
+  const out: PackSummary[] = [];
+  for (const slug of entries) {
+    const manifestPath = join(packsRoot(cwd), slug, "manifest.json");
+    if (!existsSync(manifestPath)) continue;
+    try {
+      const m = JSON.parse(readFileSync(manifestPath, "utf8")) as PackManifest;
+      out.push({
+        slug: m.slug ?? slug,
+        nodes: m.nodeCount ?? 0,
+        checks: m.checkCount ?? 0,
+        residue: m.residueCount ?? 0,
+        clusters: Array.isArray(m.clusters) ? m.clusters.length : 0,
+      });
+    } catch {
+      // Corrupt manifest → skip; a broken pack must not break the welcome.
+    }
+  }
+  return out;
 }
 
 /** Persisted navigator state — mirrors PackState in src/tui/navigator.ts. */

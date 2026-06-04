@@ -17,3 +17,10 @@ export const theme: Record<Colour, string> = { ...COLOUR_HEX };
 export function colour(name: Colour): string {
   return theme[name];
 }
+
+/**
+ * Re-export the earth-tone role tokens (60/30/10). Chrome (the shell layout)
+ * references these roles; the pigment `theme` map stays for meaning-coloring.
+ */
+export { tokens, TOKEN_FALLBACK_16 } from "./tokens.js";
+export type { TokenRole } from "./tokens.js";

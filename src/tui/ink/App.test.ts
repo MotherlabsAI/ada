@@ -24,9 +24,12 @@ function mount(
   );
 }
 
-// The app opens on the welcome page; any key drops into the graph.
+// The app opens on the welcome page. Navigate the menu to "Open a pack"
+// (one ↓ from the focused "Compile") and ⏎ to drop into the graph.
 async function enterGraph(stdin: { write: (s: string) => void }) {
-  stdin.write("\r");
+  stdin.write(DOWN); // Compile → Open a pack
+  await tick();
+  stdin.write("\r"); // open the (only) pack → graph view
   await tick();
 }
 
