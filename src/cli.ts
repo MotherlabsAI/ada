@@ -45,6 +45,7 @@ import {
 import { runChecksWithDensity, renderReport } from "./c/run.js";
 import { canRunInk } from "./tui/ink/canRunInk.js";
 import { paint, bold, dim } from "./core/grammar.js";
+import { loadEnvConfig } from "./env.js";
 import type { Seed } from "./core/types.js";
 
 const cwd = process.cwd();
@@ -151,8 +152,11 @@ const HELP = [
   "  ada resume [slug]                 show flagged / last state",
   "  ada c run [slug] [--defect]       run deterministic C checks",
   "  ada export [slug]                 list exported files",
+  "  ada key                           is ANTHROPIC_API_KEY set? (set once in ~/.ada/.env)",
   "",
-  dim("  default slug: showcase"),
+  dim(
+    "  default slug: showcase  ·  key: ./.env or ~/.ada/.env (env wins, never committed)",
+  ),
 ].join("\n");
 
 async function cmdInit(): Promise<void> {
@@ -705,7 +709,37 @@ async function writeSeedOnly(slug: string, seed: Seed): Promise<void> {
   await writeFile(p.seed, md, "utf8");
 }
 
+/**
+ * Show whether the API key is available, value-free (AXIOM A9 — never print the secret).
+ * The key is loaded at startup from `./.env` or `~/.ada/.env` (env always wins).
+ */
+function cmdKey(): void {
+  if (process.env["ANTHROPIC_API_KEY"]) {
+    console.log(paint("✓ ", "green") + "ANTHROPIC_API_KEY is available.");
+    console.log(
+      dim(
+        "  Ada loads it from (first wins): your shell env · ./.env · ~/.ada/.env",
+      ),
+    );
+  } else {
+    console.log(paint("✗ ", "rose") + "ANTHROPIC_API_KEY is not set.");
+    console.log(dim("  Set it once — never committed, never logged:"));
+    console.log(
+      dim(
+        "    mkdir -p ~/.ada && printf 'ANTHROPIC_API_KEY=sk-ant-...\\n' >> ~/.ada/.env",
+      ),
+    );
+    console.log(
+      dim("  Or for this session only: export ANTHROPIC_API_KEY=sk-ant-..."),
+    );
+  }
+}
+
 async function main(): Promise<void> {
+  // Load the API key (and optional ADA_MODEL) from ./.env or ~/.ada/.env BEFORE any command,
+  // so the engine's single compile-time call picks it up. Env always wins; the value is never
+  // logged (AXIOM A9 — local, sovereign).
+  loadEnvConfig();
   const [cmd, ...rest] = process.argv.slice(2);
   switch (cmd) {
     case "init":
@@ -714,6 +748,8 @@ async function main(): Promise<void> {
       return cmdCompile(rest);
     case "ctx":
       return cmdCtx(rest);
+    case "key":
+      return cmdKey();
     case "open":
       return cmdOpen(rest);
     case "tui":

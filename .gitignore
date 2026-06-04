@@ -8,3 +8,8 @@ dist/
 
 # scratch / preview artifacts
 ._*
+
+# local credentials — the API key lives here, NEVER commit it (loaded by src/env.ts)
+.env
+.env.*
+.ada/.env

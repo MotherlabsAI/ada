@@ -62,16 +62,16 @@ export function anthropicClient(options: AnthropicOptions = {}): ModelClient {
   const maxTokens = options.maxTokens ?? DEFAULT_MAX_TOKENS;
   return {
     async complete(prompt: string): Promise<string> {
-      // Key from env ONLY. Read at call time (not at construction) so a missing key
-      // fails the actual compile, not module import. Never defaulted, never logged.
+      // Key from env at call time (the CLI loads it from ./.env or ~/.ada/.env into
+      // process.env at startup; env always wins). Never defaulted, never logged (A1/A9).
       const apiKey = process.env["ANTHROPIC_API_KEY"];
       if (!apiKey) {
         throw new Error(
-          "ANTHROPIC_API_KEY is not set. The compile-time model call (AXIOM A1/A9) reads " +
-            "the key from the ANTHROPIC_API_KEY environment variable only — it is never " +
-            "hardcoded. Export it and retry, e.g.:\n" +
-            "  export ANTHROPIC_API_KEY=sk-ant-...\n" +
-            '  ada compile --engine "<your intent>"',
+          "ANTHROPIC_API_KEY is not set. The compile-time model call (AXIOM A1/A9) reads it " +
+            "from the environment only — never hardcoded, never logged. Set it once:\n" +
+            "  mkdir -p ~/.ada && printf 'ANTHROPIC_API_KEY=sk-ant-...\\n' >> ~/.ada/.env\n" +
+            "  # or for this session: export ANTHROPIC_API_KEY=sk-ant-...\n" +
+            '  then retry: ada compile --engine "<your intent>"   (check with: ada key)',
         );
       }
 
