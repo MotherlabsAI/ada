@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import type { Seed, CheckClass, Depth, TruthClass } from "../../core/types.js";
 import type { NodeSpec } from "../assemble.js";
 import { scoreNode, type RubricScore } from "../rubric.js";
+import { parseJsonLoose } from "./json.js";
 import type { ModelClient } from "./model.js";
 
 /**
@@ -92,12 +93,13 @@ function arr(v: unknown): string[] {
 
 /** Deterministic parse of the model's JSON into a NodeSpec. Pure — no model here (A3). */
 export function parseNodeSpec(raw: string): NodeSpec {
-  const text = raw
-    .trim()
-    .replace(/^```(?:json)?/i, "")
-    .replace(/```$/, "")
-    .trim();
-  const o = JSON.parse(text) as Record<string, unknown>;
+  // Tolerant: extract the first balanced JSON object even if the model wrapped it in
+  // fences or added a trailing sentence. A malformed response degrades to an empty spec
+  // (which the rubric then rejects) instead of crashing the whole compile.
+  const parsed = parseJsonLoose(raw);
+  const o = (
+    parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {}
+  ) as Record<string, unknown>;
   const id = String(o["id"] ?? "");
   const clusterRaw = o["cluster"];
   const cluster =

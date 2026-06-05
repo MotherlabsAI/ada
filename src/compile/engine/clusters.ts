@@ -15,6 +15,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Seed } from "../../core/types.js";
 import { resolvePromptDir } from "./excavate.js";
+import { parseJsonLoose } from "./json.js";
 import type { ModelClient } from "./model.js";
 
 /** A domain area cluster: a short UPPERCASE code + a human-readable label. */
@@ -73,18 +74,8 @@ function sanitizeCode(raw: unknown): string {
  * those), and caps at MAX_AREAS. Returns [] when there is nothing usable (→ caller falls back).
  */
 export function parseClusterProposal(raw: string): ClusterDef[] {
-  const text = raw
-    .trim()
-    .replace(/^```(?:json)?/i, "")
-    .replace(/```$/, "")
-    .trim();
-  if (!text) return [];
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    return [];
-  }
+  // Tolerant: pull the first balanced JSON value even past fences / trailing prose.
+  const parsed = parseJsonLoose(raw);
   const list: unknown = Array.isArray(parsed)
     ? parsed
     : parsed && typeof parsed === "object"

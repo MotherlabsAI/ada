@@ -15,6 +15,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Seed } from "../../core/types.js";
 import { resolvePromptDir } from "./excavate.js";
+import { parseJsonLoose } from "./json.js";
 import type { ModelClient } from "./model.js";
 
 /** The HARD turn cap (AXIOM A6/A9): the loop asks at most this many questions, ever. */
@@ -99,20 +100,12 @@ function arr(v: unknown): string[] {
  * a stop (so a garbled model can never hang the loop).
  */
 export function parseInterviewStep(raw: string): InterviewStep {
-  const text = raw
-    .trim()
-    .replace(/^```(?:json)?/i, "")
-    .replace(/```$/, "")
-    .trim();
-  let o: Record<string, unknown> = {};
-  try {
-    const parsed: unknown = JSON.parse(text);
-    if (parsed && typeof parsed === "object") {
-      o = parsed as Record<string, unknown>;
-    }
-  } catch {
-    o = {};
-  }
+  // Tolerant: extract the first balanced JSON object past fences / trailing prose.
+  const parsed = parseJsonLoose(raw);
+  const o: Record<string, unknown> =
+    parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
   // Cap options at 5 (the spec's upper bound); keep order, drop blanks.
   const options = arr(o["options"]).slice(0, 5);
   return {
