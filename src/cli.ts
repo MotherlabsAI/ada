@@ -150,6 +150,7 @@ export function buildEngineOptions(
 const HELP = [
   bold("ada") + dim(" — semantic context compiler (Ada by Motherlabs)"),
   "",
+  "  ada                               open the workbench (TTY) — the default slug's tree",
   "  ada init                          scaffold .ada/ here",
   '  ada compile "<intent>" [--slug=x] compile intent into a pack',
   '  ada compile --engine "<intent>" [--depth=N] [--model=<id>] [--clusters=A,B,C] [--repo[=path]]',
@@ -733,6 +734,12 @@ async function main(): Promise<void> {
     case "export":
       return cmdExport(rest);
     case undefined:
+      // Bare `ada` in a terminal opens the workbench (what "ada" should do —
+      // the showcase/default pack's tree). Piped / non-TTY falls through to help
+      // so scripts and `ada | …` still get usage text, never a stuck raw-mode TUI.
+      if (canRunInk(process.stdin, process.stdout)) return cmdTui(rest);
+      console.log(HELP);
+      return;
     case "help":
     case "--help":
     case "-h":
