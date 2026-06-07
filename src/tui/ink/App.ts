@@ -478,11 +478,12 @@ export function App(props: AppProps) {
     const treeRows = tree.rows;
     const move = (d: number) => {
       const i = treeRows.findIndex((r) => r.ref === cursor);
-      const next =
-        treeRows[
-          Math.max(0, Math.min(treeRows.length - 1, (i < 0 ? 0 : i) + d))
-        ];
-      if (next) setCursor(next.ref);
+      // Step in direction d, skipping gap spacers (they're never selectable).
+      let j = (i < 0 ? 0 : i) + d;
+      while (j >= 0 && j < treeRows.length && treeRows[j]?.kind === "gap")
+        j += d;
+      const next = treeRows[j];
+      if (next && next.kind !== "gap") setCursor(next.ref);
     };
     if (key.downArrow) return move(1);
     if (key.upArrow) return move(-1);

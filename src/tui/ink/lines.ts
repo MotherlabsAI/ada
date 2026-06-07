@@ -207,8 +207,8 @@ export function verifyGlyph(node: NodeCapsule): {
 
 /** A selectable row in the folder-tree: a cluster header or a node under an open cluster. */
 export interface TreeRow extends Line {
-  kind: "cluster" | "node";
-  ref: string; // cluster name or node id
+  kind: "cluster" | "node" | "gap";
+  ref: string; // cluster name or node id ("" for a gap spacer — never the cursor)
 }
 
 /**
@@ -270,6 +270,10 @@ export function graphTree(
   );
 
   for (const cluster of clusters) {
+    // A blank spacer between areas so each cluster reads as its own block — vital
+    // once areas open and their nodes would otherwise run into the next header.
+    // kind:"gap" → the cursor skips it (App `move`); it never becomes selected.
+    if (rows.length > 0) rows.push({ kind: "gap", ref: "", text: "" });
     const inCluster = nodes.filter((n) => clusterOf(n.id) === cluster);
     const colour = clusterColour(clusters, cluster);
     const isOpen = opts.open.has(cluster);
