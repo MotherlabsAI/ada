@@ -205,10 +205,10 @@ export function Welcome(p: WelcomeProps) {
     (p.mascotName ?? DEFAULT_MASCOT) === "eye" ? tokens.accent : tokens.focus;
   const focusItem = MENU_ITEMS[selected]!;
 
-  // ── banner ──
-  const banner = h(
+  // ── masthead: the ADA wordmark + tag, CENTERED across the surface ──
+  const masthead = h(
     Box,
-    { key: "banner", flexDirection: "column" },
+    { key: "masthead", flexDirection: "column", alignItems: "center" },
     h(
       Box,
       { flexDirection: "row" },
@@ -226,28 +226,29 @@ export function Welcome(p: WelcomeProps) {
       ),
     ),
     h(Text, { key: "tag", color: tokens.textMuted }, WORDMARK_TAG),
-    gapRow("gap"),
+  );
+
+  // ── greeting: the eye mascot + welcome line, left-aligned under the masthead ──
+  const greeting = h(
+    Box,
+    { key: "greet", flexDirection: "row", marginTop: compact ? 0 : 1 },
     h(
       Box,
-      { key: "greet", flexDirection: "row" },
+      { flexDirection: "column", marginRight: 2 },
+      ...m.map((l, i) => h(Text, { key: "m" + i, color: eyeColour }, l)),
+    ),
+    h(
+      Box,
+      { flexDirection: "column" },
       h(
-        Box,
-        { flexDirection: "column", marginRight: 2 },
-        ...m.map((l, i) => h(Text, { key: "m" + i, color: eyeColour }, l)),
+        Text,
+        { key: "hi", color: tokens.text, bold: true },
+        "Welcome back, Alex",
       ),
       h(
-        Box,
-        { flexDirection: "column" },
-        h(
-          Text,
-          { key: "hi", color: tokens.text, bold: true },
-          "Welcome back, Alex",
-        ),
-        h(
-          Text,
-          { key: "sub", color: tokens.textDim },
-          "a semantic compiler for context",
-        ),
+        Text,
+        { key: "sub", color: tokens.textDim },
+        "a semantic compiler for context",
       ),
     ),
   );
@@ -259,10 +260,14 @@ export function Welcome(p: WelcomeProps) {
       key: "menu",
       flexDirection: "column",
       flexShrink: 0,
-      width: 34,
-      marginRight: narrow ? 0 : 3,
+      width: 32,
+      marginRight: narrow ? 0 : 4,
     },
-    h(Text, { key: "mh", color: tokens.textMuted }, "WHAT DO YOU WANT TO DO"),
+    h(
+      Text,
+      { key: "mh", color: tokens.textDim, bold: true },
+      "WHAT DO YOU WANT TO DO",
+    ),
     gapRow("mg"),
     ...MENU_ITEMS.map((item, i) => {
       const sel = i === selected;
@@ -283,64 +288,30 @@ export function Welcome(p: WelcomeProps) {
     }),
   );
 
-  // ── right: context sidebar (what the focused item does + recent packs) ──
-  const recent = packs.slice(0, 5);
+  // ── right: your projects, at a glance — scope + WHERE THE OPEN WORK IS ──
+  // This screen drives one decision: "which pack needs me?" So each row reads in
+  // plain words the eye recognizes without decoding — `N nodes` and `N areas` =
+  // scope; `N open` (residue, amber + bold) = unresolved gaps that pull your
+  // attention; `clear` (dim) = nothing open. The old `κ N` was dropped: it was a
+  // constant check-registry count, identical on every pack, so it could not
+  // inform the choice — and a glyph the eye must decode is the opposite of native.
   type Row = ReturnType<typeof h> | null;
-  const sidebarRows: Row[] = [
-    h(Text, { key: "sh", color: tokens.textMuted }, "CONTEXT"),
-    gapRow("sg"),
-    h(Text, { key: "sd", color: tokens.text }, focusItem.describe),
-  ];
-  if (focusItem.id === "open" || focusItem.id === "browse") {
-    sidebarRows.push(gapRow("sg2"));
-    sidebarRows.push(
-      h(Text, { key: "sr", color: tokens.textMuted }, "recent packs"),
-    );
-    if (recent.length) {
-      recent.forEach((pk, i) =>
-        sidebarRows.push(
-          h(
-            Text,
-            { key: "rp" + i, color: i === 0 ? tokens.accent : tokens.textDim },
-            `  ${i === 0 ? "›" : " "} ${pk.slug}`,
-          ),
-        ),
-      );
-    } else {
-      sidebarRows.push(
-        h(Text, { key: "rp-none", color: tokens.textMuted }, "  (none yet)"),
-      );
-    }
-  }
-  const sidebar = h(
-    Box,
-    {
-      key: "sidebar",
-      flexDirection: "column",
-      // Grow to fill remaining width only in the side-by-side (wide) layout;
-      // in the stacked (narrow) layout it must not grow vertically.
-      ...(narrow ? { marginTop: 1 } : { flexGrow: 1 }),
-    },
-    ...sidebarRows.filter(Boolean),
-  );
-
-  // ── your projects, at a glance ──
-  // Fixed-width slug column (so a long slug truncates rather than colliding with
-  // the counts) + a guaranteed gap before the counts column.
-  const slugW = narrow ? 20 : 32;
-  const projectsRows: Row[] = [
-    h(Text, { key: "ph", color: tokens.textMuted }, "YOUR PROJECTS"),
+  const slugW = narrow ? 22 : 28;
+  const projectRows: Row[] = [
+    h(Text, { key: "ph", color: tokens.textDim, bold: true }, "YOUR PROJECTS"),
+    gapRow("pg"),
   ];
   if (packs.length) {
     packs.slice(0, narrow ? 4 : 8).forEach((pk, i) => {
       const active = pk.slug === p.slug;
-      projectsRows.push(
+      const open = pk.residue;
+      projectRows.push(
         h(
           Box,
           { key: "pr" + i, flexDirection: "row" },
           h(
             Box,
-            { width: slugW },
+            { width: slugW, marginRight: 2, flexShrink: 0 },
             h(
               Text,
               {
@@ -348,19 +319,26 @@ export function Welcome(p: WelcomeProps) {
                 bold: active,
                 wrap: "truncate-end",
               },
-              `  ◈ ${pk.slug}`,
+              `${active ? "›" : " "} ◈ ${pk.slug}`,
             ),
           ),
           h(
             Text,
-            { color: tokens.textMuted, wrap: "truncate-end" },
-            ` ${pk.nodes} nodes · κ ${pk.checks} · Ω ${pk.residue} · ${pk.clusters} areas`,
+            { wrap: "truncate-end" },
+            h(
+              Text,
+              { color: tokens.textMuted },
+              `${pk.nodes} nodes · ${pk.clusters} areas · `,
+            ),
+            open > 0
+              ? h(Text, { color: tokens.accent, bold: true }, `${open} open`)
+              : h(Text, { color: tokens.textMuted }, "clear"),
           ),
         ),
       );
     });
   } else {
-    projectsRows.push(
+    projectRows.push(
       h(
         Text,
         { key: "pr-none", color: tokens.textMuted },
@@ -370,12 +348,15 @@ export function Welcome(p: WelcomeProps) {
   }
   const projects = h(
     Box,
-    {
-      key: "projects",
-      flexDirection: "column",
-      marginTop: compact ? 0 : 1,
-    },
-    ...projectsRows.filter(Boolean),
+    { key: "projects", flexDirection: "column", flexGrow: 1 },
+    ...projectRows.filter(Boolean),
+  );
+
+  // ── the focused action, narrated in one line (recognition, not a manual) ──
+  const describe = h(
+    Text,
+    { key: "describe", color: tokens.textDim },
+    "› " + focusItem.describe,
   );
 
   // ── bottom: live, context-sensitive key hints (3–5 keys that matter now) ──
@@ -387,6 +368,8 @@ export function Welcome(p: WelcomeProps) {
         : "↑/↓ move · ⏎ pick · / all commands · ? help · q quit";
 
   const height = Math.max(8, p.rows - 1);
+  // Actions LEFT, projects RIGHT — the two things you choose between, side by
+  // side, so the horizontal space carries content instead of sitting empty.
   const middle = h(
     Box,
     {
@@ -395,7 +378,7 @@ export function Welcome(p: WelcomeProps) {
       marginTop: compact ? 0 : 1,
     },
     menu,
-    sidebar,
+    projects,
   );
 
   const footer: ReturnType<typeof h>[] = [];
@@ -409,7 +392,15 @@ export function Welcome(p: WelcomeProps) {
   return h(
     Box,
     { flexDirection: "column", height, paddingX: 1 },
-    h(Box, { flexGrow: 1, flexDirection: "column" }, banner, middle, projects),
+    h(
+      Box,
+      { flexGrow: 1, flexDirection: "column" },
+      masthead,
+      greeting,
+      middle,
+      gapRow("dgap"),
+      describe,
+    ),
     ...footer,
   );
 }

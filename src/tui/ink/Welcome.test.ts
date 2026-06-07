@@ -49,37 +49,51 @@ test("welcome renders all menu items", async () => {
   }
 });
 
-test("welcome sidebar describes the highlighted (first) item", async () => {
+test("welcome narrates the highlighted (first) item in one line", async () => {
   const { lastFrame } = mount();
   await tick();
   const f = lastFrame() ?? "";
-  assert.match(f, /CONTEXT/, "sidebar header");
   assert.match(f, /governed context pack/, "Compile's describe line");
 });
 
-test("welcome lists your projects with counts", async () => {
+test("welcome lists your projects with legible, plain-word counts", async () => {
   const { lastFrame } = mount();
   await tick();
   const f = lastFrame() ?? "";
   assert.match(f, /YOUR PROJECTS/);
   assert.match(f, /service-business/);
   assert.match(f, /24 nodes/);
-  assert.match(f, /κ 3/);
-  assert.match(f, /Ω 8/);
+  assert.match(f, /5 areas/);
+  // open gaps read as a WORD, not a glyph; κ (constant) is gone entirely
+  assert.match(f, /8 open/);
+  assert.doesNotMatch(f, /κ/, "the cryptic constant check glyph is dropped");
 });
 
-test("arrowing the menu moves the selection and updates the sidebar", async () => {
+test("a pack with no open gaps reads 'clear'", async () => {
+  const { lastFrame } = mount({
+    packs: [{ slug: "settled", nodes: 9, checks: 3, residue: 0, clusters: 3 }],
+    slug: "settled",
+  });
+  await tick();
+  const f = lastFrame() ?? "";
+  assert.match(f, /settled/);
+  assert.match(f, /clear/, "residue 0 → 'clear', not '0 open'");
+});
+
+test("arrowing the menu moves the selection and updates the narration", async () => {
   const { stdin, lastFrame } = mount();
   await tick();
-  // First item (Compile) is focused → its describe shows; "recent packs" hidden.
+  // First item (Compile) is focused → its describe shows.
   assert.match(lastFrame() ?? "", /governed context pack/);
-  assert.doesNotMatch(lastFrame() ?? "", /recent packs/);
 
   stdin.write(DOWN); // → Open a pack
   await tick();
   const open = lastFrame() ?? "";
-  assert.match(open, /Open the graph for a pack/, "sidebar now describes Open");
-  assert.match(open, /recent packs/, "Open surfaces recent packs");
+  assert.match(
+    open,
+    /Open the graph for a pack/,
+    "narration now describes Open",
+  );
 
   stdin.write(UP); // back to Compile
   await tick();
