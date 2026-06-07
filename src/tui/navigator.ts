@@ -5,6 +5,7 @@ import { createInterface } from "node:readline/promises";
 import type { Graph, NodeCapsule, PackManifest } from "../core/types.js";
 import { paint, bold, dim, TRUTH_GLYPH, CHECK_LABEL } from "../core/grammar.js";
 import { clusterOf } from "../core/ids.js";
+import { verifyTally } from "./ink/lines.js";
 import { paths, packsRoot } from "../pack/layout.js";
 
 /** Lists pack slugs on disk so a wrong/mangled slug self-corrects. */
@@ -57,12 +58,26 @@ function writeState(stateFile: string, state: PackState): void {
   writeFileSync(stateFile, JSON.stringify(state, null, 2) + "\n", "utf8");
 }
 
-export function header(manifest: PackManifest): string {
+export function header(manifest: PackManifest, nodes?: NodeCapsule[]): string {
   const bar = "─".repeat(2);
-  return (
+  const left =
     paint("◈ Ada", "terracotta") +
     dim(` / ${manifest.slug} ${bar} `) +
-    `nodes ${bold(String(manifest.nodeCount))} · ` +
+    `nodes ${bold(String(manifest.nodeCount))} · `;
+  // R1 scan readout: at a glance, what must you look at? checkable = trust without reading;
+  // gated = your eyes (A4); Ω = open gaps. Falls back to the old C/residue line pre-nodes.
+  if (nodes) {
+    const t = verifyTally(nodes);
+    return (
+      left +
+      `${paint(`✓${t.checkable} checkable`, "green")} · ` +
+      `${paint(`⊙${t.gated} gated`, "clay")} · ` +
+      `${paint(`Ω${t.residue} residue`, "amber")} · ` +
+      `clusters ${manifest.clusters.length}`
+    );
+  }
+  return (
+    left +
     `C ${paint(String(manifest.checkCount), "green")} · ` +
     `residue ${paint(String(manifest.residueCount), "amber")} · ` +
     `clusters ${manifest.clusters.length}`
@@ -155,9 +170,9 @@ export function renderStatic(
   if (nodeId) {
     const node = graph.nodes.find((n) => n.id === nodeId);
     if (!node) throw new Error(`No node ${nodeId} in pack ${slug}.`);
-    return header(manifest) + "\n\n" + renderNode(graph, node);
+    return header(manifest, graph.nodes) + "\n\n" + renderNode(graph, node);
   }
-  return header(manifest) + "\n" + renderTree(graph, state);
+  return header(manifest, graph.nodes) + "\n" + renderTree(graph, state);
 }
 
 export async function interactive(cwd: string, slug: string): Promise<void> {
@@ -166,7 +181,7 @@ export async function interactive(cwd: string, slug: string): Promise<void> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const out = (s: string) => process.stdout.write(s + "\n");
 
-  out(header(manifest));
+  out(header(manifest, graph.nodes));
   out(renderTree(graph, state));
   out(
     dim(

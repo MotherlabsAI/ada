@@ -8,9 +8,36 @@ import {
   resolvableLinks,
   breadcrumb,
   clusterLabel,
+  verifyTally,
 } from "./lines.js";
 import { clusterOf } from "../../core/ids.js";
 import { fixtureGraph } from "./fixtures.js";
+import type { NodeCapsule } from "../../core/types.js";
+
+test("verifyTally splits nodes into checkable (C3–C5), human-gated (C0–C2), residue (Ω) — the R1 scan readout", () => {
+  const mk = (cls: string, truth = "inference") =>
+    ({ checkability: { class: cls }, truth }) as unknown as NodeCapsule;
+  const t = verifyTally([
+    mk("C5"),
+    mk("C3"),
+    mk("C2"),
+    mk("C0"),
+    mk("C4", "residue"),
+  ]);
+  // C5/C3/C4 = checkable (trust without reading); C2/C0 = gated (your eyes); the residue node counts Ω
+  assert.deepEqual(t, { checkable: 3, gated: 2, residue: 1 });
+});
+
+test("verifyTally over a real fixture: checkable + gated = node count", () => {
+  const nodes = fixtureGraph().nodes;
+  const t = verifyTally(nodes);
+  assert.equal(
+    t.checkable + t.gated,
+    nodes.length,
+    "every node is checkable or gated",
+  );
+  assert.equal(t.residue, nodes.filter((n) => n.truth === "residue").length);
+});
 
 test("wrap never exceeds width and never drops words", () => {
   const text = "the quick brown fox jumps over the lazy dog repeatedly today";

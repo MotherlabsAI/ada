@@ -157,6 +157,28 @@ export function clusterLabel(
   return registry?.[code] ?? CLUSTER_LABELS[code] ?? code;
 }
 
+/**
+ * The R1 scan readout: split nodes by what VERIFICATION they need, so a single glance at the
+ * tree header tells you what you must look at. checkable (C3–C5) = trust without reading;
+ * gated (C0–C2) = your eyes (A4); residue (Ω, truth="residue") = open gaps. Pure.
+ */
+export function verifyTally(nodes: NodeCapsule[]): {
+  checkable: number;
+  gated: number;
+  residue: number;
+} {
+  let checkable = 0;
+  let gated = 0;
+  let residue = 0;
+  for (const n of nodes) {
+    const c = n.checkability.class;
+    if (c === "C3" || c === "C4" || c === "C5") checkable++;
+    else gated++;
+    if (n.truth === "residue") residue++;
+  }
+  return { checkable, gated, residue };
+}
+
 /** A selectable row in the folder-tree: a cluster header or a node under an open cluster. */
 export interface TreeRow extends Line {
   kind: "cluster" | "node";
