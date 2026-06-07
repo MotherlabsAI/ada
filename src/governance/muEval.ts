@@ -32,28 +32,47 @@ export function muStats(samples: number[]): MuStats {
   };
 }
 
+/**
+ * Which direction counts as "better": `lower` for μ (fewer holes = converged), `higher`
+ * for μ′ (more grounded unknowns = better excavation). Default `lower` (back-compat).
+ */
+export type BetterDirection = "lower" | "higher";
+
 export interface ArmComparison {
   baseline: MuStats;
   treatment: MuStats;
-  /** baseline.mean − treatment.mean; positive = treatment has fewer open holes */
+  direction: BetterDirection;
+  /** baseline.mean − treatment.mean (signed, unchanged regardless of direction) */
   deltaMean: number;
-  /** every treatment run strictly below every baseline run (the strongest, clean separation) */
+  /** every treatment run strictly below every baseline run (clean separation, lower-is-better) */
   strictlyBelow: boolean;
-  /** Δ mean exceeds the combined spread → a trustworthy signal, not run-to-run noise */
+  /** every treatment run strictly above every baseline run (clean separation, higher-is-better) */
+  strictlyAbove: boolean;
+  /** the favourable-direction Δ exceeds the combined spread → signal, not run-to-run noise */
   separated: boolean;
 }
 
 export function compareArms(
   baseline: number[],
   treatment: number[],
+  direction: BetterDirection = "lower",
 ): ArmComparison {
   const b = muStats(baseline);
   const t = muStats(treatment);
   const deltaMean = b.mean - t.mean;
-  const strictlyBelow =
-    baseline.length > 0 &&
-    treatment.length > 0 &&
-    Math.max(...treatment) < Math.min(...baseline);
-  const separated = deltaMean > 0 && deltaMean > b.stdev + t.stdev;
-  return { baseline: b, treatment: t, deltaMean, strictlyBelow, separated };
+  const both = baseline.length > 0 && treatment.length > 0;
+  const strictlyBelow = both && Math.max(...treatment) < Math.min(...baseline);
+  const strictlyAbove = both && Math.min(...treatment) > Math.max(...baseline);
+  // improvement in the favourable direction must clear the combined spread
+  const improvement = direction === "lower" ? deltaMean : -deltaMean;
+  const separated = improvement > 0 && improvement > b.stdev + t.stdev;
+  return {
+    baseline: b,
+    treatment: t,
+    direction,
+    deltaMean,
+    strictlyBelow,
+    strictlyAbove,
+    separated,
+  };
 }

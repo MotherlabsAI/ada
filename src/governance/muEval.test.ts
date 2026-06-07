@@ -41,3 +41,23 @@ test("compareArms refuses to call an overlapping Δ a signal (honest)", () => {
     "overlapping arms are not a trustworthy signal",
   );
 });
+
+test("direction 'higher' (μ′ sense) rewards a higher treatment, separated when clean", () => {
+  const c = compareArms([8, 9, 10], [18, 19, 20], "higher");
+  assert.equal(
+    c.strictlyAbove,
+    true,
+    "every treatment run above every baseline run",
+  );
+  assert.equal(
+    c.separated,
+    true,
+    "Δ in the favourable (higher) direction exceeds the spread",
+  );
+});
+
+test("direction 'higher' refuses an overlapping Δ (honest, μ′ sense)", () => {
+  const c = compareArms([8, 20, 12], [10, 19, 11], "higher");
+  assert.equal(c.strictlyAbove, false);
+  assert.equal(c.separated, false);
+});
