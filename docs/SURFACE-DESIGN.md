@@ -223,19 +223,27 @@ diff so the clock only repaints the moving part.
 | state it names             | symbol (glyph carrier)                    | motion                                                                      | reduced fallback          | pinball analog                |
 | -------------------------- | ----------------------------------------- | --------------------------------------------------------------------------- | ------------------------- | ----------------------------- |
 | node verification (steady) | `✓` settled / `⊙` your-eyes / `Ω` open    | none — **state lamps don't pulse**                                          | the glyph (already)       | lit/unlit lane lamps          |
-| where focus is             | the cursor row                            | slow brightness breath (~1s, half-duty, accent↔accentBright)                | static accent             | the lit lane you're aiming at |
+| where focus is             | the cursor row                            | **one-shot ease the instant it MOVES** (~120ms brighten, then settle)       | static accent             | the lit lane you're aiming at |
 | machine working (compile)  | `⠋⠙⠹⠸⠼⠴⠦⠧` braille orbit or `· ✢ ✳ ✶ ✻ ✽` | march per real pipeline stage + a determinate `stage 4/9` bar               | the static stage verb     | the ball in play              |
 | a transition just landed   | `✦`                                       | one-shot flash on the changed row, then settle                              | `✦` static for one render | the score chime               |
 | **cluster cleared (Ω→0)**  | the cluster row                           | one-shot left→right ripple (`reset()`), roll-up score ticks down to `clear` | jump straight to `clear`  | **bonus collected**           |
-| attract / idle             | wordmark gradient + eye-blink + star      | slow breath, killed on first nav                                            | static                    | attract mode                  |
+
+**The hard line (Alex's Motion Contract, `adas-markdowns-from-codex/visual-compiler-spec.md`):**
+motion is _semantic feedback, not decoration_. **Forbidden: fast blinking, ornamental pulsing,
+motion without a state change, motion that moves targets during interaction.** So there is **no
+idle motion** — no rotating star, no gradient ramp, no continuous focus "breath" (a breath at
+rest is motion without a state change). Every motion has a **visible cause** (your keystroke, a
+compile stage, an Ω closing), calm easing, short duration, reduced-motion fallback. At rest the
+welcome arms **zero timers** (enforced by a test).
 
 **The gold (build order): the cluster-clear payoff.** When a cluster's last `Ω` closes, it earns
 a brief ripple + the backglass roll-up ticking to `clear`. That is the one move where the
 _beauty and the value are the same event_: completing a lane **is** verifying a part of the
-graph. It makes excavation feel like scoring. Everything else (focus breath, compile orbit,
+graph. It makes excavation feel like scoring. Everything else (the move-ease, compile orbit,
 `✦` change-flash) is the supporting lamp-field; the payoff is the reason the field exists.
 
 **Shipped so far:** the per-row verification stripe (`✓/⊙/Ω`) = the lamp-field at rest; the
-per-cluster roll-up = the backglass reels; the welcome **focus lamp** (the cursor row breathes
-on the shared clock — `Welcome.ts` `lampLit`) = the first "where focus is" lamp. Next: lift the
-focus breath into the tree cursor, then build the cluster-clear payoff against a live Ω→0.
+per-cluster roll-up = the backglass reels; the welcome **move-ease** (the cursor brightens for
+one beat the instant you move it — `Welcome.ts` `moved`) = the first lawful "where focus is"
+motion. Removed: the rotating star + gradient ramp + the continuous focus breath (all were idle
+motion, contract violations). Next: build the cluster-clear payoff against a live Ω→0.

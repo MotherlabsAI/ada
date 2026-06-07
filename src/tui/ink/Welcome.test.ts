@@ -36,7 +36,7 @@ test("welcome renders the banner wordmark + slogan + greeting", async () => {
   await tick();
   const f = lastFrame() ?? "";
   assert.match(f, /█/, "the block ADA wordmark");
-  assert.match(f, /clarity you can ship/, "the wordmark slogan");
+  assert.match(f, /C L A R I T Y   Y O U   C A N   S H I P/, "the wordmark slogan");
   assert.match(f, /Welcome back, Alex/);
 });
 
@@ -154,23 +154,17 @@ test("degrades at 80×24 without throwing", async () => {
   assert.match(f, /◆ Compile an idea/);
 });
 
-test("every Welcome interval handle is unref'd (suite must not hang)", async () => {
-  // Intervals are the dangerous ones — they repeat forever and would keep
-  // `node --test` alive. Spy on setInterval: count created vs. unref'd.
+test("the welcome runs ZERO idle timers — motion only on interaction (Motion Contract)", async () => {
+  // The rule: no ornamental pulsing, no motion without a state change. So the
+  // welcome must not arm any repeating timer at rest — structurally, not by
+  // hoping it's unref'd. Spy on setInterval: the count must be 0.
   const realInterval = global.setInterval;
   let created = 0;
-  let unreffed = 0;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (global as any).setInterval = (...a: unknown[]) => {
     created += 1;
     // @ts-expect-error spread to the real impl
-    const handle = realInterval(...a);
-    const orig = (handle as { unref?: () => unknown }).unref?.bind(handle);
-    (handle as { unref?: () => unknown }).unref = () => {
-      unreffed += 1;
-      return orig ? orig() : handle;
-    };
-    return handle;
+    return realInterval(...a);
   };
   try {
     const { unmount } = mount();
@@ -179,7 +173,5 @@ test("every Welcome interval handle is unref'd (suite must not hang)", async () 
   } finally {
     global.setInterval = realInterval;
   }
-  // The banner ramp + the rotating star are both setInterval.
-  assert.ok(created >= 2, "expected the banner + star intervals");
-  assert.equal(unreffed, created, "every interval handle was unref'd");
+  assert.equal(created, 0, "no idle animation — nothing moves until you do");
 });

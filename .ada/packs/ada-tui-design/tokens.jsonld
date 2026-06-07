@@ -44,28 +44,28 @@
     {
       "@id": "ada:token/role/text",
       "@type": "ada:RoleToken",
-      "value": "#F0E4D2",
+      "value": "#F0E6D6",
       "tier": "structure",
       "role": "30% — primary body text",
-      "contrastOnBg": 14.95,
+      "contrastOnBg": 15.18,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/textDim",
       "@type": "ada:RoleToken",
-      "value": "#BCA488",
+      "value": "#C6B4A0",
       "tier": "structure",
       "role": "30% — secondary text",
-      "contrastOnBg": 7.86,
+      "contrastOnBg": 9.32,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/textMuted",
       "@type": "ada:RoleToken",
-      "value": "#9A8366",
+      "value": "#9E8C7A",
       "tier": "structure",
       "role": "30% — metadata, ids, dim lines",
-      "contrastOnBg": 5.19,
+      "contrastOnBg": 5.79,
       "ada:wcagAA": true
     },
     {
@@ -78,19 +78,19 @@
     {
       "@id": "ada:token/role/accent",
       "@type": "ada:RoleToken",
-      "value": "#E3A53C",
+      "value": "#DA8F3A",
       "tier": "accent",
       "role": "10% — amber: the one thing that pops",
-      "contrastOnBg": 8.68,
+      "contrastOnBg": 7.12,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/accentBright",
       "@type": "ada:RoleToken",
-      "value": "#F4BD5C",
+      "value": "#EFA851",
       "tier": "accent",
       "role": "10% — amber hover/move flash",
-      "contrastOnBg": 10.97,
+      "contrastOnBg": 9.28,
       "ada:wcagAA": true
     },
     {
@@ -105,26 +105,26 @@
     {
       "@id": "ada:token/role/selection",
       "@type": "ada:RoleToken",
-      "value": "#352616",
+      "value": "#2E2014",
       "tier": "accent",
       "role": "10% — selected-row background tint"
     },
     {
       "@id": "ada:token/role/success",
       "@type": "ada:RoleToken",
-      "value": "#7C9A55",
+      "value": "#6F9258",
       "tier": "status",
       "role": "checks pass / candidates (κ)",
-      "contrastOnBg": 5.9,
+      "contrastOnBg": 5.3,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/warning",
       "@type": "ada:RoleToken",
-      "value": "#E3A53C",
+      "value": "#DA8F3A",
       "tier": "status",
       "role": "unknowns / residue (Ω)",
-      "contrastOnBg": 8.68,
+      "contrastOnBg": 7.12,
       "ada:wcagAA": true
     },
     {
@@ -157,19 +157,19 @@
     {
       "@id": "ada:token/pigment/amber",
       "@type": "ada:PigmentToken",
-      "value": "#E3A53C",
+      "value": "#DA8F3A",
       "role": "warm area hue / warning"
     },
     {
       "@id": "ada:token/pigment/sage",
       "@type": "ada:PigmentToken",
-      "value": "#7E9A66",
+      "value": "#7A9466",
       "role": "cool-neutral area hue"
     },
     {
       "@id": "ada:token/pigment/green",
       "@type": "ada:PigmentToken",
-      "value": "#7C9A55",
+      "value": "#6F9258",
       "role": "check ok"
     },
     {

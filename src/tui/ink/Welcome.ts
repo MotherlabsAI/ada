@@ -27,11 +27,11 @@
 import { createElement as h, useState, useEffect } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { theme, tokens } from "./theme.js";
-import { WORDMARK, bannerGradient, starFrame } from "./art.js";
+import { WORDMARK, bannerGradient } from "./art.js";
 import type { PackSummary } from "./usePack.js";
 
-/** The line under the wordmark — the brand promise, not a category label. */
-const SLOGAN = "clarity you can ship";
+/** The line under the wordmark — letter-tracked like a mark, centered under ADA. */
+const SLOGAN = "C L A R I T Y   Y O U   C A N   S H I P";
 
 /** A home action. `describe` is the one-line the sidebar shows when it's focused. */
 export interface MenuItem {
@@ -103,27 +103,16 @@ export function Welcome(p: WelcomeProps) {
   const app = useApp();
   const packs = p.packs ?? [];
 
-  // ── Motion state. Each interval is unref'd so `node --test` never hangs. ──
-  const [gradStep, setGradStep] = useState(0); // banner gradient ramp
-  const [starStep, setStarStep] = useState(0); // rotating star
+  // ── State. NO idle motion (Motion Contract: no ornamental pulsing, no motion
+  // without a state change). The only motion on this screen is the one-shot ease
+  // when the cursor MOVES — visible cause, short duration. No timers run at rest.
   const [selected, setSelected] = useState(0); // focused menu row
-  const [moved, setMoved] = useState(false); // brief flash when selection moves
+  const [moved, setMoved] = useState(false); // brief ease when the cursor just moved
   const [pane, setPane] = useState<"menu" | "projects">("menu"); // which column has focus
   const [projCursor, setProjCursor] = useState(0); // focused project row
 
-  // (a) banner gradient ramp ~250ms/step and (b) star ~180ms/step — both unref'd.
-  useEffect(() => {
-    const grad = setInterval(() => setGradStep((s) => s + 1), 250);
-    const star = setInterval(() => setStarStep((s) => s + 1), 180);
-    (grad as { unref?: () => void }).unref?.();
-    (star as { unref?: () => void }).unref?.();
-    return () => {
-      clearInterval(grad);
-      clearInterval(star);
-    };
-  }, []);
-
-  // (c) selection-move ease: flash `moved` true for one short beat, then clear.
+  // Selection-move ease: a single ~120ms brighten the instant focus moves, then
+  // it settles. Cause = your keystroke; nothing animates on its own.
   useEffect(() => {
     if (!moved) return;
     const t = setTimeout(() => setMoved(false), 120);
@@ -228,34 +217,26 @@ export function Welcome(p: WelcomeProps) {
   // Short terminals: drop decorative blank rows so the banner top isn't clipped.
   const compact = p.rows < 32;
   const gapRow = (key: string) => (compact ? null : h(Text, { key }, " "));
-  const grad = bannerGradient(WORDMARK.length, gradStep, {
+  // A STATIC vertical gradient (step 0) — a coherent mark, not an animation.
+  const grad = bannerGradient(WORDMARK.length, 0, {
     terracotta: theme.terracotta,
     clay: theme.clay,
     amber: theme.amber,
   });
   const focusItem = MENU_ITEMS[selected]!;
 
-  // ── masthead: the ADA wordmark + slogan, CENTERED across the surface ──
+  // ── masthead: the ADA wordmark + tracked slogan, CENTERED across the surface ──
   const masthead = h(
     Box,
     { key: "masthead", flexDirection: "column", alignItems: "center" },
     h(
       Box,
-      { flexDirection: "row" },
-      h(
-        Box,
-        { flexDirection: "column" },
-        ...WORDMARK.map((l, i) =>
-          h(Text, { key: "w" + i, color: grad[i], bold: true }, l),
-        ),
-      ),
-      h(
-        Text,
-        { key: "star", color: tokens.accentBright },
-        "  " + starFrame(starStep),
+      { flexDirection: "column", alignItems: "center" },
+      ...WORDMARK.map((l, i) =>
+        h(Text, { key: "w" + i, color: grad[i], bold: true }, l),
       ),
     ),
-    h(Text, { key: "tag", color: tokens.accent }, SLOGAN),
+    h(Text, { key: "tag", color: tokens.textMuted }, SLOGAN),
   );
 
   // ── greeting: a single warm line, left-aligned under the masthead ──
@@ -271,13 +252,9 @@ export function Welcome(p: WelcomeProps) {
 
   // ── left: the things Ada can do for you (recognition over recall) ──
   // Focus lives in exactly one column; the active column's header brightens and
-  // its cursor lights, the other dims — so it's always clear what ↑/↓ will move.
+  // its cursor lights, the other dims — structure carries focus, not a colour panel
+  // (structure_before_color; red is reserved for blockers, so no tinted card).
   const menuActive = pane === "menu";
-  // The focus LAMP: the one cursor breathes accent↔accentBright on the shared
-  // banner clock (~1s, half-duty). The only "where focus is" motion on this screen
-  // (calm_motion: one moving thing, and it names a state). No new timer — reuses
-  // gradStep, so the unref'd-interval contract is untouched.
-  const lampLit = gradStep % 4 < 2;
   const menu = h(
     Box,
     {
@@ -286,10 +263,6 @@ export function Welcome(p: WelcomeProps) {
       flexShrink: 0,
       width: 32,
       marginRight: narrow ? 0 : 3,
-      paddingX: 1,
-      // The focused column gets a bark panel behind it (common-region grouping):
-      // the eye locks onto the active group instantly, and it fills the dark field.
-      backgroundColor: menuActive ? tokens.surface : undefined,
     },
     h(
       Text,
@@ -303,14 +276,14 @@ export function Welcome(p: WelcomeProps) {
     gapRow("mg"),
     ...MENU_ITEMS.map((item, i) => {
       const sel = i === selected;
-      const lit = sel && menuActive; // the cursor "lamp" — only on the active pane
+      const lit = sel && menuActive; // the cursor — only on the active column
       return h(
         Text,
         {
           key: "i" + i,
           backgroundColor: lit ? tokens.selection : undefined,
           color: lit
-            ? moved || lampLit
+            ? moved // one-shot ease the instant you move; settles to accent
               ? tokens.accentBright
               : tokens.accent
             : sel
@@ -348,11 +321,10 @@ export function Welcome(p: WelcomeProps) {
     packs.slice(0, narrow ? 4 : 8).forEach((pk, i) => {
       const active = pk.slug === p.slug;
       const open = pk.residue;
-      // The lit lamp: the focused row when this column has focus — it breathes
-      // on the shared clock (lampLit), the one "where focus is" motion here.
+      // The cursor: the focused row when this column has focus (one-shot ease on move).
       const lit = !menuActive && i === projCursor;
       const slugColour = lit
-        ? moved || lampLit
+        ? moved
           ? tokens.accentBright
           : tokens.accent
         : active
@@ -410,8 +382,6 @@ export function Welcome(p: WelcomeProps) {
       key: "projects",
       flexDirection: "column",
       flexGrow: 1,
-      paddingX: 1,
-      backgroundColor: !menuActive ? tokens.surface : undefined,
     },
     ...projectRows.filter(Boolean),
   );

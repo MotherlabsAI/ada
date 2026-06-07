@@ -48,20 +48,20 @@ export const tokens = {
   bg: "#16110C",
   surface: "#1F1812", // bark — the fill behind the focused column (Gestalt common region)
   surfaceAlt: "#2A2018", // lit bark
-  // ── 30% structure & text (heartwood · parchment) ──────────────────────
-  text: "#F0E4D2", // parchment — lifted to ~14:1 on bg for fast scanning
-  textDim: "#BCA488", // aged wood
-  textMuted: "#9A8366", // weathered wood — clears AA on bg (~4.9:1)
+  // ── 30% structure & text (heartwood · parchment — NEUTRAL warm, no olive) ──
+  text: "#F0E6D6", // parchment — ~14:1 on bg for fast scanning
+  textDim: "#C6B4A0", // warm tan — neutral, not olive
+  textMuted: "#9E8C7A", // weathered taupe — clears AA on bg, reads grey-warm not green
   border: "#463729", // bark edge
-  // ── 10% accent (sap · clay — the warm pop) ────────────────────────────
-  accent: "#E3A53C", // sap gold — richer than before, so the pop actually fills
-  accentBright: "#F4BD5C",
+  // ── 10% accent (amber · clay — ONE warm pop, off the mustard/lemon axis) ──
+  accent: "#DA8F3A", // amber — warmed toward orange so it reads sap, not mustard
+  accentBright: "#EFA851",
   focus: "#C8693F", // clay · bark-red
-  selection: "#352616", // warm bark tint — the cursor/panel bar (more present)
+  selection: "#2E2014", // neutral dark bark — the cursor bar (no olive cast)
   // ── status (tree-semantic, used sparingly) ────────────────────────────
-  success: "#7C9A55", // moss · lichen green — settled, alive
-  warning: "#E3A53C", // sap — open work
-  error: "#C0604D", // rust — failure
+  success: "#6F9258", // forest-moss — cleaner green, less yellow
+  warning: "#DA8F3A", // amber — open work
+  error: "#C0604D", // rust — true blocker (red reserved for risk only)
 } as const;
 
 export type TokenRole = keyof typeof tokens;
