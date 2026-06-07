@@ -36,7 +36,11 @@ test("welcome renders the banner wordmark + slogan + greeting", async () => {
   await tick();
   const f = lastFrame() ?? "";
   assert.match(f, /█/, "the block ADA wordmark");
-  assert.match(f, /C L A R I T Y   Y O U   C A N   S H I P/, "the wordmark slogan");
+  assert.match(
+    f,
+    /C L A R I T Y   Y O U   C A N   S H I P/,
+    "the wordmark slogan",
+  );
   assert.match(f, /Welcome back, Alex/);
 });
 
@@ -60,7 +64,7 @@ test("welcome lists your projects with legible, plain-word counts", async () => 
   const { lastFrame } = mount();
   await tick();
   const f = lastFrame() ?? "";
-  assert.match(f, /YOUR PROJECTS/);
+  assert.match(f, /PROJECTS/);
   assert.match(f, /service-business/);
   assert.match(f, /24 nodes/);
   assert.match(f, /5 clusters/);
@@ -86,13 +90,13 @@ test("arrowing the menu moves the selection and updates the narration", async ()
   // First item (Compile) is focused → its describe shows.
   assert.match(lastFrame() ?? "", /governed context pack/);
 
-  stdin.write(DOWN); // → Open a pack
+  stdin.write(DOWN); // → Interview
   await tick();
   const open = lastFrame() ?? "";
   assert.match(
     open,
-    /Open the graph for a pack/,
-    "narration now describes Open",
+    /Ada captures what you expect/,
+    "narration now describes Interview",
   );
 
   stdin.write(UP); // back to Compile
@@ -100,24 +104,17 @@ test("arrowing the menu moves the selection and updates the narration", async ()
   assert.match(lastFrame() ?? "", /governed context pack/);
 });
 
-test("'Open a pack' focuses the projects column, then ↑/↓ + ⏎ opens the chosen pack", async () => {
+test("'Resume last' opens the most-recent pack via onOpenPack", async () => {
   const opened: string[] = [];
   const { stdin } = mount({ onOpenPack: (s) => opened.push(s) });
   await tick();
-  stdin.write(DOWN); // → Open a pack
+  stdin.write(DOWN); // Compile → Interview
   await tick();
-  stdin.write("\r"); // focuses the projects column (does NOT open yet)
+  stdin.write(DOWN); // Interview → Resume last
   await tick();
-  assert.deepEqual(opened, [], "first ⏎ moves focus, it does not open");
-  stdin.write(DOWN); // → second project (ada-website)
+  stdin.write("\r"); // resume → opens packs[0]
   await tick();
-  stdin.write("\r"); // opens the cursored pack
-  await tick();
-  assert.deepEqual(
-    opened,
-    ["ada-website"],
-    "opens the pack you cursored, not packs[0]",
-  );
+  assert.deepEqual(opened, ["service-business"], "opens the most-recent pack");
 });
 
 test("⇥ crosses into the projects column and ⏎ opens the cursored pack", async () => {

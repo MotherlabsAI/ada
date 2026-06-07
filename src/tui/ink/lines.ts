@@ -6,7 +6,7 @@
  */
 import type { Graph, NodeCapsule, Colour } from "../../core/types.js";
 import { clusterOf } from "../../core/ids.js";
-import { TRUTH_GLYPH, CHECK_LABEL, COLOUR_HEX } from "../../core/grammar.js";
+import { TRUTH_GLYPH, CHECK_LABEL } from "../../core/grammar.js";
 
 /** A coloured span within a row (so colour can land on just the dot/name, not the whole row). */
 export interface Seg {
@@ -110,19 +110,28 @@ export function breadcrumb(trail: string[]): string {
   return (trail.length > 4 ? "… ▸ " : "") + tail.join(" ▸ ");
 }
 
-/** Colour = which area: each cluster gets its own stable colour from the palette. */
+/**
+ * Colour = which area: each cluster gets a stable hue. Ordered EARTH-FIRST so the
+ * common case (≤7 clusters) stays inside the tree family — clay/amber/sage/terracotta/
+ * slate/green/deep_blue — with adjacent areas kept distinct. The cooler hues sit at the
+ * tail for large graphs only. The hue rides the small ● dot, never the whole label, so
+ * a many-cluster tree reads calm, not rainbow (structure_before_color).
+ */
 const CLUSTER_PALETTE: Colour[] = [
-  "plum",
-  "terracotta",
-  "cyan",
-  "sage",
-  "amber",
-  "green",
-  "slate",
   "clay",
+  "amber",
+  "sage",
+  "terracotta",
+  "slate",
+  "green",
   "deep_blue",
   "rose",
+  "cyan",
+  "plum",
 ];
+
+/** The cursor bar — a calm neutral bark, NOT the cluster hue darkened (that read purple). */
+const CURSOR_BG = "#2E2014";
 export function clusterColour(clusters: string[], cluster: string): Colour {
   const i = clusters.indexOf(cluster);
   return CLUSTER_PALETTE[(i < 0 ? 0 : i) % CLUSTER_PALETTE.length]!;
@@ -233,7 +242,6 @@ export function graphTree(
     ref: string,
     segs: Seg[],
     sel: boolean,
-    areaHex: string,
   ): TreeRow => {
     let text = segs.map((s) => s.text).join("");
     const segments = [...segs];
@@ -249,14 +257,21 @@ export function graphTree(
       ref,
       text,
       segments,
-      ...(sel ? { bgHex: darken(areaHex, 0.28) } : {}),
+      ...(sel ? { bgHex: CURSOR_BG } : {}),
     };
   };
+
+  // Align the roll-up column: pad every cluster label to the widest, so the (N)
+  // count and the ✓/⊙/Ω roll-up line up vertically across rows. A roll-up that
+  // drifts row-to-row reads as ambiguity; a fixed column reads as one structure.
+  const labelW = Math.max(
+    0,
+    ...clusters.map((c) => clusterLabel(c, opts.clusterLabels).length),
+  );
 
   for (const cluster of clusters) {
     const inCluster = nodes.filter((n) => clusterOf(n.id) === cluster);
     const colour = clusterColour(clusters, cluster);
-    const areaHex = COLOUR_HEX[colour];
     const isOpen = opts.open.has(cluster);
     const sel = opts.selectedRef === cluster;
     if (sel) selectedLine = rows.length;
@@ -274,17 +289,15 @@ export function graphTree(
         [
           { text: sel ? "❯ " : "  ", bold: true },
           { text: isOpen ? "▾ " : "▸ ", dim: true },
-          { text: "● ", colour },
+          { text: "● ", colour }, // the hue rides ONLY the dot
           {
-            text: clusterLabel(cluster, opts.clusterLabels),
-            colour,
-            bold: true,
+            text: clusterLabel(cluster, opts.clusterLabels).padEnd(labelW),
+            bold: true, // label stays cream — calm, not rainbow
           },
           { text: `  (${inCluster.length})`, dim: true },
           ...(rollup.length ? [{ text: "   ", dim: true }, ...rollup] : []),
         ],
         sel,
-        areaHex,
       ),
     );
     if (isOpen) {
@@ -307,7 +320,7 @@ export function graphTree(
         ];
         if (opts.flagged.has(n.id)) segs.push({ text: " ⚑", colour: "slate" });
         if (isRej) segs.push({ text: " ✗", colour: "rose" });
-        rows.push(makeRow("node", n.id, segs, nsel, areaHex));
+        rows.push(makeRow("node", n.id, segs, nsel));
       });
     }
   }

@@ -35,7 +35,7 @@ const SLOGAN = "C L A R I T Y   Y O U   C A N   S H I P";
 
 /** A home action. `describe` is the one-line the sidebar shows when it's focused. */
 export interface MenuItem {
-  id: "compile" | "open" | "interview" | "browse" | "settings";
+  id: "compile" | "interview" | "browse" | "settings";
   label: string;
   describe: string;
 }
@@ -47,18 +47,13 @@ export const MENU_ITEMS: MenuItem[] = [
     describe: "Turn a sentence of intent into a governed context pack.",
   },
   {
-    id: "open",
-    label: "Open a pack",
-    describe: "Open the graph for a pack you've already compiled.",
-  },
-  {
     id: "interview",
     label: "Interview (ctx init)",
     describe: "Answer a few questions so Ada captures what you expect first.",
   },
   {
     id: "browse",
-    label: "Browse / resume",
+    label: "Resume last",
     describe:
       "Jump back into your most recent pack and pick up where you left off.",
   },
@@ -128,17 +123,11 @@ export function Welcome(p: WelcomeProps) {
       case "compile":
         p.onCompile?.();
         break;
-      case "open":
       case "browse":
-        // One pack → open it straight away (nothing to choose). Several → move
-        // focus INTO the projects column so you pick the exact one, not an
-        // implicit "first". (⇥ or → also cross into it directly.)
-        if (visibleProjects === 1) {
+        // "Resume last" → open the most-recent pack straight away. (To pick a
+        // different one, ⇥ / → into the projects column — that IS the chooser.)
+        if (visibleProjects > 0) {
           p.onOpenPack?.(packs[0]!.slug);
-        } else if (visibleProjects > 1) {
-          setProjCursor(0);
-          setPane("projects");
-          setMoved(true);
         } else {
           p.onOpenPack?.(p.slug);
         }
@@ -313,7 +302,7 @@ export function Welcome(p: WelcomeProps) {
         color: !menuActive ? tokens.text : tokens.textMuted,
         bold: true,
       },
-      "YOUR PROJECTS",
+      "PROJECTS",
     ),
     gapRow("pg"),
   ];
@@ -400,10 +389,10 @@ export function Welcome(p: WelcomeProps) {
   // ── bottom: live, context-sensitive key hints (3–5 keys that matter now) ──
   const hints = !menuActive
     ? "↑/↓ pick · ⏎ open · ⇥ back · / all commands · q quit"
-    : focusItem.id === "open" || focusItem.id === "browse"
-      ? "↑/↓ move · → / ⏎ projects · / all commands · q quit"
-      : focusItem.id === "compile"
-        ? "↑/↓ move · ⏎ compile · → projects · / all commands · q quit"
+    : focusItem.id === "compile"
+      ? "↑/↓ move · ⏎ compile · → projects · / all commands · q quit"
+      : focusItem.id === "browse"
+        ? "↑/↓ move · ⏎ resume last · → projects · / all commands · q quit"
         : "↑/↓ move · ⏎ pick · → projects · / all commands · q quit";
 
   const height = Math.max(8, p.rows - 1);

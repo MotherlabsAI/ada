@@ -143,21 +143,18 @@ test("Compile: a missing-key error shows the `ada key` guidance (and never crash
 
 // ── Open / Browse ───────────────────────────────────────────────────────────────
 
-test("Open with multiple packs focuses the inline projects chooser", async () => {
+test("⇥ into the projects column IS the chooser (no separate screen)", async () => {
   const { stdin, lastFrame } = mount({ packs: PACKS, compile: stubCompile });
   await tick();
-  stdin.write(DOWN); // Compile → Open a pack
-  await tick();
-  stdin.write("\r"); // Open → focus the projects column (the chooser is inline)
+  stdin.write("\t"); // ⇥ → focus the projects column
   await tick();
   const f = lastFrame() ?? "";
-  // Still on the home — the YOUR PROJECTS column is the chooser; no separate screen.
-  assert.match(f, /YOUR PROJECTS/, "the projects column is the chooser");
+  assert.match(f, /PROJECTS/, "the projects column is the chooser");
   assert.match(f, /alpha-pack/, "lists the first pack");
   assert.match(f, /beta-pack/, "lists the second pack");
 });
 
-test("Open with multiple packs: cursoring a pack and ⏎ loads it (injected loadPack) → graph", async () => {
+test("cursoring a pack in the projects column and ⏎ loads it (injected loadPack) → graph", async () => {
   const loaded: string[] = [];
   const loadPack = (_cwd: string, slug: string): ActivePack => {
     loaded.push(slug);
@@ -165,9 +162,7 @@ test("Open with multiple packs: cursoring a pack and ⏎ loads it (injected load
   };
   const { stdin, lastFrame } = mount({ packs: PACKS, loadPack });
   await tick();
-  stdin.write(DOWN); // → Open a pack
-  await tick();
-  stdin.write("\r"); // → focus the projects column (cursor on alpha-pack)
+  stdin.write("\t"); // ⇥ → projects column (cursor on alpha-pack)
   await tick();
   stdin.write(DOWN); // → beta-pack
   await tick();
@@ -189,19 +184,21 @@ test("Open with multiple packs: cursoring a pack and ⏎ loads it (injected load
     /▸ ●/,
     "the picked pack's graph (areas closed) is shown",
   );
-  assert.doesNotMatch(picked, /YOUR PROJECTS/, "the home is gone");
+  assert.doesNotMatch(picked, /PROJECTS/, "the home is gone");
 });
 
-test("Open with a single pack opens it directly (no chooser step)", async () => {
+test("'Resume last' opens the most-recent pack directly → graph", async () => {
   const single: PackSummary[] = [PACKS[0]!];
   const { stdin, lastFrame } = mount({ packs: single });
   await tick();
-  stdin.write(DOWN); // → Open a pack
+  stdin.write(DOWN); // Compile → Interview
   await tick();
-  stdin.write("\r"); // one pack → graph directly (uses the in-memory prop pack)
+  stdin.write(DOWN); // Interview → Resume last
+  await tick();
+  stdin.write("\r"); // resume → opens packs[0] (the in-memory prop pack) → graph
   await tick();
   const f = lastFrame() ?? "";
-  assert.doesNotMatch(f, /YOUR PROJECTS/, "no chooser step for a single pack");
+  assert.doesNotMatch(f, /PROJECTS/, "no chooser step — resumed directly");
   assert.match(f, /ATT\.004|▸ ●/, "dropped straight into the graph");
 });
 
@@ -217,8 +214,8 @@ test("Settings renders the value-free key + model status", async () => {
     },
   });
   await tick();
-  // Settings is the 5th menu item: Compile, Open, Interview, Browse, Settings → 4 downs.
-  for (let i = 0; i < 4; i++) {
+  // Settings is the 4th menu item: Compile, Interview, Resume last, Settings → 3 downs.
+  for (let i = 0; i < 3; i++) {
     stdin.write(DOWN);
     await tick(20);
   }
@@ -242,7 +239,7 @@ test("Settings with no key shows the ✗ status + the set-once guidance", async 
     },
   });
   await tick();
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     stdin.write(DOWN);
     await tick(20);
   }
@@ -260,7 +257,7 @@ test("Settings: esc returns to the welcome menu", async () => {
     settingsStatus: { keyAvailable: true, model: "m", modelFromEnv: false },
   });
   await tick();
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     stdin.write(DOWN);
     await tick(20);
   }
@@ -281,9 +278,7 @@ test("Settings: esc returns to the welcome menu", async () => {
 test("Interview shows a clean note pointing at `ada ctx init` (not half-built)", async () => {
   const { stdin, lastFrame } = mount({ packs: PACKS });
   await tick();
-  stdin.write(DOWN); // Compile → Open
-  await tick();
-  stdin.write(DOWN); // Open → Interview
+  stdin.write(DOWN); // Compile → Interview
   await tick();
   stdin.write("\r"); // select Interview
   await tick();

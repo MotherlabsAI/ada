@@ -24,12 +24,14 @@ function mount(
   );
 }
 
-// The app opens on the welcome page. Navigate the menu to "Open a pack"
-// (one ↓ from the focused "Compile") and ⏎ to drop into the graph.
+// The app opens on the welcome page. Navigate to "Resume last" (Compile →
+// Interview → Resume last = 2 ↓) and ⏎ to drop into the graph.
 async function enterGraph(stdin: { write: (s: string) => void }) {
-  stdin.write(DOWN); // Compile → Open a pack
+  stdin.write(DOWN); // Compile → Interview
   await tick();
-  stdin.write("\r"); // open the (only) pack → graph view
+  stdin.write(DOWN); // Interview → Resume last
+  await tick();
+  stdin.write("\r"); // open the pack → graph view
   await tick();
 }
 

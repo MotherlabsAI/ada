@@ -238,7 +238,9 @@ export function App(props: AppProps) {
     () =>
       readingNode
         ? readerLines(readingNode, cols - 2, {
-            crumb: breadcrumb(backStack),
+            // Only show a breadcrumb when there's a REAL follow-trail — a lone id
+            // just duplicates the header below it and reads as "what is this?".
+            ...(backStack.length > 1 ? { crumb: breadcrumb(backStack) } : {}),
             links,
             linkIndex,
           })
@@ -625,11 +627,12 @@ export function App(props: AppProps) {
 
   return h(
     Box,
-    { flexDirection: "column" },
+    { flexDirection: "column", paddingX: 1 },
     h(StatusBar, { slug: active.slug, ...counts }),
+    // A breath under the status bar so the tree/reader isn't squeezed against it.
     h(
       Box,
-      { flexDirection: "column" },
+      { flexDirection: "column", marginTop: 1 },
       ...body.map((l, i) => renderLine(l, i)),
     ),
     commandMode
