@@ -1,0 +1,9 @@
+id: "IDENT.012"
+parents:
+  - "IDENT.010"
+children: []
+dependsOn:
+  - "PALETTE.021"
+siblings:
+  - "IDENT.011"
+guardedBy: []

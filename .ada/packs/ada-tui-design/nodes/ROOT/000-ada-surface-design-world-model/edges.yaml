@@ -1,0 +1,15 @@
+id: "ROOT.000"
+parents: []
+children:
+  - "ROOT.001"
+  - "ROOT.002"
+  - "PALETTE.020"
+  - "LAYOUT.030"
+  - "NAV.050"
+  - "UNK.100"
+  - "UNK.101"
+  - "UNK.102"
+  - "UNK.104"
+dependsOn: []
+siblings: []
+guardedBy: []

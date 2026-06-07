@@ -1,0 +1,13 @@
+id: "A11Y.080"
+parents:
+  - "ROOT.002"
+children:
+  - "A11Y.081"
+  - "A11Y.082"
+  - "A11Y.083"
+dependsOn: []
+siblings:
+  - "A11Y.081"
+  - "A11Y.082"
+guardedBy:
+  - "color_has_glyph"

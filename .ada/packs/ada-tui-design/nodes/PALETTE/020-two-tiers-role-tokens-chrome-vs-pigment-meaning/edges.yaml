@@ -1,0 +1,12 @@
+id: "PALETTE.020"
+parents:
+  - "ROOT.000"
+children:
+  - "PALETTE.021"
+  - "PALETTE.022"
+  - "PALETTE.023"
+  - "UNK.107"
+dependsOn: []
+siblings:
+  - "PALETTE.021"
+guardedBy: []

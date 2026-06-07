@@ -1,0 +1,10 @@
+id: "LAYOUT.034"
+parents:
+  - "ROOT.001"
+children: []
+dependsOn:
+  - "PALETTE.024"
+siblings:
+  - "NAV.053"
+guardedBy:
+  - "color_has_glyph"

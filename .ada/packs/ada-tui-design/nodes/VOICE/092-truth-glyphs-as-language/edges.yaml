@@ -1,0 +1,9 @@
+id: "VOICE.092"
+parents:
+  - "VOICE.090"
+children: []
+dependsOn: []
+siblings:
+  - "A11Y.080"
+guardedBy:
+  - "color_has_glyph"

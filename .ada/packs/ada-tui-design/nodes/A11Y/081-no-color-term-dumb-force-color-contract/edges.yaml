@@ -1,0 +1,9 @@
+id: "A11Y.081"
+parents:
+  - "A11Y.080"
+children: []
+dependsOn: []
+siblings:
+  - "PALETTE.023"
+guardedBy:
+  - "no_color_no_ansi"

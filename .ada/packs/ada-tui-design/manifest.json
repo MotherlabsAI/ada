@@ -1,0 +1,36 @@
+{
+  "slug": "ada-tui-design",
+  "product": "Ada by Motherlabs — terminal surface",
+  "schemaVersion": "0.1.0",
+  "createdNote": "Excavated from one intent (Ada's own TUI surface) by the design compiler; grounded in src/tui/ink/ + docs/SURFACE-DESIGN.md. Exploratory layer (A1); provenance via truth-class + from (A2).",
+  "nodeCount": 51,
+  "edgeCount": 77,
+  "checkCount": 3,
+  "residueCount": 8,
+  "clusters": [
+    "ROOT",
+    "IDENT",
+    "PALETTE",
+    "LAYOUT",
+    "MOTION",
+    "NAV",
+    "FLOW",
+    "STATE",
+    "A11Y",
+    "VOICE",
+    "UNK"
+  ],
+  "clusterCounts": {
+    "ROOT": 3,
+    "IDENT": 4,
+    "PALETTE": 5,
+    "LAYOUT": 5,
+    "MOTION": 5,
+    "NAV": 4,
+    "FLOW": 4,
+    "STATE": 5,
+    "A11Y": 4,
+    "VOICE": 4,
+    "UNK": 8
+  }
+}

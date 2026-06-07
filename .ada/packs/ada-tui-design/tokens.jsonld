@@ -1,0 +1,408 @@
+{
+  "@context": {
+    "@vocab": "https://motherlabs.dev/ns/ada-design#",
+    "dtcg": "https://www.w3.org/community/design-tokens/#",
+    "id": "@id",
+    "type": "@type",
+    "value": "ada:value",
+    "role": "ada:role",
+    "tier": "ada:tier",
+    "contrastOnBg": "ada:contrastOnBg",
+    "glyph": "ada:glyph",
+    "label": "ada:label",
+    "color": "ada:color",
+    "weight": "ada:weight",
+    "group": "ada:group",
+    "kind": "ada:kind",
+    "ms": "ada:ms",
+    "reduced": "ada:reduced",
+    "reason": "ada:reason"
+  },
+  "ada:provenance": "PROJECTED from src/tui/ink/tokens.ts by scripts/project-tokens.mjs — do not hand-edit; run `pnpm build`.",
+  "@graph": [
+    {
+      "@id": "ada:token/role/bg",
+      "@type": "ada:RoleToken",
+      "value": "#1B1410",
+      "tier": "base",
+      "role": "60% — the calm warm-dark field the eye rests on"
+    },
+    {
+      "@id": "ada:token/role/surface",
+      "@type": "ada:RoleToken",
+      "value": "#251D16",
+      "tier": "base",
+      "role": "60% — raised field for panels/cards"
+    },
+    {
+      "@id": "ada:token/role/surfaceAlt",
+      "@type": "ada:RoleToken",
+      "value": "#2F2419",
+      "tier": "base",
+      "role": "60% — secondary raised field"
+    },
+    {
+      "@id": "ada:token/role/text",
+      "@type": "ada:RoleToken",
+      "value": "#ECDDC9",
+      "tier": "structure",
+      "role": "30% — primary body text",
+      "contrastOnBg": 13.65,
+      "ada:wcagAA": true
+    },
+    {
+      "@id": "ada:token/role/textDim",
+      "@type": "ada:RoleToken",
+      "value": "#B49B80",
+      "tier": "structure",
+      "role": "30% — secondary text",
+      "contrastOnBg": 6.88,
+      "ada:wcagAA": true
+    },
+    {
+      "@id": "ada:token/role/textMuted",
+      "@type": "ada:RoleToken",
+      "value": "#968063",
+      "tier": "structure",
+      "role": "30% — metadata, ids, dim lines",
+      "contrastOnBg": 4.82,
+      "ada:wcagAA": true
+    },
+    {
+      "@id": "ada:token/role/border",
+      "@type": "ada:RoleToken",
+      "value": "#4A3A2C",
+      "tier": "structure",
+      "role": "30% — hairlines, the one rounded frame"
+    },
+    {
+      "@id": "ada:token/role/accent",
+      "@type": "ada:RoleToken",
+      "value": "#D59632",
+      "tier": "accent",
+      "role": "10% — amber: the one thing that pops",
+      "contrastOnBg": 7.14,
+      "ada:wcagAA": true
+    },
+    {
+      "@id": "ada:token/role/accentBright",
+      "@type": "ada:RoleToken",
+      "value": "#E8A94A",
+      "tier": "accent",
+      "role": "10% — amber hover/move flash",
+      "contrastOnBg": 8.84,
+      "ada:wcagAA": true
+    },
+    {
+      "@id": "ada:token/role/focus",
+      "@type": "ada:RoleToken",
+      "value": "#C66A43",
+      "tier": "accent",
+      "role": "10% — clay: the focused/cursor mark",
+      "contrastOnBg": 4.8,
+      "ada:wcagAA": true
+    },
+    {
+      "@id": "ada:token/role/selection",
+      "@type": "ada:RoleToken",
+      "value": "#3A281C",
+      "tier": "accent",
+      "role": "10% — selected-row background tint"
+    },
+    {
+      "@id": "ada:token/role/success",
+      "@type": "ada:RoleToken",
+      "value": "#3E8F5A",
+      "tier": "status",
+      "role": "checks pass / candidates (κ)",
+      "contrastOnBg": 4.58,
+      "ada:wcagAA": true
+    },
+    {
+      "@id": "ada:token/role/warning",
+      "@type": "ada:RoleToken",
+      "value": "#D59632",
+      "tier": "status",
+      "role": "unknowns / residue (Ω)",
+      "contrastOnBg": 7.14,
+      "ada:wcagAA": true
+    },
+    {
+      "@id": "ada:token/role/error",
+      "@type": "ada:RoleToken",
+      "value": "#B65A6B",
+      "tier": "status",
+      "role": "failure-if-missing",
+      "contrastOnBg": 4.04,
+      "ada:wcagAA": true
+    },
+    {
+      "@id": "ada:token/pigment/terracotta",
+      "@type": "ada:PigmentToken",
+      "value": "#B8543C",
+      "role": "brand identity / active area"
+    },
+    {
+      "@id": "ada:token/pigment/plum",
+      "@type": "ada:PigmentToken",
+      "value": "#6E5ACF",
+      "role": "secondary identity (mascot, compile heartbeat)"
+    },
+    {
+      "@id": "ada:token/pigment/clay",
+      "@type": "ada:PigmentToken",
+      "value": "#C66A43",
+      "role": "warm area hue"
+    },
+    {
+      "@id": "ada:token/pigment/amber",
+      "@type": "ada:PigmentToken",
+      "value": "#D59632",
+      "role": "warm area hue / warning"
+    },
+    {
+      "@id": "ada:token/pigment/sage",
+      "@type": "ada:PigmentToken",
+      "value": "#6F8F72",
+      "role": "cool-neutral area hue"
+    },
+    {
+      "@id": "ada:token/pigment/green",
+      "@type": "ada:PigmentToken",
+      "value": "#3E8F5A",
+      "role": "check ok"
+    },
+    {
+      "@id": "ada:token/pigment/cyan",
+      "@type": "ada:PigmentToken",
+      "value": "#2F8FA3",
+      "role": "followable edge / link"
+    },
+    {
+      "@id": "ada:token/pigment/slate",
+      "@type": "ada:PigmentToken",
+      "value": "#8893A6",
+      "role": "compiles-to / structural (AA-fixed)"
+    },
+    {
+      "@id": "ada:token/pigment/deep_blue",
+      "@type": "ada:PigmentToken",
+      "value": "#4E7FB5",
+      "role": "area hue (AA-large fixed)"
+    },
+    {
+      "@id": "ada:token/pigment/rose",
+      "@type": "ada:PigmentToken",
+      "value": "#B65A6B",
+      "role": "failure"
+    },
+    {
+      "@id": "ada:token/state/source",
+      "@type": "ada:StateToken",
+      "ada:group": "state",
+      "glyph": "∵",
+      "label": "source",
+      "color": "accent",
+      "weight": "normal"
+    },
+    {
+      "@id": "ada:token/state/inferred",
+      "@type": "ada:StateToken",
+      "ada:group": "state",
+      "glyph": "∴",
+      "label": "inferred",
+      "color": "textDim",
+      "weight": "normal"
+    },
+    {
+      "@id": "ada:token/state/residue",
+      "@type": "ada:StateToken",
+      "ada:group": "state",
+      "glyph": "Ω",
+      "label": "residue",
+      "color": "warning",
+      "weight": "normal"
+    },
+    {
+      "@id": "ada:token/state/check",
+      "@type": "ada:StateToken",
+      "ada:group": "state",
+      "glyph": "κ",
+      "label": "check",
+      "color": "success",
+      "weight": "normal"
+    },
+    {
+      "@id": "ada:token/state/failure",
+      "@type": "ada:StateToken",
+      "ada:group": "state",
+      "glyph": "✗",
+      "label": "failure",
+      "color": "error",
+      "weight": "bold"
+    },
+    {
+      "@id": "ada:token/state/cursor",
+      "@type": "ada:StateToken",
+      "ada:group": "state",
+      "glyph": "❯",
+      "label": "focus",
+      "color": "focus",
+      "weight": "bold"
+    },
+    {
+      "@id": "ada:token/state/flagged",
+      "@type": "ada:StateToken",
+      "ada:group": "state",
+      "glyph": "⊙",
+      "label": "flagged",
+      "color": "accent",
+      "weight": "normal"
+    },
+    {
+      "@id": "ada:token/state/node",
+      "@type": "ada:StateToken",
+      "ada:group": "state",
+      "glyph": "◇",
+      "label": "node",
+      "color": "text",
+      "weight": "normal"
+    },
+    {
+      "@id": "ada:token/state/blocked",
+      "@type": "ada:StateToken",
+      "ada:group": "state",
+      "glyph": "▲",
+      "label": "blocked",
+      "color": "error",
+      "weight": "bold"
+    },
+    {
+      "@id": "ada:token/confidence/certain",
+      "@type": "ada:StateToken",
+      "ada:group": "confidence",
+      "glyph": "▰▰▰",
+      "label": "certain",
+      "color": "text",
+      "weight": "bold"
+    },
+    {
+      "@id": "ada:token/confidence/probable",
+      "@type": "ada:StateToken",
+      "ada:group": "confidence",
+      "glyph": "▰▰▱",
+      "label": "probable",
+      "color": "textDim",
+      "weight": "normal"
+    },
+    {
+      "@id": "ada:token/confidence/tentative",
+      "@type": "ada:StateToken",
+      "ada:group": "confidence",
+      "glyph": "▰▱▱",
+      "label": "tentative",
+      "color": "textMuted",
+      "weight": "dim"
+    },
+    {
+      "@id": "ada:token/recency/changed",
+      "@type": "ada:StateToken",
+      "ada:group": "recency",
+      "glyph": "✦",
+      "label": "changed",
+      "color": "accentBright",
+      "weight": "bold"
+    },
+    {
+      "@id": "ada:token/recency/settled",
+      "@type": "ada:StateToken",
+      "ada:group": "recency",
+      "glyph": "·",
+      "label": "settled",
+      "color": "textMuted",
+      "weight": "dim"
+    },
+    {
+      "@id": "ada:token/activity/working",
+      "@type": "ada:StateToken",
+      "ada:group": "activity",
+      "glyph": "◐",
+      "label": "working",
+      "color": "accent",
+      "weight": "normal"
+    },
+    {
+      "@id": "ada:token/activity/idle",
+      "@type": "ada:StateToken",
+      "ada:group": "activity",
+      "glyph": "○",
+      "label": "idle",
+      "color": "textMuted",
+      "weight": "dim"
+    },
+    {
+      "@id": "ada:token/density/sparse",
+      "@type": "ada:DensityToken",
+      "glyph": "·",
+      "label": "sparse",
+      "ada:maxEdgesPerNode": 3,
+      "ada:lineWeight": "hairline"
+    },
+    {
+      "@id": "ada:token/density/balanced",
+      "@type": "ada:DensityToken",
+      "glyph": "∶",
+      "label": "balanced",
+      "ada:maxEdgesPerNode": 6,
+      "ada:lineWeight": "thin"
+    },
+    {
+      "@id": "ada:token/density/dense",
+      "@type": "ada:DensityToken",
+      "glyph": "⁞",
+      "label": "dense",
+      "ada:maxEdgesPerNode": 10,
+      "ada:lineWeight": "regular"
+    },
+    {
+      "@id": "ada:token/motion/compileHeartbeat",
+      "@type": "ada:MotionToken",
+      "kind": "pulse",
+      "ms": 90,
+      "reduced": "static-glyph",
+      "reason": "a compile stage is in flight (machine is working, not frozen)"
+    },
+    {
+      "@id": "ada:token/motion/welcomeBreath",
+      "@type": "ada:MotionToken",
+      "kind": "breath",
+      "ms": 1400,
+      "reduced": "static",
+      "reason": "the idle welcome banner is alive (one breath, killed on first nav)"
+    },
+    {
+      "@id": "ada:token/motion/reveal",
+      "@type": "ada:MotionToken",
+      "kind": "reveal",
+      "ms": 18,
+      "reduced": "instant",
+      "reason": "a node body is being disclosed (any keypress jumps to settled)"
+    },
+    {
+      "@id": "ada:token/motion/cursorFlash",
+      "@type": "ada:MotionToken",
+      "kind": "flash",
+      "ms": 150,
+      "reduced": "none",
+      "reason": "focus just landed here (the move itself is the feedback)"
+    },
+    {
+      "@id": "ada:token/motion/areaOpen",
+      "@type": "ada:MotionToken",
+      "kind": "draw-in",
+      "ms": 150,
+      "reduced": "static",
+      "reason": "an area expanded (one-shot, completes to a static tree)"
+    }
+  ]
+}

@@ -1,0 +1,2703 @@
+id: "graph-ada-tui-design"
+version: "0.1.0"
+packSlug: "ada-tui-design"
+nodes:
+  -
+    id: "ROOT.000"
+    label: "Ada Surface Design World Model"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L5"
+    truth: "inference"
+    role:
+      cluster: "ROOT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The bounded design context for Ada's own terminal surface — not everything about TUIs, only what an executor needs to build/refactor THIS shell: identity, palette, layout, motion, nav, flow, state, a11y, voice, and honest residue."
+      whyItMatters: "The map the surface is built inside. Without it, the TUI is restyled from taste-of-the-day instead of a governed model."
+      failureIfMissing: "Each screen gets designed in isolation; the shell drifts into confetti and inconsistency."
+    worldLinks:
+      parents: []
+      children:
+        - "ROOT.001"
+        - "ROOT.002"
+        - "PALETTE.020"
+        - "LAYOUT.030"
+        - "NAV.050"
+        - "UNK.100"
+        - "UNK.101"
+        - "UNK.102"
+        - "UNK.104"
+      siblings: []
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "SEED (root intent)"
+    checkability:
+      class: "C0"
+      explanation: "Exploratory / open; not a deterministic guarantee."
+    ui:
+      visibleBadges:
+        - "L5"
+        - "C0"
+        - "∴"
+      openPriority: "high"
+  -
+    id: "ROOT.001"
+    label: "North-star: Claude Code's calm, premium sister"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L4"
+    truth: "source"
+    role:
+      cluster: "ROOT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The brief in one line: one accent on calm earth neutrals, one focal point per screen, one moving thing at a time, a frame that never jumps. Terracotta/plum is OURS — match Claude Code's restraint, never copy its hue."
+      whyItMatters: "It is the single tie-breaker for every later decision; when two designs are both 'fine', the calmer one wins."
+      failureIfMissing: "The surface reads as a LangChain-clone dashboard — busy, cool-toned, generic — and the premium promise breaks on first contact."
+    worldLinks:
+      parents:
+        - "ROOT.000"
+      children:
+        - "IDENT.010"
+        - "IDENT.011"
+        - "LAYOUT.034"
+        - "MOTION.040"
+      siblings:
+        - "ROOT.002"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C1"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C1"
+        - "∵"
+      openPriority: "high"
+  -
+    id: "ROOT.002"
+    label: "The paying non-technical user is the design constraint"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L4"
+    truth: "source"
+    role:
+      cluster: "ROOT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Ada's users are explicitly non-technical and pay real money (Motherlabs vision; A8). 'Premium, legible, calm' is therefore not decoration — it must hold under NO_COLOR, a screen reader, and an 80×24 terminal, or it isn't premium for everyone who paid."
+      whyItMatters: "It promotes accessibility and degradation from 'nice-to-have' to a load-bearing product requirement."
+      failureIfMissing: "The surface is beautiful only on the designer's 120-col truecolor iTerm; everyone else gets a broken first impression."
+    worldLinks:
+      parents:
+        - "ROOT.000"
+      children:
+        - "FLOW.060"
+        - "A11Y.080"
+        - "VOICE.090"
+      siblings:
+        - "ROOT.001"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "AXIOMS.md"
+    checkability:
+      class: "C1"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C1"
+        - "∵"
+      openPriority: "high"
+  -
+    id: "IDENT.010"
+    label: "The ADA wordmark — filled block, with fallbacks"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L3"
+    truth: "source"
+    role:
+      cluster: "IDENT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "A 6-row filled-block ADA (art.ts WORDMARK) for wide terminals; a 3-row compact WORDMARK_NARROW under ~90 cols; a plain `ADA · context` line for non-TTY/piped output. Box width is computed from the longest art row, never guessed."
+      whyItMatters: "The wordmark is the first frame the user sees; it must land identically across terminal widths and degrade to clean text in CI."
+      failureIfMissing: "The banner clips, mis-wraps, or spews box-drawing noise into a pipe — the first impression is broken before the product speaks."
+    worldLinks:
+      parents:
+        - "ROOT.001"
+      children:
+        - "IDENT.012"
+        - "IDENT.013"
+      siblings:
+        - "IDENT.011"
+        - "IDENT.012"
+        - "IDENT.013"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/art.ts"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C3"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "IDENT.011"
+    label: "The eye/node mascot — animate ONE detail"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L3"
+    truth: "source"
+    role:
+      cluster: "IDENT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The default mascot is an eye (art.ts DEFAULT_MASCOT='eye') — groundable to Ada's function: a context compiler that watches your graph, not arbitrary decoration. Rows 1 and 3 are byte-identical to the blink frame; only the eye row changes (◉→═), so the silhouette is stable and flicker-free."
+      whyItMatters: "Personality from a single moving detail is the cheapest, calmest way to feel 'a little alive' without violating the one-moving-thing rule."
+      failureIfMissing: "A fully animated mascot competes with the cursor and the compile heartbeat — three moving things, the opposite of calm."
+    worldLinks:
+      parents:
+        - "ROOT.001"
+      children: []
+      siblings:
+        - "IDENT.010"
+      dependsOn:
+        - "MOTION.040"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/art.ts"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C3"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "IDENT.012"
+    label: "Vertical terracotta→plum gradient as one object"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L3"
+    truth: "source"
+    role:
+      cluster: "IDENT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The wordmark is ramped top→bottom terracotta→clay→amber (art.ts bannerGradient, ~250ms/step triangle wave) — vertical/per-row, so the tall block reads as one coherent object. Dependency-free (~15 lines hexToRgb+lerp); no ink-gradient."
+      whyItMatters: "A per-row ramp keeps the block legible as a single mark; per-character horizontal gradients look noisy and fight AESTH.005."
+      failureIfMissing: "A rainbow per-letter wordmark turns the signature mark into confetti and adds a dependency for 20 lines of owned code."
+    worldLinks:
+      parents:
+        - "IDENT.010"
+      children: []
+      siblings:
+        - "IDENT.011"
+      dependsOn:
+        - "PALETTE.021"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/art.ts"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C2"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "IDENT.013"
+    label: "The `context` tag as identity anchor"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L2"
+    truth: "source"
+    role:
+      cluster: "IDENT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "`c o n t e x t` under the wordmark plus the subtitle 'a semantic compiler for context' (Welcome.ts) state the category in three words. It is the verbal half of the identity: the mark says ADA, the tag says what ADA is."
+      whyItMatters: "A non-technical user needs the category named, not inferred; the tag does that without a sentence of marketing."
+      failureIfMissing: "The user stares at a pretty ADA block with no idea what it compiles or why they should trust it."
+    worldLinks:
+      parents:
+        - "IDENT.010"
+      children: []
+      siblings:
+        - "VOICE.090"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/Welcome.ts"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C3"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "PALETTE.020"
+    label: "Two tiers: role tokens (chrome) vs pigment (meaning)"
+    glyph: "◇"
+    colour: "amber"
+    status: "finished"
+    depth: "L4"
+    truth: "source"
+    role:
+      cluster: "PALETTE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "tokens.ts splits the namespace: role tokens (bg/text/accent/focus…) skin the CHROME and can re-theme the whole shell from one file; the pigment palette in grammar.ts COLOUR_HEX carries MEANING (truth class, cluster identity, check class). Category and meaning never share a token."
+      whyItMatters: "Keeping the two channels separate is what stops a 10-colour graph reading as confetti and lets the shell be re-skinned without touching meaning-colour."
+      failureIfMissing: "Roles borrow from the area palette (today slate=body, rose=failure, cyan=link) so restyling the chrome silently changes what colours MEAN."
+    worldLinks:
+      parents:
+        - "ROOT.000"
+      children:
+        - "PALETTE.021"
+        - "PALETTE.022"
+        - "PALETTE.023"
+        - "UNK.107"
+      siblings:
+        - "PALETTE.021"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/tokens.ts"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C3"
+        - "∵"
+      openPriority: "high"
+  -
+    id: "PALETTE.021"
+    label: "60/30/10 earth discipline"
+    glyph: "◇"
+    colour: "amber"
+    status: "finished"
+    depth: "L3"
+    truth: "source"
+    role:
+      cluster: "PALETTE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "60% warm-dark base the eye rests on (bg/surface), 30% mid-earth structure & text, 10% accent that is the ONLY thing that pops or moves (accent/focus/selection). Every role is warm (terracotta family); cool pigments stay for meaning, never chrome."
+      whyItMatters: "A fixed ratio is what makes restraint reproducible instead of a vibe — it tells you when you've spent your accent budget."
+      failureIfMissing: "Accent leaks past 10% and the 'one warm pop' becomes wallpaper; nothing draws the eye because everything does."
+    worldLinks:
+      parents:
+        - "PALETTE.020"
+      children:
+        - "PALETTE.024"
+      siblings:
+        - "PALETTE.024"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/tokens.ts"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C2"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "PALETTE.022"
+    label: "Contrast is law — AA on every text role"
+    glyph: "◇"
+    colour: "amber"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "PALETTE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Every token used for TEXT must meet WCAG AA on bg #1B1410 (≥4.5:1 body, ≥3:1 large). This is pure math on the hex pair — checkable, no taste. The research already flags real failures (textMuted, slate-as-text, deep_blue)."
+      whyItMatters: "Legibility is the floor of 'premium'; a beautiful unreadable label is a defect, and contrast is the one design property that is fully deterministic."
+      failureIfMissing: "textMuted #7A6650 (~3.4:1) ships as body text on bg and low-vision users — who paid — cannot read the metadata."
+    worldLinks:
+      parents:
+        - "PALETTE.020"
+      children: []
+      siblings:
+        - "A11Y.081"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy:
+        - "contrast_aa"
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C5"
+      explanation: "Has a deterministic predicate (see c/)."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C5"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "PALETTE.023"
+    label: "Capability-aware degradation ladder"
+    glyph: "◇"
+    colour: "amber"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "PALETTE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "One codepath owns the fallback truecolor → 256 → 16 → mono. Detect level (supports-color/chalk.level), never hardcode the 16 ANSI indices for brand colours (the base16 remap trap) — use named RGB and let it downsample. tokens.ts already documents a 16-colour fallback per role."
+      whyItMatters: "grammar.ts paint() emits raw 24-bit escapes unconditionally, which wash out over SSH/sudo/256-colour; the ladder makes earthy-and-legible survive every terminal."
+      failureIfMissing: "Brand colours render wrong or invisible on a 256-colour terminal; the user blames Ada for a 'broken' screen."
+    worldLinks:
+      parents:
+        - "PALETTE.020"
+      children: []
+      siblings:
+        - "A11Y.081"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy:
+        - "no_color_no_ansi"
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "src/core/grammar.ts"
+    checkability:
+      class: "C4"
+      explanation: "Has a deterministic predicate (see c/)."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C4"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "PALETTE.024"
+    label: "Category hues capped at ~7 — repeat, don't invent"
+    glyph: "◇"
+    colour: "amber"
+    status: "finished"
+    depth: "L2"
+    truth: "inference"
+    role:
+      cluster: "PALETTE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Cluster identity rotates through a fixed pigment set (plum, terracotta, cyan, sage, amber, green, slate, clay, deep_blue, rose); cap simultaneously-visible at ~7 and REPEAT a hue rather than invent a muddy in-between. Hue answers 'what area'; luminance (dim/normal/bold) answers 'how important'."
+      whyItMatters: "Humans rank light/dark reliably but not colours; separating the two channels is what stops a many-cluster graph reading as confetti and degrades cleanly to mono."
+      failureIfMissing: "Each new area mints a new near-duplicate hue; at 10 clusters the tree is indistinguishable noise."
+    worldLinks:
+      parents:
+        - "PALETTE.021"
+      children: []
+      siblings:
+        - "LAYOUT.034"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C2"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "LAYOUT.030"
+    label: "Fixed skeleton: status / body / footer"
+    glyph: "◇"
+    colour: "clay"
+    status: "finished"
+    depth: "L3"
+    truth: "source"
+    role:
+      cluster: "LAYOUT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Status line top, body middle (flexGrow:1), hint/command bar pinned bottom — fixed forever. App.ts already nails this; protect it so the bottom bar truly pins and the body owns all slack."
+      whyItMatters: "Spatial constancy is the cheapest trust signal in a TUI: the user always knows where identity, content, and actions live."
+      failureIfMissing: "Panes drift between screens; the footer floats mid-body; the user re-reads the layout every transition."
+    worldLinks:
+      parents:
+        - "ROOT.000"
+      children:
+        - "LAYOUT.031"
+        - "LAYOUT.032"
+        - "LAYOUT.033"
+        - "STATE.073"
+        - "STATE.074"
+      siblings:
+        - "LAYOUT.031"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C3"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "LAYOUT.031"
+    label: "Panes never move on their own"
+    glyph: "◇"
+    colour: "clay"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "LAYOUT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The reader and the tree render into the IDENTICAL bodyHeight box (rows−4). Opening/closing a node deepens the same surface instead of repainting a new screen; transitions feel like focus changes, not page loads."
+      whyItMatters: "A surface that stays put under interaction feels solid and premium; one that repaints feels like a web page in a terminal."
+      failureIfMissing: "Following an edge swaps the whole screen; the user loses their place and their sense of where they are."
+    worldLinks:
+      parents:
+        - "LAYOUT.030"
+      children: []
+      siblings:
+        - "NAV.052"
+      dependsOn:
+        - "STATE.073"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C2"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "LAYOUT.032"
+    label: "Whitespace is structural, not decorative"
+    glyph: "◇"
+    colour: "clay"
+    status: "finished"
+    depth: "L2"
+    truth: "source"
+    role:
+      cluster: "LAYOUT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "One blank line between logical blocks, 1–2 cells padding inside any framed box, a fixed spacing rhythm held everywhere (Welcome.ts paddingX:2 / explicit gap rows). Never 0-padding (cramped), never random 1-vs-2 newline mixing."
+      whyItMatters: "Density is the absence of decorative noise, not the absence of space; rhythm is what makes a dense screen still feel calm."
+      failureIfMissing: "Inconsistent gaps make the screen feel hand-assembled and cheap, even with a perfect palette."
+    worldLinks:
+      parents:
+        - "LAYOUT.030"
+      children: []
+      siblings:
+        - "LAYOUT.033"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/Welcome.ts"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C2"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "LAYOUT.033"
+    label: "Frame sparingly — one border is the signature"
+    glyph: "◇"
+    colour: "clay"
+    status: "finished"
+    depth: "L2"
+    truth: "inference"
+    role:
+      cluster: "LAYOUT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "One rounded border (the Welcome box / `?` overlay) is a signature; bordering every pane is noise. Inside the workbench, separate regions with the StatusBar title and a dim hint line — no nested boxes, no second border style."
+      whyItMatters: "Borders are expensive attention; spending them once makes that one frame meaningful."
+      failureIfMissing: "Every pane gets a box; the screen becomes a grid of cells and the signature frame loses all weight."
+    worldLinks:
+      parents:
+        - "LAYOUT.030"
+      children: []
+      siblings:
+        - "LAYOUT.032"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C2"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "LAYOUT.034"
+    label: "One focal point — the cursor is the only thing fully lit"
+    glyph: "◇"
+    colour: "clay"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "LAYOUT"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "One high-contrast focal point per screen. Replace the full-width inverse bar (which strobes on scroll and erases the row's area hue) with a ❯ caret + bold label + a dark desaturated area-hue background bar, so selection is unmistakable AND the area colour survives on the selected row."
+      whyItMatters: "A single lit focus is how the eye is led; throwing the whole row to inverse destroys the one colour you most want to read."
+      failureIfMissing: "During scroll the inverse bar strobes and the selected node loses its identity colour exactly when you're trying to identify it."
+    worldLinks:
+      parents:
+        - "ROOT.001"
+      children: []
+      siblings:
+        - "NAV.053"
+      dependsOn:
+        - "PALETTE.024"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy:
+        - "color_has_glyph"
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C2"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "MOTION.040"
+    label: "One clock — a single shared animation timer"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "MOTION"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "A single AnimationProvider at the App root owns the only timer and exposes {frame,time} via context; a spinner + a pulse + a reveal cost one timer, not three. isActive = isTTY && !NO_COLOR && (compiling||revealing||welcomeIdle); an idle Ada renders at 0fps."
+      whyItMatters: "Per-component setInterval is the #1 source of out-of-phase flicker and CPU burn; one clock is what makes motion phase-coherent and free when idle."
+      failureIfMissing: "Three timers drift out of phase, the banner and spinner stutter against each other, and a 'calm' surface jitters."
+    worldLinks:
+      parents:
+        - "ROOT.001"
+      children:
+        - "MOTION.041"
+        - "MOTION.042"
+        - "MOTION.043"
+        - "MOTION.044"
+      siblings:
+        - "MOTION.041"
+        - "MOTION.042"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C3"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "MOTION.041"
+    label: "Compile heartbeat — the 9 stages made visible"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "MOTION"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "THE place Ada should feel alive: a heartbeat (· ✢ ✳ ✶ ✻ ✽, ~80–100ms, plum) paired with the REAL current pipeline stage (CTX→INT→PER→ENT→PRO→SYN→VER→GOV→BLD) and a determinate bar `stage 4/9` — a bar, not a spinner, because the total is known. Each finished stage emits into <Static>."
+      whyItMatters: "A real semantic compiler surfacing real multi-stage work both reassures (not frozen) and informs (where am I); it is the product's signature trust moment."
+      failureIfMissing: "A generic spinner hides the work; the user can't tell a 9-stage compile from a hang and loses trust at the exact moment it's earned."
+    worldLinks:
+      parents:
+        - "MOTION.040"
+      children: []
+      siblings:
+        - "MOTION.042"
+      dependsOn:
+        - "FLOW.061"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C2"
+        - "∴"
+      openPriority: "high"
+  -
+    id: "MOTION.042"
+    label: "One welcome breath — border OR mascot, never both"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L2"
+    truth: "source"
+    role:
+      cluster: "MOTION"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "A slow breath on EITHER the banner gradient OR the mascot eye-blink — never two breathing elements at once. Welcome.ts runs the gradient ramp (~250ms) + a single eye blink (open ~3.8s/shut ~140ms); kill all of it the instant view flips to graph."
+      whyItMatters: "Two competing breaths read as nervousness; one slow breath reads as calm presence."
+      failureIfMissing: "Border and mascot pulse simultaneously and the home screen feels anxious instead of inviting."
+    worldLinks:
+      parents:
+        - "MOTION.040"
+      children: []
+      siblings:
+        - "MOTION.043"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/Welcome.ts"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C2"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "MOTION.043"
+    label: "Reduced motion + reserve the space"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "MOTION"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "ADA_REDUCED_MOTION (and NO_COLOR/CI) forces isActive:false everywhere: spinners→static glyph, reveals→instant, bars→final; any keypress during a reveal jumps to settled state. The status/activity row holds a FIXED height whether or not it's animating, so a spinner appearing never pushes layout down."
+      whyItMatters: "Motion is an accessibility hazard for some users and a layout-jitter hazard for everyone; both escape hatches are non-negotiable for 'premium'."
+      failureIfMissing: "A spinner appears, the layout jumps a row, and motion-sensitive users get no way to turn it off."
+    worldLinks:
+      parents:
+        - "MOTION.040"
+      children: []
+      siblings:
+        - "MOTION.044"
+      dependsOn:
+        - "A11Y.081"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C4"
+      explanation: "Has a deterministic predicate (see c/)."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C4"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "MOTION.044"
+    label: "What NEVER animates"
+    glyph: "◇"
+    colour: "plum"
+    status: "finished"
+    depth: "L2"
+    truth: "inference"
+    role:
+      cluster: "MOTION"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Don't animate: idle chrome, the stats counts, tree connector lines as a permanent effect (one-shot ~150ms draw-in max), selection beyond the existing highlight, or anything while the input has focus or the reader is scrolling. The cursor MOVE is the feedback — don't decorate it."
+      whyItMatters: "Motion means 'real work, focus, or a just-happened transition'; animating anything else spends the user's attention on nothing."
+      failureIfMissing: "Twitching counts and pulsing idle borders train the user to ignore motion — so they miss it when it finally means something."
+    worldLinks:
+      parents:
+        - "MOTION.040"
+      children:
+        - "UNK.106"
+      siblings:
+        - "MOTION.043"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C2"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "NAV.050"
+    label: "Filter-as-you-type that PRUNES the tree"
+    glyph: "◇"
+    colour: "cyan"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "NAV"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The single biggest upgrade: any printable key in tree mode enters a filter substate that rebuilds the tree from only matching nodes + their ancestor area headers, auto-opens those areas, pre-selects the best match so ⏎ opens immediately, shows the live pattern in the bottom bar, and Esc restores fold state. matchNode() already exists and is unit-tested."
+      whyItMatters: "It is the realistic way to find one of 30+ nodes without knowing its id, and pruning (vs jump-to-first-match) keeps you oriented — you see WHICH area a match lives in."
+      failureIfMissing: "Today's onCommand('search') jumps the cursor and discards structure; the user finds a match but loses the map."
+    worldLinks:
+      parents:
+        - "ROOT.000"
+      children:
+        - "NAV.051"
+        - "NAV.052"
+        - "NAV.053"
+      siblings:
+        - "NAV.051"
+        - "NAV.052"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C2"
+        - "∴"
+      openPriority: "high"
+  -
+    id: "NAV.051"
+    label: "Breadcrumb always visible, always truthful"
+    glyph: "◇"
+    colour: "cyan"
+    status: "finished"
+    depth: "L2"
+    truth: "inference"
+    role:
+      cluster: "NAV"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Once edges cross areas a graph has no canonical parent path; breadcrumb() exists but only feeds the reader. Render the cross-area trail in tree mode too, fed the actual path the user walked, not a fabricated hierarchy."
+      whyItMatters: "In a graph-projected-as-tree the breadcrumb is the only honest 'where am I'; a fabricated parent path is a small lie (A4)."
+      failureIfMissing: "The user follows three edges across areas and the breadcrumb still shows the original folder path — orientation is lost."
+    worldLinks:
+      parents:
+        - "NAV.050"
+      children: []
+      siblings:
+        - "NAV.052"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C3"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "NAV.052"
+    label: "Edges are first-class — one shared back-stack"
+    glyph: "◇"
+    colour: "cyan"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "NAV"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Ada is a graph projected as a tree; nodes cross cluster boundaries. Following an edge must be as cheap as opening a folder and reversible. The reader's Tab-cycle / ⏎-follow / ⌫-back loop is the right primitive — lift it into the model layer so a key opens a neighbour picker from resolvableLinks() in the TREE too, pushing onto ONE shared backStack."
+      whyItMatters: "Edges are the actual structure; if they're only navigable in the reader, the tree hides the graph's whole point."
+      failureIfMissing: "Edges are invisible in tree mode and the back-stack is reader-only; the user can't traverse the web they were promised."
+    worldLinks:
+      parents:
+        - "NAV.050"
+      children: []
+      siblings:
+        - "NAV.051"
+      dependsOn:
+        - "LAYOUT.031"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C3"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "NAV.053"
+    label: "Keymap vocabulary + jump-to-node + `?` overlay"
+    glyph: "◇"
+    colour: "cyan"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "NAV"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Arrows+hjkl move, l/→/⏎ open, h/← close-or-parent, / filter, Esc clear/back, q quit, ? help. Type trailing id digits or a 2-char hint to teleport in a 30+ node tree. The `?` overlay is GENERATED from a single keymap source of truth so displayed keys can never drift from real bindings. Footer shows only currently-valid keys."
+      whyItMatters: "A single source of truth for keys makes the help overlay provably honest and the footer contextual instead of a dense fixed line."
+      failureIfMissing: "The footer lists keys that don't work in this mode, or the `?` overlay drifts from the real bindings — every shown key is now suspect."
+    worldLinks:
+      parents:
+        - "NAV.050"
+      children:
+        - "UNK.105"
+      siblings:
+        - "LAYOUT.034"
+      dependsOn:
+        - "A11Y.083"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C3"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "FLOW.060"
+    label: "Welcome home — recognition over recall"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L4"
+    truth: "source"
+    role:
+      cluster: "FLOW"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The home screen SHOWS the actions (Compile / Open / Interview / Browse / Settings) with an arrow-nav menu, a sidebar that narrates the focused item, and a 'your projects' panel of packs on disk with node/κ/Ω counts — not a memorized command list. Key hints are the 3–5 keys that matter right now."
+      whyItMatters: "Recognition-over-recall is what makes a TUI usable by a non-technical user on first run; they pick from what they see, not what they remember."
+      failureIfMissing: "A blank prompt expecting a command the user has never been taught — the non-technical user bounces immediately."
+    worldLinks:
+      parents:
+        - "ROOT.002"
+      children:
+        - "FLOW.061"
+        - "FLOW.062"
+        - "FLOW.063"
+        - "STATE.070"
+        - "UNK.103"
+      siblings:
+        - "FLOW.061"
+        - "FLOW.062"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/Welcome.ts"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C2"
+        - "∵"
+      openPriority: "high"
+  -
+    id: "FLOW.061"
+    label: "Compile journey — a sentence becomes a pack"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L4"
+    truth: "inference"
+    role:
+      cluster: "FLOW"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The core trust moment: one sentence of intent → the 9-stage heartbeat (visible, determinate) → a finished pack the user can open. Input is usable immediately (no blocking intro >3s); completed stages scroll into <Static>; the end state hands off to the graph, not a dead 'done'."
+      whyItMatters: "This is A8 made tangible — the one journey that must feel like a real compiler doing real work, because it's where the product earns its price."
+      failureIfMissing: "The compile feels like a black-box spinner; the user can't distinguish progress from a hang and never trusts the output."
+    worldLinks:
+      parents:
+        - "FLOW.060"
+      children:
+        - "STATE.071"
+        - "STATE.072"
+      siblings:
+        - "FLOW.062"
+      dependsOn:
+        - "MOTION.041"
+        - "STATE.071"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C1"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C1"
+        - "∴"
+      openPriority: "high"
+  -
+    id: "FLOW.062"
+    label: "Open / Browse / Resume — pick up where you left off"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L2"
+    truth: "source"
+    role:
+      cluster: "FLOW"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Open targets the most-recent pack by default; Browse/Resume jumps back into it and restores position. The sidebar lists recent packs with the active one marked. The default action is always the thing the user most likely wants next."
+      whyItMatters: "Returning users should re-enter their work in one keystroke; a compiler people pay for is a tool they come back to."
+      failureIfMissing: "Every return starts from a cold menu with no memory of the last session; the tool feels stateless and disposable."
+    worldLinks:
+      parents:
+        - "FLOW.060"
+      children: []
+      siblings:
+        - "FLOW.063"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/Welcome.ts"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C3"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "FLOW.063"
+    label: "Reader — full-width capsule + neighbour strip"
+    glyph: "◇"
+    colour: "terracotta"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "FLOW"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Nodes carry 200+ word capsules that need full width, so the reader is a full-screen overlay (not a cramped split). A tiny one-hop neighbour strip in area colours sits in the header (◦ATT.004 ─┬─▶ ◦ATT.007(here) ◀─── ◦ATT.006) so a node's position in the web reads BEFORE its body."
+      whyItMatters: "Position-before-prose lets the user orient in the graph before committing to 200 words; the strip is the cheapest map of local structure."
+      failureIfMissing: "The capsule opens with no sense of where it sits; the reader becomes a wall of text disconnected from the graph."
+    worldLinks:
+      parents:
+        - "FLOW.060"
+      children: []
+      siblings:
+        - "FLOW.062"
+      dependsOn:
+        - "NAV.052"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C2"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "STATE.070"
+    label: "Empty state — no packs yet"
+    glyph: "◇"
+    colour: "sage"
+    status: "finished"
+    depth: "L2"
+    truth: "source"
+    role:
+      cluster: "STATE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "With zero packs the projects panel reads 'no packs yet — Compile an idea' and the default action is Compile. The empty state TEACHES the next step instead of showing a void."
+      whyItMatters: "The first-ever run is the highest-stakes empty state; it must point at the one action that creates value."
+      failureIfMissing: "A new user sees an empty panel and a blinking cursor with no idea that 'Compile an idea' is the way in."
+    worldLinks:
+      parents:
+        - "FLOW.060"
+      children: []
+      siblings:
+        - "STATE.071"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/Welcome.ts"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C3"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "STATE.071"
+    label: "Compiling / in-flight — never looks frozen"
+    glyph: "◇"
+    colour: "sage"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "STATE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "While the single compile-time model call (A9) is in flight, the heartbeat + stage label + determinate bar prove liveness; the activity row is fixed-height so nothing jumps; ctrl-c is honoured. The one slow network call in the whole app is the one that most needs to feel alive."
+      whyItMatters: "The compile is the only long wait in Ada; visible liveness there is the difference between 'working' and 'hung'."
+      failureIfMissing: "A frozen-looking screen during a 20s compile reads as a crash; the user kills it mid-pack."
+    worldLinks:
+      parents:
+        - "FLOW.061"
+      children: []
+      siblings:
+        - "STATE.072"
+      dependsOn:
+        - "MOTION.041"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C2"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "STATE.072"
+    label: "Error state — honest and recoverable"
+    glyph: "◇"
+    colour: "sage"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "STATE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "When a compile fails (e.g. model returns prose around the JSON — the tolerant-extraction path), the surface says what failed in plain language, preserves any partial work, and offers the next step (retry / open partial / report). A hole is better than a lie (A4): never fake a finished pack."
+      whyItMatters: "How software behaves when it breaks is most of how trustworthy it feels; honesty under failure is the premium signal."
+      failureIfMissing: "A raw stack trace or a silently empty pack; the non-technical user is stranded with no recoverable next step."
+    worldLinks:
+      parents:
+        - "FLOW.061"
+      children: []
+      siblings:
+        - "STATE.071"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "src/cli.ts"
+    checkability:
+      class: "C2"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C2"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "STATE.073"
+    label: "Resize / SIGWINCH — dimensions stay live"
+    glyph: "◇"
+    colour: "sage"
+    status: "finished"
+    depth: "L2"
+    truth: "inference"
+    role:
+      cluster: "STATE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Use Ink's useWindowSize() (re-renders on SIGWINCH) instead of reading stdout.rows once. Today dims are read once and never update, so resizing leaves bodyHeight/banner-width/reader-wrap stale until some unrelated state change repaints. A ~3-line fix that satisfies 'responsive to terminal size'."
+      whyItMatters: "A surface that breaks on resize feels fragile; live dimensions are table stakes for 'works in any terminal'."
+      failureIfMissing: "The user resizes their terminal and the layout is wrong until they press a key — a visible, latent bug."
+    worldLinks:
+      parents:
+        - "LAYOUT.030"
+      children: []
+      siblings:
+        - "STATE.074"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C4"
+      explanation: "Has a deterministic predicate (see c/)."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C4"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "STATE.074"
+    label: "Non-TTY / CI / piped — clean fallback"
+    glyph: "◇"
+    colour: "sage"
+    status: "finished"
+    depth: "L2"
+    truth: "source"
+    role:
+      cluster: "STATE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "canRunInk gates the interactive shell; non-TTY/CI/piped output degrades to plain lines (no box-drawing, no ANSI, no animation). alternateScreen is auto-ignored when non-interactive. The wordmark falls back to `ADA · context`."
+      whyItMatters: "Ada is a CLI that must compose in pipes and CI; a TUI that corrupts piped output isn't a good Unix citizen."
+      failureIfMissing: "Piping `ada` into a file captures escape soup and box-drawing characters instead of readable text."
+    worldLinks:
+      parents:
+        - "LAYOUT.030"
+      children: []
+      siblings:
+        - "STATE.073"
+      dependsOn:
+        - "A11Y.081"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy:
+        - "no_color_no_ansi"
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/cli.ts"
+    checkability:
+      class: "C4"
+      explanation: "Has a deterministic predicate (see c/)."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C4"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "A11Y.080"
+    label: "Colour redundant, never load-bearing"
+    glyph: "◇"
+    colour: "green"
+    status: "finished"
+    depth: "L4"
+    truth: "source"
+    role:
+      cluster: "A11Y"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Every state shown in colour is ALSO shown by a glyph/label, and the app stays fully usable with colour stripped. Ada is close: ❯ cursor, ✗ rejected, ⊙ flagged, ∵/∴/Ω truth glyphs, ◈/◦ symbols. Make 'every coloured state also has a glyph' a DOCUMENTED, checkable invariant so it can't regress."
+      whyItMatters: "It's the foundation of both colourblind access and NO_COLOR legibility — and the AESTH.005 rule (colour carries meaning, not decoration) taken to its logical floor."
+      failureIfMissing: "A status communicated by colour alone vanishes for ~8% of men and 100% of NO_COLOR users; meaning is silently lost."
+    worldLinks:
+      parents:
+        - "ROOT.002"
+      children:
+        - "A11Y.081"
+        - "A11Y.082"
+        - "A11Y.083"
+      siblings:
+        - "A11Y.081"
+        - "A11Y.082"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy:
+        - "color_has_glyph"
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/core/grammar.ts"
+    checkability:
+      class: "C4"
+      explanation: "Has a deterministic predicate (see c/)."
+    ui:
+      visibleBadges:
+        - "L4"
+        - "C4"
+        - "∵"
+      openPriority: "high"
+  -
+    id: "A11Y.081"
+    label: "NO_COLOR / TERM=dumb / FORCE_COLOR contract"
+    glyph: "◇"
+    colour: "green"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "A11Y"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Honour NO_COLOR (presence only), TERM=dumb, non-TTY; let FORCE_COLOR and --color/--no-color override with precedence flag > config > env. grammar.ts checks NO_COLOR+isTTY (correct but incomplete) — add the rest and snapshot-test tree+reader at FORCE_COLOR=3/1 and NO_COLOR=1 so 'degrades gracefully' is verified, not hoped."
+      whyItMatters: "The colour contract is a published convention; honouring it precisely is part of being a well-behaved, premium CLI."
+      failureIfMissing: "NO_COLOR is ignored or FORCE_COLOR can't force colour back; power users and accessibility users both get the wrong output."
+    worldLinks:
+      parents:
+        - "A11Y.080"
+      children: []
+      siblings:
+        - "PALETTE.023"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy:
+        - "no_color_no_ansi"
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "src/core/grammar.ts"
+    checkability:
+      class: "C4"
+      explanation: "Has a deterministic predicate (see c/)."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C4"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "A11Y.082"
+    label: "Screen reader — aria roles + gated ASCII"
+    glyph: "◇"
+    colour: "green"
+    status: "finished"
+    depth: "L3"
+    truth: "inference"
+    role:
+      cluster: "A11Y"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Ink Box accepts aria-role (list/listitem/tablist/textbox) and aria-state ({selected,expanded,busy}). Tag the tree 'list', each row 'listitem'+selected, clusters expanded, the slash input 'textbox'; gate decorative ASCII (mascot/wordmark) behind useIsScreenReaderEnabled() so SR users get content, not box-drawing noise."
+      whyItMatters: "Ada's users are explicitly non-technical and pay real money — 'premium, legible, calm' must include screen-reader users, not just sighted ones."
+      failureIfMissing: "A screen reader reads the box-drawing wordmark character by character and never reaches the actual menu."
+    worldLinks:
+      parents:
+        - "A11Y.080"
+      children: []
+      siblings:
+        - "A11Y.083"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C3"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "A11Y.083"
+    label: "Keyboard-only, one keymap source"
+    glyph: "◇"
+    colour: "green"
+    status: "finished"
+    depth: "L2"
+    truth: "inference"
+    role:
+      cluster: "A11Y"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The surface is fully operable by keyboard with no mouse dependency; every action has a key, and all keys come from a single source of truth that also generates the footer and `?` overlay. Single-letter motions are gated behind a 'navigation has focus' state so letters never fire motions while an input owns focus."
+      whyItMatters: "A TUI is keyboard-first by nature; a single keymap source is what keeps help, footer, and bindings provably in sync."
+      failureIfMissing: "A letter motion fires while the user is typing an intent, mangling their input — the classic modal-TUI bug."
+    worldLinks:
+      parents:
+        - "A11Y.080"
+      children: []
+      siblings:
+        - "A11Y.082"
+      dependsOn:
+        - "NAV.053"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C3"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "VOICE.090"
+    label: "Tone — calm, premium, never condescending"
+    glyph: "◇"
+    colour: "amber"
+    status: "finished"
+    depth: "L3"
+    truth: "source"
+    role:
+      cluster: "VOICE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Copy speaks to a capable adult who happens not to code: 'Welcome back, Alex' / 'a semantic compiler for context' / 'Turn a sentence of intent into a governed context pack.' Plain, warm, specific. No jargon walls, no baby-talk, no exclamation-mark hype."
+      whyItMatters: "Tone is the audible half of 'premium'; the non-technical user judges trustworthiness by whether the words respect them."
+      failureIfMissing: "Either a wall of compiler jargon (alienating) or cutesy hand-holding (insulting); both break the premium contract."
+    worldLinks:
+      parents:
+        - "ROOT.002"
+      children:
+        - "VOICE.091"
+        - "VOICE.092"
+        - "VOICE.093"
+      siblings:
+        - "VOICE.091"
+        - "VOICE.093"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/Welcome.ts"
+    checkability:
+      class: "C1"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C1"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "VOICE.091"
+    label: "The verbs — Compile / Open / Interview / Browse"
+    glyph: "◇"
+    colour: "amber"
+    status: "finished"
+    depth: "L2"
+    truth: "source"
+    role:
+      cluster: "VOICE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The home actions are concrete verbs with a one-line describe each (MENU_ITEMS): Compile an idea, Open a pack, Interview (ctx init), Browse/resume, Settings. The verb says what happens; the describe says why you'd pick it. Naming is the interface."
+      whyItMatters: "For a non-technical user the verb labels ARE the mental model of what Ada can do; precise verbs prevent wrong turns."
+      failureIfMissing: "Vague labels ('Start', 'Go', 'New') force the user to guess; the menu stops being self-explanatory."
+    worldLinks:
+      parents:
+        - "VOICE.090"
+      children: []
+      siblings:
+        - "VOICE.092"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/tui/ink/Welcome.ts"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C3"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "VOICE.092"
+    label: "Truth glyphs as language"
+    glyph: "◇"
+    colour: "amber"
+    status: "finished"
+    depth: "L3"
+    truth: "source"
+    role:
+      cluster: "VOICE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The glyphs are vocabulary, not decoration: ∵ source-backed, ∴ inferred, Ω residue/gap, κ check, ◈/◦ pack/node. The surface teaches this alphabet once and reuses it everywhere (counts read `κ 3 · Ω 8`), so provenance is legible at a glance and survives NO_COLOR."
+      whyItMatters: "A tiny consistent glyph alphabet lets the surface show epistemic status (A2) without prose and without colour — meaning that degrades to mono."
+      failureIfMissing: "Provenance is shown only in colour or only in words; under NO_COLOR or at a glance the user can't tell a fact from a guess."
+    worldLinks:
+      parents:
+        - "VOICE.090"
+      children: []
+      siblings:
+        - "A11Y.080"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy:
+        - "color_has_glyph"
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "high"
+      sourceStatus: "excavated"
+      from: "src/core/grammar.ts"
+    checkability:
+      class: "C3"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L3"
+        - "C3"
+        - "∵"
+      openPriority: "normal"
+  -
+    id: "VOICE.093"
+    label: "Error & empty microcopy — a hole, not a lie"
+    glyph: "◇"
+    colour: "amber"
+    status: "finished"
+    depth: "L2"
+    truth: "inference"
+    role:
+      cluster: "VOICE"
+      nodeType: "design_capsule"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Failure and empty copy follow A4 in language: name the gap, never fabricate completion. 'no packs yet — Compile an idea', 'couldn't parse the model's output — retry or open the partial'. A deferred question beats a fabricated answer, in the words as much as the engine."
+      whyItMatters: "Microcopy is where the governance axioms become felt; honest copy under failure is what makes the trust claim credible."
+      failureIfMissing: "Cheerful copy papers over a failure ('All done!') and the user discovers the lie later — the worst trust outcome."
+    worldLinks:
+      parents:
+        - "VOICE.090"
+      children: []
+      siblings:
+        - "VOICE.092"
+      dependsOn:
+        - "STATE.072"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "design_principle"
+      confidence: "medium"
+      sourceStatus: "excavated"
+      from: "AXIOMS.md"
+    checkability:
+      class: "C1"
+      explanation: "Subjective or human-gated (A3/A4); rubric or Alex decides, not C."
+    ui:
+      visibleBadges:
+        - "L2"
+        - "C1"
+        - "∴"
+      openPriority: "normal"
+  -
+    id: "UNK.100"
+    label: "Light mode / adaptive theme — only a dark reference exists"
+    glyph: "Ω"
+    colour: "slate"
+    status: "finished"
+    depth: "L1"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "residue"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Every token and contrast figure is measured against one dark reference (#1B1410 / #1E1E1E). Whether Ada needs a light-terminal theme — and whether AdaptiveColor (lipgloss) is worth the complexity — is unanswered. A user on a light terminal today gets earth tones tuned for dark."
+      whyItMatters: "A meaningful slice of terminals run light backgrounds; the surface's legibility there is currently unverified."
+      failureIfMissing: "Earth tones tuned for dark wash out on a light terminal and the premium feel inverts into a muddy mess."
+    worldLinks:
+      parents:
+        - "ROOT.000"
+      children: []
+      siblings:
+        - "UNK.101"
+      dependsOn:
+        - "PALETTE.022"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "open_question"
+      confidence: "open"
+      sourceStatus: "unexcavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C0"
+      explanation: "Exploratory / open; not a deterministic guarantee."
+    ui:
+      visibleBadges:
+        - "L1"
+        - "C0"
+        - "Ω"
+      openPriority: "normal"
+  -
+    id: "UNK.101"
+    label: "Mouse / OSC-8 hyperlinks — adopt or stay keyboard-pure?"
+    glyph: "Ω"
+    colour: "slate"
+    status: "finished"
+    depth: "L1"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "residue"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Modern terminals support mouse events and OSC-8 hyperlinks (clickable node ids, file paths to the pack on disk). Whether Ada adopts any pointer affordance or stays deliberately keyboard-pure is an open identity decision, not just a feature toggle."
+      whyItMatters: "Clickable pack paths could make A5 (filesystem-backed) tangible; mouse could also dilute the keyboard-first identity."
+      failureIfMissing: "Either a half-mouse surface that works in some terminals and not others, or a missed cheap win (clickable .ada/ paths)."
+    worldLinks:
+      parents:
+        - "ROOT.000"
+      children: []
+      siblings:
+        - "UNK.100"
+      dependsOn:
+        - "A11Y.083"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "open_question"
+      confidence: "open"
+      sourceStatus: "unexcavated"
+      from: "SEED (root intent)"
+    checkability:
+      class: "C0"
+      explanation: "Exploratory / open; not a deterministic guarantee."
+    ui:
+      visibleBadges:
+        - "L1"
+        - "C0"
+        - "Ω"
+      openPriority: "normal"
+  -
+    id: "UNK.102"
+    label: "The editable playground (A1 D3) — how does it FEEL in a TUI?"
+    glyph: "Ω"
+    colour: "slate"
+    status: "finished"
+    depth: "L1"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "residue"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "Axiom A1/D3 makes the exploratory graph USER-EDITABLE: spawn nodes, drag edges, push deeper, co-excavating alongside the engine. What the verbs, gestures, and feedback for that look like in a terminal — and how user-authored ∵ nodes visually differ from engine ∴/Ω — is entirely unexcavated."
+      whyItMatters: "This is a load-bearing product capability with zero surface design yet; it could be the most important screen Ada doesn't have."
+      failureIfMissing: "The editable layer ships as raw file editing because no interaction model was designed; the 'playground' promise is hollow."
+    worldLinks:
+      parents:
+        - "ROOT.000"
+      children: []
+      siblings:
+        - "UNK.105"
+      dependsOn:
+        - "NAV.052"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "open_question"
+      confidence: "open"
+      sourceStatus: "unexcavated"
+      from: "AXIOMS.md"
+    checkability:
+      class: "C0"
+      explanation: "Exploratory / open; not a deterministic guarantee."
+    ui:
+      visibleBadges:
+        - "L1"
+        - "C0"
+        - "Ω"
+      openPriority: "normal"
+  -
+    id: "UNK.103"
+    label: "True first-run onboarding — is recognition enough?"
+    glyph: "Ω"
+    colour: "slate"
+    status: "finished"
+    depth: "L1"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "residue"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The welcome assumes the user knows what a 'pack', a 'node', a 'graph' is. For a genuine first-ever run (never seen Ada, non-technical) recognition-over-recall may not be enough — there may need to be a one-time guided compile. Unverified whether the menu alone carries a true novice."
+      whyItMatters: "First-run is where non-technical users are won or lost; the current design is optimised for the returning 'Alex', not the stranger."
+      failureIfMissing: "A first-time non-technical user recognises the buttons but not the concepts, compiles nothing, and leaves."
+    worldLinks:
+      parents:
+        - "FLOW.060"
+      children: []
+      siblings:
+        - "UNK.104"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "open_question"
+      confidence: "open"
+      sourceStatus: "unexcavated"
+      from: "SEED (root intent)"
+    checkability:
+      class: "C0"
+      explanation: "Exploratory / open; not a deterministic guarantee."
+    ui:
+      visibleBadges:
+        - "L1"
+        - "C0"
+        - "Ω"
+      openPriority: "normal"
+  -
+    id: "UNK.104"
+    label: "i18n / non-Latin wordmark / RTL — scope or debt?"
+    glyph: "Ω"
+    colour: "slate"
+    status: "finished"
+    depth: "L1"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "residue"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The wordmark, tag, and all copy are Latin/English; box-drawing widths assume monospace Latin. Whether Ada ever needs non-Latin labels, RTL layout, or a non-Latin wordmark fallback is undecided — currently latent debt, not a plan."
+      whyItMatters: "Naming the boundary now prevents a silent monolingual assumption from hardening into the layout engine."
+      failureIfMissing: "CJK/RTL support is retrofitted later against width assumptions baked into every box — expensive and fragile."
+    worldLinks:
+      parents:
+        - "ROOT.000"
+      children: []
+      siblings:
+        - "UNK.103"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "open_question"
+      confidence: "open"
+      sourceStatus: "unexcavated"
+      from: "src/tui/ink/art.ts"
+    checkability:
+      class: "C0"
+      explanation: "Exploratory / open; not a deterministic guarantee."
+    ui:
+      visibleBadges:
+        - "L1"
+        - "C0"
+        - "Ω"
+      openPriority: "normal"
+  -
+    id: "UNK.105"
+    label: "Persistent chat-input beside the tree — two focus regions"
+    glyph: "Ω"
+    colour: "slate"
+    status: "finished"
+    depth: "L1"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "residue"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "The research defers useFocusManager until 'the persistent chat-input-beside-the-tree milestone lands and two interactive regions are on screen at once.' That milestone's layout, focus-cycling, and motion-quiet-zones are unexcavated — today's one-pane model is a deliberate simplification with a known expansion point."
+      whyItMatters: "It's the named next architectural step for the surface; designing it early prevents the one-pane assumptions from calcifying."
+      failureIfMissing: "Two interactive regions get bolted on without a focus model and single-letter motions start firing into the chat input."
+    worldLinks:
+      parents:
+        - "NAV.053"
+      children: []
+      siblings:
+        - "UNK.102"
+      dependsOn:
+        - "A11Y.083"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "open_question"
+      confidence: "open"
+      sourceStatus: "unexcavated"
+      from: "docs/SURFACE-DESIGN.md"
+    checkability:
+      class: "C0"
+      explanation: "Exploratory / open; not a deterministic guarantee."
+    ui:
+      visibleBadges:
+        - "L1"
+        - "C0"
+        - "Ω"
+      openPriority: "normal"
+  -
+    id: "UNK.106"
+    label: "Notifications on long compile vs sovereignty (A9)"
+    glyph: "Ω"
+    colour: "slate"
+    status: "finished"
+    depth: "L1"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "residue"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "A long compile might warrant a terminal bell or OS notification when done. But A9 (no phone-home, runs-and-exits) and the calm-motion ethic both push back. Whether ANY out-of-band signal fits Ada — and how it stays local-only — is unresolved."
+      whyItMatters: "It sits on a real tension between attentiveness and Ada's sovereignty/calm identity; resolving it wrong violates an axiom or annoys the user."
+      failureIfMissing: "A notification feature quietly reaches for an OS service that phones home, breaching A9; or a bell shatters the calm."
+    worldLinks:
+      parents:
+        - "MOTION.044"
+      children: []
+      siblings:
+        - "UNK.107"
+      dependsOn: []
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "open_question"
+      confidence: "open"
+      sourceStatus: "unexcavated"
+      from: "AXIOMS.md"
+    checkability:
+      class: "C0"
+      explanation: "Exploratory / open; not a deterministic guarantee."
+    ui:
+      visibleBadges:
+        - "L1"
+        - "C0"
+        - "Ω"
+      openPriority: "normal"
+  -
+    id: "UNK.107"
+    label: "Theme-ability vs identity dilution — the base16 trap"
+    glyph: "Ω"
+    colour: "slate"
+    status: "finished"
+    depth: "L1"
+    truth: "residue"
+    role:
+      cluster: "UNK"
+      nodeType: "residue"
+      compileTargets:
+        - "graph"
+        - "wiki"
+        - "claude"
+        - "blueprint"
+    localContext:
+      summary: "tokens.ts is built to re-skin the whole shell from one file — inviting user themes. But the more a user remaps, the less Ada looks like Ada (the base16/ngrok identity trap the palette work warns about). How much customization the surface should expose before the brand dissolves is an open product line."
+      whyItMatters: "It's a direct tension between the token system's flexibility and the 'sister to Claude Code' identity that flexibility could erase."
+      failureIfMissing: "Full theme exposure turns every install into a different-looking tool; the recognisable Ada identity evaporates."
+    worldLinks:
+      parents:
+        - "PALETTE.020"
+      children: []
+      siblings:
+        - "UNK.106"
+      dependsOn:
+        - "PALETTE.023"
+      exportsTo:
+        - "CLAUDE.md"
+        - "CONTEXT.md"
+      guardedBy: []
+    epistemics:
+      claimClass: "open_question"
+      confidence: "open"
+      sourceStatus: "unexcavated"
+      from: "src/tui/ink/tokens.ts"
+    checkability:
+      class: "C0"
+      explanation: "Exploratory / open; not a deterministic guarantee."
+    ui:
+      visibleBadges:
+        - "L1"
+        - "C0"
+        - "Ω"
+      openPriority: "normal"
+edges:
+  -
+    from: "ROOT.000"
+    to: "ROOT.001"
+    kind: "parent"
+  -
+    from: "ROOT.000"
+    to: "ROOT.002"
+    kind: "parent"
+  -
+    from: "ROOT.001"
+    to: "IDENT.010"
+    kind: "parent"
+  -
+    from: "ROOT.001"
+    to: "IDENT.011"
+    kind: "parent"
+  -
+    from: "IDENT.011"
+    to: "MOTION.040"
+    kind: "dependsOn"
+  -
+    from: "IDENT.010"
+    to: "IDENT.012"
+    kind: "parent"
+  -
+    from: "IDENT.012"
+    to: "PALETTE.021"
+    kind: "dependsOn"
+  -
+    from: "IDENT.010"
+    to: "IDENT.013"
+    kind: "parent"
+  -
+    from: "ROOT.000"
+    to: "PALETTE.020"
+    kind: "parent"
+  -
+    from: "PALETTE.020"
+    to: "PALETTE.021"
+    kind: "parent"
+  -
+    from: "PALETTE.020"
+    to: "PALETTE.022"
+    kind: "parent"
+  -
+    from: "PALETTE.022"
+    to: "check:contrast_aa"
+    kind: "guardedBy"
+  -
+    from: "PALETTE.020"
+    to: "PALETTE.023"
+    kind: "parent"
+  -
+    from: "PALETTE.023"
+    to: "check:no_color_no_ansi"
+    kind: "guardedBy"
+  -
+    from: "PALETTE.021"
+    to: "PALETTE.024"
+    kind: "parent"
+  -
+    from: "ROOT.000"
+    to: "LAYOUT.030"
+    kind: "parent"
+  -
+    from: "LAYOUT.030"
+    to: "LAYOUT.031"
+    kind: "parent"
+  -
+    from: "LAYOUT.031"
+    to: "STATE.073"
+    kind: "dependsOn"
+  -
+    from: "LAYOUT.030"
+    to: "LAYOUT.032"
+    kind: "parent"
+  -
+    from: "LAYOUT.030"
+    to: "LAYOUT.033"
+    kind: "parent"
+  -
+    from: "ROOT.001"
+    to: "LAYOUT.034"
+    kind: "parent"
+  -
+    from: "LAYOUT.034"
+    to: "PALETTE.024"
+    kind: "dependsOn"
+  -
+    from: "LAYOUT.034"
+    to: "check:color_has_glyph"
+    kind: "guardedBy"
+  -
+    from: "ROOT.001"
+    to: "MOTION.040"
+    kind: "parent"
+  -
+    from: "MOTION.040"
+    to: "MOTION.041"
+    kind: "parent"
+  -
+    from: "MOTION.041"
+    to: "FLOW.061"
+    kind: "dependsOn"
+  -
+    from: "MOTION.040"
+    to: "MOTION.042"
+    kind: "parent"
+  -
+    from: "MOTION.040"
+    to: "MOTION.043"
+    kind: "parent"
+  -
+    from: "MOTION.043"
+    to: "A11Y.081"
+    kind: "dependsOn"
+  -
+    from: "MOTION.040"
+    to: "MOTION.044"
+    kind: "parent"
+  -
+    from: "ROOT.000"
+    to: "NAV.050"
+    kind: "parent"
+  -
+    from: "NAV.050"
+    to: "NAV.051"
+    kind: "parent"
+  -
+    from: "NAV.050"
+    to: "NAV.052"
+    kind: "parent"
+  -
+    from: "NAV.052"
+    to: "LAYOUT.031"
+    kind: "dependsOn"
+  -
+    from: "NAV.050"
+    to: "NAV.053"
+    kind: "parent"
+  -
+    from: "NAV.053"
+    to: "A11Y.083"
+    kind: "dependsOn"
+  -
+    from: "ROOT.002"
+    to: "FLOW.060"
+    kind: "parent"
+  -
+    from: "FLOW.060"
+    to: "FLOW.061"
+    kind: "parent"
+  -
+    from: "FLOW.061"
+    to: "MOTION.041"
+    kind: "dependsOn"
+  -
+    from: "FLOW.061"
+    to: "STATE.071"
+    kind: "dependsOn"
+  -
+    from: "FLOW.060"
+    to: "FLOW.062"
+    kind: "parent"
+  -
+    from: "FLOW.060"
+    to: "FLOW.063"
+    kind: "parent"
+  -
+    from: "FLOW.063"
+    to: "NAV.052"
+    kind: "dependsOn"
+  -
+    from: "FLOW.060"
+    to: "STATE.070"
+    kind: "parent"
+  -
+    from: "FLOW.061"
+    to: "STATE.071"
+    kind: "parent"
+  -
+    from: "STATE.071"
+    to: "MOTION.041"
+    kind: "dependsOn"
+  -
+    from: "FLOW.061"
+    to: "STATE.072"
+    kind: "parent"
+  -
+    from: "LAYOUT.030"
+    to: "STATE.073"
+    kind: "parent"
+  -
+    from: "LAYOUT.030"
+    to: "STATE.074"
+    kind: "parent"
+  -
+    from: "STATE.074"
+    to: "A11Y.081"
+    kind: "dependsOn"
+  -
+    from: "STATE.074"
+    to: "check:no_color_no_ansi"
+    kind: "guardedBy"
+  -
+    from: "ROOT.002"
+    to: "A11Y.080"
+    kind: "parent"
+  -
+    from: "A11Y.080"
+    to: "check:color_has_glyph"
+    kind: "guardedBy"
+  -
+    from: "A11Y.080"
+    to: "A11Y.081"
+    kind: "parent"
+  -
+    from: "A11Y.081"
+    to: "check:no_color_no_ansi"
+    kind: "guardedBy"
+  -
+    from: "A11Y.080"
+    to: "A11Y.082"
+    kind: "parent"
+  -
+    from: "A11Y.080"
+    to: "A11Y.083"
+    kind: "parent"
+  -
+    from: "A11Y.083"
+    to: "NAV.053"
+    kind: "dependsOn"
+  -
+    from: "ROOT.002"
+    to: "VOICE.090"
+    kind: "parent"
+  -
+    from: "VOICE.090"
+    to: "VOICE.091"
+    kind: "parent"
+  -
+    from: "VOICE.090"
+    to: "VOICE.092"
+    kind: "parent"
+  -
+    from: "VOICE.092"
+    to: "check:color_has_glyph"
+    kind: "guardedBy"
+  -
+    from: "VOICE.090"
+    to: "VOICE.093"
+    kind: "parent"
+  -
+    from: "VOICE.093"
+    to: "STATE.072"
+    kind: "dependsOn"
+  -
+    from: "ROOT.000"
+    to: "UNK.100"
+    kind: "parent"
+  -
+    from: "UNK.100"
+    to: "PALETTE.022"
+    kind: "dependsOn"
+  -
+    from: "ROOT.000"
+    to: "UNK.101"
+    kind: "parent"
+  -
+    from: "UNK.101"
+    to: "A11Y.083"
+    kind: "dependsOn"
+  -
+    from: "ROOT.000"
+    to: "UNK.102"
+    kind: "parent"
+  -
+    from: "UNK.102"
+    to: "NAV.052"
+    kind: "dependsOn"
+  -
+    from: "FLOW.060"
+    to: "UNK.103"
+    kind: "parent"
+  -
+    from: "ROOT.000"
+    to: "UNK.104"
+    kind: "parent"
+  -
+    from: "NAV.053"
+    to: "UNK.105"
+    kind: "parent"
+  -
+    from: "UNK.105"
+    to: "A11Y.083"
+    kind: "dependsOn"
+  -
+    from: "MOTION.044"
+    to: "UNK.106"
+    kind: "parent"
+  -
+    from: "PALETTE.020"
+    to: "UNK.107"
+    kind: "parent"
+  -
+    from: "UNK.107"
+    to: "PALETTE.023"
+    kind: "dependsOn"
+checks:
+  -
+    id: "contrast_aa"
+    cls: "C5"
+    invariant: "Every role token used for TEXT (text, textDim, textMuted, accent, focus, success, warning, error) meets WCAG AA contrast on bg #1B1410: ≥4.5:1 for body, ≥3:1 for large/icon use. Pure ratio math on the hex pair — no judgment."
+  -
+    id: "no_color_no_ansi"
+    cls: "C4"
+    invariant: "With NO_COLOR set (or a non-TTY stream), the rendered surface emits zero ANSI SGR colour escapes (no \\x1b[3#m / \\x1b[38;2;…m). Presence-only styling is allowed; colour is not."
+  -
+    id: "color_has_glyph"
+    cls: "C4"
+    invariant: "Every state communicated by a colour token is ALSO carried by a non-colour glyph or label, so meaning survives colour-strip and colour-blindness. The cursor(❯), checks(κ), residue(Ω), and truth classes(∵/∴) each have a glyph."

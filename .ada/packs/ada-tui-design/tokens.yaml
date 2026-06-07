@@ -1,0 +1,152 @@
+pack: "ada-tui-design"
+reference:
+  bg: "#1B1410"
+  note: "contrast ratios are WCAG 2.x relative luminance vs bg"
+tiers:
+  base: "60% — calm field"
+  structure: "30% — text & structure"
+  accent: "10% — the one warm pop"
+  status: "sparingly used state colour"
+roleTokens:
+  -
+    name: "bg"
+    value: "#1B1410"
+    tier: "base"
+    role: "60% — the calm warm-dark field the eye rests on"
+  -
+    name: "surface"
+    value: "#251D16"
+    tier: "base"
+    role: "60% — raised field for panels/cards"
+  -
+    name: "surfaceAlt"
+    value: "#2F2419"
+    tier: "base"
+    role: "60% — secondary raised field"
+  -
+    name: "text"
+    value: "#ECDDC9"
+    tier: "structure"
+    role: "30% — primary body text"
+    contrastOnBg: 13.65
+    aa: true
+    aaLarge: true
+  -
+    name: "textDim"
+    value: "#B49B80"
+    tier: "structure"
+    role: "30% — secondary text"
+    contrastOnBg: 6.88
+    aa: true
+    aaLarge: true
+  -
+    name: "textMuted"
+    value: "#7A6650"
+    tier: "structure"
+    role: "30% — metadata, ids, dim lines"
+    contrastOnBg: 3.33
+    aa: false
+    aaLarge: true
+  -
+    name: "border"
+    value: "#4A3A2C"
+    tier: "structure"
+    role: "30% — hairlines, the one rounded frame"
+  -
+    name: "accent"
+    value: "#D59632"
+    tier: "accent"
+    role: "10% — amber: the one thing that pops"
+    contrastOnBg: 7.14
+    aa: true
+    aaLarge: true
+  -
+    name: "accentBright"
+    value: "#E8A94A"
+    tier: "accent"
+    role: "10% — amber hover/move flash"
+  -
+    name: "focus"
+    value: "#C66A43"
+    tier: "accent"
+    role: "10% — clay: the focused/cursor mark"
+    contrastOnBg: 4.8
+    aa: true
+    aaLarge: true
+  -
+    name: "selection"
+    value: "#3A281C"
+    tier: "accent"
+    role: "10% — selected-row background tint"
+  -
+    name: "success"
+    value: "#3E8F5A"
+    tier: "status"
+    role: "checks pass / candidates (κ)"
+    contrastOnBg: 4.58
+    aa: true
+    aaLarge: true
+  -
+    name: "warning"
+    value: "#D59632"
+    tier: "status"
+    role: "unknowns / residue (Ω)"
+    contrastOnBg: 7.14
+    aa: true
+    aaLarge: true
+  -
+    name: "error"
+    value: "#B65A6B"
+    tier: "status"
+    role: "failure-if-missing"
+    contrastOnBg: 4.04
+    aa: false
+    aaLarge: true
+pigmentPalette:
+  -
+    name: "terracotta"
+    value: "#B8543C"
+    role: "brand identity / active area"
+  -
+    name: "plum"
+    value: "#6E5ACF"
+    role: "secondary identity (mascot, compile heartbeat)"
+  -
+    name: "clay"
+    value: "#C66A43"
+    role: "warm area hue"
+  -
+    name: "amber"
+    value: "#D59632"
+    role: "warm area hue / warning"
+  -
+    name: "sage"
+    value: "#7E9C76"
+    role: "cool-neutral area hue"
+  -
+    name: "green"
+    value: "#3E8F5A"
+    role: "check ok"
+  -
+    name: "cyan"
+    value: "#2F8FA3"
+    role: "followable edge / link"
+  -
+    name: "slate"
+    value: "#8893A6"
+    role: "compiles-to / structural (AA-fixed)"
+  -
+    name: "deep_blue"
+    value: "#4E7FB5"
+    role: "area hue (AA-large fixed)"
+  -
+    name: "rose"
+    value: "#B65A6B"
+    role: "failure"
+glyphAlphabet:
+  source: "∵"
+  inferred: "∴"
+  residue: "Ω"
+  check: "κ"
+  node: "◇"
+  dot: "●"

@@ -1,0 +1,13 @@
+id: "LAYOUT.030"
+parents:
+  - "ROOT.000"
+children:
+  - "LAYOUT.031"
+  - "LAYOUT.032"
+  - "LAYOUT.033"
+  - "STATE.073"
+  - "STATE.074"
+dependsOn: []
+siblings:
+  - "LAYOUT.031"
+guardedBy: []

@@ -1,0 +1,11 @@
+compileTargets:
+  - "graph"
+  - "wiki"
+  - "claude"
+  - "blueprint"
+exportsTo:
+  - "CLAUDE.md"
+  - "CONTEXT.md"
+truth: "inference"
+checkClass: "C1"
+provenance: "docs/SURFACE-DESIGN.md"

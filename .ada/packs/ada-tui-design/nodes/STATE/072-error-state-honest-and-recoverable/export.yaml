@@ -1,0 +1,11 @@
+compileTargets:
+  - "graph"
+  - "wiki"
+  - "claude"
+  - "blueprint"
+exportsTo:
+  - "CLAUDE.md"
+  - "CONTEXT.md"
+truth: "inference"
+checkClass: "C2"
+provenance: "src/cli.ts"

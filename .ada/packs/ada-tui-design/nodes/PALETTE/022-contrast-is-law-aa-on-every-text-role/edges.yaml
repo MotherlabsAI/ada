@@ -1,0 +1,9 @@
+id: "PALETTE.022"
+parents:
+  - "PALETTE.020"
+children: []
+dependsOn: []
+siblings:
+  - "A11Y.081"
+guardedBy:
+  - "contrast_aa"

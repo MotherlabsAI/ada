@@ -1,0 +1,11 @@
+compileTargets:
+  - "graph"
+  - "wiki"
+  - "claude"
+  - "blueprint"
+exportsTo:
+  - "CLAUDE.md"
+  - "CONTEXT.md"
+truth: "residue"
+checkClass: "C0"
+provenance: "SEED (root intent)"

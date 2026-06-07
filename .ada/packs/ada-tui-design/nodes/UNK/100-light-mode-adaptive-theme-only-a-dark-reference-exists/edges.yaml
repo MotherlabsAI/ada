@@ -1,0 +1,9 @@
+id: "UNK.100"
+parents:
+  - "ROOT.000"
+children: []
+dependsOn:
+  - "PALETTE.022"
+siblings:
+  - "UNK.101"
+guardedBy: []
