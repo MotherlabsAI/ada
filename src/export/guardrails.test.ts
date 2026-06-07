@@ -114,7 +114,7 @@ test("4-a: the tail is demoted to a single load-on-demand pointer", () => {
     .filter((l) => /demoted to load-on-demand/.test(l));
   assert.equal(demoteLines.length, 1, "expected exactly one demote pointer");
   assert.match(demoteLines[0]!, /\bwiki\//);
-  assert.match(demoteLines[0]!, /verify\.mjs/); // the full set stays runnable
+  assert.match(demoteLines[0]!, /c\/C\.md/); // the full set is listed in c/C.md (honest pointer)
 });
 
 test("4-a: density predicate FAILS an over-budget pack and PASSES an in-budget one", () => {

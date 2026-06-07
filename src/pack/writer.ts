@@ -15,6 +15,7 @@ import { nodeWiki } from "./wiki.js";
 import { emitChecks, registryYaml, cDoc } from "../c/emit.js";
 import { CHECK_FILES } from "../c/checkSources.js";
 import { claudeExports } from "../export/claude.js";
+import { assertBackingHonest } from "../export/coherence.js";
 import { blueprintExports } from "../export/blueprint.js";
 
 function manifestOf(model: PackModel): PackManifest {
@@ -188,11 +189,22 @@ export async function writePack(
     await writeFile(join(p.wikiDir, w.slug), w.markdown, "utf8");
   }
 
-  await emitChecks(p.cChecksDir);
-  await writeFile(p.cRegistry, registryYaml(), "utf8");
-  await writeFile(p.cDoc, cDoc(), "utf8");
+  const shipsRunnable = model.shipsRunnableChecks === true;
+  await emitChecks(p.cChecksDir, shipsRunnable);
+  await writeFile(p.cRegistry, registryYaml(model, shipsRunnable), "utf8");
+  await writeFile(p.cDoc, cDoc(model, shipsRunnable), "utf8");
 
-  for (const f of claudeExports(model)) {
+  const claudeFiles = claudeExports(model);
+  // A2 coherence guard (fail-closed): a pack must never claim a runnable-check
+  // backing it does not ship. Assert over the whole executor bundle before writing.
+  const bundle = claudeFiles.map((f) => f.content).join("\n");
+  const verdict = assertBackingHonest(bundle, shipsRunnable);
+  if (!verdict.honest) {
+    throw new Error(
+      `A2 coherence violation in executor export: ${verdict.reason}`,
+    );
+  }
+  for (const f of claudeFiles) {
     const dest = join(p.claudeDir, f.path);
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, f.content, "utf8");

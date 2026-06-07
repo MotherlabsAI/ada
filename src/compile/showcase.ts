@@ -971,5 +971,8 @@ export function buildShowcasePack(slug: string, intent: string): PackModel {
     wiki,
     provenance:
       "Deterministically seeded from the founder goal brief and its Ada world-model schema graph (§13/§15), provided as the product spec. No model-generated content (AXIOM A2/D6).",
+    // The booking showcase is the one pack whose emitted c/checks/verify.mjs is a
+    // real runnable suite matching its MUST rules — so it may claim that backing.
+    shipsRunnableChecks: true,
   };
 }

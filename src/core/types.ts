@@ -243,4 +243,12 @@ export interface PackModel {
    * showcase and pre-P7 packs omit it and fall back to the built-in label map.
    */
   clusterLabels?: Record<string, string>;
+  /**
+   * Whether this pack ships RUNNABLE C checks (a real `c/checks/verify.mjs` whose
+   * checks correspond to its MUST rules). Only the booking showcase does today;
+   * the generic engine emits κ candidates the executor must implement, so it
+   * leaves this false. Gates the honesty of the executor export (AXIOM A2 — a
+   * pack must not claim a backing it does not ship). Default false.
+   */
+  shipsRunnableChecks?: boolean;
 }

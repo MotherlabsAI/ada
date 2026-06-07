@@ -114,8 +114,11 @@ function hardRuleLines(model: PackModel): string[] {
   const { inline, demoted } = splitByCount(ranked, HARD_RULES_BUDGET);
   const lines = inline.map((it) => it.rule);
   if (demoted.length) {
+    const tail = model.shipsRunnableChecks
+      ? "the full set stays runnable via `c/checks/verify.mjs`"
+      : "the full candidate set is listed in `c/C.md`";
     lines.push(
-      `- …${demoted.length} more lower-salience invariant${demoted.length === 1 ? "" : "s"} demoted to load-on-demand — see \`wiki/index.md\` and \`c/C.md\` (the full set stays runnable via \`c/checks/verify.mjs\`).`,
+      `- …${demoted.length} more lower-salience invariant${demoted.length === 1 ? "" : "s"} demoted to load-on-demand — see \`wiki/index.md\` and \`c/C.md\` (${tail}).`,
     );
   }
   return lines;
@@ -165,6 +168,50 @@ function gateRule(model: PackModel): string[] {
 
 export function claudeExports(model: PackModel): ExportFile[] {
   const { seed } = model;
+  // AXIOM A2 (a hole beats a lie): only a pack that actually ships a runnable
+  // c/checks/verify.mjs matching its rules may claim that backing. The generic
+  // engine emits κ candidates the executor must IMPLEMENT, so it claims nothing
+  // it cannot honor. `coherence.ts` enforces this at write time.
+  const shipsRunnable = model.shipsRunnableChecks === true;
+
+  const hardRuleHeader = shipsRunnable
+    ? [
+        "<!-- ADA:HARD-RULES:BEGIN — immutable. Do NOT summarize, compress, or paraphrase this",
+        "     block. If context is compacted, re-read it verbatim from this file. Each rule is",
+        "     backed by a runnable check in `c/checks/` — `node c/checks/verify.mjs`. -->",
+        "Every rule below traces to a checkable node id and is enforced by a deterministic C check.",
+      ]
+    : [
+        "<!-- ADA:HARD-RULES:BEGIN — immutable. Do NOT summarize, compress, or paraphrase this",
+        "     block. If context is compacted, re-read it verbatim from this file. Each rule is a",
+        "     deterministic invariant you MUST implement AND verify; the assertion after it is the",
+        "     acceptance test to write. The full candidate set is in `c/C.md`. -->",
+        "Every rule below traces to a checkable node id and is a deterministic invariant the executor must implement and verify.",
+      ];
+
+  const definitionOfDone = shipsRunnable
+    ? [
+        "## Definition of done",
+        "Run the pack's own verification before claiming done:",
+        "",
+        "```bash",
+        "node c/checks/verify.mjs                   # bundled clean dataset → all checks pass",
+        "node c/checks/verify.mjs --data DATA.json  # YOUR data, exported as JSON",
+        "```",
+        "",
+        "A feature is done when the code satisfies ACCEPTANCE.md AND the C checks pass when run",
+        "against your real data via `--data` (export your records to JSON), not just the fixtures.",
+      ]
+    : [
+        "## Definition of done",
+        "Each hard rule above is a deterministic invariant. Implement it AND a runnable check that",
+        "asserts it — the rule's assertion (after the em dash) is the acceptance test. The full",
+        "candidate set, with node ids and check classes, is in `c/C.md`.",
+        "",
+        "A feature is done when the code satisfies ACCEPTANCE.md AND every hard-rule invariant has a",
+        "passing deterministic check you implemented from its assertion (no model in the check — A3).",
+      ];
+
   const claudeMd: ExportFile = {
     path: "CLAUDE.md",
     content: [
@@ -176,17 +223,14 @@ export function claudeExports(model: PackModel): ExportFile[] {
       "- `wiki/index.md` — the map and the high-value nodes",
       "- `exports/blueprint/BLUEPRINT.md` — the deterministic build contract",
       "- `exports/blueprint/ACCEPTANCE.md` — the must-pass conditions",
-      "- `c/C.md` — the deterministic checks",
+      `- \`c/C.md\` — the deterministic ${shipsRunnable ? "checks" : "invariants (candidate checks to implement)"}`,
       "",
       // 4-b — compaction-resistant emit shape. The immutable hard-rules sit under an
       // explicitly fenced "do not summarize; re-read from this file" block so a downstream
-      // compactor won't dilute them. Pure formatting; every rule is backed by a
-      // re-runnable C file under `c/checks/` (the real source of truth).
+      // compactor won't dilute them. The backing claim is honesty-gated (A2): only a pack
+      // that ships runnable checks claims them; otherwise the rules are invariants to implement.
       "## Hard rules (immutable — do not summarize; re-read from this file)",
-      "<!-- ADA:HARD-RULES:BEGIN — immutable. Do NOT summarize, compress, or paraphrase this",
-      "     block. If context is compacted, re-read it verbatim from this file. Each rule is",
-      "     backed by a runnable check in `c/checks/` — `node c/checks/verify.mjs`. -->",
-      "Every rule below traces to a checkable node id and is enforced by a deterministic C check.",
+      ...hardRuleHeader,
       ...hardRuleLines(model),
       "- Do not invent constraints that are listed as open questions — see `wiki/open-questions.md`.",
       ...gateRule(model),
@@ -195,16 +239,7 @@ export function claudeExports(model: PackModel): ExportFile[] {
       "## Entities in this pack",
       ...entityLines(model),
       "",
-      "## Definition of done",
-      "Run the pack's own verification before claiming done:",
-      "",
-      "```bash",
-      "node c/checks/verify.mjs                   # bundled clean dataset → all checks pass",
-      "node c/checks/verify.mjs --data DATA.json  # YOUR data, exported as JSON",
-      "```",
-      "",
-      "A feature is done when the code satisfies ACCEPTANCE.md AND the C checks pass when run",
-      "against your real data via `--data` (export your records to JSON), not just the fixtures.",
+      ...definitionOfDone,
       "",
     ].join("\n"),
   };
@@ -226,7 +261,9 @@ export function claudeExports(model: PackModel): ExportFile[] {
       "1. Read `wiki/index.md` and the high-value nodes it lists.",
       "2. Read `exports/blueprint/BLUEPRINT.md` and `ACCEPTANCE.md`.",
       "3. Implement against the blueprint's data model and task graph.",
-      "4. Before claiming done, run `node c/checks/verify.mjs`. All checks must pass on real data.",
+      shipsRunnable
+        ? "4. Before claiming done, run `node c/checks/verify.mjs`. All checks must pass on real data."
+        : "4. Before claiming done, implement a runnable deterministic check for each invariant in `c/C.md` and run them. All must pass on real data.",
       "5. If output is wrong but checks pass, that is a *missed failure*: propose a new invariant",
       "   for `c/registry.yaml` rather than patching silently (the C growth loop).",
       "",
@@ -274,7 +311,9 @@ export function claudeExports(model: PackModel): ExportFile[] {
       "description: Runs the pack's deterministic C checks and blocks acceptance on any failure.",
       "---",
       "",
-      "Run `node c/checks/verify.mjs --json` and parse the report. If any check fails on",
+      shipsRunnable
+        ? "Run `node c/checks/verify.mjs --json` and parse the report. If any check fails on"
+        : "Run the deterministic checks implemented from `c/C.md` (the `verify.mjs` you build) and parse the report. If any fails on",
       "real data, the work is not done — report the violating records and stop. Never",
       "weaken a check to make it pass; that violates the trust contract (AXIOM A3).",
       "",
@@ -310,7 +349,9 @@ export function claudeExports(model: PackModel): ExportFile[] {
       "# Test pack (the A8 experiment)",
       "",
       "Build the pack's headline feature TWICE: once from this pack, once from only the",
-      "raw intent. For each, run `node c/checks/verify.mjs` against the result's data",
+      shipsRunnable
+        ? "raw intent. For each, run `node c/checks/verify.mjs` against the result's data"
+        : "raw intent. For each, implement and run the deterministic checks from `c/C.md` against the result's data",
       "layer. The pack run should make the pack's invariants obvious and enforced; the raw",
       "run usually will not. That delta is the product thesis (AXIOM A8).",
       "",
