@@ -23,6 +23,7 @@ import type { Seed, PackModel, PackManifest } from "../../core/types.js";
 import { assemblePackGated } from "../assemble.js";
 import { excavatePack, type RejectedSpec } from "./orchestrate.js";
 import { proposeClusters, type ClusterDef } from "./clusters.js";
+import { normalizeIntent } from "./normalize.js";
 import { anthropicClient, type ModelClient } from "./model.js";
 import { writePack } from "../../pack/writer.js";
 
@@ -39,6 +40,14 @@ export interface EngineCompileOptions {
   model?: string;
   /** Explicit area override (skips the model proposal). ROOT/UNK ensured by the caller. */
   clusters?: ClusterDef[];
+  /**
+   * Run the INTENT-NORMALIZATION front-end first: ONE model call that expands a thin/vague
+   * intent into a rich Seed (domain inferred, unknowns surfaced) before proposal/excavation.
+   * This is what lets a non-expert's five words excavate as well as an expert's paragraph.
+   * Skipped when a `seedOverride` (the interview) already captured a rich Seed. Default off so
+   * stubbed-client tests are unchanged; the live CLI/TUI turn it on.
+   */
+  normalize?: boolean;
   /**
    * The model boundary. DEFAULT: `anthropicClient({ model })` (the live compile-time call,
    * A1/A9). Tests inject a stub so no network is touched. This is the ONLY seam through which
@@ -107,17 +116,25 @@ export async function engineCompile(args: {
   const clientOpts = opts.model ? { model: opts.model } : {};
   const client = opts.client ?? anthropicClient(clientOpts);
 
+  // INTENT FRONT-END: expand a thin intent into a rich Seed before anything downstream — so a
+  // non-expert's vague sentence excavates like an expert's spec. Skipped when the interview
+  // (`seedOverride`) already captured a rich Seed; off by default (stub tests unaffected).
+  const drivingSeed: Seed =
+    opts.normalize && !seedOverride
+      ? await normalizeIntent(intent, seed, client)
+      : seed;
+
   // Derive DOMAIN-appropriate areas from the Seed (P7). An explicit override skips the model
   // proposal; otherwise `proposeClusters` makes ONE model call and falls back on garbled output.
   const proposed: ClusterDef[] = opts.clusters
     ? withAnchors(opts.clusters)
-    : await proposeClusters(seed, client);
+    : await proposeClusters(drivingSeed, client);
   const clusterLabels: Record<string, string> = Object.fromEntries(
     proposed.map((c) => [c.code, c.label]),
   );
 
   const { kept, rejected } = await excavatePack(
-    seed,
+    drivingSeed,
     proposed.map((c) => c.code),
     client,
     depthOpts,

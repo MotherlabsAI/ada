@@ -318,6 +318,8 @@ async function compileWithEngine(
     seed,
     ...(seedOverride ? { seedOverride } : {}),
     opts: {
+      // Live path: expand a thin intent before excavating (self-skips on the interview seed).
+      normalize: true,
       ...(options.perCluster ? { perCluster: options.perCluster } : {}),
       ...(options.model ? { model: options.model } : {}),
       ...(options.clusters ? { clusters: options.clusters } : {}),
