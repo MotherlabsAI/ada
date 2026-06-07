@@ -128,3 +128,40 @@ test("muPrime counts only holes whose text cites a real artifact", () => {
   // NOT grounded: ROOT.001 unknown #2 (generic), ATT.004 unknown (generic)
   assert.equal(muPrime(pack, arts), 2);
 });
+
+test("NEGATIVE CONTROL: holes that don't cite the repo score ~0 (validates μ′ is not common-word noise)", () => {
+  // This is how "grounds 5x more" is validated WITHOUT reading the holes (OP-07): a measure
+  // that scores 0 on non-citing prose, and high on citing prose, is detecting CITATION — so a
+  // separation between arms is real grounding, not an artifact of the metric.
+  const arts = new Set(["graph.json", "ingestrepo", "packmodel"]);
+  const foreign = {
+    graph: {
+      nodes: [
+        {
+          id: "BOOK.001",
+          truth: "inference",
+          label: "double booking",
+          localContext: { summary: "" },
+          epistemics: {
+            unknowns: [
+              "staff overlap policy is unspecified",
+              "timezone handling is unclear",
+            ],
+          },
+        },
+        {
+          id: "PAY.001",
+          truth: "residue",
+          label: "refund amount sign",
+          localContext: { summary: "" },
+          epistemics: { unknowns: ["partial refunds are undefined"] },
+        },
+      ],
+    },
+  } as unknown as PackModel;
+  assert.equal(
+    muPrime(foreign, arts),
+    0,
+    "a pack that never cites the repo must ground at ~0",
+  );
+});
