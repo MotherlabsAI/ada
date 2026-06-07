@@ -100,11 +100,31 @@ test("arrowing the menu moves the selection and updates the narration", async ()
   assert.match(lastFrame() ?? "", /governed context pack/);
 });
 
-test("⏎ on 'Open a pack' opens the first pack via onOpenPack", async () => {
+test("'Open a pack' focuses the projects column, then ↑/↓ + ⏎ opens the chosen pack", async () => {
   const opened: string[] = [];
   const { stdin } = mount({ onOpenPack: (s) => opened.push(s) });
   await tick();
-  stdin.write(DOWN); // Open a pack
+  stdin.write(DOWN); // → Open a pack
+  await tick();
+  stdin.write("\r"); // focuses the projects column (does NOT open yet)
+  await tick();
+  assert.deepEqual(opened, [], "first ⏎ moves focus, it does not open");
+  stdin.write(DOWN); // → second project (ada-website)
+  await tick();
+  stdin.write("\r"); // opens the cursored pack
+  await tick();
+  assert.deepEqual(
+    opened,
+    ["ada-website"],
+    "opens the pack you cursored, not packs[0]",
+  );
+});
+
+test("⇥ crosses into the projects column and ⏎ opens the cursored pack", async () => {
+  const opened: string[] = [];
+  const { stdin } = mount({ onOpenPack: (s) => opened.push(s) });
+  await tick();
+  stdin.write("\t"); // ⇥ → projects pane, cursor at 0
   await tick();
   stdin.write("\r");
   await tick();

@@ -143,20 +143,21 @@ test("Compile: a missing-key error shows the `ada key` guidance (and never crash
 
 // ── Open / Browse ───────────────────────────────────────────────────────────────
 
-test("Open with multiple packs shows the pack picker", async () => {
+test("Open with multiple packs focuses the inline projects chooser", async () => {
   const { stdin, lastFrame } = mount({ packs: PACKS, compile: stubCompile });
   await tick();
   stdin.write(DOWN); // Compile → Open a pack
   await tick();
-  stdin.write("\r"); // Open → picker (2 packs)
+  stdin.write("\r"); // Open → focus the projects column (the chooser is inline)
   await tick();
   const f = lastFrame() ?? "";
-  assert.match(f, /OPEN A PACK/, "the picker header");
+  // Still on the home — the YOUR PROJECTS column is the chooser; no separate screen.
+  assert.match(f, /YOUR PROJECTS/, "the projects column is the chooser");
   assert.match(f, /alpha-pack/, "lists the first pack");
   assert.match(f, /beta-pack/, "lists the second pack");
 });
 
-test("Open with multiple packs: picking a pack loads it (injected loadPack) → graph", async () => {
+test("Open with multiple packs: cursoring a pack and ⏎ loads it (injected loadPack) → graph", async () => {
   const loaded: string[] = [];
   const loadPack = (_cwd: string, slug: string): ActivePack => {
     loaded.push(slug);
@@ -166,11 +167,11 @@ test("Open with multiple packs: picking a pack loads it (injected loadPack) → 
   await tick();
   stdin.write(DOWN); // → Open a pack
   await tick();
-  stdin.write("\r"); // → picker
+  stdin.write("\r"); // → focus the projects column (cursor on alpha-pack)
   await tick();
   stdin.write(DOWN); // → beta-pack
   await tick();
-  stdin.write("\r"); // pick it
+  stdin.write("\r"); // open it
   await tick();
   assert.deepEqual(
     loaded,
@@ -188,19 +189,19 @@ test("Open with multiple packs: picking a pack loads it (injected loadPack) → 
     /▸ ●/,
     "the picked pack's graph (areas closed) is shown",
   );
-  assert.doesNotMatch(picked, /OPEN A PACK/, "the picker is gone");
+  assert.doesNotMatch(picked, /YOUR PROJECTS/, "the home is gone");
 });
 
-test("Open with a single pack opens it directly (no picker)", async () => {
+test("Open with a single pack opens it directly (no chooser step)", async () => {
   const single: PackSummary[] = [PACKS[0]!];
   const { stdin, lastFrame } = mount({ packs: single });
   await tick();
   stdin.write(DOWN); // → Open a pack
   await tick();
-  stdin.write("\r"); // single pack → graph directly (uses the in-memory prop pack)
+  stdin.write("\r"); // one pack → graph directly (uses the in-memory prop pack)
   await tick();
   const f = lastFrame() ?? "";
-  assert.doesNotMatch(f, /OPEN A PACK/, "no picker for a single pack");
+  assert.doesNotMatch(f, /YOUR PROJECTS/, "no chooser step for a single pack");
   assert.match(f, /ATT\.004|▸ ●/, "dropped straight into the graph");
 });
 

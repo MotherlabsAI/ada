@@ -527,15 +527,12 @@ export function App(props: AppProps) {
       rows,
       ...(props.packs ? { packs: props.packs } : {}),
       notice: compileError ? `couldn't open: ${compileError}` : notice,
-      onOpenPack: () => {
-        // "Open a pack": several on disk → picker; otherwise open the one (or the prop slug).
-        const packs = props.packs ?? [];
+      onOpenPack: (slug: string) => {
+        // The welcome's projects column IS the picker now — you navigate it and
+        // press ⏎ on the pack you want. Honour that slug and load it straight to
+        // the graph (the separate `picker` view is kept only as a fallback path).
         setNotice(null);
-        if (packs.length > 1) {
-          setView("picker");
-        } else {
-          openPackBySlug(packs[0]?.slug ?? props.slug);
-        }
+        openPackBySlug(slug || props.slug);
       },
       onCompile: () => {
         setNotice(null);

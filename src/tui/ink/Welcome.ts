@@ -113,6 +113,8 @@ export function Welcome(p: WelcomeProps) {
   const [starStep, setStarStep] = useState(0); // rotating star
   const [selected, setSelected] = useState(0); // focused menu row
   const [moved, setMoved] = useState(false); // brief flash when selection moves
+  const [pane, setPane] = useState<"menu" | "projects">("menu"); // which column has focus
+  const [projCursor, setProjCursor] = useState(0); // focused project row
 
   // (d) eye blink — setTimeout chain, unref'd.
   useEffect(() => {
@@ -153,6 +155,9 @@ export function Welcome(p: WelcomeProps) {
     return () => clearTimeout(t);
   }, [moved]);
 
+  // How many project rows are reachable (matches the render slice below).
+  const visibleProjects = Math.min(packs.length, p.cols < 90 ? 4 : 8);
+
   const dispatch = (item: MenuItem) => {
     switch (item.id) {
       case "compile":
@@ -160,7 +165,18 @@ export function Welcome(p: WelcomeProps) {
         break;
       case "open":
       case "browse":
-        p.onOpenPack?.(packs[0]?.slug ?? p.slug);
+        // One pack → open it straight away (nothing to choose). Several → move
+        // focus INTO the projects column so you pick the exact one, not an
+        // implicit "first". (⇥ or → also cross into it directly.)
+        if (visibleProjects === 1) {
+          p.onOpenPack?.(packs[0]!.slug);
+        } else if (visibleProjects > 1) {
+          setProjCursor(0);
+          setPane("projects");
+          setMoved(true);
+        } else {
+          p.onOpenPack?.(p.slug);
+        }
         break;
       case "interview":
         p.onInterview?.();
@@ -173,6 +189,47 @@ export function Welcome(p: WelcomeProps) {
 
   useInput((input, key) => {
     if (input === "q") return (p.onQuit ?? app.exit)();
+
+    // ⇥ toggles which column has focus — the whole screen is navigable, not just one menu.
+    if (key.tab) {
+      setPane((pn) =>
+        pn === "menu" ? (visibleProjects > 0 ? "projects" : "menu") : "menu",
+      );
+      setMoved(true);
+      return;
+    }
+
+    if (pane === "projects") {
+      if (key.leftArrow || key.escape) {
+        setPane("menu");
+        setMoved(true);
+        return;
+      }
+      if (key.downArrow) {
+        setProjCursor((i) => (i + 1) % visibleProjects);
+        setMoved(true);
+        return;
+      }
+      if (key.upArrow) {
+        setProjCursor((i) => (i - 1 + visibleProjects) % visibleProjects);
+        setMoved(true);
+        return;
+      }
+      if (key.return) {
+        const pk = packs[projCursor];
+        if (pk) p.onOpenPack?.(pk.slug);
+        return;
+      }
+      return;
+    }
+
+    // pane === "menu"
+    if (key.rightArrow && visibleProjects > 0) {
+      setProjCursor(0);
+      setPane("projects");
+      setMoved(true);
+      return;
+    }
     if (key.downArrow) {
       setSelected((i) => (i + 1) % MENU_ITEMS.length);
       setMoved(true);
@@ -253,7 +310,10 @@ export function Welcome(p: WelcomeProps) {
     ),
   );
 
-  // ── left: arrow-nav menu ──
+  // ── left: the things Ada can do for you (recognition over recall) ──
+  // Focus lives in exactly one column; the active column's header brightens and
+  // its cursor lights, the other dims — so it's always clear what ↑/↓ will move.
+  const menuActive = pane === "menu";
   const menu = h(
     Box,
     {
@@ -265,25 +325,32 @@ export function Welcome(p: WelcomeProps) {
     },
     h(
       Text,
-      { key: "mh", color: tokens.textDim, bold: true },
-      "WHAT DO YOU WANT TO DO",
+      {
+        key: "mh",
+        color: menuActive ? tokens.text : tokens.textMuted,
+        bold: true,
+      },
+      "MAKE & OPEN",
     ),
     gapRow("mg"),
     ...MENU_ITEMS.map((item, i) => {
       const sel = i === selected;
+      const lit = sel && menuActive; // the cursor "lamp" — only on the active pane
       return h(
         Text,
         {
           key: "i" + i,
-          backgroundColor: sel ? tokens.selection : undefined,
-          color: sel
+          backgroundColor: lit ? tokens.selection : undefined,
+          color: lit
             ? moved
               ? tokens.accentBright
               : tokens.accent
-            : tokens.textDim,
-          bold: sel,
+            : sel
+              ? tokens.textMuted // keeps your place while focus is on projects
+              : tokens.textDim,
+          bold: lit,
         },
-        `${sel ? "❯" : " "} ◆ ${item.label}`,
+        `${lit ? "❯" : " "} ◆ ${item.label}`,
       );
     }),
   );
@@ -298,13 +365,31 @@ export function Welcome(p: WelcomeProps) {
   type Row = ReturnType<typeof h> | null;
   const slugW = narrow ? 22 : 28;
   const projectRows: Row[] = [
-    h(Text, { key: "ph", color: tokens.textDim, bold: true }, "YOUR PROJECTS"),
+    h(
+      Text,
+      {
+        key: "ph",
+        color: !menuActive ? tokens.text : tokens.textMuted,
+        bold: true,
+      },
+      "YOUR PROJECTS",
+    ),
     gapRow("pg"),
   ];
   if (packs.length) {
     packs.slice(0, narrow ? 4 : 8).forEach((pk, i) => {
       const active = pk.slug === p.slug;
       const open = pk.residue;
+      // The lit lamp: the focused row when this column has focus.
+      const lit = !menuActive && i === projCursor;
+      const slugColour = lit
+        ? moved
+          ? tokens.accentBright
+          : tokens.accent
+        : active
+          ? theme.terracotta
+          : tokens.textDim;
+      const caret = lit ? "❯" : active ? "›" : " ";
       projectRows.push(
         h(
           Box,
@@ -315,16 +400,20 @@ export function Welcome(p: WelcomeProps) {
             h(
               Text,
               {
-                color: active ? theme.terracotta : tokens.textDim,
-                bold: active,
+                backgroundColor: lit ? tokens.selection : undefined,
+                color: slugColour,
+                bold: lit || active,
                 wrap: "truncate-end",
               },
-              `${active ? "›" : " "} ◈ ${pk.slug}`,
+              `${caret} ◈ ${pk.slug}`,
             ),
           ),
           h(
             Text,
-            { wrap: "truncate-end" },
+            {
+              backgroundColor: lit ? tokens.selection : undefined,
+              wrap: "truncate-end",
+            },
             h(
               Text,
               { color: tokens.textMuted },
@@ -352,20 +441,25 @@ export function Welcome(p: WelcomeProps) {
     ...projectRows.filter(Boolean),
   );
 
-  // ── the focused action, narrated in one line (recognition, not a manual) ──
+  // ── one-line narration: what ⏎ does right now, for whatever has focus ──
+  const focusPack = !menuActive ? packs[projCursor] : undefined;
+  const describeText = focusPack
+    ? `open ${focusPack.slug} — read its tree to verify, then hand it to your agents`
+    : focusItem.describe;
   const describe = h(
     Text,
     { key: "describe", color: tokens.textDim },
-    "› " + focusItem.describe,
+    "› " + describeText,
   );
 
   // ── bottom: live, context-sensitive key hints (3–5 keys that matter now) ──
-  const hints =
-    focusItem.id === "open" || focusItem.id === "browse"
-      ? "↑/↓ move · ⏎ open pack · / all commands · ? help · q quit"
+  const hints = !menuActive
+    ? "↑/↓ pick · ⏎ open · ⇥ back · / all commands · q quit"
+    : focusItem.id === "open" || focusItem.id === "browse"
+      ? "↑/↓ move · → / ⏎ projects · / all commands · q quit"
       : focusItem.id === "compile"
-        ? "↑/↓ move · ⏎ compile · / all commands · ? help · q quit"
-        : "↑/↓ move · ⏎ pick · / all commands · ? help · q quit";
+        ? "↑/↓ move · ⏎ compile · → projects · / all commands · q quit"
+        : "↑/↓ move · ⏎ pick · → projects · / all commands · q quit";
 
   const height = Math.max(8, p.rows - 1);
   // Actions LEFT, projects RIGHT — the two things you choose between, side by
