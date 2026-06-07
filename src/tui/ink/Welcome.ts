@@ -27,15 +27,11 @@
 import { createElement as h, useState, useEffect } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { theme, tokens } from "./theme.js";
-import {
-  WORDMARK,
-  WORDMARK_TAG,
-  bannerGradient,
-  starFrame,
-  mascotFrame,
-  DEFAULT_MASCOT,
-} from "./art.js";
+import { WORDMARK, bannerGradient, starFrame } from "./art.js";
 import type { PackSummary } from "./usePack.js";
+
+/** The line under the wordmark — the brand promise, not a category label. */
+const SLOGAN = "clarity you can ship";
 
 /** A home action. `describe` is the one-line the sidebar shows when it's focused. */
 export interface MenuItem {
@@ -107,33 +103,13 @@ export function Welcome(p: WelcomeProps) {
   const app = useApp();
   const packs = p.packs ?? [];
 
-  // ── Motion state. Each interval/timeout is unref'd (see arm/armInterval). ──
-  const [blink, setBlink] = useState(false);
+  // ── Motion state. Each interval is unref'd so `node --test` never hangs. ──
   const [gradStep, setGradStep] = useState(0); // banner gradient ramp
   const [starStep, setStarStep] = useState(0); // rotating star
   const [selected, setSelected] = useState(0); // focused menu row
   const [moved, setMoved] = useState(false); // brief flash when selection moves
   const [pane, setPane] = useState<"menu" | "projects">("menu"); // which column has focus
   const [projCursor, setProjCursor] = useState(0); // focused project row
-
-  // (d) eye blink — setTimeout chain, unref'd.
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const arm = (fn: () => void, ms: number) => {
-      timer = setTimeout(fn, ms);
-      (timer as { unref?: () => void }).unref?.();
-    };
-    const open = () => {
-      setBlink(false);
-      arm(close, 3800);
-    };
-    const close = () => {
-      setBlink(true);
-      arm(open, 140);
-    };
-    arm(close, 3800);
-    return () => clearTimeout(timer);
-  }, []);
 
   // (a) banner gradient ramp ~250ms/step and (b) star ~180ms/step — both unref'd.
   useEffect(() => {
@@ -257,12 +233,9 @@ export function Welcome(p: WelcomeProps) {
     clay: theme.clay,
     amber: theme.amber,
   });
-  const m = mascotFrame(p.mascotName, blink);
-  const eyeColour =
-    (p.mascotName ?? DEFAULT_MASCOT) === "eye" ? tokens.accent : tokens.focus;
   const focusItem = MENU_ITEMS[selected]!;
 
-  // ── masthead: the ADA wordmark + tag, CENTERED across the surface ──
+  // ── masthead: the ADA wordmark + slogan, CENTERED across the surface ──
   const masthead = h(
     Box,
     { key: "masthead", flexDirection: "column", alignItems: "center" },
@@ -282,31 +255,17 @@ export function Welcome(p: WelcomeProps) {
         "  " + starFrame(starStep),
       ),
     ),
-    h(Text, { key: "tag", color: tokens.textMuted }, WORDMARK_TAG),
+    h(Text, { key: "tag", color: tokens.accent }, SLOGAN),
   );
 
-  // ── greeting: the eye mascot + welcome line, left-aligned under the masthead ──
+  // ── greeting: a single warm line, left-aligned under the masthead ──
   const greeting = h(
     Box,
-    { key: "greet", flexDirection: "row", marginTop: compact ? 0 : 1 },
+    { key: "greet", marginTop: compact ? 0 : 1 },
     h(
-      Box,
-      { flexDirection: "column", marginRight: 2 },
-      ...m.map((l, i) => h(Text, { key: "m" + i, color: eyeColour }, l)),
-    ),
-    h(
-      Box,
-      { flexDirection: "column" },
-      h(
-        Text,
-        { key: "hi", color: tokens.text, bold: true },
-        "Welcome back, Alex",
-      ),
-      h(
-        Text,
-        { key: "sub", color: tokens.textDim },
-        "a semantic compiler for context",
-      ),
+      Text,
+      { key: "hi", color: tokens.text, bold: true },
+      "Welcome back, Alex",
     ),
   );
 
@@ -326,7 +285,11 @@ export function Welcome(p: WelcomeProps) {
       flexDirection: "column",
       flexShrink: 0,
       width: 32,
-      marginRight: narrow ? 0 : 4,
+      marginRight: narrow ? 0 : 3,
+      paddingX: 1,
+      // The focused column gets a bark panel behind it (common-region grouping):
+      // the eye locks onto the active group instantly, and it fills the dark field.
+      backgroundColor: menuActive ? tokens.surface : undefined,
     },
     h(
       Text,
@@ -368,7 +331,7 @@ export function Welcome(p: WelcomeProps) {
   // constant check-registry count, identical on every pack, so it could not
   // inform the choice — and a glyph the eye must decode is the opposite of native.
   type Row = ReturnType<typeof h> | null;
-  const slugW = narrow ? 22 : 28;
+  const slugW = narrow ? 20 : 26;
   const projectRows: Row[] = [
     h(
       Text,
@@ -443,7 +406,13 @@ export function Welcome(p: WelcomeProps) {
   }
   const projects = h(
     Box,
-    { key: "projects", flexDirection: "column", flexGrow: 1 },
+    {
+      key: "projects",
+      flexDirection: "column",
+      flexGrow: 1,
+      paddingX: 1,
+      backgroundColor: !menuActive ? tokens.surface : undefined,
+    },
     ...projectRows.filter(Boolean),
   );
 

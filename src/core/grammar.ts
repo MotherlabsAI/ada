@@ -9,9 +9,9 @@ export const COLOUR_HEX: Record<Colour, string> = {
   terracotta: "#B8543C",
   plum: "#6E5ACF",
   deep_blue: "#4E7FB5",
-  sage: "#6F8F72",
-  amber: "#D59632",
-  green: "#3E8F5A",
+  sage: "#7E9A66",
+  amber: "#E3A53C", // sap — harmonised with the tree palette (tokens.warning)
+  green: "#7C9A55", // moss · lichen — settled/checkable, matches tokens.success
   rose: "#B65A6B",
   slate: "#8893A6",
   cyan: "#2F8FA3",

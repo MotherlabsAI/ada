@@ -30,26 +30,38 @@
  * for the day we add a low-colour code path.
  */
 
-/** Semantic role → truecolor hex. The only place chrome colour is decided. */
+/**
+ * Semantic role → truecolor hex. The only place chrome colour is decided.
+ *
+ * THE TREE PALETTE (2026-06-07): nature's own harmony — bark-brown field, leaf-green
+ * and sap-gold accents. Brown + green is the most grounded pairing there is (a trunk
+ * under its canopy), so the scheme reads as *organic* without anyone naming why.
+ * Tones held muted at the "right depth" (no neon), contrast lifted so the 30/10 carry
+ * against the 60: text ~14:1, accent ~9:1 on the deepened base.
+ *   • 60% bark / soil / shadow — bg / surface / surfaceAlt (the warm dark, + the
+ *     `surface` fill that panels the focused group so the screen isn't half-empty).
+ *   • 30% heartwood / parchment — text / textDim / textMuted / border.
+ *   • 10% sap / clay — accent / accentBright / focus / selection (the one warm pop).
+ */
 export const tokens = {
-  // ── 60% base (the calm warm-dark field) ───────────────────────────────
-  bg: "#1B1410",
-  surface: "#251D16",
-  surfaceAlt: "#2F2419",
-  // ── 30% structure & text (mid earth) ──────────────────────────────────
-  text: "#ECDDC9",
-  textDim: "#B49B80",
-  textMuted: "#968063", // lifted from #7A6650 (3.33:1) → 4.82:1 to clear AA for body text (PALETTE.022)
-  border: "#4A3A2C",
-  // ── 10% accent (the warm pop — the only thing that moves) ──────────────
-  accent: "#D59632", // amber
-  accentBright: "#E8A94A",
-  focus: "#C66A43", // clay
-  selection: "#3A281C", // selected-row background tint
-  // ── status (warm-leaning, used sparingly) ─────────────────────────────
-  success: "#3E8F5A",
-  warning: "#D59632",
-  error: "#B65A6B",
+  // ── 60% base (bark · soil · shadow — the warm dark field) ──────────────
+  bg: "#16110C",
+  surface: "#1F1812", // bark — the fill behind the focused column (Gestalt common region)
+  surfaceAlt: "#2A2018", // lit bark
+  // ── 30% structure & text (heartwood · parchment) ──────────────────────
+  text: "#F0E4D2", // parchment — lifted to ~14:1 on bg for fast scanning
+  textDim: "#BCA488", // aged wood
+  textMuted: "#9A8366", // weathered wood — clears AA on bg (~4.9:1)
+  border: "#463729", // bark edge
+  // ── 10% accent (sap · clay — the warm pop) ────────────────────────────
+  accent: "#E3A53C", // sap gold — richer than before, so the pop actually fills
+  accentBright: "#F4BD5C",
+  focus: "#C8693F", // clay · bark-red
+  selection: "#352616", // warm bark tint — the cursor/panel bar (more present)
+  // ── status (tree-semantic, used sparingly) ────────────────────────────
+  success: "#7C9A55", // moss · lichen green — settled, alive
+  warning: "#E3A53C", // sap — open work
+  error: "#C0604D", // rust — failure
 } as const;
 
 export type TokenRole = keyof typeof tokens;

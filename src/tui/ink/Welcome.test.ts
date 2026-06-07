@@ -31,12 +31,12 @@ function mount(extra: Partial<Parameters<typeof Welcome>[0]> = {}) {
   );
 }
 
-test("welcome renders the banner wordmark + context tag + greeting", async () => {
+test("welcome renders the banner wordmark + slogan + greeting", async () => {
   const { lastFrame } = mount();
   await tick();
   const f = lastFrame() ?? "";
   assert.match(f, /█/, "the block ADA wordmark");
-  assert.match(f, /c o n t e x t/, "the wordmark tag");
+  assert.match(f, /clarity you can ship/, "the wordmark slogan");
   assert.match(f, /Welcome back, Alex/);
 });
 

@@ -23,117 +23,117 @@
     {
       "@id": "ada:token/role/bg",
       "@type": "ada:RoleToken",
-      "value": "#1B1410",
+      "value": "#16110C",
       "tier": "base",
       "role": "60% — the calm warm-dark field the eye rests on"
     },
     {
       "@id": "ada:token/role/surface",
       "@type": "ada:RoleToken",
-      "value": "#251D16",
+      "value": "#1F1812",
       "tier": "base",
       "role": "60% — raised field for panels/cards"
     },
     {
       "@id": "ada:token/role/surfaceAlt",
       "@type": "ada:RoleToken",
-      "value": "#2F2419",
+      "value": "#2A2018",
       "tier": "base",
       "role": "60% — secondary raised field"
     },
     {
       "@id": "ada:token/role/text",
       "@type": "ada:RoleToken",
-      "value": "#ECDDC9",
+      "value": "#F0E4D2",
       "tier": "structure",
       "role": "30% — primary body text",
-      "contrastOnBg": 13.65,
+      "contrastOnBg": 14.95,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/textDim",
       "@type": "ada:RoleToken",
-      "value": "#B49B80",
+      "value": "#BCA488",
       "tier": "structure",
       "role": "30% — secondary text",
-      "contrastOnBg": 6.88,
+      "contrastOnBg": 7.86,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/textMuted",
       "@type": "ada:RoleToken",
-      "value": "#968063",
+      "value": "#9A8366",
       "tier": "structure",
       "role": "30% — metadata, ids, dim lines",
-      "contrastOnBg": 4.82,
+      "contrastOnBg": 5.19,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/border",
       "@type": "ada:RoleToken",
-      "value": "#4A3A2C",
+      "value": "#463729",
       "tier": "structure",
       "role": "30% — hairlines, the one rounded frame"
     },
     {
       "@id": "ada:token/role/accent",
       "@type": "ada:RoleToken",
-      "value": "#D59632",
+      "value": "#E3A53C",
       "tier": "accent",
       "role": "10% — amber: the one thing that pops",
-      "contrastOnBg": 7.14,
+      "contrastOnBg": 8.68,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/accentBright",
       "@type": "ada:RoleToken",
-      "value": "#E8A94A",
+      "value": "#F4BD5C",
       "tier": "accent",
       "role": "10% — amber hover/move flash",
-      "contrastOnBg": 8.84,
+      "contrastOnBg": 10.97,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/focus",
       "@type": "ada:RoleToken",
-      "value": "#C66A43",
+      "value": "#C8693F",
       "tier": "accent",
       "role": "10% — clay: the focused/cursor mark",
-      "contrastOnBg": 4.8,
+      "contrastOnBg": 4.96,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/selection",
       "@type": "ada:RoleToken",
-      "value": "#3A281C",
+      "value": "#352616",
       "tier": "accent",
       "role": "10% — selected-row background tint"
     },
     {
       "@id": "ada:token/role/success",
       "@type": "ada:RoleToken",
-      "value": "#3E8F5A",
+      "value": "#7C9A55",
       "tier": "status",
       "role": "checks pass / candidates (κ)",
-      "contrastOnBg": 4.58,
+      "contrastOnBg": 5.9,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/warning",
       "@type": "ada:RoleToken",
-      "value": "#D59632",
+      "value": "#E3A53C",
       "tier": "status",
       "role": "unknowns / residue (Ω)",
-      "contrastOnBg": 7.14,
+      "contrastOnBg": 8.68,
       "ada:wcagAA": true
     },
     {
       "@id": "ada:token/role/error",
       "@type": "ada:RoleToken",
-      "value": "#B65A6B",
+      "value": "#C0604D",
       "tier": "status",
       "role": "failure-if-missing",
-      "contrastOnBg": 4.04,
+      "contrastOnBg": 4.49,
       "ada:wcagAA": true
     },
     {
@@ -157,19 +157,19 @@
     {
       "@id": "ada:token/pigment/amber",
       "@type": "ada:PigmentToken",
-      "value": "#D59632",
+      "value": "#E3A53C",
       "role": "warm area hue / warning"
     },
     {
       "@id": "ada:token/pigment/sage",
       "@type": "ada:PigmentToken",
-      "value": "#6F8F72",
+      "value": "#7E9A66",
       "role": "cool-neutral area hue"
     },
     {
       "@id": "ada:token/pigment/green",
       "@type": "ada:PigmentToken",
-      "value": "#3E8F5A",
+      "value": "#7C9A55",
       "role": "check ok"
     },
     {

@@ -38,7 +38,7 @@ test("opening page shows the ADA wordmark + welcome", async () => {
   await tick();
   const f = lastFrame() ?? "";
   assert.match(f, /Welcome back, Alex/);
-  assert.match(f, /c o n t e x t/, "the wordmark tag");
+  assert.match(f, /clarity you can ship/, "the wordmark slogan");
 });
 
 test("areas are closed by default — headers show, nodes hidden", async () => {
