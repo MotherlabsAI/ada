@@ -417,7 +417,7 @@ export function Welcome(p: WelcomeProps) {
             h(
               Text,
               { color: tokens.textMuted },
-              `${pk.nodes} nodes · ${pk.clusters} areas · `,
+              `${pk.nodes} nodes · ${pk.clusters} clusters · `,
             ),
             open > 0
               ? h(Text, { color: tokens.accent, bold: true }, `${open} open`)

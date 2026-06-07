@@ -104,14 +104,14 @@ test("Compiling shows the working label, the rotating star, the phase, and the e
   const { lastFrame } = render(
     h(Compiling, {
       intent: "a citable notes tool",
-      phase: "excavating the areas…",
+      phase: "excavating the clusters…",
     }),
   );
   await tick();
   const f = lastFrame() ?? "";
   assert.match(f, /compiling…/);
   assert.match(f, /[✶✷✸✹✺]/, "the rotating star (approved motion)");
-  assert.match(f, /excavating the areas…/, "the live phase line");
+  assert.match(f, /excavating the clusters…/, "the live phase line");
   assert.match(f, /a citable notes tool/, "echoes the intent in flight");
 });
 

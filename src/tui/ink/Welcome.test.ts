@@ -63,7 +63,7 @@ test("welcome lists your projects with legible, plain-word counts", async () => 
   assert.match(f, /YOUR PROJECTS/);
   assert.match(f, /service-business/);
   assert.match(f, /24 nodes/);
-  assert.match(f, /5 areas/);
+  assert.match(f, /5 clusters/);
   // open gaps read as a WORD, not a glyph; κ (constant) is gone entirely
   assert.match(f, /8 open/);
   assert.doesNotMatch(f, /κ/, "the cryptic constant check glyph is dropped");

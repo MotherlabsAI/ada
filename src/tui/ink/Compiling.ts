@@ -59,7 +59,7 @@ export function Compiling(p: CompilingProps) {
     h(
       Text,
       { color: tokens.textMuted },
-      "one compile-time model call per area · the key never leaves your machine",
+      "one compile-time model call per cluster · the key never leaves your machine",
     ),
   );
 }

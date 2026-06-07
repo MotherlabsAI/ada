@@ -179,7 +179,7 @@ export function App(props: AppProps) {
   const [activePack, setActivePack] = useState<ActivePack | null>(null);
   // The Compile flow: the in-flight intent, the live phase line, and any inline error.
   const [intentDraft, setIntentDraft] = useState("");
-  const [phase, setPhase] = useState("proposing areas…");
+  const [phase, setPhase] = useState("proposing clusters…");
   const [compileError, setCompileError] = useState<string | null>(null);
 
   // The pack the workbench renders: the freshly compiled/opened one, else the prop pack.
@@ -354,11 +354,11 @@ export function App(props: AppProps) {
     async (intent: string) => {
       setIntentDraft(intent);
       setCompileError(null);
-      setPhase("proposing areas…");
+      setPhase("proposing clusters…");
       setView("compiling");
       // Advance the phase line shortly after starting so the user sees motion through the
       // pipeline even when the (stubbed) compile resolves fast. Timer is unref'd.
-      const t1 = setTimeout(() => setPhase("excavating the areas…"), 350);
+      const t1 = setTimeout(() => setPhase("excavating the clusters…"), 350);
       const t2 = setTimeout(() => setPhase("writing the pack…"), 900);
       (t1 as { unref?: () => void }).unref?.();
       (t2 as { unref?: () => void }).unref?.();

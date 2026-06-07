@@ -9,6 +9,9 @@ dist/
 # scratch / preview artifacts
 ._*
 
+# agent worktrees — embedded git checkouts from Claude Code agent runs, never commit
+.claude/worktrees/
+
 # local credentials — the API key lives here, NEVER commit it (loaded by src/env.ts)
 .env
 .env.*

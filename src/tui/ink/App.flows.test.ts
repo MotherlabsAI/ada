@@ -100,7 +100,7 @@ test("Compile: the working state renders the rotating star + a live phase line",
   assert.match(f, /[✶✷✸✹✺]/, "the rotating star glyph (the approved motion)");
   assert.match(
     f,
-    /proposing areas|excavating|writing the pack/,
+    /proposing clusters|excavating|writing the pack/,
     "a live phase line",
   );
 });
