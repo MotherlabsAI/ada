@@ -314,6 +314,11 @@ export function Welcome(p: WelcomeProps) {
   // Focus lives in exactly one column; the active column's header brightens and
   // its cursor lights, the other dims — so it's always clear what ↑/↓ will move.
   const menuActive = pane === "menu";
+  // The focus LAMP: the one cursor breathes accent↔accentBright on the shared
+  // banner clock (~1s, half-duty). The only "where focus is" motion on this screen
+  // (calm_motion: one moving thing, and it names a state). No new timer — reuses
+  // gradStep, so the unref'd-interval contract is untouched.
+  const lampLit = gradStep % 4 < 2;
   const menu = h(
     Box,
     {
@@ -342,7 +347,7 @@ export function Welcome(p: WelcomeProps) {
           key: "i" + i,
           backgroundColor: lit ? tokens.selection : undefined,
           color: lit
-            ? moved
+            ? moved || lampLit
               ? tokens.accentBright
               : tokens.accent
             : sel
@@ -380,10 +385,11 @@ export function Welcome(p: WelcomeProps) {
     packs.slice(0, narrow ? 4 : 8).forEach((pk, i) => {
       const active = pk.slug === p.slug;
       const open = pk.residue;
-      // The lit lamp: the focused row when this column has focus.
+      // The lit lamp: the focused row when this column has focus — it breathes
+      // on the shared clock (lampLit), the one "where focus is" motion here.
       const lit = !menuActive && i === projCursor;
       const slugColour = lit
-        ? moved
+        ? moved || lampLit
           ? tokens.accentBright
           : tokens.accent
         : active
