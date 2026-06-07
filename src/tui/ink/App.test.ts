@@ -38,7 +38,11 @@ test("opening page shows the ADA wordmark + welcome", async () => {
   await tick();
   const f = lastFrame() ?? "";
   assert.match(f, /Welcome back, Alex/);
-  assert.match(f, /C L A R I T Y   Y O U   C A N   S H I P/, "the wordmark slogan");
+  assert.match(
+    f,
+    /C L A R I T Y   Y O U   C A N   S H I P/,
+    "the wordmark slogan",
+  );
 });
 
 test("areas are closed by default — headers show, nodes hidden", async () => {
@@ -69,7 +73,7 @@ test("right opens an area (connectors appear), enter reads a node", async () => 
   stdin.write("\r"); // read it
   await tick();
   const reader = lastFrame() ?? "";
-  assert.match(reader, /⟡/, "capsule summary marker");
+  assert.match(reader, /SUMMARY/, "the structured inspector's summary section");
   assert.match(reader, /ATT\.004/);
 });
 

@@ -320,56 +320,91 @@ export interface ReaderOpts {
   linkIndex?: number;
 }
 
-/** The node capsule as wrapped lines: breadcrumb, capsule, then the followable links. */
+/**
+ * The opened node as a STRUCTURED inspector — not a wall. A fixed reading measure
+ * (long lines hurt; cap ~84), quiet uppercase section labels carrying the structure,
+ * bodies wrapped + indented under their label, lists as bullets. Colour rides the
+ * LABEL only (structure_before_color); bodies stay calm cream/dim. Every line is ≤
+ * the measure, so the reader never overflows the viewport.
+ */
 export function readerLines(
   node: NodeCapsule,
   width: number,
   opts: ReaderOpts = {},
 ): Line[] {
   const c = node.checkability;
+  const measure = Math.min(width, 84);
   const lines: Line[] = [];
   const push = (
     text: string,
     colour?: Colour,
     o?: { bold?: boolean; dim?: boolean },
   ) => lines.push({ text, colour, ...(o ?? {}) });
-  const block = (text: string, colour?: Colour, o?: { dim?: boolean }) => {
-    for (const l of wrap(text, width)) push(l, colour, o);
+  const gap = () => push("");
+  /** A quiet section label — uppercase, dim, colour only as a light accent. */
+  const label = (text: string, colour?: Colour) =>
+    push(text, colour, { dim: !colour });
+  /** Body text wrapped to the measure and indented 2 under its label. */
+  const body = (text: string, colour?: Colour, o?: { dim?: boolean }) => {
+    for (const l of wrap(text, measure - 2)) push("  " + l, colour, o);
+  };
+  /** A bullet with a hanging indent — continuation lines align under the text, not the •. */
+  const bullet = (text: string, colour?: Colour) => {
+    const ls = wrap(text, measure - 4);
+    ls.forEach((l, i) => push((i === 0 ? "  • " : "    ") + l, colour));
   };
 
+  // ── breadcrumb ──
   if (opts.crumb) {
     push(opts.crumb, undefined, { dim: true });
-    push("");
+    gap();
   }
-  push(`${node.ui.graphSymbol} ${node.id}  ${node.label}`, node.colour, {
-    bold: true,
-  });
+
+  // ── header: id (cluster colour) · label (bold, wrapped — never overflows) · meta ──
+  push(`● ${node.id}`, node.colour, { bold: true });
+  for (const l of wrap(node.label, measure)) push(l, undefined, { bold: true });
   push(
     `${node.role.cluster} · ${node.depth} · ${TRUTH_GLYPH[node.truth]} ${node.truth} · ${c.class} ${CHECK_LABEL[c.class]}`,
     undefined,
     { dim: true },
   );
-  push("");
-  block(`⟡ ${node.localContext.summary}`, node.colour);
-  push("");
-  block(`∴ ${node.localContext.whyItMatters}`, undefined, { dim: true });
-  push("");
-  block(`! ${node.localContext.failureIfMissing}`, "rose");
-  push("");
-  block(`⊢ compiles to: ${node.role.compileTargets.join(", ")}`, "slate");
-  if (c.candidates.length)
-    block(`κ candidates: ${c.candidates.join(", ")}`, "green");
-  if (node.epistemics.unknowns.length)
-    block(`Ω unknowns: ${node.epistemics.unknowns.join("; ")}`, "amber");
+
+  // ── sections — label carries the structure; body is calm ──
+  gap();
+  label("SUMMARY");
+  body(node.localContext.summary);
+
+  gap();
+  label("WHY IT MATTERS");
+  body(node.localContext.whyItMatters, undefined, { dim: true });
+
+  gap();
+  label("FAILURE IF MISSING", "rose"); // a real risk — the one place red belongs
+  body(node.localContext.failureIfMissing);
+
+  gap();
+  label("COMPILES TO");
+  body(node.role.compileTargets.join(" · "));
+
+  if (c.candidates.length) {
+    gap();
+    label("CHECK CANDIDATES", "green");
+    for (const cand of c.candidates) bullet(cand);
+  }
+  if (node.epistemics.unknowns.length) {
+    gap();
+    label("UNKNOWNS", "amber");
+    for (const u of node.epistemics.unknowns) bullet(u);
+  }
 
   const links = opts.links ?? [];
   if (links.length) {
-    push("");
-    push("↔ links  (Tab cycle · ⏎ follow)", undefined, { dim: true });
+    gap();
+    label("LINKS  (Tab cycle · ⏎ follow)");
     links.forEach((l, i) => {
       const hot = i === (opts.linkIndex ?? -1);
       push(
-        `${hot ? "›" : " "} ${l.kind.padEnd(8)} ${l.id}  ${l.label}`,
+        `  ${hot ? "›" : " "} ${l.kind.padEnd(8)} ${l.id}  ${l.label}`,
         hot ? "cyan" : undefined,
         { bold: hot, dim: !hot },
       );
