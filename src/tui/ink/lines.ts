@@ -179,6 +179,23 @@ export function verifyTally(nodes: NodeCapsule[]): {
   return { checkable, gated, residue };
 }
 
+/**
+ * The per-node verification mark — the single-glyph version of verifyTally, so the tree
+ * shows R1 state on EVERY row (the tree IS the verification surface). Priority: an open
+ * gap (Ω residue) dominates; else trust-without-reading (✓ checkable, C3–C5); else your
+ * eyes (⊙ gated, C0–C2). Colour is redundant with the glyph (AESTH.005 / NO_COLOR-safe).
+ */
+export function verifyGlyph(node: NodeCapsule): {
+  glyph: string;
+  colour: Colour;
+} {
+  if (node.truth === "residue") return { glyph: "Ω", colour: "amber" };
+  const c = node.checkability.class;
+  if (c === "C3" || c === "C4" || c === "C5")
+    return { glyph: "✓", colour: "green" };
+  return { glyph: "⊙", colour: "clay" };
+}
+
 /** A selectable row in the folder-tree: a cluster header or a node under an open cluster. */
 export interface TreeRow extends Line {
   kind: "cluster" | "node";
@@ -243,6 +260,13 @@ export function graphTree(
     const isOpen = opts.open.has(cluster);
     const sel = opts.selectedRef === cluster;
     if (sel) selectedLine = rows.length;
+    // Per-area verification roll-up — so a CLOSED area still tells you its posture
+    // (what's settled vs what needs your eyes vs what's open) without opening it.
+    const t = verifyTally(inCluster);
+    const rollup: Seg[] = [];
+    if (t.checkable) rollup.push({ text: `✓${t.checkable} `, colour: "green" });
+    if (t.gated) rollup.push({ text: `⊙${t.gated} `, colour: "clay" });
+    if (t.residue) rollup.push({ text: `Ω${t.residue}`, colour: "amber" });
     rows.push(
       makeRow(
         "cluster",
@@ -257,6 +281,7 @@ export function graphTree(
             bold: true,
           },
           { text: `  (${inCluster.length})`, dim: true },
+          ...(rollup.length ? [{ text: "   ", dim: true }, ...rollup] : []),
         ],
         sel,
         areaHex,
@@ -268,15 +293,19 @@ export function graphTree(
         const nsel = opts.selectedRef === n.id;
         if (nsel) selectedLine = rows.length;
         const isRej = rejected.has(n.id);
-        // Calm: colour only the ◦ dot; id is faint, label is plain cream.
+        // R1 column: every node leads with its verification mark (✓ trust / ⊙ your eyes
+        // / Ω open gap) so the tree IS the verification surface — scan the left stripe,
+        // not the docs. Calm body: colour only the ◦ dot + that mark; id faint, label cream.
+        const v = verifyGlyph(n);
         const segs: Seg[] = [
           { text: nsel ? "❯ " : "  ", bold: true },
           { text: `  ${last ? "└─" : "├─"} `, dim: true },
+          { text: `${v.glyph} `, colour: v.colour },
           { text: "◦ ", colour },
           { text: n.id.padEnd(idW), dim: true },
           { text: n.label, dim: isRej },
         ];
-        if (opts.flagged.has(n.id)) segs.push({ text: " ⊙", colour: "slate" });
+        if (opts.flagged.has(n.id)) segs.push({ text: " ⚑", colour: "slate" });
         if (isRej) segs.push({ text: " ✗", colour: "rose" });
         rows.push(makeRow("node", n.id, segs, nsel, areaHex));
       });

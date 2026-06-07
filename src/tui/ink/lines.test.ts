@@ -9,6 +9,7 @@ import {
   breadcrumb,
   clusterLabel,
   verifyTally,
+  verifyGlyph,
 } from "./lines.js";
 import { clusterOf } from "../../core/ids.js";
 import { fixtureGraph } from "./fixtures.js";
@@ -37,6 +38,41 @@ test("verifyTally over a real fixture: checkable + gated = node count", () => {
     "every node is checkable or gated",
   );
   assert.equal(t.residue, nodes.filter((n) => n.truth === "residue").length);
+});
+
+test("verifyGlyph: Ω (open gap) dominates, else ✓ checkable, else ⊙ gated — the per-row R1 mark", () => {
+  const mk = (cls: string, truth = "inference") =>
+    ({ checkability: { class: cls }, truth }) as unknown as NodeCapsule;
+  assert.deepEqual(verifyGlyph(mk("C5")), { glyph: "✓", colour: "green" });
+  assert.deepEqual(verifyGlyph(mk("C1")), { glyph: "⊙", colour: "clay" });
+  assert.deepEqual(verifyGlyph(mk("C0")), { glyph: "⊙", colour: "clay" });
+  // residue wins even on a checkable class — an open gap is the thing to look at
+  assert.deepEqual(verifyGlyph(mk("C5", "residue")), {
+    glyph: "Ω",
+    colour: "amber",
+  });
+});
+
+test("graphTree: every node row leads with its verification glyph, and cluster headers carry the area roll-up", () => {
+  const g = fixtureGraph();
+  const cluster = clusterOf(g.nodes[0]!.id);
+  const { rows } = graphTree(g.nodes, {
+    selectedRef: cluster,
+    open: new Set([cluster]),
+    flagged: new Set(),
+  });
+  const header = rows.find((r) => r.kind === "cluster" && r.ref === cluster)!;
+  // the roll-up shows at least one verification tally glyph on the closed-or-open header
+  assert.ok(
+    /[✓⊙Ω]\d/.test(header.text),
+    `cluster header should carry a verification roll-up, got: ${header.text}`,
+  );
+  for (const r of rows.filter((r) => r.kind === "node")) {
+    assert.ok(
+      /[✓⊙Ω]/.test(r.text),
+      `node row should lead with a verification glyph, got: ${r.text}`,
+    );
+  }
 });
 
 test("wrap never exceeds width and never drops words", () => {
