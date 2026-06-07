@@ -76,10 +76,14 @@ export const MENU_ITEMS: MenuItem[] = [
 export interface WelcomeProps {
   /** The active/most-recent pack slug (highlighted; the default Open/Browse target). */
   slug: string;
-  nodes: number;
-  checks: number;
-  residue: number;
-  clusters: number;
+  // Active-pack stats are accepted (spread from statusCounts) but the hero renders
+  // per-pack figures from `packs`, not these — so they're optional, not load-bearing.
+  nodes?: number;
+  checks?: number;
+  checkable?: number;
+  gated?: number;
+  residue?: number;
+  clusters?: number;
   cols: number;
   rows: number;
   /** Packs on disk, for the "your projects" panel + the sidebar's recent list. */

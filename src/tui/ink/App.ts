@@ -41,6 +41,7 @@ import {
   windowSlice,
   resolvableLinks,
   breadcrumb,
+  verifyTally,
   type Line,
 } from "./lines.js";
 import { loadPackData, type PackState, type PackSummary } from "./usePack.js";
@@ -107,20 +108,19 @@ export interface AppProps {
 }
 
 function statusCounts(graph: Graph, manifest?: PackManifest) {
-  if (manifest) {
-    return {
-      nodes: manifest.nodeCount,
-      checks: manifest.checkCount,
-      residue: manifest.residueCount,
-      clusters: manifest.clusters.length,
-    };
-  }
+  // The R1 scan readout (same split as the readline header in navigator.ts):
+  // checkable = trust without reading, gated = your eyes (A4), Ω = open gaps.
+  // Always derived from the live graph so the split is authoritative; node/cluster
+  // totals prefer the manifest when present.
+  const t = verifyTally(graph.nodes);
   return {
-    nodes: graph.nodes.length,
-    checks: graph.nodes.filter((n) => n.checkability.candidates.length > 0)
-      .length,
-    residue: graph.nodes.filter((n) => n.truth === "residue").length,
-    clusters: new Set(graph.nodes.map((n) => clusterOf(n.id))).size,
+    nodes: manifest ? manifest.nodeCount : graph.nodes.length,
+    checkable: t.checkable,
+    gated: t.gated,
+    residue: t.residue,
+    clusters: manifest
+      ? manifest.clusters.length
+      : new Set(graph.nodes.map((n) => clusterOf(n.id))).size,
   };
 }
 

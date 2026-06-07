@@ -9,7 +9,8 @@ test("status bar shows pack stats", () => {
     h(StatusBar, {
       slug: "demo",
       nodes: 24,
-      checks: 3,
+      checkable: 16,
+      gated: 8,
       residue: 8,
       clusters: 5,
     }),
@@ -18,4 +19,7 @@ test("status bar shows pack stats", () => {
   assert.match(f, /demo/);
   assert.match(f, /24/);
   assert.match(f, /◈/);
+  // the R1 scan readout, not the old `C N` line
+  assert.match(f, /checkable/);
+  assert.match(f, /gated/);
 });
