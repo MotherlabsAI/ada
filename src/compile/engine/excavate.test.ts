@@ -12,7 +12,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { excavateNode, resolvePromptDir } from "./excavate.js";
+import { excavateNode, resolvePromptDir, buildPrompt } from "./excavate.js";
 import type { ModelClient } from "./model.js";
 import type { Seed } from "../../core/types.js";
 
@@ -38,6 +38,25 @@ function seed(): Seed {
     risks: ["Retrieval behaviour differs across LLM vendors."],
   };
 }
+
+test("buildPrompt injects repo context as ∵ source ONLY when present (repo-aware compile)", () => {
+  const without = buildPrompt(seed(), "ROOT", "TEMPLATE", []);
+  assert.ok(
+    !/REPO CONTEXT/.test(without),
+    "no repo block when seed has no repoContext",
+  );
+
+  const s = seed();
+  s.repoContext =
+    "Existing repo (∵ source ...):\n- src/cli.ts (code): main, run";
+  const withRepo = buildPrompt(s, "ROOT", "TEMPLATE", []);
+  assert.match(withRepo, /## REPO CONTEXT/);
+  assert.match(
+    withRepo,
+    /src\/cli\.ts/,
+    "the digest (with its path provenance) reaches the prompt",
+  );
+});
 
 // A realistic excavated capsule for this intent — specific, mechanism-first, traced.
 const IMPRESS_JSON = JSON.stringify({

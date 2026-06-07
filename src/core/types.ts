@@ -201,6 +201,12 @@ export interface Seed {
   sources: string[];
   constraints: string[];
   risks: string[];
+  /**
+   * Optional COMPILED digest of an existing repo (repo-aware compile, spine step 1).
+   * When present, the excavator reads it as ∵ source so it builds ON the real code instead
+   * of inventing holes for what already exists. Density-bounded (`repoDigest`), never a dump.
+   */
+  repoContext?: string;
 }
 
 export interface WikiPage {

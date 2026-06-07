@@ -54,7 +54,7 @@ export interface ExcavateResult {
   rejected: boolean;
 }
 
-function buildPrompt(
+export function buildPrompt(
   seed: Seed,
   cluster: string,
   template: string,
@@ -69,6 +69,15 @@ function buildPrompt(
     `objective: ${seed.buildObjective}`,
     `cluster to excavate: ${cluster}`,
   ];
+  // Repo-aware compile (spine step 1): the compiled repo digest enters as ∵ source so the
+  // excavator builds ON existing code and cites paths, instead of inventing holes for it.
+  if (seed.repoContext && seed.repoContext.trim()) {
+    lines.push(
+      "",
+      "## REPO CONTEXT (∵ source — existing code; build on it, cite paths, do NOT re-derive what already exists)",
+      seed.repoContext.trim(),
+    );
+  }
   if (avoid.length) {
     lines.push(
       "",

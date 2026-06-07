@@ -15,7 +15,7 @@
  */
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { buildShowcasePack } from "./compile/showcase.js";
 import {
   DEFAULT_PROPOSED_CLUSTERS,
@@ -26,6 +26,8 @@ import {
   withAnchors as withAnchorsShared,
 } from "./compile/engine/compile.js";
 import { engineSeed } from "./compile/engine/seed.js";
+import { ingestRepo } from "./compile/engine/ingest.js";
+import { repoDigest } from "./compile/engine/repoDigest.js";
 import { anthropicClient } from "./compile/engine/model.js";
 import {
   nextStep,
@@ -86,6 +88,11 @@ export interface EngineOptions {
    * bare code, so the code doubles as its label. Undefined → propose from the intent.
    */
   clusters?: ClusterDef[];
+  /**
+   * `--repo[=path]` → repo-aware compile (spine step 1). Path to an existing repo whose
+   * compiled digest is fed to the excavator as ∵ source. Bare `--repo` means the cwd (".").
+   */
+  repo?: string;
 }
 
 /**
@@ -132,6 +139,11 @@ export function buildEngineOptions(
     }
     if (defs.length) opts.clusters = defs;
   }
+  // --repo[=path] → repo-aware compile. A string value is the path; bare `--repo` (boolean
+  // true) defaults to "." (the cwd). The ingest itself is I/O and happens downstream, not here.
+  const repoRaw = flags["repo"];
+  if (typeof repoRaw === "string") opts.repo = repoRaw.trim() || ".";
+  else if (repoRaw === true) opts.repo = ".";
   return opts;
 }
 
@@ -140,10 +152,11 @@ const HELP = [
   "",
   "  ada init                          scaffold .ada/ here",
   '  ada compile "<intent>" [--slug=x] compile intent into a pack',
-  '  ada compile --engine "<intent>" [--depth=N] [--model=<id>] [--clusters=A,B,C]',
+  '  ada compile --engine "<intent>" [--depth=N] [--model=<id>] [--clusters=A,B,C] [--repo[=path]]',
   "                                    compile via the U2F engine (real model call);",
   "                                    --depth caps nodes/cluster (cost), --model picks the model,",
-  "                                    --clusters overrides the auto-derived domain areas",
+  "                                    --clusters overrides the auto-derived domain areas,",
+  "                                    --repo compiles an existing repo as ∵ source context",
   "  ada ctx init [intent] [--slug=x] [--model=id] [--compile]",
   "                                    chat-style interview BEFORE compile: captures what you",
   "                                    expect into the Seed, then exits (--compile chains in)",
@@ -283,7 +296,20 @@ async function compileWithEngine(
   // first-node pick, the gate-empty throw) is identical — it was MOVED, not changed.
   //   • `seed` drives proposal + excavation (bare-intent `engineSeed`, or the interview's Seed).
   //   • `seedOverride` is the assembly override (interview → SEED.md verbatim; absent → derived).
-  const seed = seedOverride ?? engineSeed(intent);
+  let seed = seedOverride ?? engineSeed(intent);
+  // Repo-aware compile (spine step 1): ingest the existing repo → COMPILE it to a bounded
+  // digest → attach as ∵ source so the excavator builds ON real code. Copy (not mutate) so
+  // an interview `seedOverride` is still persisted verbatim as SEED.md (A2).
+  if (options.repo) {
+    const ingested = ingestRepo(resolve(cwd, options.repo));
+    const digest = repoDigest(ingested);
+    seed = { ...seed, repoContext: digest };
+    console.log(
+      dim(
+        `  repo-aware: ${ingested.admittedCount} sources → ${Buffer.byteLength(digest, "utf8")}B digest (∵ source)`,
+      ),
+    );
+  }
   const { model, manifest, firstNodeId, rejected } = await engineCompile({
     cwd,
     slug,

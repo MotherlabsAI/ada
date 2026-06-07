@@ -41,6 +41,19 @@ test("--depth and --model combine", () => {
   );
 });
 
+test("--repo[=path] maps to the repo-aware compile option (bare → cwd)", () => {
+  assert.deepEqual(buildEngineOptions({ repo: "/some/path" }), {
+    repo: "/some/path",
+  });
+  assert.deepEqual(buildEngineOptions({ repo: true }), { repo: "." });
+  assert.deepEqual(buildEngineOptions({ repo: "  " }), { repo: "." });
+  assert.equal(
+    "repo" in buildEngineOptions({}),
+    false,
+    "absent → no repo (greenfield)",
+  );
+});
+
 test("junk depth is ignored (no perCluster emitted), so the engine default holds", () => {
   for (const bad of ["0", "-2", "2.5", "abc", "", " ", "01", "3x", "1e3"]) {
     const opts = buildEngineOptions({ depth: bad });
