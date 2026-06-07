@@ -11,8 +11,26 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Seed, CheckClass, Depth, TruthClass } from "../../core/types.js";
+import type {
+  Seed,
+  CheckClass,
+  Depth,
+  TruthClass,
+  NodeType,
+} from "../../core/types.js";
+import { NODE_TYPES } from "../../core/types.js";
 import type { NodeSpec } from "../assemble.js";
+
+/**
+ * Validate the model's semanticType against the closed ontology (organ 04). On an omitted or
+ * out-of-enum value, default to "Mechanism" — the neutral catch-all for an Ada capsule that
+ * describes a how/why — rather than inventing a wrong type (A2: an honest default, not a lie).
+ */
+function coerceNodeType(v: unknown): NodeType {
+  return typeof v === "string" && (NODE_TYPES as readonly string[]).includes(v)
+    ? (v as NodeType)
+    : "Mechanism";
+}
 import { scoreNode, type RubricScore } from "../rubric.js";
 import { parseJsonLoose } from "./json.js";
 import type { ModelClient } from "./model.js";
@@ -91,7 +109,12 @@ export function buildPrompt(
     "Return exactly ONE NodeSpec as strict JSON (no prose, no code fences) with keys:",
     "id, label, cluster, depth, summary, whyItMatters, failureIfMissing,",
     "fromPrompt (string[]), compilesTo (string[]), checkClass, cCandidates (string[]),",
-    "unknowns (string[]), truth, parents (string[]).",
+    "unknowns (string[]), truth, parents (string[]), semanticType.",
+    "",
+    "semanticType is the node's TYPE — exactly one of: Intent, Constraint, Claim, Evidence,",
+    "Assumption, Unknown, Risk, Mechanism, Invariant, Decision, Action, Artifact, Tool, Eval,",
+    "Memory. Pick the single best fit (a contract/boundary = Invariant or Constraint; a how/why",
+    "mechanism = Mechanism; an open gap = Unknown; a produced file = Artifact; a checkable rule = Eval).",
   );
   return lines.join("\n");
 }
@@ -130,6 +153,7 @@ export function parseNodeSpec(raw: string): NodeSpec {
     unknowns: arr(o["unknowns"]),
     truth: (o["truth"] as TruthClass) ?? "inference",
     parents: arr(o["parents"]),
+    semanticType: coerceNodeType(o["semanticType"]),
   };
 }
 

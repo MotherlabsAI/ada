@@ -380,8 +380,9 @@ export function readerLines(
   // ── header: id (cluster colour) · label (bold, wrapped — never overflows) · meta ──
   push(`● ${node.id}`, node.colour, { bold: true });
   for (const l of wrap(node.label, measure)) push(l, undefined, { bold: true });
+  // meta: semantic type (organ 04) leads, then cluster · depth · truth · check class
   push(
-    `${node.role.cluster} · ${node.depth} · ${TRUTH_GLYPH[node.truth]} ${node.truth} · ${c.class} ${CHECK_LABEL[c.class]}`,
+    `${node.semanticType ? node.semanticType + " · " : ""}${node.role.cluster} · ${node.depth} · ${TRUTH_GLYPH[node.truth]} ${node.truth} · ${c.class} ${CHECK_LABEL[c.class]}`,
     undefined,
     { dim: true },
   );

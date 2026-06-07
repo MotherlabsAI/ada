@@ -16,6 +16,7 @@ import type {
   TruthClass,
   CheckClass,
   Depth,
+  NodeType,
   Projection,
 } from "../core/types.js";
 import { TRUTH_GLYPH } from "../core/grammar.js";
@@ -39,6 +40,12 @@ export interface NodeSpec {
   unknowns: string[];
   truth: TruthClass;
   parents: string[];
+  /**
+   * The semantic node-type (organ 04). The excavator parse always sets it (from the model,
+   * coerced to the closed ontology); optional on the spec so hand-built fixtures need not — the
+   * assembly defaults any omission to "Mechanism" so every CAPSULE is typed regardless.
+   */
+  semanticType?: NodeType;
 }
 
 // Deterministic, domain-agnostic cluster→colour mapping (AXIOM A1). These are the
@@ -183,6 +190,7 @@ function toCapsule(spec: NodeSpec, score?: RubricScore): NodeCapsule {
     status: "finished",
     depth: spec.depth,
     truth: spec.truth,
+    semanticType: spec.semanticType ?? "Mechanism",
     role: { cluster, nodeType: "context_capsule", compileTargets: targets },
     localContext: {
       summary: spec.summary,

@@ -53,6 +53,48 @@ export type CheckClass = "C0" | "C1" | "C2" | "C3" | "C4" | "C5";
 
 export type Depth = "L1" | "L2" | "L3" | "L4" | "L5";
 
+/**
+ * The SEMANTIC node-type ontology (NORTH-STAR organ 04). A typed graph, not a folder-tree of
+ * generic capsules: every node IS one of these atoms, so edges and checks can reason about it.
+ * Closed enum — the verifier rejects anything outside it. (Distinct from `NodeRole.nodeType`,
+ * which is the fixed render-role descriptor; this is the meaning of the node.)
+ */
+export type NodeType =
+  | "Intent"
+  | "Constraint"
+  | "Claim"
+  | "Evidence"
+  | "Assumption"
+  | "Unknown"
+  | "Risk"
+  | "Mechanism"
+  | "Invariant"
+  | "Decision"
+  | "Action"
+  | "Artifact"
+  | "Tool"
+  | "Eval"
+  | "Memory";
+
+/** The 15 semantic node types, as a runtime list (for validation + the `typed-nodes` check). */
+export const NODE_TYPES: readonly NodeType[] = [
+  "Intent",
+  "Constraint",
+  "Claim",
+  "Evidence",
+  "Assumption",
+  "Unknown",
+  "Risk",
+  "Mechanism",
+  "Invariant",
+  "Decision",
+  "Action",
+  "Artifact",
+  "Tool",
+  "Eval",
+  "Memory",
+];
+
 /** Where a node projects (spec §4). */
 export type Projection =
   | "graph"
@@ -157,6 +199,8 @@ export interface NodeCapsule {
   status: Status;
   depth: Depth;
   truth: TruthClass;
+  /** The semantic node-type (organ 04). Optional for back-compat with packs compiled before it. */
+  semanticType?: NodeType;
   role: NodeRole;
   localContext: LocalContext;
   worldLinks: WorldLinks;
