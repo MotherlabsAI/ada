@@ -82,3 +82,108 @@ test("an empty manifest yields an honest empty-digest marker, not a crash", () =
   assert.ok(d.length > 0, "non-empty marker");
   assert.match(d, /no source|empty/i);
 });
+
+// ── two-tier: KEY FILES carry CONTENT; the rest stay symbols (attention budget) ──
+
+test("high-salience files contribute CONTENT; ordinary files stay symbol-only", () => {
+  const d = repoDigest(
+    manifest([
+      src({
+        path: "AXIOMS.md",
+        kind: "doc",
+        content: "# AXIOMS\n\nA1 — Determinism boundary: the spine.",
+      }),
+      src({
+        path: "src/core/types.ts",
+        kind: "code",
+        content:
+          "export interface Seed { rootIntent: string; repoContext?: string }",
+      }),
+      src({
+        path: "src/cli.ts",
+        kind: "code",
+        content:
+          "export function main(){ const UNIQUE_BODY_42 = 1; return UNIQUE_BODY_42; }",
+      }),
+    ]),
+  );
+  // focus files → real content reaches the excavator (the deep holes can now collapse)
+  assert.match(d, /Determinism boundary: the spine/, "AXIOMS content included");
+  assert.match(
+    d,
+    /rootIntent: string; repoContext\?: string/,
+    "the schema body is included",
+  );
+  // ordinary file → symbol line, body NOT dumped
+  assert.match(d, /src\/cli\.ts.*main/, "cli is indexed by symbol");
+  assert.ok(!d.includes("UNIQUE_BODY_42"), "ordinary file body is not dumped");
+});
+
+test("the schema (types.ts) is prioritized into KEY FILES over lower-rank focus files", () => {
+  // The schema is the file that collapses the most holes ("graph.json schema unspecified"),
+  // so it must win a focus slot even when AXIOMS/governance are present and budget is tight.
+  const fill = (s: string) => s.padEnd(1600, ".");
+  const d = repoDigest(
+    manifest([
+      src({
+        path: "governance/invariants.md",
+        kind: "doc",
+        content: fill("# Bounds GOVMARKER"),
+      }),
+      src({
+        path: "AXIOMS.md",
+        kind: "doc",
+        content: fill("# AXIOMS AXMARKER"),
+      }),
+      src({
+        path: "src/core/types.ts",
+        kind: "code",
+        content: "export interface Seed { rootIntent: string }",
+      }),
+    ]),
+    { maxBytes: 2400, focusBytes: 1500, perFocusBytes: 1200 },
+  );
+  assert.match(
+    d,
+    /rootIntent: string/,
+    "the schema is prioritized into the tight focus budget",
+  );
+});
+
+test("a code focus file surfaces its DECLARATIONS, not a raw byte-prefix of noise", () => {
+  const preamble = "// boilerplate preamble line\n".repeat(120); // ~3.3KB before the schema
+  const types =
+    preamble +
+    "export interface Seed { rootIntent: string; repoContext?: string }\n" +
+    "export type TruthClass = 'source' | 'residue';\n";
+  const d = repoDigest(
+    manifest([
+      src({ path: "src/core/types.ts", kind: "code", content: types }),
+    ]),
+    { perFocusBytes: 1200 },
+  );
+  assert.match(
+    d,
+    /interface Seed \{ rootIntent: string/,
+    "the Seed declaration is surfaced past the preamble",
+  );
+  assert.match(d, /type TruthClass/, "the type alias is surfaced too");
+  assert.ok(
+    !d.includes("boilerplate preamble"),
+    "non-declaration noise is dropped",
+  );
+});
+
+test("KEY FILES content is bounded — a huge focus file cannot blow the budget", () => {
+  const big =
+    "export interface Huge {\n" + "  field: string;\n".repeat(2000) + "}";
+  const d = repoDigest(
+    manifest([src({ path: "src/core/types.ts", kind: "code", content: big })]),
+    { maxBytes: 4000, perFocusBytes: 1500 },
+  );
+  assert.ok(
+    Buffer.byteLength(d, "utf8") <= 4000,
+    `digest ${Buffer.byteLength(d)}B <= 4000`,
+  );
+  assert.match(d, /truncated/i, "over-cap focus content is honestly truncated");
+});
