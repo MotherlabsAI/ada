@@ -32,6 +32,7 @@ import { exportManifestArtifact } from "../export/manifest.js";
 import { projectDecomposition } from "../export/decomposition.js";
 import { projectMvpClosers } from "../export/closers.js";
 import { evalExports } from "../export/eval.js";
+import { projectLoopClosers } from "../export/loop.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -288,6 +289,7 @@ async function writePackBody(
     ...projectDecomposition(model),
     ...projectMvpClosers(model),
     ...evalExports(model),
+    ...projectLoopClosers(model),
   ]) {
     const dest = join(p.blueprintDir, f.path);
     await mkdir(dirname(dest), { recursive: true });

@@ -123,6 +123,18 @@ export function projectExportManifest(model: PackModel): ExportManifest {
       audience: "verifier",
     },
     {
+      path: "exports/blueprint/recompile_triggers.yaml",
+      family: "memory-state",
+      format: "yaml",
+      audience: "agent",
+    },
+    {
+      path: "exports/blueprint/SUCCESSOR_UPDATE.md",
+      family: "memory-state",
+      format: "markdown",
+      audience: "agent",
+    },
+    {
       path: "exports/blueprint/schema_graph_tree.md",
       family: "graphs",
       format: "markdown",
@@ -188,9 +200,9 @@ export function projectExportManifest(model: PackModel): ExportManifest {
   const families_present = [...new Set(artifacts.map((a) => a.family))].sort();
   // The taxonomy families Ada does not yet emit as first-class artifacts (honest frontier, A2).
   const frontier = [
-    "OUTCOME eval (L9b: does the pack beat raw-prompt? — held-out, human-judged, OWED; structural eval ships)",
-    "observability-trace (run traces — runtime tail, L10)",
-    "schemas-ir (machine schemas for the envelope)",
+    "OUTCOME eval (L9b: does the pack beat raw-prompt? — held-out, human-judged, OWED — Alex's gate)",
+    "observability-trace (run traces — emitted at RUNTIME by the executor, not at compile time)",
+    "schemas-ir (machine JSON Schemas for the §2 envelope)",
   ];
   return { slug: model.slug, artifacts, families_present, frontier };
 }
