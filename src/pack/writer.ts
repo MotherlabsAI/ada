@@ -1,5 +1,6 @@
 /** Writes a PackModel to disk as the full .ada/packs/<slug>/ tree (spec §12, AXIOM A5). */
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, rename, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type {
   PackModel,
@@ -117,11 +118,59 @@ function nodeCard(node: NodeCapsule): string {
   ].join("\n");
 }
 
+/**
+ * Atomic-ish pack replace (INVARIANT.002, production-ready). The previous pack must stay the
+ * canonical one until the new pack is FULLY written: a crash or thrown error mid-write must
+ * never leave a half-written, corrupt pack on disk. So we move the existing pack aside to a
+ * `.bak`, write the fresh one into the real root, and only on success drop the backup — on any
+ * failure we remove the partial and restore the previous pack intact, then rethrow. (A directory
+ * rename on one filesystem is atomic; the brief gap is covered by the recoverable `.bak`.)
+ */
+export async function atomicReplace(
+  root: string,
+  write: () => Promise<void>,
+): Promise<void> {
+  const bak = `${root}.bak`;
+  await rm(bak, { recursive: true, force: true }); // clear a stale backup from a prior crash
+  const hadPrevious = existsSync(root);
+  if (hadPrevious) await rename(root, bak);
+  try {
+    await write();
+    if (hadPrevious) await rm(bak, { recursive: true, force: true });
+  } catch (err) {
+    await rm(root, { recursive: true, force: true }); // drop the partial
+    if (hadPrevious) await rename(bak, root); // restore the canonical previous pack
+    throw err;
+  }
+}
+
 export async function writePack(
   cwd: string,
   model: PackModel,
 ): Promise<PackManifest> {
   const p = paths(cwd, model.slug);
+  // Fail BEFORE touching disk: a duplicate id would desync the manifest (kept here, pre-transaction).
+  const preIds = model.graph.nodes.map((n) => n.id);
+  const preDupes = [
+    ...new Set(preIds.filter((id, i) => preIds.indexOf(id) !== i)),
+  ];
+  if (preDupes.length) {
+    throw new Error(
+      `Duplicate node ids would collide on disk: ${preDupes.join(", ")}`,
+    );
+  }
+  let manifest!: PackManifest;
+  await atomicReplace(p.root, async () => {
+    manifest = await writePackBody(cwd, model, p);
+  });
+  return manifest;
+}
+
+async function writePackBody(
+  cwd: string,
+  model: PackModel,
+  p: ReturnType<typeof paths>,
+): Promise<PackManifest> {
   for (const d of [
     p.root,
     p.wikiDir,
