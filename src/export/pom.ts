@@ -24,9 +24,15 @@ const bullets = (ns: NodeCapsule[]): string =>
 export function projectPOM(model: PackModel): string {
   const seed = model.seed;
   const residue = model.graph.nodes.filter((n) => n.truth === "residue");
-  // contradictions: any pair joined by a `contradicts` / `disambiguates` edge.
+  // contradictions: pairs in genuine conflict (a held claim vs its negation, or a soft rule).
   const tensions = model.graph.edges.filter(
     (e) => e.type === "contradicts" || e.type === "defeasible",
+  );
+  // distinctions (the distinguish operator): pairs the intent FUSED that the excavator split.
+  // A conflation made explicit is NOT a contradiction — it gets its own current_state surface so
+  // an operator reads two concepts where the prompt glossed one (NORTH-STAR: distinguish).
+  const distinctions = model.graph.edges.filter(
+    (e) => e.type === "disambiguates",
   );
   // verification questions: every node's open unknowns, attributed to the node.
   const questions = model.graph.nodes.flatMap((n) =>
@@ -62,6 +68,12 @@ export function projectPOM(model: PackModel): string {
     "### contradictions",
     tensions.length
       ? tensions.map((e) => `- \`${e.from}\` ${e.type} \`${e.to}\``).join("\n")
+      : "_(none surfaced)_",
+    "### distinctions (fused concepts split apart)",
+    distinctions.length
+      ? distinctions
+          .map((e) => `- \`${e.from}\` disambiguates \`${e.to}\``)
+          .join("\n")
       : "_(none surfaced)_",
     "",
     "## constraint_graph",

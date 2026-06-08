@@ -118,3 +118,35 @@ test("projectPOM renders contradictions from `contradicts` edges (the distinguis
     "edge → contradiction line",
   );
 });
+
+test("projectPOM renders DISTINCTIONS from `disambiguates` edges — the distinguish operator splits fused concepts", () => {
+  // The intent conflated "idea" with "product"; the excavator split them and joined the two
+  // nodes with a `disambiguates` edge. current_state must SHOW that split (not gloss it), so an
+  // operator reads two distinct concepts where the prompt fused one. (NORTH-STAR: distinguish.)
+  const md = projectPOM(
+    model(
+      [
+        node("IDEA.1", "Claim", "the idea"),
+        node("PROD.1", "Claim", "the product"),
+      ],
+      [{ from: "IDEA.1", to: "PROD.1", type: "disambiguates" }],
+    ),
+  );
+  assert.match(
+    md,
+    /distinctions[\s\S]*IDEA\.1` disambiguates `PROD\.1/,
+    "a disambiguates edge renders as a distinction, not a contradiction",
+  );
+  // And it must NOT be miscategorised as a contradiction (a split ≠ a conflict): the pair never
+  // renders with the word `contradicts`, and the contradictions section stays empty for this input.
+  assert.doesNotMatch(
+    md,
+    /IDEA\.1` contradicts/,
+    "a disambiguates edge is never relabelled as a contradiction",
+  );
+  assert.match(
+    md,
+    /### contradictions\n_\(none surfaced\)_/,
+    "with only a disambiguation present, contradictions is empty",
+  );
+});

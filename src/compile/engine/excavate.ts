@@ -144,10 +144,15 @@ export function buildPrompt(
     "",
     "relations is an array of TYPED cross-edges to OTHER node ids you can name (the graph layer",
     'over the tree): each {"to":"<node id>","type":"<edge type>"} where edge type is one of:',
-    "depends_on, enables, blocks, contradicts, supports, derived_from, compiles_to, exports_to,",
-    "guarded_by, verified_by, missed_by, generalizes_to, residue_of, promotes_to_memory,",
+    "depends_on, enables, blocks, contradicts, disambiguates, supports, derived_from, compiles_to,",
+    "exports_to, guarded_by, verified_by, missed_by, generalizes_to, residue_of, promotes_to_memory,",
     "recompiles, defeasible, exception. Add only edges you are confident name a real relation;",
     "[] is fine. Do NOT use `contains` (the engine builds the structural spine itself).",
+    "",
+    "DISTINGUISH (important): if the intent FUSES two concepts that are not the same — e.g. idea vs",
+    "product, usage vs retention, a build-goal vs a knowledge-goal — do NOT gloss them into one node.",
+    "Split them: excavate the distinct concept as its own node and add a `disambiguates` edge from it",
+    "to the node it was conflated with. A conflation made explicit is the compiler's job; a gloss is a lie.",
   );
   return lines.join("\n");
 }

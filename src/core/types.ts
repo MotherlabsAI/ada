@@ -115,6 +115,12 @@ export type Projection =
  * and an `exception` edge names the case that overrides it. These are DATA in the
  * exploratory layer (A1), never a model in the checker (A3): a node a `defeasible` edge
  * touches routes to C0–C2 + residue, and is never forged into a brittle C3–C5 MUST.
+ *
+ * `disambiguates` (the distinguish operator, NORTH-STAR): A `disambiguates` B means the
+ * intent FUSED two concepts (idea≈product, usage≈retention) and the excavator split them —
+ * A is the distinct concept pulled out of B. Unlike `contradicts` (a conflict between two
+ * held claims), this marks a CONFLATION made explicit: the POM's current_state shows the
+ * split so an operator reads two concepts where the prompt glossed one.
  */
 export type EdgeType =
   | "contains"
@@ -122,6 +128,7 @@ export type EdgeType =
   | "enables"
   | "blocks"
   | "contradicts"
+  | "disambiguates"
   | "supports"
   | "derived_from"
   | "compiles_to"
@@ -148,6 +155,7 @@ export const EDGE_TYPES: readonly EdgeType[] = [
   "enables",
   "blocks",
   "contradicts",
+  "disambiguates",
   "supports",
   "derived_from",
   "compiles_to",
