@@ -34,6 +34,7 @@ import { projectMvpClosers } from "../export/closers.js";
 import { evalExports } from "../export/eval.js";
 import { projectLoopClosers } from "../export/loop.js";
 import { projectSpawnAuthority } from "../governance/spawnAuthority.js";
+import { projectTruthInvariant } from "../governance/truthMonotonicity.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -292,6 +293,7 @@ async function writePackBody(
     ...evalExports(model),
     ...projectLoopClosers(model),
     projectSpawnAuthority(model),
+    projectTruthInvariant(model),
   ]) {
     const dest = join(p.blueprintDir, f.path);
     await mkdir(dirname(dest), { recursive: true });
