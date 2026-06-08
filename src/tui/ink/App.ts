@@ -83,7 +83,11 @@ const defaultCompile: CompileFn = async ({ cwd, slug, intent }) => {
     slug,
     intent,
     seed: engineSeed(intent),
-    opts: { perCluster: DEFAULT_COMPILE_PER_CLUSTER, normalize: true },
+    opts: {
+      perCluster: DEFAULT_COMPILE_PER_CLUSTER,
+      normalize: true,
+      plan: true,
+    },
   });
   return { pack: { slug, graph: model.graph, manifest }, firstNodeId };
 };

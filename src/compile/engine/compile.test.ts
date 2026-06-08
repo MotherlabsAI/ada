@@ -277,6 +277,101 @@ test("a seedOverride is persisted verbatim into the pack's SEED.md (A2)", async 
   }
 });
 
+test("engineCompile with plan:true merges gated Action nodes under PLAN (the planner wiring, no live call)", async () => {
+  // Proves end-to-end what the live dogfood compile would show, but deterministically: with
+  // plan:true, the planner's model call (the prompt containing "PLANNER") returns an action array,
+  // the gated Action lands in the assembled graph under the PLAN cluster, and the cluster label is
+  // registered. This is the wiring the credit-blocked live compile couldn't demonstrate.
+  const cwd = tmp();
+  const ACTION = JSON.stringify([
+    {
+      label: "Build the validating ingest gate",
+      summary:
+        "Add validate()→normalize()→persist as the single write path so every record is checked inside one ~50ms budget before it lands; today writes bypass it.",
+      whyItMatters:
+        "It is the only place validation can be enforced for all writes at once.",
+      failureIfMissing:
+        "Each call site validates differently and malformed records slip into the store.",
+      fromPrompt: ["Notes an LLM will cite, not just retrieve."],
+      compilesTo: ["src/ingest.ts", "c/checks/ingest_validates.mjs"],
+      checkClass: "C3",
+      cCandidates: [
+        "assert no write reaches the store without passing validate()",
+      ],
+      unknowns: ["which fields are required per record kind?"],
+      truth: "inference",
+      closesGap: "Chunk-resident citations",
+    },
+  ]);
+  const client: ModelClient = {
+    async complete(prompt: string): Promise<string> {
+      if (prompt.includes("PLANNER")) return ACTION;
+      if (prompt.includes("Do NOT include ROOT or UNK"))
+        return JSON.stringify([
+          { code: "ATT", label: "Attention" },
+          { code: "BIND", label: "Binding" },
+          { code: "WIN", label: "Windowing" },
+        ]);
+      if (prompt.includes("cluster to excavate: ATT"))
+        return impress("Chunk-resident citations");
+      return GENERIC;
+    },
+  };
+  try {
+    const r = await engineCompile({
+      cwd,
+      slug: "kb",
+      intent: INTENT,
+      seed: seed(),
+      opts: { perCluster: 1, client, plan: true },
+    });
+    const actions = r.model.graph.nodes.filter(
+      (n) => n.semanticType === "Action",
+    );
+    assert.equal(
+      actions.length,
+      1,
+      "the gated Action node landed in the graph",
+    );
+    assert.match(
+      actions[0]!.id,
+      /^PLAN\.001$/,
+      "under the PLAN cluster, positional id",
+    );
+    assert.equal(
+      r.model.clusterLabels?.["PLAN"],
+      "Plan / next moves",
+      "the PLAN cluster label is registered for the TUI/wiki",
+    );
+    // The action is wired to the gap it closes (Chunk-resident citations → its real id).
+    const edge = r.model.graph.edges.find(
+      (e) => e.from === "PLAN.001" && e.type === "enables",
+    );
+    assert.ok(edge, "the action enables the gap node it closes (traced, A2)");
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test("engineCompile WITHOUT plan adds no Action nodes (opt-in; default path unchanged)", async () => {
+  const cwd = tmp();
+  try {
+    const r = await engineCompile({
+      cwd,
+      slug: "kb",
+      intent: INTENT,
+      seed: seed(),
+      opts: { perCluster: 1, client: stub() }, // no plan:true
+    });
+    assert.ok(
+      !r.model.graph.nodes.some((n) => n.semanticType === "Action"),
+      "no planner ran → no Action nodes",
+    );
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
 test("no model/network token lives in engine/compile.ts (A1/A9 boundary is structural)", () => {
   const src = readFileSync(
     join(process.cwd(), "src/compile/engine/compile.ts"),

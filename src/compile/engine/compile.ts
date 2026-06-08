@@ -23,6 +23,7 @@ import type { Seed, PackModel, PackManifest } from "../../core/types.js";
 import { assemblePackGated } from "../assemble.js";
 import { excavatePack, type RejectedSpec } from "./orchestrate.js";
 import { proposeClusters, type ClusterDef } from "./clusters.js";
+import { proposeActions, PLAN_CLUSTER } from "./plan.js";
 import { normalizeIntent } from "./normalize.js";
 import { anthropicClient, type ModelClient } from "./model.js";
 import { writePack } from "../../pack/writer.js";
@@ -48,6 +49,14 @@ export interface EngineCompileOptions {
    * stubbed-client tests are unchanged; the live CLI/TUI turn it on.
    */
   normalize?: boolean;
+  /**
+   * Run the PLANNER pass after excavation: ONE model call that reads the goal + the excavated
+   * world and emits gated Action nodes (the moves from current repo → goal), so the POM gets an
+   * `execution_plan`, not just a constraint atlas. Each action is gated by the same rubric (A3)
+   * and traced to the gap it closes (A2). Off by default so stubbed-client tests are unchanged;
+   * the live CLI/TUI turn it on. A non-array model response adds nothing (degrades cleanly).
+   */
+  plan?: boolean;
   /**
    * The model boundary. DEFAULT: `anthropicClient({ model })` (the live compile-time call,
    * A1/A9). Tests inject a stub so no network is touched. This is the ONLY seam through which
@@ -146,12 +155,30 @@ export async function engineCompile(args: {
     );
   }
 
+  // PLANNER pass (opt-in): turn the described world into a plan. ONE model call → gated Action
+  // nodes (the moves from current repo → goal), merged under the PLAN cluster so the POM's
+  // execution_plan populates. Traced to gaps (A2), gated by the same rubric (A3); a non-array
+  // response adds nothing. Runs only when a planning move exists (≥1 kept world node to act on).
+  let allNodes = kept;
+  if (opts.plan) {
+    const { actions, rejected: planRejected } = await proposeActions(
+      drivingSeed,
+      kept,
+      client,
+    );
+    if (actions.length) {
+      allNodes = [...kept, ...actions];
+      clusterLabels[PLAN_CLUSTER] = "Plan / next moves";
+    }
+    rejected.push(...planRejected);
+  }
+
   // `seedOverride` (interview) persists verbatim; absent → assembly DERIVES the pack Seed from
   // intent + kept nodes. Forwarding `undefined` here is exactly what the CLI did (A2).
   const { model } = assemblePackGated(
     slug,
     intent,
-    kept,
+    allNodes,
     seedOverride,
     clusterLabels,
   );
