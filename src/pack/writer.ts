@@ -16,6 +16,7 @@ import { nodeWiki } from "./wiki.js";
 import { emitChecks, registryYaml, cDoc } from "../c/emit.js";
 import { CHECK_FILES } from "../c/checkSources.js";
 import { claudeExports } from "../export/claude.js";
+import { settingsExports } from "../export/settings.js";
 import { assertBackingHonest } from "../export/coherence.js";
 import { blueprintExports } from "../export/blueprint.js";
 import { pomExport } from "../export/pom.js";
@@ -26,6 +27,7 @@ import { evidenceLedgerExport } from "../export/evidence.js";
 import { memoryPolicyExport } from "../export/memory.js";
 import { copilotExports } from "../export/copilot.js";
 import { mcpExports } from "../export/mcp.js";
+import { openaiExports } from "../export/openai.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -251,7 +253,9 @@ async function writePackBody(
   await writeFile(p.cRegistry, registryYaml(model, shipsRunnable), "utf8");
   await writeFile(p.cDoc, cDoc(model, shipsRunnable), "utf8");
 
-  const claudeFiles = claudeExports(model);
+  // The executor bundle: the context files (claude) + the enforced-governance layer
+  // (settings.json + hooks, brick 7). Both land under `.claude/`; both pass the A2 guard.
+  const claudeFiles = [...claudeExports(model), ...settingsExports(model)];
   // A2 coherence guard (fail-closed): a pack must never claim a runnable-check
   // backing it does not ship. Assert over the whole executor bundle before writing.
   const bundle = claudeFiles.map((f) => f.content).join("\n");

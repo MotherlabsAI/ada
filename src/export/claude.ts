@@ -330,6 +330,15 @@ export function claudeExports(model: PackModel): ExportFile[] {
       "`exports/claude/skills/ada-context/` into `.claude/skills/`. Then start a session;",
       "Claude Code will load the pack as governed context.",
       "",
+      "## Enforce it (the authority boundary — brick 7)",
+      "Copy `exports/claude/settings.json` to `.claude/settings.json` and",
+      "`exports/claude/hooks/` to `.claude/hooks/`. This turns the Autonomy Contract from",
+      "advice into a hard boundary: file edits / commits become human-gated (ask), secret",
+      "reads and destructive commands are denied before they run (the PreToolUse gate), and",
+      "every state-changing tool call is appended to the evidence ledger (the PostToolUse",
+      "hook). Without this, the contracts are context the model may follow; with it, they",
+      "are enforced by the harness.",
+      "",
     ].join("\n"),
   };
 
