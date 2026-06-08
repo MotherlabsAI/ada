@@ -51,6 +51,33 @@ test("the excavator parses typed relations and DROPS invented edge types (A2: an
   assert.deepEqual(parsed.relations, [{ to: "Y.1", type: "supports" }]);
 });
 
+test("the distinguish operator survives the seam: a model `disambiguates` relation → a real graph edge", () => {
+  // End-to-end of the split: the excavator names a fused-concept split as a `disambiguates`
+  // relation; parseNodeSpec keeps it (it's in-vocab) and buildEdges emits it as an edge on real
+  // nodes. Proves the path the POM's `distinctions` section then reads — no model, deterministic.
+  const parsed = parseNodeSpec(
+    JSON.stringify({
+      id: "IDEA.1",
+      label: "the idea",
+      relations: [{ to: "PROD.1", type: "disambiguates" }],
+    }),
+  );
+  assert.deepEqual(
+    parsed.relations,
+    [{ to: "PROD.1", type: "disambiguates" }],
+    "disambiguates is in-vocab and is not dropped as invented",
+  );
+  const nodes = [node("IDEA.1"), node("PROD.1")];
+  const typed = buildEdges(nodes, [parsed as unknown as NodeSpec]).filter(
+    (e) => e.type !== "contains",
+  );
+  assert.deepEqual(
+    typed,
+    [{ from: "IDEA.1", to: "PROD.1", type: "disambiguates" }],
+    "the split becomes a typed cross-edge the POM's distinctions section reads",
+  );
+});
+
 test("the excavator never uses `contains` from the model — the engine owns the structural spine", () => {
   const parsed = parseNodeSpec(
     JSON.stringify({
