@@ -377,7 +377,7 @@ test("engineCompile writes a live progress snapshot: phases in order, per-cluste
   const cwd = tmp();
   const events: ProgressEvent[] = [];
   try {
-    await engineCompile({
+    const r = await engineCompile({
       cwd,
       slug: "kb",
       intent: INTENT,
@@ -424,7 +424,24 @@ test("engineCompile writes a live progress snapshot: phases in order, per-cluste
       exc!.clusters!.some((c) => c.nodes > 0),
       "at least one cluster excavated a node",
     );
-    assert.ok(snap.totals.nodes > 0, "totals.nodes reflects kept nodes");
+    // The done snapshot carries the AUTHORITATIVE manifest counts (not excavate-phase partials):
+    // nodes/edges/residue match the written pack exactly.
+    assert.equal(
+      snap.totals.nodes,
+      r.manifest.nodeCount,
+      "totals.nodes == manifest.nodeCount",
+    );
+    assert.equal(
+      snap.totals.edges,
+      r.manifest.edgeCount,
+      "totals.edges == manifest.edgeCount (was never set before)",
+    );
+    assert.ok(snap.totals.edges > 0, "edges are actually populated");
+    assert.equal(
+      snap.totals.residue,
+      r.manifest.residueCount,
+      "totals.residue == manifest.residueCount",
+    );
 
     // The optional onProgress sink saw the same stream, terminated by a done event.
     assert.ok(

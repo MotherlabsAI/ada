@@ -260,7 +260,14 @@ export async function engineCompile(args: {
     emit({ kind: "phase_start", phase });
     const manifest = await writePack(cwd, model);
     emit({ kind: "phase_done", phase });
-    emit({ kind: "residue", count: manifest.residueCount ?? 0 });
+    // The authoritative pack counts — freezes the snapshot's totals at the true manifest values
+    // (live nodes were the excavate-phase tally; edges/residue weren't known until the pack wrote).
+    emit({
+      kind: "totals",
+      nodes: manifest.nodeCount,
+      edges: manifest.edgeCount,
+      residue: manifest.residueCount ?? 0,
+    });
 
     const firstNodeId =
       model.graph.nodes.find((n) => n.id !== "ROOT.000")?.id ??

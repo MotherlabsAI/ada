@@ -53,6 +53,9 @@ export type ProgressEvent =
       truth: string;
     }
   | { kind: "residue"; count: number }
+  // The FINAL counts from the written manifest (true pack totals, not excavate-phase partials).
+  // Freezes totals.nodes/edges/residue at their authoritative values for the done snapshot.
+  | { kind: "totals"; nodes: number; edges: number; residue: number }
   | { kind: "done" }
   | { kind: "error"; phase: PhaseId; message: string };
 
@@ -235,6 +238,13 @@ export class ProgressRecorder {
         this.snap.totals.residue = e.count;
         break;
       }
+      case "totals": {
+        this.snap.totals.nodes = e.nodes;
+        this.snap.totals.edges = e.edges;
+        this.snap.totals.residue = e.residue;
+        this.finalized = true; // stop deriving nodes from the excavate phase; these are authoritative
+        break;
+      }
       case "done": {
         this.snap.status = "done";
         break;
@@ -247,7 +257,13 @@ export class ProgressRecorder {
     }
   }
 
-  /** Token/cost/call totals are owned by the meter; nodes are summed from the excavate phase. */
+  private finalized = false;
+
+  /**
+   * Token/cost/call totals always track the meter. While running, node count is the live
+   * excavate-phase tally; once a `totals` event finalizes the pack, node/edge/residue counts are
+   * the authoritative manifest values and are no longer overwritten by the running estimate.
+   */
   private refreshTotals(): void {
     const t = this.snap.totals;
     t.calls = this.meter.calls;
@@ -255,8 +271,10 @@ export class ProgressRecorder {
     t.outTok = this.meter.outputTokens;
     t.cacheTok = this.meter.cacheReadTokens;
     t.costUsd = this.meter.costUsd;
-    const exc = this.snap.phases.find((p) => p.id === "excavate");
-    t.nodes = exc?.nodes ?? 0;
+    if (!this.finalized) {
+      const exc = this.snap.phases.find((p) => p.id === "excavate");
+      t.nodes = exc?.nodes ?? 0;
+    }
   }
 
   private persist(now: string, event?: ProgressEvent): void {
