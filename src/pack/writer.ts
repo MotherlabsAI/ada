@@ -18,6 +18,7 @@ import { CHECK_FILES } from "../c/checkSources.js";
 import { claudeExports } from "../export/claude.js";
 import { assertBackingHonest } from "../export/coherence.js";
 import { blueprintExports } from "../export/blueprint.js";
+import { pomExport } from "../export/pom.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -258,7 +259,7 @@ async function writePackBody(
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, f.content, "utf8");
   }
-  for (const f of blueprintExports(model)) {
+  for (const f of [...blueprintExports(model), pomExport(model)]) {
     const dest = join(p.blueprintDir, f.path);
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, f.content, "utf8");
