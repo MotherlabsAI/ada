@@ -35,6 +35,7 @@ export function paths(cwd: string, slug: string) {
     blueprintDir: join(root, "exports", "blueprint"),
     copilotDir: join(root, "exports", "copilot"),
     mcpDir: join(root, "exports", "mcp"),
+    openaiDir: join(root, "exports", "openai-agents"),
   };
 }
 

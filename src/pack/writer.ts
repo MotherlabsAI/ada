@@ -295,6 +295,12 @@ async function writePackBody(
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, f.content, "utf8");
   }
+  // …and the OpenAI Agents SDK shape: agents + handoffs + guardrails.
+  for (const f of openaiExports(model)) {
+    const dest = join(p.openaiDir, f.path);
+    await mkdir(dirname(dest), { recursive: true });
+    await writeFile(dest, f.content, "utf8");
+  }
 
   return manifest;
 }
