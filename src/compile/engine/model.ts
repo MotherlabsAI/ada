@@ -29,6 +29,26 @@ export interface AnthropicOptions {
   model?: string;
   /** Output token ceiling for one excavation completion. */
   maxTokens?: number;
+  /** Wall-clock budget for one call before it aborts. Env `ADA_MODEL_TIMEOUT_MS` else 120s. */
+  timeoutMs?: number;
+}
+
+/** Default per-call wall-clock ceiling — a hung connection must not hang the whole compile. */
+const DEFAULT_TIMEOUT_MS = 120_000;
+
+/**
+ * An abort budget: aborts the returned signal after `ms`, with a `clear()` to cancel the timer
+ * on a normal return. Pure timer logic (the timer is unref'd so it never holds the process open),
+ * so the timeout contract is unit-testable without a network. MODELCALL.003 (production-ready).
+ */
+export function deadline(ms: number): {
+  signal: AbortSignal;
+  clear: () => void;
+} {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), ms);
+  (t as { unref?: () => void }).unref?.();
+  return { signal: ac.signal, clear: () => clearTimeout(t) };
 }
 
 const ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
@@ -60,6 +80,12 @@ interface MessagesResponse {
 export function anthropicClient(options: AnthropicOptions = {}): ModelClient {
   const model = options.model ?? process.env["ADA_MODEL"] ?? DEFAULT_MODEL;
   const maxTokens = options.maxTokens ?? DEFAULT_MAX_TOKENS;
+  const envTimeout = Number(process.env["ADA_MODEL_TIMEOUT_MS"]);
+  const timeoutMs =
+    options.timeoutMs ??
+    (Number.isFinite(envTimeout) && envTimeout > 0
+      ? envTimeout
+      : DEFAULT_TIMEOUT_MS);
   return {
     async complete(prompt: string): Promise<string> {
       // Key from env at call time (the CLI loads it from ./.env or ~/.ada/.env into
@@ -75,6 +101,8 @@ export function anthropicClient(options: AnthropicOptions = {}): ModelClient {
         );
       }
 
+      // Abort budget (MODELCALL.003): a hung connection must not hang the whole compile.
+      const budget = deadline(timeoutMs);
       let res: Response;
       try {
         res = await fetch(ANTHROPIC_MESSAGES_URL, {
@@ -89,11 +117,22 @@ export function anthropicClient(options: AnthropicOptions = {}): ModelClient {
             max_tokens: maxTokens,
             messages: [{ role: "user", content: prompt }],
           }),
+          signal: budget.signal,
         });
       } catch (cause) {
+        // A timeout aborts the request — surface it as a timeout, not a generic network error.
+        if (budget.signal.aborted) {
+          throw new Error(
+            `Anthropic request timed out after ${timeoutMs}ms with no response. ` +
+              "Retry, or raise the budget via ADA_MODEL_TIMEOUT_MS.",
+          );
+        }
         // Network-level failure. Surface a clean message WITHOUT the key or the prompt.
         const detail = cause instanceof Error ? cause.message : String(cause);
         throw new Error(`Anthropic request failed (network): ${detail}`);
+      } finally {
+        // Response headers are in hand (or it threw) — stop the abort timer either way.
+        budget.clear();
       }
 
       if (!res.ok) {
