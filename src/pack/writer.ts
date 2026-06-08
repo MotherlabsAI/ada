@@ -36,6 +36,7 @@ import { projectLoopClosers } from "../export/loop.js";
 import { projectSpawnAuthority } from "../governance/spawnAuthority.js";
 import { projectTruthInvariant } from "../governance/truthMonotonicity.js";
 import { projectDiscovery } from "../governance/discovery.js";
+import { projectSemanticContracts } from "../governance/semanticContracts.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -296,6 +297,7 @@ async function writePackBody(
     projectSpawnAuthority(model),
     projectTruthInvariant(model),
     projectDiscovery(model),
+    projectSemanticContracts(model),
   ]) {
     const dest = join(p.blueprintDir, f.path);
     await mkdir(dirname(dest), { recursive: true });
