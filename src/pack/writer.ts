@@ -21,6 +21,7 @@ import { blueprintExports } from "../export/blueprint.js";
 import { pomExport } from "../export/pom.js";
 import { autonomyContractExport } from "../export/autonomy.js";
 import { agentChartersExport } from "../export/agents.js";
+import { toolContractsExport } from "../export/tools.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -266,6 +267,7 @@ async function writePackBody(
     pomExport(model),
     autonomyContractExport(model),
     agentChartersExport(model),
+    toolContractsExport(model),
   ]) {
     const dest = join(p.blueprintDir, f.path);
     await mkdir(dirname(dest), { recursive: true });
