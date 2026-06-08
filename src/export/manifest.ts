@@ -105,6 +105,24 @@ export function projectExportManifest(model: PackModel): ExportManifest {
       audience: "agent",
     },
     {
+      path: "exports/blueprint/EVAL_PLAN.md",
+      family: "data-training",
+      format: "markdown",
+      audience: "verifier",
+    },
+    {
+      path: "exports/blueprint/EVAL_REPORT.md",
+      family: "data-training",
+      format: "markdown",
+      audience: "verifier",
+    },
+    {
+      path: "exports/blueprint/scorecard.json",
+      family: "data-training",
+      format: "json",
+      audience: "verifier",
+    },
+    {
       path: "exports/blueprint/schema_graph_tree.md",
       family: "graphs",
       format: "markdown",
@@ -170,7 +188,7 @@ export function projectExportManifest(model: PackModel): ExportManifest {
   const families_present = [...new Set(artifacts.map((a) => a.family))].sort();
   // The taxonomy families Ada does not yet emit as first-class artifacts (honest frontier, A2).
   const frontier = [
-    "data-training (datasets / evals — value-ladder L9)",
+    "OUTCOME eval (L9b: does the pack beat raw-prompt? — held-out, human-judged, OWED; structural eval ships)",
     "observability-trace (run traces — runtime tail, L10)",
     "schemas-ir (machine schemas for the envelope)",
   ];
