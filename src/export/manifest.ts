@@ -188,6 +188,24 @@ export function projectExportManifest(model: PackModel): ExportManifest {
       format: "markdown",
       audience: "human",
     },
+    {
+      path: "schemas/asset.schema.json",
+      family: "schemas-ir",
+      format: "json",
+      audience: "verifier",
+    },
+    {
+      path: "schemas/node.schema.json",
+      family: "schemas-ir",
+      format: "json",
+      audience: "verifier",
+    },
+    {
+      path: "schemas/edge.schema.json",
+      family: "schemas-ir",
+      format: "json",
+      audience: "verifier",
+    },
   ];
   if (hasPlan) {
     artifacts.push({
@@ -202,7 +220,6 @@ export function projectExportManifest(model: PackModel): ExportManifest {
   const frontier = [
     "OUTCOME eval (L9b: does the pack beat raw-prompt? — held-out, human-judged, OWED — Alex's gate)",
     "observability-trace (run traces — emitted at RUNTIME by the executor, not at compile time)",
-    "schemas-ir (machine JSON Schemas for the §2 envelope)",
   ];
   return { slug: model.slug, artifacts, families_present, frontier };
 }

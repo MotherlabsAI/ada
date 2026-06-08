@@ -37,6 +37,7 @@ import { projectSpawnAuthority } from "../governance/spawnAuthority.js";
 import { projectTruthInvariant } from "../governance/truthMonotonicity.js";
 import { projectDiscovery } from "../governance/discovery.js";
 import { projectSemanticContracts } from "../governance/semanticContracts.js";
+import { projectSchemas } from "../export/schemas.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -318,6 +319,12 @@ async function writePackBody(
   // …and the OpenAI Agents SDK shape: agents + handoffs + guardrails.
   for (const f of openaiExports(model)) {
     const dest = join(p.openaiDir, f.path);
+    await mkdir(dirname(dest), { recursive: true });
+    await writeFile(dest, f.content, "utf8");
+  }
+  // …and the machine schemas (schemas-IR): the §2 envelope + node + edge, validatable at the root.
+  for (const f of projectSchemas(model)) {
+    const dest = join(p.root, f.path);
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, f.content, "utf8");
   }
