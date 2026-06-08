@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deadline, resolveProvider, buildClaudeCodeArgs } from "./model.js";
+import {
+  deadline,
+  resolveProvider,
+  buildClaudeCodeArgs,
+  parseClaudeCodeOutput,
+  estimateCostUsd,
+  newUsageMeter,
+  recordUsage,
+} from "./model.js";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -57,19 +65,113 @@ test("resolveProvider: falls back to the API key when claude is absent; to 'api'
   );
 });
 
-test("buildClaudeCodeArgs: headless, text out, single-turn, MCP/skills off — never --bare (it breaks subscription auth)", () => {
+test("buildClaudeCodeArgs: headless, JSON out (for usage capture), MCP/skills off — never --bare (it breaks subscription auth)", () => {
   const args = buildClaudeCodeArgs({});
   assert.ok(args.includes("-p"), "headless print mode");
-  assert.deepEqual(
-    [args[args.indexOf("--output-format") + 1]],
-    ["text"],
-    "text output (clean single string)",
+  assert.equal(
+    args[args.indexOf("--output-format") + 1],
+    "json",
+    "JSON output so we can read per-call token usage + cost (the spend report)",
   );
   assert.ok(args.includes("--strict-mcp-config"), "no MCP servers loaded");
   assert.ok(args.includes("--disable-slash-commands"), "no skills loaded");
   assert.ok(
     !args.includes("--bare"),
     "MUST NOT use --bare — it forces API-key auth and breaks the subscription",
+  );
+});
+
+// ── Spend reporting (the agent needs to see token + $ cost; the user needs to save money) ──
+
+test("parseClaudeCodeOutput pulls the text AND the usage/cost from claude -p's JSON event array", () => {
+  // The real shape (verified): an array of stream events; the `result` event carries the answer,
+  // a usage block, and total_cost_usd. The big number is cache_read — Claude Code's own ~31K-token
+  // system prompt rides every call (the cost of borrowing the harness).
+  const stdout = JSON.stringify([
+    { type: "system", subtype: "init", session_id: "x" },
+    { type: "assistant", message: {} },
+    {
+      type: "result",
+      result: '{"id":"X.1","label":"a node"}',
+      total_cost_usd: 0.0307745,
+      usage: {
+        input_tokens: 3039,
+        output_tokens: 412,
+        cache_read_input_tokens: 30959,
+        cache_creation_input_tokens: 0,
+      },
+    },
+  ]);
+  const { text, usage } = parseClaudeCodeOutput(stdout);
+  assert.equal(
+    text,
+    '{"id":"X.1","label":"a node"}',
+    "the answer text is extracted",
+  );
+  assert.equal(usage?.inputTokens, 3039);
+  assert.equal(usage?.outputTokens, 412);
+  assert.equal(
+    usage?.cacheReadTokens,
+    30959,
+    "the harness-overhead cache read is captured",
+  );
+  assert.equal(
+    usage?.costUsd,
+    0.0307745,
+    "provider-reported $ is exact, not estimated",
+  );
+});
+
+test("parseClaudeCodeOutput falls back to raw text when output isn't the JSON envelope (no usage)", () => {
+  const { text, usage } = parseClaudeCodeOutput("just plain text\n");
+  assert.equal(text, "just plain text");
+  assert.equal(usage, null, "no usage when there's no JSON envelope");
+});
+
+test("estimateCostUsd prices by model family (API path, where claude doesn't hand us a $ figure)", () => {
+  // 1M in + 1M out on Opus = $15 + $75; on Sonnet = $3 + $15. Unknown model → null (honest).
+  assert.equal(estimateCostUsd("claude-opus-4-8", 1_000_000, 1_000_000), 90);
+  assert.equal(estimateCostUsd("claude-sonnet-4-6", 1_000_000, 1_000_000), 18);
+  assert.equal(estimateCostUsd("some-unknown-model", 1000, 1000), null);
+});
+
+test("recordUsage accumulates a per-compile meter — calls, tokens, cache, and summed cost", () => {
+  const m = newUsageMeter();
+  recordUsage(
+    m,
+    {
+      inputTokens: 3000,
+      outputTokens: 400,
+      cacheReadTokens: 31000,
+      cacheCreationTokens: 0,
+      costUsd: 0.03,
+    },
+    false,
+  );
+  recordUsage(
+    m,
+    {
+      inputTokens: 3500,
+      outputTokens: 900,
+      cacheReadTokens: 31000,
+      cacheCreationTokens: 0,
+      costUsd: 0.04,
+    },
+    false,
+  );
+  assert.equal(m.calls, 2);
+  assert.equal(m.inputTokens, 6500);
+  assert.equal(m.outputTokens, 1300);
+  assert.equal(
+    m.cacheReadTokens,
+    62000,
+    "the harness overhead totals across calls",
+  );
+  assert.equal(Math.round(m.costUsd * 100) / 100, 0.07);
+  assert.equal(
+    m.costEstimated,
+    false,
+    "provider-exact costs are not flagged as estimates",
   );
 });
 

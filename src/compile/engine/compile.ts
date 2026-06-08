@@ -25,7 +25,12 @@ import { excavatePack, type RejectedSpec } from "./orchestrate.js";
 import { proposeClusters, type ClusterDef } from "./clusters.js";
 import { proposeActions, PLAN_CLUSTER } from "./plan.js";
 import { normalizeIntent } from "./normalize.js";
-import { defaultModelClient, type ModelClient } from "./model.js";
+import {
+  defaultModelClient,
+  newUsageMeter,
+  type ModelClient,
+  type UsageMeter,
+} from "./model.js";
 import { writePack } from "../../pack/writer.js";
 
 /**
@@ -84,6 +89,8 @@ export interface EngineCompileResult {
   firstNodeId: string;
   /** Candidates the gate refused / dups — for the CLI's audit line. Empty in the happy path. */
   rejected: RejectedSpec[];
+  /** The compile's spend: calls, tokens, cache, cost. Zeroed when a stub client is injected. */
+  usage: UsageMeter;
 }
 
 /**
@@ -129,9 +136,13 @@ export async function engineCompile(args: {
   // --depth caps kept nodes/cluster (≈ caps model calls → caps cost). The model id flows into
   // the DEFAULT client only; an injected `client` (tests) wins and never touches a network.
   const depthOpts = opts.perCluster ? { perCluster: opts.perCluster } : {};
+  // The spend meter: the real client folds each call's tokens + cost in; an injected stub leaves
+  // it zero (no network, no spend). Returned in the result so the CLI/agent can report cost.
+  const meter = newUsageMeter();
   const client =
     opts.client ??
     defaultModelClient({
+      meter,
       ...(opts.model ? { model: opts.model } : {}),
       ...(opts.provider ? { provider: opts.provider } : {}),
     });
@@ -200,5 +211,5 @@ export async function engineCompile(args: {
     model.graph.nodes[0]?.id ??
     "ROOT.000";
 
-  return { model, manifest, firstNodeId, rejected };
+  return { model, manifest, firstNodeId, rejected, usage: meter };
 }

@@ -334,23 +334,25 @@ async function compileWithEngine(
       ),
     );
   }
-  const { model, manifest, firstNodeId, rejected } = await engineCompile({
-    cwd,
-    slug,
-    intent,
-    seed,
-    ...(seedOverride ? { seedOverride } : {}),
-    opts: {
-      // Live path: expand a thin intent before excavating (self-skips on the interview seed).
-      normalize: true,
-      // …and turn the excavated world into a plan (gated Action nodes → POM execution_plan).
-      plan: true,
-      ...(options.perCluster ? { perCluster: options.perCluster } : {}),
-      ...(options.model ? { model: options.model } : {}),
-      ...(options.clusters ? { clusters: options.clusters } : {}),
-      ...(options.provider ? { provider: options.provider } : {}),
+  const { model, manifest, firstNodeId, rejected, usage } = await engineCompile(
+    {
+      cwd,
+      slug,
+      intent,
+      seed,
+      ...(seedOverride ? { seedOverride } : {}),
+      opts: {
+        // Live path: expand a thin intent before excavating (self-skips on the interview seed).
+        normalize: true,
+        // …and turn the excavated world into a plan (gated Action nodes → POM execution_plan).
+        plan: true,
+        ...(options.perCluster ? { perCluster: options.perCluster } : {}),
+        ...(options.model ? { model: options.model } : {}),
+        ...(options.clusters ? { clusters: options.clusters } : {}),
+        ...(options.provider ? { provider: options.provider } : {}),
+      },
     },
-  });
+  );
   const p = paths(cwd, slug);
   const firstNode = firstNodeId;
 
@@ -364,6 +366,30 @@ async function compileWithEngine(
     `  ${bold(String(manifest.nodeCount))} nodes · ${bold(String(manifest.edgeCount))} edges · ${paint(String(manifest.checkCount) + " checks", "green")} · ${paint(String(manifest.residueCount) + " residue", "amber")}`,
   );
   console.log(`  clusters: ${dim(manifest.clusters.join(", "))}`);
+  if (usage.calls > 0) {
+    const k = (n: number) =>
+      n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K` : String(n);
+    const cost =
+      usage.costUsd > 0
+        ? `${usage.costEstimated ? "≈" : ""}$${usage.costUsd.toFixed(2)}`
+        : "—";
+    // claude-code reports an exact $ even on the subscription (it's the API-equivalent value);
+    // before 2026-06-15 that's included in the plan, after it's drawn from the Agent SDK credit.
+    const note = usage.costEstimated
+      ? dim(" (API, est.)")
+      : dim(
+          " (subscription: included until 2026-06-15, then Agent SDK credit)",
+        );
+    console.log(
+      "  " +
+        paint("spend", "amber") +
+        dim(
+          `  ${usage.calls} calls · ${k(usage.inputTokens)} in · ${k(usage.outputTokens)} out · ${k(usage.cacheReadTokens)} harness-cache · `,
+        ) +
+        cost +
+        note,
+    );
+  }
   if (rejected.length) {
     console.log(
       dim(

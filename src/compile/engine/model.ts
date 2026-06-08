@@ -36,6 +36,129 @@ export function notConfigured(): ModelClient {
   };
 }
 
+// ── Spend metering (the agent reads this; the user uses it to cut cost) ──────────────────────
+
+/** One call's token usage + cost. `costUsd` is provider-exact when known, else null (estimate it). */
+export interface CallUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheCreationTokens: number;
+  costUsd: number | null;
+}
+
+/** A per-compile accumulator: how many calls, how many tokens, and how much it cost. */
+export interface UsageMeter {
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheCreationTokens: number;
+  costUsd: number;
+  /** True if ANY call's cost was estimated from a price table (API path) vs provider-reported. */
+  costEstimated: boolean;
+}
+
+export function newUsageMeter(): UsageMeter {
+  return {
+    calls: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheReadTokens: 0,
+    cacheCreationTokens: 0,
+    costUsd: 0,
+    costEstimated: false,
+  };
+}
+
+/** Fold one call's usage into the meter. `estimated` flags a table-derived (not exact) cost. */
+export function recordUsage(
+  meter: UsageMeter,
+  u: CallUsage,
+  estimated: boolean,
+): void {
+  meter.calls += 1;
+  meter.inputTokens += u.inputTokens;
+  meter.outputTokens += u.outputTokens;
+  meter.cacheReadTokens += u.cacheReadTokens;
+  meter.cacheCreationTokens += u.cacheCreationTokens;
+  if (typeof u.costUsd === "number") meter.costUsd += u.costUsd;
+  if (estimated) meter.costEstimated = true;
+}
+
+/** Published per-million-token prices, by model family — for estimating the API path's cost. */
+const PRICE_PER_MTOK: Record<string, { in: number; out: number }> = {
+  opus: { in: 15, out: 75 },
+  sonnet: { in: 3, out: 15 },
+  haiku: { in: 1, out: 5 },
+};
+
+/** Estimate USD for an API call from the model family. Unknown family → null (don't guess). */
+export function estimateCostUsd(
+  model: string,
+  inTokens: number,
+  outTokens: number,
+): number | null {
+  const m = model.toLowerCase();
+  const fam = m.includes("opus")
+    ? "opus"
+    : m.includes("sonnet")
+      ? "sonnet"
+      : m.includes("haiku")
+        ? "haiku"
+        : null;
+  if (!fam) return null;
+  const p = PRICE_PER_MTOK[fam]!;
+  return (inTokens / 1_000_000) * p.in + (outTokens / 1_000_000) * p.out;
+}
+
+/**
+ * Pull the answer text AND the usage/cost out of `claude -p --output-format json`. That format is
+ * an ARRAY of stream events; the `result` event carries `.result` (the text), a `.usage` block, and
+ * `.total_cost_usd` (provider-exact). The big `cache_read_input_tokens` is Claude Code's own system
+ * prompt riding every call — the overhead of borrowing the harness. Falls back to raw text (no usage)
+ * if the output isn't the JSON envelope (e.g. an error string), so callers degrade cleanly.
+ */
+export function parseClaudeCodeOutput(stdout: string): {
+  text: string;
+  usage: CallUsage | null;
+} {
+  const raw = stdout.trim();
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    const ev = (
+      Array.isArray(parsed)
+        ? parsed.find(
+            (e) =>
+              e &&
+              typeof e === "object" &&
+              (e as { type?: string }).type === "result",
+          )
+        : parsed
+    ) as Record<string, unknown> | undefined;
+    if (ev && typeof ev["result"] === "string") {
+      const u = (ev["usage"] ?? {}) as Record<string, unknown>;
+      const num = (v: unknown): number => (typeof v === "number" ? v : 0);
+      return {
+        text: ev["result"] as string,
+        usage: {
+          inputTokens: num(u["input_tokens"]),
+          outputTokens: num(u["output_tokens"]),
+          cacheReadTokens: num(u["cache_read_input_tokens"]),
+          cacheCreationTokens: num(u["cache_creation_input_tokens"]),
+          costUsd:
+            typeof ev["total_cost_usd"] === "number"
+              ? (ev["total_cost_usd"] as number)
+              : null,
+        },
+      };
+    }
+  } catch {
+    // not the JSON envelope — fall through to raw text
+  }
+  return { text: raw, usage: null };
+}
+
 /** Tuning for the live client. Defaults are conservative; never carries a key. */
 export interface AnthropicOptions {
   /** Model id. Override via `ADA_MODEL` env or this arg; defaults to a current Claude. */
@@ -44,6 +167,8 @@ export interface AnthropicOptions {
   maxTokens?: number;
   /** Wall-clock budget for one call before it aborts. Env `ADA_MODEL_TIMEOUT_MS` else 120s. */
   timeoutMs?: number;
+  /** Optional spend meter — each call folds its token usage + cost in, for the compile's report. */
+  meter?: UsageMeter;
 }
 
 /** Default per-call wall-clock ceiling — a hung connection must not hang the whole compile. */
@@ -83,6 +208,12 @@ const DEFAULT_MAX_TOKENS = 4096;
 /** Narrow shape of the bits of the Messages response we read. */
 interface MessagesResponse {
   content?: Array<{ type?: string; text?: string }>;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    cache_read_input_tokens?: number;
+    cache_creation_input_tokens?: number;
+  };
 }
 
 /**
@@ -176,6 +307,22 @@ export function anthropicClient(options: AnthropicOptions = {}): ModelClient {
             "type 'text'; got an empty or non-text response.",
         );
       }
+      // The API doesn't hand us a $ figure → estimate from the model family's price table.
+      if (options.meter) {
+        const inTok = data.usage?.input_tokens ?? 0;
+        const outTok = data.usage?.output_tokens ?? 0;
+        recordUsage(
+          options.meter,
+          {
+            inputTokens: inTok,
+            outputTokens: outTok,
+            cacheReadTokens: data.usage?.cache_read_input_tokens ?? 0,
+            cacheCreationTokens: data.usage?.cache_creation_input_tokens ?? 0,
+            costUsd: estimateCostUsd(model, inTok, outTok),
+          },
+          true,
+        );
+      }
       return text;
     },
   };
@@ -236,7 +383,7 @@ export function buildClaudeCodeArgs(opts: { model?: string } = {}): string[] {
   return [
     "-p",
     "--output-format",
-    "text",
+    "json", // JSON envelope so we can read per-call token usage + total_cost_usd (the spend report)
     "--strict-mcp-config",
     "--disable-slash-commands",
     ...(opts.model ? ["--model", opts.model] : []),
@@ -245,11 +392,12 @@ export function buildClaudeCodeArgs(opts: { model?: string } = {}): string[] {
 
 /**
  * BORROW the harness: run the compile-time call through the local `claude` CLI on the user's
- * subscription — no API key. The prompt goes in on STDIN (no ARG_MAX limit); the answer is read
- * from stdout (`--output-format text`). Run in a NEUTRAL cwd (a temp dir) so the target repo's
- * CLAUDE.md/hooks never load (which would be slow, polluting, and — inside Ada's own repo —
- * recursive). ANTHROPIC_API_KEY is STRIPPED from the child env so a present-but-dead key can't
- * route this to the paid API. Timeout via the same `deadline` budget, enforced by killing the child.
+ * subscription — no API key. The prompt goes in on STDIN (no ARG_MAX limit); the answer + the token
+ * usage + the cost are read from stdout (`--output-format json`). Run in a NEUTRAL cwd (a temp dir)
+ * so the target repo's CLAUDE.md/hooks never load (which would be slow, polluting, and — inside Ada's
+ * own repo — recursive). ANTHROPIC_API_KEY is STRIPPED from the child env so a present-but-dead key
+ * can't route this to the paid API. Timeout via the `deadline` budget, enforced by killing the child.
+ * When a `meter` is provided, each call's provider-exact usage + cost is folded in (the spend report).
  */
 export function claudeCodeClient(options: AnthropicOptions = {}): ModelClient {
   const model = options.model ?? process.env["ADA_MODEL"];
@@ -295,9 +443,12 @@ export function claudeCodeClient(options: AnthropicOptions = {}): ModelClient {
         });
         child.on("close", (code) => {
           clearTimeout(timer);
-          const text = out.trim();
+          const { text, usage } = parseClaudeCodeOutput(out);
           if (code !== 0 || !text) {
-            const detail = (err.trim() || text || `exit ${code}`).slice(0, 500);
+            const detail = (err.trim() || out.trim() || `exit ${code}`).slice(
+              0,
+              500,
+            );
             reject(
               new Error(
                 `claude -p failed (${detail}). If it says "Not logged in", run \`claude login\`; ` +
@@ -306,6 +457,8 @@ export function claudeCodeClient(options: AnthropicOptions = {}): ModelClient {
             );
             return;
           }
+          // Provider-EXACT spend (claude reports total_cost_usd) — fold it into the meter.
+          if (options.meter && usage) recordUsage(options.meter, usage, false);
           resolve(text);
         });
         child.stdin.write(prompt);
@@ -338,6 +491,7 @@ export function defaultModelClient(
     ...(options.model ? { model: options.model } : {}),
     ...(options.maxTokens ? { maxTokens: options.maxTokens } : {}),
     ...(options.timeoutMs ? { timeoutMs: options.timeoutMs } : {}),
+    ...(options.meter ? { meter: options.meter } : {}),
   };
   return provider === "claude-code"
     ? claudeCodeClient(tuning)
