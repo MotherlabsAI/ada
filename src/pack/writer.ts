@@ -25,6 +25,7 @@ import { toolContractsExport } from "../export/tools.js";
 import { evidenceLedgerExport } from "../export/evidence.js";
 import { memoryPolicyExport } from "../export/memory.js";
 import { copilotExports } from "../export/copilot.js";
+import { mcpExports } from "../export/mcp.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -281,6 +282,12 @@ async function writePackBody(
   // Multi-target reach (the family beyond Claude): GitHub Copilot repo instructions.
   for (const f of copilotExports(model)) {
     const dest = join(p.copilotDir, f.path);
+    await mkdir(dirname(dest), { recursive: true });
+    await writeFile(dest, f.content, "utf8");
+  }
+  // …and the open protocol: MCP resources + tools, mountable by any MCP-speaking client.
+  for (const f of mcpExports(model)) {
+    const dest = join(p.mcpDir, f.path);
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, f.content, "utf8");
   }
