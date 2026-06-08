@@ -1,6 +1,6 @@
 ---
-description: Ada control panel — operate the semantic compiler from inside Claude Code. No verb = status; verbs = compile|view|verify|list|residue|recompile|deeper. Args - [verb] [rest]
-argument-hint: "[compile <intent> | view [slug] | verify [slug] | list | residue [slug] | recompile <slug> | deeper <slug> <node>]"
+description: Ada control panel — operate the semantic compiler from inside Claude Code. No verb = status; verbs = compile|watch|view|verify|list|residue|recompile|deeper. Args - [verb] [rest]
+argument-hint: "[compile <intent> | watch [slug] | view [slug] | verify [slug] | list | residue [slug] | recompile <slug> | deeper <slug> <node>]"
 allowed-tools: Bash, Read
 ---
 
@@ -24,7 +24,8 @@ ls -1 .ada/packs/ 2>/dev/null
 - List the packs (or, if none: "no packs — run `/ada compile <intent>`").
 - Name the default slug (`showcase`) and the most-recently-modified pack.
 - Print the verb menu, one line each:
-  `compile <intent>` · `view [slug]` · `verify [slug]` · `list` · `residue [slug]` · `recompile <slug>` · `deeper <slug> <node>`
+  `compile <intent>` · `watch [slug]` · `view [slug]` · `verify [slug]` · `list` · `residue [slug]` · `recompile <slug>` · `deeper <slug> <node>`
+- If a pack has a live `.compile-progress.json` with status `running`, note it: "◈ <slug> compiling — `/ada watch <slug>`".
 
 ## compile <intent>
 
@@ -37,8 +38,29 @@ ada compile --engine "<intent>" --slug=<slug> --provider=claude-code
 ```
 
 Add `--repo=.` **only** if the intent is about the current repo/codebase. Do not lower
-`ADA_MODEL_TIMEOUT_MS`. When the task notifies completion, show `ada pom <slug>` + the tree
-(`.ada/packs/<slug>/wiki/index.md`).
+`ADA_MODEL_TIMEOUT_MS`.
+
+**Then MONITOR it live — this is the cockpit watching Ada compile.** The engine writes a live
+snapshot to `.ada/packs/<slug>/.compile-progress.json` as it runs; surface it in the transcript:
+
+1. Right after launch, print the first snapshot: `ada watch <slug> --once`.
+2. Every ~20–30s, re-run `ada watch <slug> --once` and reprint the live tree — phases, per-cluster
+   excavation (the "agents"), `nodes · Ω · $cost`. A brief sleep between polls is fine; the
+   background task's completion notification is the authoritative end signal (don't poll-spam).
+3. On completion — or status `done`/`error` in the snapshot — stop polling and show `ada pom <slug>`
+   - the tree (`.ada/packs/<slug>/wiki/index.md`). On `error`, surface the snapshot's reason line.
+
+(`ada watch <slug>` **without** `--once` is a smooth in-place live view for your own terminal via
+`! ada watch <slug>`; the skill uses `--once` so each tick is one cheap snapshot, not a re-scrape.)
+
+## watch [slug]
+
+```
+ada watch <slug> --once    # one snapshot of the live (or last) compile: phases · per-cluster · totals
+```
+
+Read-only — re-attach to an in-flight compile or re-render the last run; omit slug → default.
+`--json` gives the raw snapshot for parsing. For a smooth in-place stream, run `! ada watch <slug>`.
 
 ## view [slug]
 
