@@ -33,6 +33,7 @@ export function paths(cwd: string, slug: string) {
     claudeAgentsDir: join(root, "exports", "claude", "agents"),
     claudePromptsDir: join(root, "exports", "claude", "prompts"),
     blueprintDir: join(root, "exports", "blueprint"),
+    copilotDir: join(root, "exports", "copilot"),
   };
 }
 

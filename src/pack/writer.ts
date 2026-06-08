@@ -24,6 +24,7 @@ import { agentChartersExport } from "../export/agents.js";
 import { toolContractsExport } from "../export/tools.js";
 import { evidenceLedgerExport } from "../export/evidence.js";
 import { memoryPolicyExport } from "../export/memory.js";
+import { copilotExports } from "../export/copilot.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -274,6 +275,12 @@ async function writePackBody(
     memoryPolicyExport(model),
   ]) {
     const dest = join(p.blueprintDir, f.path);
+    await mkdir(dirname(dest), { recursive: true });
+    await writeFile(dest, f.content, "utf8");
+  }
+  // Multi-target reach (the family beyond Claude): GitHub Copilot repo instructions.
+  for (const f of copilotExports(model)) {
+    const dest = join(p.copilotDir, f.path);
     await mkdir(dirname(dest), { recursive: true });
     await writeFile(dest, f.content, "utf8");
   }
