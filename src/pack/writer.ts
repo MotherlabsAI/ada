@@ -20,6 +20,7 @@ import { assertBackingHonest } from "../export/coherence.js";
 import { blueprintExports } from "../export/blueprint.js";
 import { pomExport } from "../export/pom.js";
 import { autonomyContractExport } from "../export/autonomy.js";
+import { agentChartersExport } from "../export/agents.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -264,6 +265,7 @@ async function writePackBody(
     ...blueprintExports(model),
     pomExport(model),
     autonomyContractExport(model),
+    agentChartersExport(model),
   ]) {
     const dest = join(p.blueprintDir, f.path);
     await mkdir(dirname(dest), { recursive: true });
