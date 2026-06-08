@@ -25,7 +25,7 @@ import { excavatePack, type RejectedSpec } from "./orchestrate.js";
 import { proposeClusters, type ClusterDef } from "./clusters.js";
 import { proposeActions, PLAN_CLUSTER } from "./plan.js";
 import { normalizeIntent } from "./normalize.js";
-import { anthropicClient, type ModelClient } from "./model.js";
+import { defaultModelClient, type ModelClient } from "./model.js";
 import { writePack } from "../../pack/writer.js";
 
 /**
@@ -37,8 +37,15 @@ import { writePack } from "../../pack/writer.js";
 export interface EngineCompileOptions {
   /** Target kept nodes per cluster; undefined → engine default (4). Caps model calls → cost. */
   perCluster?: number;
-  /** Model id override; undefined → anthropicClient falls back to ADA_MODEL, then default. */
+  /** Model id override; undefined → the client falls back to ADA_MODEL, then its default. */
   model?: string;
+  /**
+   * Force the model PROVIDER: "claude-code" (borrow the Claude Code subscription via the local
+   * `claude` CLI — no API key) or "api" (the direct Messages API with ANTHROPIC_API_KEY). Undefined
+   * → `resolveProvider` decides (prefers the subscription when `claude` is on PATH). A9: still one
+   * compile-time call, just through a different door.
+   */
+  provider?: string;
   /** Explicit area override (skips the model proposal). ROOT/UNK ensured by the caller. */
   clusters?: ClusterDef[];
   /**
@@ -122,8 +129,12 @@ export async function engineCompile(args: {
   // --depth caps kept nodes/cluster (≈ caps model calls → caps cost). The model id flows into
   // the DEFAULT client only; an injected `client` (tests) wins and never touches a network.
   const depthOpts = opts.perCluster ? { perCluster: opts.perCluster } : {};
-  const clientOpts = opts.model ? { model: opts.model } : {};
-  const client = opts.client ?? anthropicClient(clientOpts);
+  const client =
+    opts.client ??
+    defaultModelClient({
+      ...(opts.model ? { model: opts.model } : {}),
+      ...(opts.provider ? { provider: opts.provider } : {}),
+    });
 
   // INTENT FRONT-END: expand a thin intent into a rich Seed before anything downstream — so a
   // non-expert's vague sentence excavates like an expert's spec. Skipped when the interview

@@ -28,7 +28,11 @@ import {
 import { engineSeed } from "./compile/engine/seed.js";
 import { ingestRepo } from "./compile/engine/ingest.js";
 import { repoDigest } from "./compile/engine/repoDigest.js";
-import { anthropicClient } from "./compile/engine/model.js";
+import {
+  defaultModelClient,
+  claudeCodeAvailable,
+  resolveProvider,
+} from "./compile/engine/model.js";
 import {
   nextStep,
   applyAnswer,
@@ -95,6 +99,12 @@ export interface EngineOptions {
    * compiled digest is fed to the excavator as ∵ source. Bare `--repo` means the cwd (".").
    */
   repo?: string;
+  /**
+   * `--provider=claude-code|api` → force the model provider. `claude-code` borrows the local
+   * `claude` CLI on the user's subscription (NO API key); `api` uses ANTHROPIC_API_KEY directly.
+   * Undefined → auto (prefers the subscription when `claude` is on PATH). `--claude-code` is sugar.
+   */
+  provider?: string;
 }
 
 /**
@@ -146,6 +156,14 @@ export function buildEngineOptions(
   const repoRaw = flags["repo"];
   if (typeof repoRaw === "string") opts.repo = repoRaw.trim() || ".";
   else if (repoRaw === true) opts.repo = ".";
+  // --provider=claude-code|api (or the sugar --claude-code) → force the model provider. Only the
+  // two known values are honored; anything else is ignored, leaving the auto-resolution path.
+  const providerRaw = flags["provider"];
+  if (typeof providerRaw === "string") {
+    const p = providerRaw.trim().toLowerCase();
+    if (p === "claude-code" || p === "api") opts.provider = p;
+  }
+  if (flags["claude-code"] === true) opts.provider = "claude-code";
   return opts;
 }
 
@@ -155,11 +173,13 @@ const HELP = [
   "  ada                               open the workbench (TTY) — the default slug's tree",
   "  ada init                          scaffold .ada/ here",
   '  ada compile "<intent>" [--slug=x] compile intent into a pack',
-  '  ada compile --engine "<intent>" [--depth=N] [--model=<id>] [--clusters=A,B,C] [--repo[=path]]',
+  '  ada compile --engine "<intent>" [--depth=N] [--model=<id>] [--clusters=A,B,C] [--repo[=path]] [--provider=…]',
   "                                    compile via the U2F engine (real model call);",
   "                                    --depth caps nodes/cluster (cost), --model picks the model,",
   "                                    --clusters overrides the auto-derived domain areas,",
-  "                                    --repo compiles an existing repo as ∵ source context",
+  "                                    --repo compiles an existing repo as ∵ source context,",
+  "                                    --provider=claude-code uses your Claude Code subscription",
+  "                                      (NO API key); =api forces the key. Default: auto.",
   "  ada ctx init [intent] [--slug=x] [--model=id] [--compile]",
   "                                    chat-style interview BEFORE compile: captures what you",
   "                                    expect into the Seed, then exits (--compile chains in)",
@@ -171,10 +191,10 @@ const HELP = [
   "  ada c run [slug] [--defect]       run deterministic C checks",
   "  ada pom [slug]                    print the Problem Operating Model (intent · constraints · unknowns · verifier · residue)",
   "  ada export [slug]                 list exported files",
-  "  ada key                           is ANTHROPIC_API_KEY set? (set once in ~/.ada/.env)",
+  "  ada key                           how Ada reaches the model: subscription (no key) or API key",
   "",
   dim(
-    "  default slug: showcase  ·  key: ./.env or ~/.ada/.env (env wins, never committed)",
+    "  default slug: showcase  ·  model: Claude Code subscription (no key) or ANTHROPIC_API_KEY",
   ),
 ].join("\n");
 
@@ -328,6 +348,7 @@ async function compileWithEngine(
       ...(options.perCluster ? { perCluster: options.perCluster } : {}),
       ...(options.model ? { model: options.model } : {}),
       ...(options.clusters ? { clusters: options.clusters } : {}),
+      ...(options.provider ? { provider: options.provider } : {}),
     },
   });
   const p = paths(cwd, slug);
@@ -614,7 +635,10 @@ async function cmdCtx(args: string[]): Promise<void> {
   const engineOptions = buildEngineOptions(flags);
 
   await mkdir(packsRoot(cwd), { recursive: true });
-  const client = anthropicClient(clientOpts);
+  const client = defaultModelClient({
+    ...clientOpts,
+    ...(engineOptions.provider ? { provider: engineOptions.provider } : {}),
+  });
   const baseSeed = engineSeed(intent);
 
   // Non-TTY fallback (mirror cmdTui): the chat UI needs raw mode. Without it we do NOT hang —
@@ -731,27 +755,49 @@ async function writeSeedOnly(slug: string, seed: Seed): Promise<void> {
 }
 
 /**
- * Show whether the API key is available, value-free (AXIOM A9 — never print the secret).
- * The key is loaded at startup from `./.env` or `~/.ada/.env` (env always wins).
+ * Show how Ada will reach the model — value-free (AXIOM A9 — never print the secret). Two paths:
+ * the Claude Code SUBSCRIPTION (the local `claude` CLI, no key) and the API key. Reports which
+ * provider auto-resolution would pick, so a keyless user sees they can compile with zero setup.
  */
 function cmdKey(): void {
-  if (process.env["ANTHROPIC_API_KEY"]) {
-    console.log(paint("✓ ", "green") + "ANTHROPIC_API_KEY is available.");
-    console.log(
+  const hasKey = Boolean((process.env["ANTHROPIC_API_KEY"] ?? "").trim());
+  const hasClaude = claudeCodeAvailable();
+  const provider = resolveProvider({
+    env: process.env,
+    claudeAvailable: hasClaude,
+  });
+
+  console.log(bold("Model access") + dim(" — Ada needs ONE of these:"));
+  console.log(
+    (hasClaude ? paint("✓ ", "green") : paint("✗ ", "rose")) +
+      "Claude Code subscription " +
       dim(
-        "  Ada loads it from (first wins): your shell env · ./.env · ~/.ada/.env",
+        hasClaude
+          ? "(`claude` on PATH — no API key needed; runs on your plan)"
+          : "(install Claude Code + `claude login` to compile without a key)",
       ),
-    );
-  } else {
-    console.log(paint("✗ ", "rose") + "ANTHROPIC_API_KEY is not set.");
-    console.log(dim("  Set it once — never committed, never logged:"));
-    console.log(
+  );
+  console.log(
+    (hasKey ? paint("✓ ", "green") : paint("✗ ", "rose")) +
+      "ANTHROPIC_API_KEY " +
       dim(
-        "    mkdir -p ~/.ada && printf 'ANTHROPIC_API_KEY=sk-ant-...\\n' >> ~/.ada/.env",
+        hasKey
+          ? "(loaded from: shell env · ./.env · ~/.ada/.env)"
+          : "(optional — `mkdir -p ~/.ada && printf 'ANTHROPIC_API_KEY=sk-ant-...\\n' >> ~/.ada/.env`)",
       ),
-    );
+  );
+  console.log(
+    dim(
+      `  → auto-selects: ${bold(provider === "claude-code" ? "claude-code (subscription)" : "api (key)")}` +
+        "  ·  force with --provider=claude-code|api",
+    ),
+  );
+  if (!hasClaude && !hasKey) {
     console.log(
-      dim("  Or for this session only: export ANTHROPIC_API_KEY=sk-ant-..."),
+      paint("  ! ", "amber") +
+        dim(
+          "neither is set up yet — do one of the two above, then `ada compile --engine ...`",
+        ),
     );
   }
 }
