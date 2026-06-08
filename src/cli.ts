@@ -48,6 +48,7 @@ import {
 } from "./tui/navigator.js";
 import { runChecksWithDensity, renderReport } from "./c/run.js";
 import { canRunInk } from "./tui/ink/canRunInk.js";
+import { restoreTerminal, armTerminalRestore } from "./tui/terminal.js";
 import { paint, bold, dim } from "./core/grammar.js";
 import { loadEnvConfig } from "./env.js";
 import type { Seed } from "./core/types.js";
@@ -405,6 +406,9 @@ async function cmdTui(args: string[]): Promise<void> {
   const initialState = readPackState(stateFile);
   const packs = listPacks(cwd);
 
+  // Safety net (TERM.001): restore the terminal on ANY exit / SIGTERM, so a crash or `kill`
+  // mid-session never leaves the user's shell in raw mode + the alternate screen.
+  const disarmRestore = armTerminalRestore();
   try {
     const { waitUntilExit } = render(
       createElement(App, {
@@ -430,10 +434,15 @@ async function cmdTui(args: string[]): Promise<void> {
     await waitUntilExit();
   } catch (err) {
     // Raw mode can still be refused by some terminals; never leave a blank flash.
+    restoreTerminal();
     const msg = err instanceof Error ? err.message : String(err);
     console.error(paint("✗ TUI could not start: ", "rose") + dim(msg));
     console.error(dim("  falling back to the static view —"));
     console.log(renderStatic(cwd, slug, nodeId));
+  } finally {
+    // Normal exit: Ink already restored, but make it certain, then drop the handlers.
+    restoreTerminal();
+    disarmRestore();
   }
 }
 

@@ -13,6 +13,24 @@ import { fixtureGraph } from "./fixtures.js";
 import type { PackSummary } from "./usePack.js";
 
 const tick = (ms = 60) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Poll the frame until it matches — robust to machine load, where a fixed `tick(80)` flakes
+ * (a green suite that intermittently fails is itself a production-readiness defect). Returns the
+ * final frame either way, so the caller's assertion produces a useful message on a real failure.
+ */
+async function waitForFrame(
+  getFrame: () => string | undefined,
+  re: RegExp,
+  tries = 80,
+): Promise<string> {
+  for (let i = 0; i < tries; i++) {
+    if (re.test(getFrame() ?? "")) return getFrame() ?? "";
+    await tick(20);
+  }
+  return getFrame() ?? "";
+}
+
 const ESC = String.fromCharCode(27);
 const DOWN = ESC + "[B";
 
@@ -116,8 +134,10 @@ test("Compile: an injected error surfaces cleanly back on the intent view", asyn
   for (const ch of "x") stdin.write(ch);
   await tick();
   stdin.write("\r"); // submit → error
-  await tick(80);
-  const f = lastFrame() ?? "";
+  const f = await waitForFrame(
+    lastFrame,
+    /✗ the gate rejected every candidate/,
+  );
   assert.match(f, /✗ the gate rejected every candidate/, "error shown inline");
   assert.match(f, /COMPILE AN IDEA/, "back on the intent view to retry");
 });
@@ -135,8 +155,7 @@ test("Compile: a missing-key error shows the `ada key` guidance (and never crash
   for (const ch of "y") stdin.write(ch);
   await tick();
   stdin.write("\r");
-  await tick(80);
-  const f = lastFrame() ?? "";
+  const f = await waitForFrame(lastFrame, /ANTHROPIC_API_KEY/);
   assert.match(f, /ANTHROPIC_API_KEY/, "names the missing key");
   assert.match(f, /~\/\.ada\/\.env/, "points at where the key lives");
 });
