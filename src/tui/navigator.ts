@@ -3,10 +3,32 @@ import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import type { Graph, NodeCapsule, PackManifest } from "../core/types.js";
-import { paint, bold, dim, TRUTH_GLYPH, CHECK_LABEL } from "../core/grammar.js";
+import { paint, bold, dim } from "../core/grammar.js";
 import { clusterOf } from "../core/ids.js";
-import { verifyTally } from "./ink/lines.js";
+import {
+  verifyTally,
+  readerLines,
+  resolvableLinks,
+  type Line,
+} from "./ink/lines.js";
 import { paths, packsRoot } from "../pack/layout.js";
+
+/**
+ * Render one lines.ts `Line` to an ANSI string (the static projection of the Ink reader). This is
+ * the single-source-of-truth bridge (ROOT.001): the readline inspector now PROJECTS `readerLines`
+ * instead of keeping a second, divergent layout — so `ada open <node>` and `ada tui` read identically.
+ */
+function lineToString(l: Line): string {
+  const seg = (text: string, o: Partial<Line>): string => {
+    let t = text;
+    if (o.colour) t = paint(t, o.colour);
+    if (o.bold) t = bold(t);
+    if (o.dim) t = dim(t);
+    return t;
+  };
+  if (l.segments) return l.segments.map((s) => seg(s.text, s)).join("");
+  return seg(l.text, l);
+}
 
 /** Lists pack slugs on disk so a wrong/mangled slug self-corrects. */
 function availablePacks(cwd: string): string[] {
@@ -101,51 +123,14 @@ export function renderTree(graph: Graph, state: PackState): string {
   return lines.join("\n");
 }
 
+/**
+ * The static node inspector — now a PROJECTION of the Ink reader (`readerLines`), not a second
+ * layout. One source of truth for the inspector's visible geometry (ROOT.001): sections, reading
+ * measure, bullets, and followable links are defined once in lines.ts and rendered here as ANSI.
+ */
 export function renderNode(graph: Graph, node: NodeCapsule): string {
-  const c = node.checkability;
-  const wl = node.worldLinks;
-  const link = (label: string, ids: string[]) =>
-    ids.length ? `  ${dim(label + ":")} ${ids.join(", ")}` : "";
-  const lines = [
-    paint(`${node.ui.graphSymbol} ${node.id}`, node.colour) +
-      "  " +
-      bold(node.label),
-    dim(
-      `  ${node.role.cluster} · ${node.depth} · ${TRUTH_GLYPH[node.truth]} ${node.truth} · ${c.class} ${CHECK_LABEL[c.class]}`,
-    ),
-    "",
-    "  " + paint("⟡ ", "terracotta") + node.localContext.summary,
-    "  " + dim("∴ ") + node.localContext.whyItMatters,
-    "  " + paint("! ", "rose") + dim(node.localContext.failureIfMissing),
-    "",
-    "  " +
-      paint("⊢ compiles to: ", "slate") +
-      node.role.compileTargets.join(", "),
-  ];
-  if (c.candidates.length) {
-    lines.push(
-      "  " + paint("κ candidates: ", "green") + c.candidates.join(", "),
-    );
-  }
-  if (node.epistemics.unknowns.length) {
-    lines.push(
-      "  " +
-        paint("Ω unknowns: ", "amber") +
-        node.epistemics.unknowns.join("; "),
-    );
-  }
-  lines.push("");
-  for (const l of [
-    link("parents", wl.parents),
-    link("children", wl.children),
-    link("siblings", wl.siblings),
-    link("depends on", wl.dependsOn),
-    link("exports to", wl.exportsTo),
-    link("guarded by", wl.guardedBy),
-  ]) {
-    if (l) lines.push(l);
-  }
-  return lines.join("\n");
+  const links = resolvableLinks(node, graph);
+  return readerLines(node, 84, { links }).map(lineToString).join("\n");
 }
 
 export function flagNode(cwd: string, slug: string, nodeId: string): string {
