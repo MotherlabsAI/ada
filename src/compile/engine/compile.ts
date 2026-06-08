@@ -32,6 +32,11 @@ import {
   type UsageMeter,
 } from "./model.js";
 import { writePack } from "../../pack/writer.js";
+import {
+  ProgressRecorder,
+  type PhaseId,
+  type ProgressSink,
+} from "./progress.js";
 
 /**
  * Cost-control + injection options for one engine compile. `perCluster`/`model`/`clusters`
@@ -75,6 +80,13 @@ export interface EngineCompileOptions {
    * a network can enter — every other line here is pure orchestration over it.
    */
   client?: ModelClient;
+  /**
+   * Real-time progress sink. The engine ALWAYS records progress to `.compile-progress.json` in
+   * the pack dir (so `ada watch <slug>` works unconditionally); this optional sink is an extra
+   * fan-out — e.g. a TUI/state setter — called with each raw event. Off by default; no behavior
+   * change when absent (stub tests unaffected).
+   */
+  onProgress?: ProgressSink;
 }
 
 export interface EngineCompileResult {
@@ -147,69 +159,124 @@ export async function engineCompile(args: {
       ...(opts.provider ? { provider: opts.provider } : {}),
     });
 
-  // INTENT FRONT-END: expand a thin intent into a rich Seed before anything downstream — so a
-  // non-expert's vague sentence excavates like an expert's spec. Skipped when the interview
-  // (`seedOverride`) already captured a rich Seed; off by default (stub tests unaffected).
-  const drivingSeed: Seed =
-    opts.normalize && !seedOverride
-      ? await normalizeIntent(intent, seed, client)
-      : seed;
-
-  // Derive DOMAIN-appropriate areas from the Seed (P7). An explicit override skips the model
-  // proposal; otherwise `proposeClusters` makes ONE model call and falls back on garbled output.
-  const proposed: ClusterDef[] = opts.clusters
-    ? withAnchors(opts.clusters)
-    : await proposeClusters(drivingSeed, client);
-  const clusterLabels: Record<string, string> = Object.fromEntries(
-    proposed.map((c) => [c.code, c.label]),
-  );
-
-  const { kept, rejected } = await excavatePack(
-    drivingSeed,
-    proposed.map((c) => c.code),
-    client,
-    depthOpts,
-  );
-  if (kept.length === 0) {
-    throw new Error(
-      "The engine produced no node that cleared the gate. Every candidate was rejected " +
-        "as generic or un-traced. Refine the intent and retry.",
-    );
-  }
-
-  // PLANNER pass (opt-in): turn the described world into a plan. ONE model call → gated Action
-  // nodes (the moves from current repo → goal), merged under the PLAN cluster so the POM's
-  // execution_plan populates. Traced to gaps (A2), gated by the same rubric (A3); a non-array
-  // response adds nothing. Runs only when a planning move exists (≥1 kept world node to act on).
-  let allNodes = kept;
-  if (opts.plan) {
-    const { actions, rejected: planRejected } = await proposeActions(
-      drivingSeed,
-      kept,
-      client,
-    );
-    if (actions.length) {
-      allNodes = [...kept, ...actions];
-      clusterLabels[PLAN_CLUSTER] = "Plan / next moves";
-    }
-    rejected.push(...planRejected);
-  }
-
-  // `seedOverride` (interview) persists verbatim; absent → assembly DERIVES the pack Seed from
-  // intent + kept nodes. Forwarding `undefined` here is exactly what the CLI did (A2).
-  const { model } = assemblePackGated(
+  // THE REAL-TIME SPINE. The recorder folds the engine's event stream into one snapshot and
+  // writes `.compile-progress.json` after every event, so `ada watch <slug>` (and the /ada skill
+  // loop) can see the compile run. It refreshes token/cost totals from `meter` on each emit, and
+  // fans every raw event out to `opts.onProgress` when present. Best-effort: it never throws.
+  const now = (): string => new Date().toISOString();
+  const rec = new ProgressRecorder({
+    cwd,
     slug,
     intent,
-    allNodes,
-    seedOverride,
-    clusterLabels,
-  );
-  const manifest = await writePack(cwd, model);
+    now: now(),
+    meter,
+    ...(opts.onProgress ? { onEvent: opts.onProgress } : {}),
+  });
+  const emit = (e: Parameters<ProgressSink>[0]): void => rec.emit(e, now());
+  let phase: PhaseId = "normalize";
 
-  const firstNodeId =
-    model.graph.nodes.find((n) => n.id !== "ROOT.000")?.id ??
-    model.graph.nodes[0]?.id ??
-    "ROOT.000";
+  try {
+    // INTENT FRONT-END: expand a thin intent into a rich Seed before anything downstream — so a
+    // non-expert's vague sentence excavates like an expert's spec. Skipped when the interview
+    // (`seedOverride`) already captured a rich Seed; off by default (stub tests unaffected).
+    let drivingSeed: Seed = seed;
+    if (opts.normalize && !seedOverride) {
+      phase = "normalize";
+      emit({ kind: "phase_start", phase, callsTotal: 1 });
+      emit({ kind: "call", phase });
+      drivingSeed = await normalizeIntent(intent, seed, client);
+      emit({ kind: "phase_done", phase });
+    }
 
-  return { model, manifest, firstNodeId, rejected, usage: meter };
+    // Derive DOMAIN-appropriate areas from the Seed (P7). An explicit override skips the model
+    // proposal; otherwise `proposeClusters` makes ONE model call and falls back on garbled output.
+    let proposed: ClusterDef[];
+    if (opts.clusters) {
+      proposed = withAnchors(opts.clusters);
+    } else {
+      phase = "propose";
+      emit({ kind: "phase_start", phase, callsTotal: 1 });
+      emit({ kind: "call", phase });
+      proposed = await proposeClusters(drivingSeed, client);
+      emit({ kind: "phase_done", phase });
+    }
+    const clusterLabels: Record<string, string> = Object.fromEntries(
+      proposed.map((c) => [c.code, c.label]),
+    );
+
+    phase = "excavate";
+    emit({ kind: "phase_start", phase });
+    const { kept, rejected } = await excavatePack(
+      drivingSeed,
+      proposed.map((c) => c.code),
+      client,
+      depthOpts,
+      emit,
+    );
+    emit({ kind: "phase_done", phase });
+    if (kept.length === 0) {
+      throw new Error(
+        "The engine produced no node that cleared the gate. Every candidate was rejected " +
+          "as generic or un-traced. Refine the intent and retry.",
+      );
+    }
+
+    // PLANNER pass (opt-in): turn the described world into a plan. ONE model call → gated Action
+    // nodes (the moves from current repo → goal), merged under the PLAN cluster so the POM's
+    // execution_plan populates. Traced to gaps (A2), gated by the same rubric (A3); a non-array
+    // response adds nothing. Runs only when a planning move exists (≥1 kept world node to act on).
+    let allNodes = kept;
+    if (opts.plan) {
+      phase = "plan";
+      emit({ kind: "phase_start", phase, callsTotal: 1 });
+      emit({ kind: "call", phase });
+      const { actions, rejected: planRejected } = await proposeActions(
+        drivingSeed,
+        kept,
+        client,
+      );
+      if (actions.length) {
+        allNodes = [...kept, ...actions];
+        clusterLabels[PLAN_CLUSTER] = "Plan / next moves";
+      }
+      rejected.push(...planRejected);
+      emit({ kind: "phase_done", phase });
+    }
+
+    // `seedOverride` (interview) persists verbatim; absent → assembly DERIVES the pack Seed from
+    // intent + kept nodes. Forwarding `undefined` here is exactly what the CLI did (A2).
+    phase = "assemble";
+    emit({ kind: "phase_start", phase });
+    const { model } = assemblePackGated(
+      slug,
+      intent,
+      allNodes,
+      seedOverride,
+      clusterLabels,
+    );
+    emit({ kind: "phase_done", phase });
+
+    phase = "write";
+    emit({ kind: "phase_start", phase });
+    const manifest = await writePack(cwd, model);
+    emit({ kind: "phase_done", phase });
+    emit({ kind: "residue", count: manifest.residueCount ?? 0 });
+
+    const firstNodeId =
+      model.graph.nodes.find((n) => n.id !== "ROOT.000")?.id ??
+      model.graph.nodes[0]?.id ??
+      "ROOT.000";
+
+    emit({ kind: "done" });
+    return { model, manifest, firstNodeId, rejected, usage: meter };
+  } catch (err) {
+    // Record the failure into the snapshot (status:"error") so a watcher sees WHY it stopped,
+    // then re-throw — the spine observes; it does not swallow the engine's contract.
+    emit({
+      kind: "error",
+      phase,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    throw err;
+  }
 }

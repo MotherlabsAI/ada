@@ -9,6 +9,11 @@ dist/
 # scratch / preview artifacts
 ._*
 
+# live compile progress — volatile per-run state, never committed (like .state.json)
+.ada/packs/*/.compile-progress.json
+.ada/packs/*/.compile-progress.json.tmp
+.ada/packs/*/.compile-progress.jsonl
+
 # agent worktrees — embedded git checkouts from Claude Code agent runs, never commit
 .claude/worktrees/
 

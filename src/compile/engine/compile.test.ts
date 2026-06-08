@@ -12,6 +12,7 @@ import { join } from "node:path";
 import { engineCompile } from "./compile.js";
 import type { ModelClient } from "./model.js";
 import type { Seed } from "../../core/types.js";
+import type { ProgressEvent, CompileSnapshot } from "./progress.js";
 
 const INTENT =
   "a personal knowledge base that makes my research notes citable by an LLM";
@@ -366,6 +367,110 @@ test("engineCompile WITHOUT plan adds no Action nodes (opt-in; default path unch
     assert.ok(
       !r.model.graph.nodes.some((n) => n.semanticType === "Action"),
       "no planner ran → no Action nodes",
+    );
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test("engineCompile writes a live progress snapshot: phases in order, per-cluster excavation, ends done", async () => {
+  const cwd = tmp();
+  const events: ProgressEvent[] = [];
+  try {
+    await engineCompile({
+      cwd,
+      slug: "kb",
+      intent: INTENT,
+      seed: seed(),
+      // No cluster override → the propose phase runs, so we can assert propose → excavate order.
+      opts: {
+        perCluster: 3,
+        client: stub(),
+        onProgress: (e) => events.push(e),
+      },
+    });
+
+    // The spine wrote the snapshot to the pack dir.
+    const snapPath = join(cwd, ".ada", "packs", "kb", ".compile-progress.json");
+    assert.ok(existsSync(snapPath), ".compile-progress.json was written");
+    const snap = JSON.parse(readFileSync(snapPath, "utf8")) as CompileSnapshot;
+
+    // It ended cleanly.
+    assert.equal(snap.status, "done", "snapshot status is done");
+    assert.equal(snap.lastError, null, "no error recorded");
+
+    // Phases appear in run order: propose before excavate before write.
+    const ids = snap.phases.map((p) => p.id);
+    assert.ok(ids.includes("propose"), "propose phase recorded");
+    assert.ok(ids.includes("excavate"), "excavate phase recorded");
+    assert.ok(ids.includes("write"), "write phase recorded");
+    assert.ok(
+      ids.indexOf("propose") < ids.indexOf("excavate") &&
+        ids.indexOf("excavate") < ids.indexOf("write"),
+      "phases are ordered propose → excavate → write",
+    );
+    assert.ok(
+      snap.phases.every((p) => p.status === "done"),
+      "every recorded phase finished",
+    );
+
+    // The excavate phase carries the per-cluster breakdown, with ≥1 cluster that kept nodes.
+    const exc = snap.phases.find((p) => p.id === "excavate");
+    assert.ok(
+      exc?.clusters && exc.clusters.length > 0,
+      "per-cluster rows present",
+    );
+    assert.ok(
+      exc!.clusters!.some((c) => c.nodes > 0),
+      "at least one cluster excavated a node",
+    );
+    assert.ok(snap.totals.nodes > 0, "totals.nodes reflects kept nodes");
+
+    // The optional onProgress sink saw the same stream, terminated by a done event.
+    assert.ok(
+      events.some((e) => e.kind === "node_added"),
+      "onProgress received node_added events",
+    );
+    assert.equal(
+      events.at(-1)?.kind,
+      "done",
+      "onProgress stream ends with done",
+    );
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test("engineCompile records status:error into the snapshot when the gate rejects everything", async () => {
+  const cwd = tmp();
+  const allGeneric: ModelClient = {
+    async complete(prompt: string): Promise<string> {
+      if (prompt.includes("Do NOT include ROOT or UNK"))
+        return JSON.stringify([{ code: "ATT", label: "Attention" }]);
+      return GENERIC;
+    },
+  };
+  try {
+    await assert.rejects(
+      engineCompile({
+        cwd,
+        slug: "kb",
+        intent: INTENT,
+        seed: seed(),
+        opts: { perCluster: 2, client: allGeneric },
+      }),
+    );
+    const snap = JSON.parse(
+      readFileSync(
+        join(cwd, ".ada", "packs", "kb", ".compile-progress.json"),
+        "utf8",
+      ),
+    ) as CompileSnapshot;
+    assert.equal(snap.status, "error", "the failure is recorded, not silent");
+    assert.match(
+      snap.lastError ?? "",
+      /cleared the gate/,
+      "the snapshot says WHY it stopped",
     );
   } finally {
     rmSync(cwd, { recursive: true, force: true });

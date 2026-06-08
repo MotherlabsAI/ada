@@ -19,6 +19,7 @@ import type { NodeSpec } from "../assemble.js";
 import type { RubricScore } from "../rubric.js";
 import { excavateNode } from "./excavate.js";
 import type { ModelClient } from "./model.js";
+import type { ProgressSink } from "./progress.js";
 
 /** A candidate the deterministic rubric refused (or a duplicate), kept for the audit trail. */
 export interface RejectedSpec {
@@ -66,6 +67,9 @@ export async function excavatePack(
   clusters: string[],
   model: ModelClient,
   opts: DepthOptions = {},
+  /** Optional progress sink: emits cluster_start/call/node_added/cluster_done so a watcher can
+   *  see each "agent" (cluster excavation) run in real time. A no-op when absent. */
+  onProgress?: ProgressSink,
 ): Promise<ExcavatePackResult> {
   const cfg: Required<DepthOptions> = { ...DEFAULTS, ...opts };
   const kept: NodeSpec[] = [];
@@ -77,12 +81,20 @@ export async function excavatePack(
     let keptHere = 0;
     let attempts = 0;
     let misses = 0;
+    // callsTotal is the per-cluster TARGET (a lower bound; a cluster may take more attempts when
+    // candidates are gated out, capped at maxAttemptsPerCluster). A watcher renders calls/target.
+    onProgress?.({
+      kind: "cluster_start",
+      cluster,
+      callsTotal: cfg.perCluster,
+    });
     while (
       keptHere < cfg.perCluster &&
       attempts < cfg.maxAttemptsPerCluster &&
       misses < cfg.maxConsecutiveMisses
     ) {
       attempts++;
+      onProgress?.({ kind: "call", phase: "excavate", cluster });
       const r = await excavateNode(seed, cluster, model, seenLabels);
       if (r.rejected || r.node === null) {
         rejected.push({ spec: r.spec, score: r.score, reason: "gate" });
@@ -104,7 +116,15 @@ export async function excavatePack(
       const id = `${cluster}.${String(keptHere).padStart(3, "0")}`;
       const parents = cluster === "ROOT" ? [] : ["ROOT.000"];
       kept.push({ ...r.node, id, cluster, parents });
+      onProgress?.({
+        kind: "node_added",
+        cluster,
+        id,
+        label: r.node.label,
+        truth: r.node.truth ?? "inference",
+      });
     }
+    onProgress?.({ kind: "cluster_done", cluster });
   }
   return { kept, rejected };
 }
