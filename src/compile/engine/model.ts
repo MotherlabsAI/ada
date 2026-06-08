@@ -48,6 +48,13 @@ export interface AnthropicOptions {
 
 /** Default per-call wall-clock ceiling — a hung connection must not hang the whole compile. */
 const DEFAULT_TIMEOUT_MS = 120_000;
+/**
+ * The Claude Code provider is slower per call than the raw API: each completion is a fresh `claude`
+ * process (cold-start) plus generation, measured at ~45–75s for a real excavation/normalize prompt.
+ * So it gets a much higher default ceiling than the API path — a single slow call must not abort
+ * the whole compile. Still overridable via ADA_MODEL_TIMEOUT_MS / `timeoutMs`.
+ */
+const CLAUDE_CODE_DEFAULT_TIMEOUT_MS = 300_000;
 
 /**
  * An abort budget: aborts the returned signal after `ms`, with a `clear()` to cancel the timer
@@ -251,7 +258,7 @@ export function claudeCodeClient(options: AnthropicOptions = {}): ModelClient {
     options.timeoutMs ??
     (Number.isFinite(envTimeout) && envTimeout > 0
       ? envTimeout
-      : DEFAULT_TIMEOUT_MS);
+      : CLAUDE_CODE_DEFAULT_TIMEOUT_MS);
   return {
     async complete(prompt: string): Promise<string> {
       const childEnv: Record<string, string | undefined> = { ...process.env };
