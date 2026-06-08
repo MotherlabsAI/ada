@@ -58,6 +58,32 @@ test("buildPrompt injects repo context as ∵ source ONLY when present (repo-awa
   );
 });
 
+test("buildPrompt steers TYPE DIVERSITY — every under-used type is cued and the all-Invariant collapse is named", () => {
+  const p = buildPrompt(seed(), "ROOT", "TEMPLATE", []);
+  // Each of the types that the self-compile collapsed away must carry an explicit recognition cue,
+  // so the excavator types a next-move as Action and a test as Eval instead of flattening both to
+  // Invariant. The POM's plan + verifier sections depend on these existing.
+  for (const cue of ["Intent", "Action", "Eval", "Decision", "Risk"]) {
+    assert.match(
+      p,
+      new RegExp(`\\b${cue}\\b`),
+      `the semanticType guidance cues ${cue}`,
+    );
+  }
+  // The anti-collapse nudge itself — naming the failure mode observed on the ada-self compile.
+  assert.match(
+    p,
+    /every node is an Invariant|all-Invariant|collapse/i,
+    "the prompt warns against typing everything as Invariant",
+  );
+  // …but never FORCES a type (A2: type by what the node genuinely is; a forced Action is a lie).
+  assert.match(
+    p,
+    /never force|do not force|only when genuinely present|accurately/i,
+    "the steering is honest: type accurately, do not fabricate a type",
+  );
+});
+
 // A realistic excavated capsule for this intent — specific, mechanism-first, traced.
 const IMPRESS_JSON = JSON.stringify({
   id: "ATT.010",
