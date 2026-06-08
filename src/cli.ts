@@ -37,6 +37,7 @@ import {
   type InterviewTurn,
 } from "./compile/engine/interview.js";
 import { writePack } from "./pack/writer.js";
+import { projectPOM } from "./export/pom.js";
 import { paths, packsRoot, nodeDir } from "./pack/layout.js";
 import { nodeWiki } from "./pack/wiki.js";
 import {
@@ -168,6 +169,7 @@ const HELP = [
   "  ada flag <slug> <nodeId>          flag a node",
   "  ada resume [slug]                 show flagged / last state",
   "  ada c run [slug] [--defect]       run deterministic C checks",
+  "  ada pom [slug]                    print the Problem Operating Model (intent · constraints · unknowns · verifier · residue)",
   "  ada export [slug]                 list exported files",
   "  ada key                           is ANTHROPIC_API_KEY set? (set once in ~/.ada/.env)",
   "",
@@ -513,6 +515,43 @@ async function cmdExport(args: string[]): Promise<void> {
 }
 
 /**
+ * `ada pom <slug>` — print the pack's Problem Operating Model (the governed epistemic state:
+ * intent · constraints · unknowns · verifier · residue). Prefers the compile-time POM.md (it
+ * carries the real seed); for an older pack without one, projects it live from the typed graph
+ * with a thin manifest-derived intent kernel — so the unique-function output is always one
+ * command away, never a file you must dig for.
+ */
+function cmdPom(args: string[]): void {
+  const { positional } = parseFlags(args);
+  const slug = resolveSlug(positional[0]);
+  const p = paths(cwd, slug);
+  const pomFile = join(p.blueprintDir, "POM.md");
+  if (existsSync(pomFile)) {
+    console.log(readFileSync(pomFile, "utf8"));
+    return;
+  }
+  if (!existsSync(p.graphJson)) {
+    throw new Error(`No pack "${slug}". Run \`ada compile\` first.`);
+  }
+  const graph = JSON.parse(readFileSync(p.graphJson, "utf8"));
+  const manifest = JSON.parse(readFileSync(p.manifest, "utf8"));
+  // Older pack: no compiled POM. Project live with a thin kernel (honest — the seed wasn't kept).
+  const model = {
+    slug,
+    seed: {
+      rootIntent: manifest.slug ?? slug,
+      domain: manifest.product ?? slug,
+      buildObjective:
+        "(re-compile this pack to capture the full intent kernel)",
+      trustObjective: "see the verifier section",
+      unknownContext: [],
+    },
+    graph,
+  } as unknown as Parameters<typeof projectPOM>[0];
+  console.log(projectPOM(model));
+}
+
+/**
  * Map a finished interview transcript onto the engine Seed (AXIOM A2: every field traces to an
  * answer; never a domain literal). Starts from the bare-intent `engineSeed` so any field the
  * interview did NOT cover keeps an honest, intent-derived default, then folds each answer into
@@ -744,6 +783,8 @@ async function main(): Promise<void> {
       return cmdC(rest);
     case "export":
       return cmdExport(rest);
+    case "pom":
+      return cmdPom(rest);
     case undefined:
       // Bare `ada` in a terminal opens the workbench (what "ada" should do —
       // the showcase/default pack's tree). Piped / non-TTY falls through to help
