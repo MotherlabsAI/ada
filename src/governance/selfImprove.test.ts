@@ -5,6 +5,8 @@ import {
   checkGateWeakening,
   extractGates,
   verifyPatch,
+  qualityScore,
+  checkQuality,
 } from "./selfImprove.js";
 import type { Graph, NodeCapsule } from "../core/types.js";
 
@@ -91,6 +93,57 @@ test("verifyPatch: promotable when no gate is weakened; the diff is attached as 
     ["A.2"],
     "the inspectable change is carried",
   );
+});
+
+test("qualityScore rewards a richer graph (typed cross-edges, checkable nodes, surfaced unknowns)", () => {
+  const thin = g([n("A.1", "x")]);
+  const rich = g(
+    [
+      n("A.1", "x", {
+        checkability: { class: "C4" },
+        epistemics: { unknowns: ["q1", "q2"] },
+      } as Partial<NodeCapsule>),
+      n("A.2", "y"),
+    ],
+    [{ from: "A.1", to: "A.2", type: "guarded_by" }],
+  );
+  assert.ok(
+    qualityScore(rich) > qualityScore(thin),
+    "richer graph scores higher",
+  );
+});
+
+test("checkQuality blocks a THINNER compile (green-but-worse) — the gate the regression suite can't be", () => {
+  const before = g([n("A.1", "x"), n("A.2", "y"), n("A.3", "z")]);
+  const after = g([n("A.1", "x")]); // a patch that produces a thinner graph
+  assert.equal(
+    checkQuality(before, after).ok,
+    false,
+    "quality regressed → blocked",
+  );
+  assert.equal(checkQuality(before, before).ok, true, "unchanged → fine");
+});
+
+test("verifyPatch: a gate-preserving patch that DEGRADES quality is still NOT promotable", () => {
+  const before = g([n("A.1", "x"), n("A.2", "y")]);
+  const after = g([n("A.1", "x")]); // no gate touched, but thinner
+  const verdict = verifyPatch({
+    before,
+    after,
+    gatesBefore: ["gate-A"],
+    gatesAfter: ["gate-A"], // gate intact
+  });
+  assert.equal(
+    verdict.promotable,
+    false,
+    "quality regression blocks auto-promotion",
+  );
+  assert.equal(
+    verdict.gateCheck.ok,
+    true,
+    "and it's NOT a gate weakening — it's a quality one",
+  );
+  assert.match(verdict.reasons.join(" "), /quality regression/);
 });
 
 test("the design-contract suite is itself a gate set the harness can guard against weakening", () => {

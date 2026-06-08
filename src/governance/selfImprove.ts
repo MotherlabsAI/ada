@@ -84,9 +84,47 @@ export function extractGates(testSource: string): string[] {
   return out;
 }
 
+/**
+ * A proxy for COMPILE QUALITY that the regression suite does NOT measure: a richer graph scores
+ * higher — typed cross-edges (the graph layer over the tree), checkable nodes (trust-without-
+ * reading), and surfaced unknowns (excavation depth). The point is non-regression: an auto-
+ * promoted prompt/schema patch must not produce a THINNER graph on the frozen seed. This closes
+ * the hole where a patch stays green yet degrades the thing Ada exists for (A3: the gate must
+ * measure the right thing). It is a proxy, not a verdict on quality — Alex's eye remains the
+ * final judge of "good" (C0–C2); this only blocks a measurable regression.
+ */
+export function qualityScore(g: Graph): number {
+  const ids = new Set(g.nodes.map((n) => n.id));
+  let s = g.nodes.length;
+  for (const n of g.nodes) {
+    const c = n.checkability?.class;
+    if (c === "C3" || c === "C4" || c === "C5") s += 1; // checkable = trust without reading
+    s += n.epistemics?.unknowns?.length ?? 0; // surfaced unknowns = excavation depth
+  }
+  // typed cross-edges (not the structural `contains` spine) that land on real nodes
+  s += g.edges.filter(
+    (e) => e.type !== "contains" && ids.has(e.from) && ids.has(e.to),
+  ).length;
+  return s;
+}
+
+export interface QualityGate {
+  ok: boolean;
+  before: number;
+  after: number;
+}
+
+/** The quality non-regression gate: the patched compile must not score lower than the baseline. */
+export function checkQuality(before: Graph, after: Graph): QualityGate {
+  const a = qualityScore(before);
+  const b = qualityScore(after);
+  return { ok: b >= a, before: a, after: b };
+}
+
 export interface PatchVerdict {
   promotable: boolean;
   gateCheck: GateWeakening;
+  quality: QualityGate;
   diff: GraphDiff;
   reasons: string[];
 }
@@ -103,6 +141,7 @@ export function verifyPatch(args: {
   gatesAfter: readonly string[];
 }): PatchVerdict {
   const gateCheck = checkGateWeakening(args.gatesBefore, args.gatesAfter);
+  const quality = checkQuality(args.before, args.after);
   const diff = diffGraphs(args.before, args.after);
   const reasons: string[] = [];
   if (!gateCheck.ok) {
@@ -110,10 +149,23 @@ export function verifyPatch(args: {
       `rejected — weakens ${gateCheck.removed.length} gate(s): ${gateCheck.removed.join(", ")}`,
     );
   }
+  if (!quality.ok) {
+    reasons.push(
+      `rejected — quality regression: ${quality.after} < ${quality.before} (thinner graph; green but worse)`,
+    );
+  }
   if (diff.removedNodes.length) {
     reasons.push(
       `note — drops ${diff.removedNodes.length} node(s); confirm intended`,
     );
   }
-  return { promotable: gateCheck.ok, gateCheck, diff, reasons };
+  // Auto-promotable ONLY when it weakens no gate AND does not regress quality. Regression-suite
+  // green is the third gate, asserted by the caller (it runs `pnpm test`).
+  return {
+    promotable: gateCheck.ok && quality.ok,
+    gateCheck,
+    quality,
+    diff,
+    reasons,
+  };
 }
