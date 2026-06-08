@@ -220,6 +220,7 @@ export function claudeExports(model: PackModel): ExportFile[] {
       "This project has a compiled Ada context pack. Build from it, not from a raw prompt.",
       "",
       "## What to load first",
+      "- `exports/blueprint/POM.md` — **the Problem Operating Model**: the governed state to operate on (intent, constraints, unknowns, verifier, residue). Read this FIRST; do not re-derive it. Honour its `unknowns_graph` (do not fill an Ω hole with a guess) and its `constraint_graph` (never violate an invariant).",
       "- `wiki/index.md` — the map and the high-value nodes",
       "- `exports/blueprint/BLUEPRINT.md` — the deterministic build contract",
       "- `exports/blueprint/ACCEPTANCE.md` — the must-pass conditions",

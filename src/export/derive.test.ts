@@ -152,6 +152,18 @@ test("(a) blueprint + CLAUDE.md contain the fixture's node-derived content", () 
   assert.ok(b.claudeMd.includes("knowledge base"));
   // A node-derived check candidate surfaces as a Hard rule.
   assert.ok(b.claudeMd.includes("chunk.claim_source_title_coresident"));
+  // The executor is pointed at the Problem Operating Model FIRST — the operating state it must
+  // honour (output-must-be-operable). Without this, the POM is an unread file.
+  assert.match(
+    b.claudeMd,
+    /POM\.md/,
+    "CLAUDE.md references the Problem Operating Model",
+  );
+  assert.match(
+    b.claudeMd,
+    /Problem Operating Model/,
+    "and names it so the agent loads it",
+  );
 });
 
 test("(b) emitted views contain ZERO booking literals", () => {
