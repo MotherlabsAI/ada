@@ -67,8 +67,8 @@ Ada is the **compiler before execution (A6)**. So:
   under shadow-compile + regression + a promotion gate).
 - **OFF spine — borrowed, A6:** the agent **runtime** (planner/executor/governor agents running),
   live **tool execution**, and **action governance** (deploy/email/payment/delete gates). Ada
-  _emits the contracts_ for these (AGENTS.md, tool_contracts, gates) — the harness (Claude Code
-  `/loop`) _runs_ them. Building a competing runtime is the off-spine mistake.
+  _emits the contracts_ for these (AGENTS.md, tool*contracts, gates) — the harness (Claude Code
+  `/loop`) \_runs* them. Building a competing runtime is the off-spine mistake.
 
 ## The two things to adopt that close the gaps the work keeps hitting
 
@@ -116,3 +116,45 @@ it cannot verify itself, cite Ada's real files, or actually self-improve. Ada's 
 _describe_ this anatomy but to **be it, grounded and checkable and recursively improving** — which
 the single-shot is not. The blueprint is the map; Ada is the governed, self-correcting territory.
 That is strictly more than either the single-shot or today's Ada alone.
+
+## The unique function (Alex, 2026-06-07): epistemic action compilation
+
+The durable wedge is not generation or execution — both already exist (a model answers, an agent
+runs). It is **context governance BEFORE reasoning and execution**: separating what is _known_ /
+_assumed_ / _unknown_ / _must-be-verified_ / _safe-to-act_, so action is never taken before the
+system knows what is true. The output is not prose — it is a **Problem Operating Model (POM)**: a
+structured, inspectable, verifiable problem _state_ that humans, agents, and tools operate on
+without losing truth, constraints, or uncertainty.
+
+**Hold this bounded claim** (it is the defensible one): Ada _improves_ novel problem-solving by
+turning vague problems into structured, inspectable, verifiable search spaces — NOT "solves all
+novel problems."
+
+**The POM output shape (richer than today's pack):** `intent_kernel` · `current_state`
+(known / weak / assumed / contradictions / missing) · `constraint_graph` · `unknowns_graph` ·
+`solution_space` (candidate + rejected paths, tradeoffs, reversibility) · `execution_plan` ·
+`verifier` (tests, evidence, stop-conditions) · `memory` (residue, promoted).
+
+**Map to Ada today:** the typed-node ontology just shipped (Intent · Constraint · Claim · Evidence
+· Assumption · Unknown · Risk · Invariant · Decision · Action · Tool · Eval · Memory) IS the POM's
+vocabulary — the substrate now exists. The gap is **projection**: surface `constraint_graph` /
+`unknowns_graph` / `verifier-gates` / `solution_space` / `memory` as first-class POM _sections_ of
+the emitted pack, not buried inside the graph. (These are the same organs 04/09/10/11/12.)
+
+**The one genuinely new capability this names — the `distinguish` operator.** Most bad reasoning is
+_conflation_; the highest-leverage move is to **split fused concepts before deriving** —
+idea≠product, usage≠retention, automation≠autonomy, context≠truth, output≠outcome, novelty≠value,
+users≠customers. A `distinguish` compile pass (surface a conflation, emit the separated concepts as
+distinct typed nodes joined by a `contradicts`/`disambiguates` edge) is not in the pipeline today
+and is cheap, novel, and broadly applicable. Strong candidate brick.
+
+**First-principles discipline (the reasoning posture):** reduce to the _lowest **useful** primitive
+for action_ — controlled reduction, not infinite philosophy. Convert vague wisdom into operational
+primitives ("quality matters" → "fewer defects on the user's actual success path"; "trust is
+important" → "calibrated belief the system behaves correctly under relevant conditions"). A claim is
+a first principle only if it is non-derivative, generative, bounded/falsifiable, and **can change
+what we do**. The 10 semantic-compiler primitives in the source ≈ Ada's frozen axioms already
+(compile-before-execute, context≠truth, unknowns-are-state, verification-outranks-generation,
+action-requires-governance, memory-requires-promotion, corrections-become-infrastructure,
+output-must-be-operable) — confirming the kernel is aligned; the build is the projection + the
+recursive loop.
