@@ -55,7 +55,11 @@ export function projectPOM(model: PackModel): string {
     `- **domain:** ${seed.domain}`,
     `- **desired_state:** ${seed.buildObjective}`,
     `- **success (trust):** ${seed.trustObjective}`,
-    `- **non_goals:** ${seed.unknownContext.length ? "" : "_(none stated)_"}`,
+    // The normalize front-end's expansion (known/open context) is carried here so the headline
+    // output traces to the *normalized* intent, not just the raw goal (A2). The old `non_goals`
+    // line claimed a field the Seed never models and went blank when populated — removed.
+    `- **known going in:** ${seed.knownContext?.length ? seed.knownContext.join("; ") : "_(none stated)_"}`,
+    `- **open at intake:** ${seed.unknownContext?.length ? seed.unknownContext.join("; ") : "_(none stated)_"}`,
     "",
     "### intents",
     bullets(byType(model, "Intent")),

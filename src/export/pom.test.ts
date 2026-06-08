@@ -82,6 +82,40 @@ test("projectPOM files each typed node under its POM section (the unique functio
   );
 });
 
+test("projectPOM surfaces the normalize expansion (known/open context) and never emits a blank non_goals", () => {
+  // The intent front-end (normalize) expands thin intent into a rich Seed — knownContext and
+  // unknownContext. That expansion must reach the POM (A2: the headline output traces to the
+  // normalized intent), not leak out. The old `non_goals` line claimed a field the Seed never
+  // models and went BLANK when unknownContext was populated — a gloss this pins shut.
+  const md = projectPOM({
+    slug: "demo",
+    seed: {
+      rootIntent: "a citable notes tool",
+      domain: "knowledge management",
+      buildObjective: "notes linked to sources",
+      trustObjective: "every cite resolves",
+      knownContext: ["users keep notes in markdown"],
+      unknownContext: ["what counts as a source?"],
+    },
+    graph: { nodes: [], edges: [] },
+  } as unknown as PackModel);
+  assert.match(
+    md,
+    /known going in[\s\S]*users keep notes in markdown/,
+    "knownContext from normalize reaches the intent_kernel",
+  );
+  assert.match(
+    md,
+    /open at intake[\s\S]*what counts as a source\?/,
+    "unknownContext from normalize is surfaced (not mislabeled non_goals)",
+  );
+  assert.doesNotMatch(
+    md,
+    /non_goals:\*\*\s*\n/,
+    "no blank field is emitted (the old non_goals gloss is gone)",
+  );
+});
+
 test("projectPOM surfaces residue as Ω and a node's unknowns as verification_questions", () => {
   const md = projectPOM(
     model([
