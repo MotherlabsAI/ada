@@ -9,6 +9,7 @@ import {
   verifyTally,
   readerLines,
   resolvableLinks,
+  graphTree,
   type Line,
 } from "./ink/lines.js";
 import { paths, packsRoot } from "../pack/layout.js";
@@ -111,16 +112,20 @@ function nodeLine(n: NodeCapsule, flagged: boolean): string {
   return `  ${paint(n.ui.graphSymbol, n.colour)} ${dim(n.id)} ${n.label}${mark}`;
 }
 
+/**
+ * The static tree — now a PROJECTION of `graphTree` (ROOT.001 complete): the verification stripe,
+ * per-area roll-ups, connectors, and inter-cluster gaps are defined ONCE in lines.ts. Static mode
+ * shows every area open and no cursor; `ada open` and `ada tui` now render the same tree geometry.
+ */
 export function renderTree(graph: Graph, state: PackState): string {
-  const lines: string[] = [];
-  for (const cluster of [...new Set(graph.nodes.map((n) => clusterOf(n.id)))]) {
-    const nodes = graph.nodes.filter((n) => clusterOf(n.id) === cluster);
-    lines.push("");
-    lines.push(paint(`◆ ${cluster}`, "deep_blue") + dim(`  (${nodes.length})`));
-    for (const n of nodes)
-      lines.push(nodeLine(n, state.flagged.includes(n.id)));
-  }
-  return lines.join("\n");
+  const open = new Set(graph.nodes.map((n) => clusterOf(n.id))); // static: all areas expanded
+  const { rows } = graphTree(graph.nodes, {
+    open,
+    flagged: new Set(state.flagged),
+    rejected: new Set(state.rejected),
+    width: 100,
+  });
+  return rows.map(lineToString).join("\n");
 }
 
 /**
