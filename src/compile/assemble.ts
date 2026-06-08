@@ -17,6 +17,7 @@ import type {
   CheckClass,
   Depth,
   NodeType,
+  EdgeType,
   Projection,
 } from "../core/types.js";
 import { TRUTH_GLYPH } from "../core/grammar.js";
@@ -46,6 +47,12 @@ export interface NodeSpec {
    * assembly defaults any omission to "Mechanism" so every CAPSULE is typed regardless.
    */
   semanticType?: NodeType;
+  /**
+   * Typed cross-edges to OTHER nodes (organ 04, step 2) — the graph layer over the tree. Each
+   * is a {to, type} with `type` from the EDGE_TYPES vocabulary; the assembly emits them as real
+   * edges when `to` resolves to a kept node. Optional; the structural `contains` spine stands alone.
+   */
+  relations?: { to: string; type: EdgeType }[];
 }
 
 // Deterministic, domain-agnostic cluster→colour mapping (AXIOM A1). These are the
@@ -239,20 +246,36 @@ function toCapsule(spec: NodeSpec, score?: RubricScore): NodeCapsule {
   };
 }
 
-function buildEdges(nodes: NodeCapsule[]): Edge[] {
+export function buildEdges(
+  nodes: NodeCapsule[],
+  specs: NodeSpec[] = [],
+): Edge[] {
   const ids = new Set(nodes.map((n) => n.id));
   const edges: Edge[] = [];
-  // contains: ROOT.000 -> the first node of each cluster (illustrative spine)
-  const seen = new Set<string>();
+  const seen = new Set<string>(); // dedup (from|to|type)
+  const add = (e: Edge) => {
+    const k = `${e.from}|${e.to}|${e.type}`;
+    if (e.from !== e.to && ids.has(e.from) && ids.has(e.to) && !seen.has(k)) {
+      seen.add(k);
+      edges.push(e);
+    }
+  };
+  // contains: the structural spine — ROOT.000 → each cluster's first node, and parent → node.
+  const clusterSeen = new Set<string>();
   for (const n of nodes) {
     const c = clusterOf(n.id);
-    if (!seen.has(c)) {
-      seen.add(c);
-      if (ids.has("ROOT.000"))
-        edges.push({ from: "ROOT.000", to: n.id, type: "contains" });
+    if (!clusterSeen.has(c)) {
+      clusterSeen.add(c);
+      add({ from: "ROOT.000", to: n.id, type: "contains" });
     }
-    for (const p of n.worldLinks.parents) {
-      if (ids.has(p)) edges.push({ from: p, to: n.id, type: "contains" });
+    for (const p of n.worldLinks.parents)
+      add({ from: p, to: n.id, type: "contains" });
+  }
+  // typed cross-edges (organ 04, step 2): the excavator's surfaced relations become the graph
+  // layer over the tree — only when they land on a real kept node (a dangling edge is dropped).
+  for (const spec of specs) {
+    for (const r of spec.relations ?? []) {
+      add({ from: spec.id, to: r.to, type: r.type });
     }
   }
   return edges;
@@ -332,7 +355,7 @@ export function assemblePackGated(
     ...(hasRoot ? [] : [rootNode(intent, clusters)]),
     ...keptScored.map((s) => toCapsule(s.spec, s.score)),
   ];
-  const edges = buildEdges(nodes);
+  const edges = buildEdges(nodes, kept);
   const seed: Seed = seedOverride ?? deriveSeed(intent, kept);
   const graph: Graph = {
     id: `graph-${slug}`,

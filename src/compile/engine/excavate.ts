@@ -18,7 +18,8 @@ import type {
   TruthClass,
   NodeType,
 } from "../../core/types.js";
-import { NODE_TYPES } from "../../core/types.js";
+import { NODE_TYPES, EDGE_TYPES } from "../../core/types.js";
+import type { EdgeType } from "../../core/types.js";
 import type { NodeSpec } from "../assemble.js";
 
 /**
@@ -30,6 +31,31 @@ function coerceNodeType(v: unknown): NodeType {
   return typeof v === "string" && (NODE_TYPES as readonly string[]).includes(v)
     ? (v as NodeType)
     : "Mechanism";
+}
+
+/**
+ * Parse the model's typed cross-edges (organ 04, step 2). Keeps only well-formed relations: a
+ * string `to` and a `type` inside the closed EDGE_TYPES vocabulary. Invalid entries are dropped
+ * (not coerced — an invented edge type is a lie, A2); the assembly later drops any `to` that
+ * doesn't resolve to a kept node. Returns [] when absent/garbled.
+ */
+function parseRelations(v: unknown): { to: string; type: EdgeType }[] {
+  if (!Array.isArray(v)) return [];
+  const out: { to: string; type: EdgeType }[] = [];
+  for (const item of v) {
+    if (!item || typeof item !== "object") continue;
+    const o = item as Record<string, unknown>;
+    const to = typeof o["to"] === "string" ? o["to"].trim() : "";
+    const type = o["type"];
+    if (
+      to &&
+      typeof type === "string" &&
+      (EDGE_TYPES as readonly string[]).includes(type)
+    ) {
+      out.push({ to, type: type as EdgeType });
+    }
+  }
+  return out;
 }
 import { scoreNode, type RubricScore } from "../rubric.js";
 import { parseJsonLoose } from "./json.js";
@@ -109,12 +135,19 @@ export function buildPrompt(
     "Return exactly ONE NodeSpec as strict JSON (no prose, no code fences) with keys:",
     "id, label, cluster, depth, summary, whyItMatters, failureIfMissing,",
     "fromPrompt (string[]), compilesTo (string[]), checkClass, cCandidates (string[]),",
-    "unknowns (string[]), truth, parents (string[]), semanticType.",
+    "unknowns (string[]), truth, parents (string[]), semanticType, relations.",
     "",
     "semanticType is the node's TYPE — exactly one of: Intent, Constraint, Claim, Evidence,",
     "Assumption, Unknown, Risk, Mechanism, Invariant, Decision, Action, Artifact, Tool, Eval,",
     "Memory. Pick the single best fit (a contract/boundary = Invariant or Constraint; a how/why",
     "mechanism = Mechanism; an open gap = Unknown; a produced file = Artifact; a checkable rule = Eval).",
+    "",
+    "relations is an array of TYPED cross-edges to OTHER node ids you can name (the graph layer",
+    'over the tree): each {"to":"<node id>","type":"<edge type>"} where edge type is one of:',
+    "depends_on, enables, blocks, contradicts, supports, derived_from, compiles_to, exports_to,",
+    "guarded_by, verified_by, missed_by, generalizes_to, residue_of, promotes_to_memory,",
+    "recompiles, defeasible, exception. Add only edges you are confident name a real relation;",
+    "[] is fine. Do NOT use `contains` (the engine builds the structural spine itself).",
   );
   return lines.join("\n");
 }
@@ -154,6 +187,7 @@ export function parseNodeSpec(raw: string): NodeSpec {
     truth: (o["truth"] as TruthClass) ?? "inference",
     parents: arr(o["parents"]),
     semanticType: coerceNodeType(o["semanticType"]),
+    relations: parseRelations(o["relations"]),
   };
 }
 

@@ -136,6 +136,33 @@ export type EdgeType =
   | "defeasible"
   | "exception";
 
+/**
+ * The semantic edge vocabulary as a runtime list (organ 04, step 2). `contains` is the
+ * structural tree spine; the rest are typed cross-edges the excavator surfaces between nodes,
+ * so the graph encodes operational meaning ("this Invariant `guarded_by` that Eval", "this
+ * Decision `supersedes`…") rather than a folder hierarchy. Used to validate emitted relations.
+ */
+export const EDGE_TYPES: readonly EdgeType[] = [
+  "contains",
+  "depends_on",
+  "enables",
+  "blocks",
+  "contradicts",
+  "supports",
+  "derived_from",
+  "compiles_to",
+  "exports_to",
+  "guarded_by",
+  "verified_by",
+  "missed_by",
+  "generalizes_to",
+  "residue_of",
+  "promotes_to_memory",
+  "recompiles",
+  "defeasible",
+  "exception",
+];
+
 export type Confidence = "low" | "medium" | "high";
 export type GateStatus = "passed" | "pending" | "failed" | "not_applicable";
 export type Score = "low" | "medium" | "high";
