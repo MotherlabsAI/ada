@@ -29,6 +29,7 @@ import { copilotExports } from "../export/copilot.js";
 import { mcpExports } from "../export/mcp.js";
 import { openaiExports } from "../export/openai.js";
 import { exportManifestArtifact } from "../export/manifest.js";
+import { projectDecomposition } from "../export/decomposition.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -282,6 +283,7 @@ async function writePackBody(
     toolContractsExport(model),
     evidenceLedgerExport(model),
     memoryPolicyExport(model),
+    ...projectDecomposition(model),
   ]) {
     const dest = join(p.blueprintDir, f.path);
     await mkdir(dirname(dest), { recursive: true });

@@ -72,6 +72,20 @@ export function projectExportManifest(model: PackModel): ExportManifest {
       format: "jsonl",
       audience: "verifier",
     },
+    ...[
+      "FACTS",
+      "CLAIMS",
+      "ASSUMPTIONS",
+      "UNKNOWNS",
+      "CONSTRAINTS",
+      "DECISIONS",
+      "ACTIONS",
+    ].map((f) => ({
+      path: `exports/blueprint/${f}.md`,
+      family: "decomposition" as const,
+      format: "markdown" as const,
+      audience: "agent" as const,
+    })),
     {
       path: "c/C.md",
       family: "verification",
@@ -133,7 +147,6 @@ export function projectExportManifest(model: PackModel): ExportManifest {
   // The taxonomy families Ada does not yet emit as first-class artifacts (honest frontier, A2).
   const frontier = [
     "intent (INTENT.md / SCOPE.md as named files)",
-    "decomposition (FACTS/CLAIMS/ASSUMPTIONS/UNKNOWNS as named files — currently graph buckets)",
     "data-training (datasets / evals — value-ladder L9)",
     "observability-trace (run traces — runtime tail, L10)",
     "schemas-ir (machine schemas for the envelope)",
