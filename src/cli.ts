@@ -53,6 +53,7 @@ import {
 } from "./tui/navigator.js";
 import { runChecksWithDensity, renderReport } from "./c/run.js";
 import { canRunInk } from "./tui/ink/canRunInk.js";
+import { readSnapshot, renderSnapshot } from "./tui/watch.js";
 import { restoreTerminal, armTerminalRestore } from "./tui/terminal.js";
 import { paint, bold, dim } from "./core/grammar.js";
 import { loadEnvConfig } from "./env.js";
@@ -190,6 +191,8 @@ const HELP = [
   "  ada resume [slug]                 show flagged / last state",
   "  ada c run [slug] [--defect]       run deterministic C checks",
   "  ada pom [slug]                    print the Problem Operating Model (intent · constraints · unknowns · verifier · residue)",
+  "  ada watch [slug] [--once] [--json] watch a compile run live (the real-time spine);",
+  "                                    --once prints one snapshot, --json the raw snapshot",
   "  ada export [slug]                 list exported files",
   "  ada key                           how Ada reaches the model: subscription (no key) or API key",
   "",
@@ -828,6 +831,64 @@ function cmdKey(): void {
   }
 }
 
+const sleep = (ms: number): Promise<void> =>
+  new Promise((r) => setTimeout(r, ms));
+
+/**
+ * `ada watch [slug] [--once] [--json]` — render the engine's live compile snapshot.
+ *
+ * Default (TTY): poll `.compile-progress.json` and redraw the tree in place until the run ends.
+ * `--once`: print one snapshot and exit (the cheap call the /ada skill makes each poll tick).
+ * `--json`: print the raw snapshot for deterministic parsing. Non-TTY default degrades to --once.
+ * No progress file → a clear message + non-zero exit (nothing to watch).
+ *
+ * Staleness (the crash contract): a compile that dies leaves status "running" forever; if the
+ * snapshot hasn't advanced for STALE_MS we stop and say so rather than spinning indefinitely.
+ */
+async function cmdWatch(args: string[]): Promise<void> {
+  const { positional, flags } = parseFlags(args);
+  const slug = resolveSlug(positional[0]);
+  const first = readSnapshot(cwd, slug);
+  if (!first) {
+    console.error(
+      paint(`no compile in flight for ${slug}`, "rose") +
+        dim(`   (run: ada compile --engine "…" --slug=${slug})`),
+    );
+    process.exitCode = 1;
+    return;
+  }
+  if (flags["json"]) {
+    console.log(JSON.stringify(first, null, 2));
+    return;
+  }
+  if (flags["once"] || !process.stdout.isTTY) {
+    console.log(renderSnapshot(first));
+    return;
+  }
+
+  const STALE_MS = 120_000;
+  let prevLines = 0;
+  let tick = 0;
+  for (;;) {
+    const snap = readSnapshot(cwd, slug) ?? first;
+    const out = renderSnapshot(snap, tick++);
+    if (prevLines > 0) process.stdout.write(`\x1b[${prevLines}A\x1b[0J`);
+    process.stdout.write(`${out}\n`);
+    prevLines = out.split("\n").length;
+    if (snap.status !== "running") break;
+    const age = Date.now() - new Date(snap.updatedAt).getTime();
+    if (age > STALE_MS) {
+      console.log(
+        dim(
+          `  (no update for ${Math.round(age / 1000)}s — the compile may have stopped)`,
+        ),
+      );
+      break;
+    }
+    await sleep(250);
+  }
+}
+
 async function main(): Promise<void> {
   // Load the API key (and optional ADA_MODEL) from ./.env or ~/.ada/.env BEFORE any command,
   // so the engine's single compile-time call picks it up. Env always wins; the value is never
@@ -859,6 +920,8 @@ async function main(): Promise<void> {
       return cmdExport(rest);
     case "pom":
       return cmdPom(rest);
+    case "watch":
+      return cmdWatch(rest);
     case undefined:
       // Bare `ada` in a terminal opens the workbench (what "ada" should do —
       // the showcase/default pack's tree). Piped / non-TTY falls through to help
