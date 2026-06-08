@@ -28,6 +28,7 @@ import { memoryPolicyExport } from "../export/memory.js";
 import { copilotExports } from "../export/copilot.js";
 import { mcpExports } from "../export/mcp.js";
 import { openaiExports } from "../export/openai.js";
+import { exportManifestArtifact } from "../export/manifest.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -208,6 +209,9 @@ async function writePackBody(
   await writeFile(p.graphYaml, toYaml(model.graph), "utf8");
   await writeFile(p.manifest, toJson(manifest), "utf8");
   await writeFile(p.pack, packMd(model, manifest), "utf8");
+  // The self-describing index of the whole emitted family (§22 EXPORT_MANIFEST), at the root.
+  const em = exportManifestArtifact(model);
+  await writeFile(join(p.root, em.path), em.content, "utf8");
 
   for (const node of model.graph.nodes) {
     const dir = nodeDir(cwd, model.slug, node);
