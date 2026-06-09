@@ -11,6 +11,7 @@
  *   isSaturated — stop a branch when expansion surfaces NO new grounded sense (only restatement/holes).
  */
 import type { NodeCapsule, Seed } from "../../core/types.js";
+import { engineCompile, type EngineCompileOptions } from "./compile.js";
 
 /** A node may be expanded iff it is grounded — never a pure hole (Ω). */
 export function canExpand(node: NodeCapsule): { ok: boolean; reason: string } {
@@ -60,4 +61,63 @@ export function isSaturated(parent: NodeCapsule, subNodes: SubNode[]): boolean {
       (f) => f.trim() !== "" && !parentText.includes(f.toLowerCase()),
     );
   return !subNodes.some(introducesNewGround);
+}
+
+/** Derive the nested sub-pack slug for a node — the postcode extends: <parent>__<NODE.ID>. */
+export function subPackSlug(parentSlug: string, nodeId: string): string {
+  return `${parentSlug}__${nodeId}`.replace(/[^a-z0-9._-]+/gi, "-");
+}
+
+export interface ExpandResult {
+  /** False when the node is a hole (a leaf, not a seed) — no compile was run. */
+  expanded: boolean;
+  reason: string;
+  /** The sub-pack slug, when expanded. */
+  subSlug?: string;
+  /** Whether the expansion saturated — deeper here yields no new ground (it is a leaf). */
+  saturated?: boolean;
+  nodeCount?: number;
+}
+
+/**
+ * Descend ONE node into its own sub-pack: refuse a hole (a leaf), else derive the sub-seed from the
+ * node's meaning, run the budgeted engine compile, and report whether the branch saturated. Composes
+ * the pure governors with the existing engine seam (one more compile-time call, A1/A9). The recursive
+ * traversal and the CLI verb call this; budget = `opts.perCluster` (the ≤k discovery bound).
+ */
+export async function expandNode(args: {
+  cwd: string;
+  parentSlug: string;
+  node: NodeCapsule;
+  parentSeed: Seed;
+  opts?: EngineCompileOptions;
+}): Promise<ExpandResult> {
+  const gate = canExpand(args.node);
+  if (!gate.ok) return { expanded: false, reason: gate.reason };
+
+  const subSlug = subPackSlug(args.parentSlug, args.node.id);
+  const seed = expandSeed(args.node, args.parentSeed);
+  const { model } = await engineCompile({
+    cwd: args.cwd,
+    slug: subSlug,
+    intent: seed.rootIntent,
+    seed,
+    opts: args.opts ?? {},
+  });
+  const saturated = isSaturated(
+    args.node,
+    model.graph.nodes.map((n) => ({
+      truth: n.truth,
+      fromPrompt: [] as string[],
+    })),
+  );
+  return {
+    expanded: true,
+    reason: saturated
+      ? "expanded, but saturated — deeper here yields no new ground (a leaf)"
+      : "expanded — new ground surfaced; descend further if budget remains",
+    subSlug,
+    saturated,
+    nodeCount: model.graph.nodes.length,
+  };
 }
