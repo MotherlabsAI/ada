@@ -40,6 +40,7 @@ import { projectSemanticContracts } from "../governance/semanticContracts.js";
 import { projectSchemas } from "../export/schemas.js";
 import { projectWriteFirewall } from "../governance/writeFirewall.js";
 import { projectTrustCeiling } from "../governance/trustCeiling.js";
+import { projectLoopVariant } from "../governance/loopVariant.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -303,6 +304,7 @@ async function writePackBody(
     projectSemanticContracts(model),
     projectWriteFirewall(model),
     projectTrustCeiling(model),
+    projectLoopVariant(model),
   ]) {
     const dest = join(p.blueprintDir, f.path);
     await mkdir(dirname(dest), { recursive: true });
