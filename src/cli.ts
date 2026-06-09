@@ -26,6 +26,7 @@ import {
   withAnchors as withAnchorsShared,
 } from "./compile/engine/compile.js";
 import { engineSeed } from "./compile/engine/seed.js";
+import { expandNode, canExpand } from "./compile/engine/expand.js";
 import { ingestRepo } from "./compile/engine/ingest.js";
 import { repoDigest } from "./compile/engine/repoDigest.js";
 import {
@@ -187,6 +188,7 @@ const HELP = [
   "  ada open [slug] [nodeId]          navigate the pack",
   "  ada tui [slug]                    launch the Ink workbench (TTY)",
   "  ada deeper <slug> <nodeId>        full wiki article for a node",
+  "  ada expand <slug> <nodeId>        fractal descent — compile a node into its own sub-tree (travel the language)",
   "  ada flag <slug> <nodeId>          flag a node",
   "  ada resume [slug]                 show flagged / last state",
   "  ada c run [slug] [--defect]       run deterministic C checks",
@@ -521,6 +523,63 @@ async function cmdFlag(args: string[]): Promise<void> {
   const nodeId = positional[1];
   if (!nodeId) throw new Error("usage: ada flag <slug> <nodeId>");
   console.log(paint(flagNode(cwd, slug, nodeId), "slate"));
+}
+
+/**
+ * `ada expand <slug> <nodeId>` — fractal descent: re-compile ONE node into its own sub-tree (travel
+ * the language). Refuses a hole (a leaf, never a seed — A2); else lands a sub-pack at <slug>__<nodeId>,
+ * budget-gated by --depth (≤k children) and reporting whether the branch surfaced new ground or saturated.
+ */
+async function cmdExpand(args: string[]): Promise<void> {
+  const { positional, flags } = parseFlags(args);
+  const slug = resolveSlug(positional[0]);
+  const nodeId = positional[1];
+  if (!nodeId)
+    throw new Error(
+      "usage: ada expand <slug> <nodeId> [--depth=N] [--provider=…]",
+    );
+  const { graph } = loadPack(cwd, slug);
+  const node = graph.nodes.find((n) => n.id === nodeId);
+  if (!node) throw new Error(`No node ${nodeId} in pack ${slug}.`);
+  const gate = canExpand(node);
+  if (!gate.ok) {
+    console.log(
+      paint("✗ ", "amber") + `cannot expand ${nodeId} — ${gate.reason}`,
+    );
+    return;
+  }
+  const engineOptions = buildEngineOptions(flags);
+  const parentSeed = engineSeed(
+    `${node.label}. ${node.localContext.summary}`.trim(),
+  );
+  console.log(
+    dim(`◈ expanding ${slug}/${nodeId} into its own sub-tree (one compile)…`),
+  );
+  const r = await expandNode({
+    cwd,
+    parentSlug: slug,
+    node,
+    parentSeed,
+    opts: {
+      normalize: true,
+      plan: true,
+      ...(engineOptions.perCluster
+        ? { perCluster: engineOptions.perCluster }
+        : {}),
+      ...(engineOptions.provider ? { provider: engineOptions.provider } : {}),
+    },
+  });
+  if (!r.expanded) {
+    console.log(paint("✗ ", "amber") + r.reason);
+    return;
+  }
+  console.log(
+    paint("◈ expanded", "terracotta") +
+      dim(
+        `  ${r.subSlug}  ·  ${r.nodeCount} nodes  ·  ${r.saturated ? "saturated (a leaf — deeper yields no new ground)" : "new ground surfaced"}`,
+      ),
+  );
+  console.log(dim(`  travel further:  ada open ${r.subSlug}`));
 }
 
 async function cmdResume(args: string[]): Promise<void> {
@@ -910,6 +969,8 @@ async function main(): Promise<void> {
       return cmdTui(rest);
     case "deeper":
       return cmdDeeper(rest);
+    case "expand":
+      return cmdExpand(rest);
     case "flag":
       return cmdFlag(rest);
     case "resume":
