@@ -43,6 +43,7 @@ import { projectTrustCeiling } from "../governance/trustCeiling.js";
 import { projectLoopVariant } from "../governance/loopVariant.js";
 import { projectRatchet } from "../governance/ratchet.js";
 import { projectAttribution } from "../governance/attribution.js";
+import { projectRevocation } from "../governance/revocation.js";
 
 function manifestOf(model: PackModel): PackManifest {
   const clusters = [...new Set(model.graph.nodes.map((n) => clusterOf(n.id)))];
@@ -309,6 +310,7 @@ async function writePackBody(
     projectLoopVariant(model),
     projectRatchet(model),
     projectAttribution(model),
+    projectRevocation(model),
   ]) {
     const dest = join(p.blueprintDir, f.path);
     await mkdir(dirname(dest), { recursive: true });
