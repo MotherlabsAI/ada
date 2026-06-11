@@ -21,3 +21,6 @@ dist/
 .env
 .env.*
 .ada/.env
+
+# internal compiler state, contracts, residue, and PRIVATE strategy notes — NEVER publish
+.compiler/

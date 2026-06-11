@@ -1,12 +1,25 @@
-# Ada — semantic context compiler
+# Ada — a Context Compiler
 
-Ada compiles a natural-language intent into a **governed context pack** for a coding agent:
-a typed world-model graph, a Problem Operating Model (what is known / assumed / unknown /
-constrained / verifiable), deterministic checks, and a `CLAUDE.md` the executor loads first.
-It sits **before** execution — it feeds the agentic loop, it does not replace it.
+**Context Compiler** is a category: a compiler whose source is natural-language intent, whose
+IR is a typed knowledge graph, and whose output is the governed context a coding agent needs to
+build reliably. Ada is the reference implementation.
 
-> The thesis and the north-star gate live in [`docs/NORTH-STAR.md`](docs/NORTH-STAR.md) and
-> [`docs/POSITIONING.md`](docs/POSITIONING.md); the frozen laws in [`AXIOMS.md`](AXIOMS.md).
+You say what you want, in English. Ada does not generate code from it — it **excavates** a
+structure out of it. Every node traces back to a sentence you said; nothing is invented. The
+structure is a typed graph — Invariant, Mechanism, Decision, Unknown, Action — and the graph is
+the verification surface: what the operator reads is the contract.
+
+The output is what a coding agent runs inside: a `CLAUDE.md`, agent definitions, pre-tool hooks,
+a world model, deterministic checks, a Problem Operating Model. Ada sits **before** execution. It
+feeds the agentic loop; it does not replace it.
+
+**Why a category, not a feature.** Spec-driven tools start from a spec document a human writes.
+Ada starts from raw intent and excavates the graph. Prompt compilers tune one model call.
+Intent-to-code stops at code. Agent frameworks are the plumbing the agent runs on. Each holds one
+axis; none holds all three — intent as the source, a typed graph with provenance as the IR,
+governed agent-context with a checkable surface as the output. That intersection is the category.
+
+> Frozen laws: [`AXIOMS.md`](AXIOMS.md). Thesis and north-star gate: [`docs/NORTH-STAR.md`](docs/NORTH-STAR.md).
 > This file is the operational door: how to install it and run it.
 
 ## Requirements
@@ -87,3 +100,7 @@ The suite is the contract: the engine pipeline is byte-deterministic after the s
 call, the ship-gates are pinned (`src/prodContract.test.ts`), and this README's commands are
 checked against the real CLI dispatch (`src/readme.test.ts`) so the door can't drift from the
 building.
+
+## License
+
+See [`LICENSE`](LICENSE) if present; otherwise all rights reserved, Motherlabs.
