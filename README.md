@@ -1,23 +1,23 @@
 # Ada — a Context Compiler
 
-**Context Compiler** is a category: a compiler whose source is natural-language intent, whose
-IR is a typed knowledge graph, and whose output is the governed context a coding agent needs to
-build reliably. Ada is the reference implementation.
+A context compiler turns plain-English intent into the governed context an AI coding agent needs
+to build reliably. Ada is the reference implementation, and it works with Claude Code and Codex.
 
-You say what you want, in English. Ada does not generate code from it — it **excavates** a
-structure out of it. Every node traces back to a sentence you said; nothing is invented. The
-structure is a typed graph — Invariant, Mechanism, Decision, Unknown, Action — and the graph is
-the verification surface: what the operator reads is the contract.
+You say what you want, in English. Ada doesn't write code from that. It **excavates** a structure
+out of it, and every node traces back to a sentence you said. Nothing is invented. The structure
+is a typed graph: Invariant, Mechanism, Decision, Unknown, Action. That graph is the verification
+surface. What you read is the contract.
 
-The output is what a coding agent runs inside: a `CLAUDE.md`, agent definitions, pre-tool hooks,
-a world model, deterministic checks, a Problem Operating Model. Ada sits **before** execution. It
-feeds the agentic loop; it does not replace it.
+The output is what the agent runs inside: a `CLAUDE.md`, agent definitions, pre-tool hooks, a
+world model, deterministic checks, a Problem Operating Model. Ada runs before execution. It feeds
+the agentic loop. It doesn't replace it.
 
-**Why a category, not a feature.** Spec-driven tools start from a spec document a human writes.
-Ada starts from raw intent and excavates the graph. Prompt compilers tune one model call.
-Intent-to-code stops at code. Agent frameworks are the plumbing the agent runs on. Each holds one
-axis; none holds all three — intent as the source, a typed graph with provenance as the IR,
-governed agent-context with a checkable surface as the output. That intersection is the category.
+**Why it's a category, not a feature.** Call it the supply side of intent-driven and spec-driven
+development. Spec-driven tools make you write the spec; Ada excavates it from raw intent. Prompt
+compilers tune one model call. Intent-to-code stops at code. Agent frameworks are the plumbing the
+agent runs on. Each holds one axis. None holds all three: intent as the source, a typed graph with
+provenance as the IR, governed agent-context with a checkable surface as the output. That
+intersection is the category, and it's what Ada is.
 
 > Frozen laws: [`AXIOMS.md`](AXIOMS.md). Thesis and north-star gate: [`docs/NORTH-STAR.md`](docs/NORTH-STAR.md).
 > This file is the operational door: how to install it and run it.
